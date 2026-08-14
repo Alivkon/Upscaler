@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="ru">
+<head><meta charset="utf-8"><title>Проверка биллинга Google Upscaler</title></head>
+<body>
+  <h1>Проверка биллинга Google Upscaler</h1>
+  <h2>Цель и решение</h2>
+  <p>Установить, через какой сервис списываются деньги при выборе Google Upscaler.</p>
+  <h2>Проверенные файлы</h2>
+  <ul>
+    <li><code>server.js</code>: модель использует endpoint <code>models/google/upscaler/predictions</code>.</li>
+    <li><code>server.js</code>: запросы направляются в API Replicate с токеном <code>REPLICATE_API_TOKEN</code>.</li>
+    <li><code>.env.example</code>: токен обозначен как токен Replicate.</li>
+  </ul>
+  <h2>Результат и ограничения</h2>
+  <p>Деньги списываются со счёта Replicate, которому принадлежит API-токен, а не напрямую со счёта Google или Google Cloud. Цена зависит от текущего тарифа модели в Replicate.</p>
+  <h2>Источники</h2>
+  <p>Локальная конфигурация проекта: <code>server.js</code>, <code>.env.example</code>.</p>
+</body>
+</html>

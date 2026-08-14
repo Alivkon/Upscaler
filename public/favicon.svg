@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <!-- фон: фирменный тёмно-зелёный ink с скруглёнными углами -->
+  <rect x="2" y="2" width="96" height="96" rx="24" fill="#17352e"/>
+  <!-- фоторамка (белая поверхность) -->
+  <rect x="26" y="26" width="48" height="48" rx="9" fill="#fffdfa"/>
+  <!-- «пейзаж» внутри фото: гора + солнце (лайм) -->
+  <polygon points="32,69 48,45 64,69" fill="#d9f25f"/>
+  <circle cx="57" cy="39" r="4.5" fill="#d9f25f"/>
+  <!-- углы-«расширение» (метафора апскейла) -->
+  <g stroke="#d9f25f" stroke-width="4.5" stroke-linecap="round" fill="none">
+    <path d="M75 19 V26 H82"/>
+    <path d="M25 81 V74 H18"/>
+  </g>
+</svg>

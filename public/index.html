@@ -3,7 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Увеличить фото ×2</title>
+  <title>Улучшить фото · Replicate</title>
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
@@ -13,21 +17,45 @@
   <main class="shell">
     <header><p>AI image upscaler</p></header>
     <section class="hero">
-      <div class="eyebrow">TOPAZ AI · ×2 UPSCALE</div>
+      <div class="eyebrow">REPLICATE · AI UPSCALE</div>
       <h1>Дайте фотографии<br><em>больше деталей.</em></h1>
-      <p class="lead">Загрузите снимок — Topaz AI аккуратно увеличит его разрешение в два раза. Без настроек и лишних шагов.</p>
+      <p class="lead">Загрузите снимок, выберите алгоритм — сервис увеличит изображение в два раза и сохранит файл на вашем сервере.</p>
       <form id="upscale-form">
+        <fieldset class="models">
+          <legend>Выберите модель</legend>
+          <div class="model-grid">
+            <label class="model-card"><input type="radio" name="model" value="topaz" checked><span><b>Topaz Image Upscale</b><small>Профессиональная универсальная обработка</small></span></label>
+            <label class="model-card"><input type="radio" name="model" value="google"><span><b>Google Upscaler</b><small>Чистое увеличение изображения</small></span></label>
+            <label class="model-card"><input type="radio" name="model" value="real_esrgan"><span><b>Real-ESRGAN</b><small>Универсальные фотографии и детали</small></span></label>
+            <label class="model-card"><input type="radio" name="model" value="gfpgan"><span><b>GFPGAN</b><small>Портреты и восстановление лиц</small></span></label>
+            <label class="model-card"><input type="radio" name="model" value="codeformer"><span><b>CodeFormer</b><small>Старые и повреждённые портреты</small></span></label>
+          </div>
+        </fieldset>
         <label class="dropzone" id="dropzone" for="photo">
           <input id="photo" name="photo" type="file" accept="image/jpeg,image/png,image/webp" hidden>
           <span class="upload-icon">↥</span>
           <strong id="file-label">Перетащите фото сюда</strong>
           <small>или нажмите для выбора · JPG, PNG, WebP · до 10 МБ</small>
         </label>
-        <button id="submit" type="submit" disabled><span>Увеличить ×2</span><b>→</b></button>
+        <button id="submit" type="submit" disabled><span>Улучшить ×2</span><b>→</b></button>
       </form>
       <p id="status" class="status" aria-live="polite"></p>
+      <section class="preview" id="preview" aria-label="Предпросмотр увеличенного изображения">
+        <div class="preview-frame">
+          <div class="preview-placeholder" id="preview-placeholder">
+            <svg class="preview-icon" width="46" height="46" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <rect x="4" y="4" width="40" height="40" rx="4" stroke="currentColor" stroke-width="2.5" fill="none" opacity=".7"/>
+              <circle cx="18" cy="18" r="4" fill="currentColor" opacity=".55"/>
+              <path d="m7 34 10-9 8 7 7-6 9 8" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity=".7"/>
+              <path d="M10 48 4 42M10 48l6 0M4 48v-6" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M38 4l6 6M38 4h6M44 4v6" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <span>Увеличенное изображение появится здесь</span>
+          </div>
+          <img id="result-image" class="preview-image" alt="Увеличенное изображение" hidden />
+        </div>
+      </section>
       <section id="result" class="result" hidden>
-        <img id="result-image" alt="Увеличенное изображение" />
         <div><span class="done">Готово</span><h2>Ваше фото увеличено ×2</h2><p>Файл сохранён в папке <code>outputs</code> проекта.</p><a id="download" class="download" download>Скачать изображение</a></div>
       </section>
     </section>

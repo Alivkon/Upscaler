@@ -1,5 +1,4 @@
 import 'dotenv/config';
-import crypto from 'node:crypto';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -21,73 +20,92 @@ await fs.mkdir(OUTPUTS_DIR, { recursive: true });
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/outputs', express.static(OUTPUTS_DIR, { fallthrough: false }));
 
-function apiHeaders() {
-  if (!process.env.KIE_API_KEY || process.env.KIE_API_KEY === 'replace_with_your_kie_api_key') {
-    throw new Error('Добавьте действительный KIE_API_KEY в файл .env.');
+const MODELS = {
+  topaz: {
+    title: 'Topaz Image Upscale',
+    endpoint: 'models/topazlabs/image-upscale/predictions',
+    input: image => ({ image, enhance_model: 'Standard V2', output_format: 'jpg', upscale_factor: '2x', face_enhancement: false, subject_detection: 'None' })
+  },
+  google: {
+    title: 'Google Upscaler',
+    endpoint: 'models/google/upscaler/predictions',
+    input: image => ({ image, upscale_factor: 'x2', compression_quality: 90 })
+  },
+  real_esrgan: {
+    title: 'Real-ESRGAN',
+    endpoint: 'models/nightmareai/real-esrgan/predictions',
+    input: image => ({ image, scale: 2, face_enhance: false })
+  },
+  gfpgan: {
+    title: 'GFPGAN',
+    version: 'tencentarc/gfpgan:297a243ce8643961d52f745f9b6c8c1bd96850a51c92be5f43628a0d3e08321a',
+    input: image => ({ img: image, scale: 2, version: 'v1.4' })
+  },
+  codeformer: {
+    title: 'CodeFormer',
+    version: 'sczhou/codeformer:cc4956dd26fa5a7185d5660cc9100fab1b8070a1d1654a8bb5eb6d443b020bb2',
+    input: image => ({ image, upscale: 2, face_upsample: true, background_enhance: true, codeformer_fidelity: 0.7 })
   }
-  return { Authorization: `Bearer ${process.env.KIE_API_KEY}` };
+};
+
+function apiHeaders() {
+  if (!process.env.REPLICATE_API_TOKEN || process.env.REPLICATE_API_TOKEN === 'r8_replace_with_your_replicate_api_token') {
+    throw new Error('Добавьте действительный REPLICATE_API_TOKEN в файл .env.');
+  }
+  return { Authorization: `Bearer ${process.env.REPLICATE_API_TOKEN}` };
 }
 
 async function parseResponse(response) {
   const data = await response.json().catch(() => ({}));
   if (!response.ok || data.code >= 400 || data.success === false) {
-    throw new Error(data.msg || data.message || `Kie.ai вернул HTTP ${response.status}`);
+    throw new Error(data.detail || data.error || data.msg || data.message || `Replicate вернул HTTP ${response.status}`);
   }
   return data;
 }
 
-async function uploadToKie(file) {
-  const form = new FormData();
-  form.append('file', new Blob([file.buffer], { type: file.mimetype }), file.originalname);
-  form.append('uploadPath', 'images/user-uploads');
-  form.append('fileName', `${crypto.randomUUID()}-${file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_')}`);
-  const response = await fetch('https://kieai.redpandaai.co/api/file-stream-upload', {
-    method: 'POST', headers: apiHeaders(), body: form
-  });
-  const data = await parseResponse(response);
-  const url = data.data?.downloadUrl || data.data?.fileUrl;
-  if (!url) throw new Error('Kie.ai не вернул URL загруженного файла.');
-  return url;
+function asDataUrl(file) {
+  return `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
 }
 
-async function createUpscaleTask(imageUrl) {
-  const response = await fetch('https://api.kie.ai/api/v1/jobs/createTask', {
+async function createPrediction(model, image) {
+  const body = { input: model.input(image) };
+  const endpoint = model.endpoint || 'predictions';
+  if (model.version) body.version = model.version;
+  const response = await fetch(`https://api.replicate.com/v1/${endpoint}`, {
     method: 'POST',
-    headers: { ...apiHeaders(), 'Content-Type': 'application/json' },
-    body: JSON.stringify({ model: 'topaz/image-upscale', input: { image_url: imageUrl, upscale_factor: '2' } })
+    headers: { ...apiHeaders(), 'Content-Type': 'application/json', Prefer: 'wait=60', 'Cancel-After': '10m' },
+    body: JSON.stringify(body)
   });
   const data = await parseResponse(response);
-  if (!data.data?.taskId) throw new Error('Kie.ai не вернул идентификатор задачи.');
-  return data.data.taskId;
+  if (!data.id) throw new Error('Replicate не вернул идентификатор задачи.');
+  return data;
 }
 
-async function waitForResult(taskId) {
+async function waitForResult(prediction) {
   const deadline = Date.now() + 10 * 60 * 1000;
+  let task = prediction;
   while (Date.now() < deadline) {
-    await new Promise(resolve => setTimeout(resolve, 2500));
-    const response = await fetch(`https://api.kie.ai/api/v1/jobs/recordInfo?taskId=${encodeURIComponent(taskId)}`, {
-      headers: apiHeaders()
-    });
-    const data = await parseResponse(response);
-    const task = data.data || {};
-    if (task.state === 'success') {
-      const result = typeof task.resultJson === 'string' ? JSON.parse(task.resultJson) : task.resultJson;
-      const url = result?.resultUrls?.[0] || result?.resultUrl || result?.output;
+    if (task.status === 'succeeded') {
+      const url = Array.isArray(task.output) ? task.output[0] : task.output;
       if (!url) throw new Error('Задача завершилась, но ссылка на изображение отсутствует.');
       return url;
     }
-    if (task.state === 'fail') throw new Error(task.failMsg || 'Апскейлинг не выполнен сервисом Kie.ai.');
+    if (task.status === 'failed' || task.status === 'canceled') throw new Error(task.error || 'Апскейлинг не выполнен сервисом Replicate.');
+    await new Promise(resolve => setTimeout(resolve, 2000));
+    const response = await fetch(task.urls?.get || `https://api.replicate.com/v1/predictions/${task.id}`, { headers: apiHeaders() });
+    task = await parseResponse(response);
   }
   throw new Error('Время ожидания результата истекло. Попробуйте ещё раз.');
 }
 
 async function saveResult(sourceUrl, originalName, mimeType) {
-  const response = await fetch(sourceUrl);
-  if (!response.ok) throw new Error('Не удалось скачать готовое изображение с Kie.ai.');
+  const response = await fetch(sourceUrl, { headers: apiHeaders() });
+  if (!response.ok) throw new Error('Не удалось скачать готовое изображение с Replicate.');
   const contentType = response.headers.get('content-type') || mimeType;
+  if (!contentType.startsWith('image/')) throw new Error('Replicate вернул файл, который не является изображением.');
   const extension = contentType.includes('png') ? '.png' : contentType.includes('webp') ? '.webp' : '.jpg';
   const baseName = path.basename(originalName, path.extname(originalName)).replace(/[^a-zA-Z0-9_-]/g, '_') || 'photo';
-  const filename = `${baseName}-topaz-x2-${Date.now()}${extension}`;
+  const filename = `${baseName}-replicate-x2-${Date.now()}${extension}`;
   await fs.writeFile(path.join(OUTPUTS_DIR, filename), Buffer.from(await response.arrayBuffer()));
   return filename;
 }
@@ -95,11 +113,12 @@ async function saveResult(sourceUrl, originalName, mimeType) {
 app.post('/api/upscale', upload.single('photo'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'Выберите JPG, PNG или WebP размером до 10 МБ.' });
-    const uploadedUrl = await uploadToKie(req.file);
-    const taskId = await createUpscaleTask(uploadedUrl);
-    const resultUrl = await waitForResult(taskId);
+    const model = MODELS[req.body.model];
+    if (!model) return res.status(400).json({ error: 'Выберите один из доступных методов обработки.' });
+    const prediction = await createPrediction(model, asDataUrl(req.file));
+    const resultUrl = await waitForResult(prediction);
     const filename = await saveResult(resultUrl, req.file.originalname, req.file.mimetype);
-    res.json({ filename, url: `/outputs/${encodeURIComponent(filename)}`, taskId });
+    res.json({ filename, url: `/outputs/${encodeURIComponent(filename)}`, taskId: prediction.id, model: model.title });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: error.message || 'Не удалось обработать изображение.' });
@@ -115,4 +134,4 @@ app.use((error, _req, res, _next) => {
 
 const port = Number(process.env.PORT || 3000);
 const host = process.env.HOST || '127.0.0.1';
-app.listen(port, host, () => console.log(`Topaz ×2 Upscaler: http://${host}:${port}`));
+app.listen(port, host, () => console.log(`Replicate Image Upscaler: http://${host}:${port}`));
