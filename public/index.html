@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Увеличить фото ×2</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <main class="shell">
+    <header><p>AI image upscaler</p></header>
+    <section class="hero">
+      <div class="eyebrow">TOPAZ AI · ×2 UPSCALE</div>
+      <h1>Дайте фотографии<br><em>больше деталей.</em></h1>
+      <p class="lead">Загрузите снимок — Topaz AI аккуратно увеличит его разрешение в два раза. Без настроек и лишних шагов.</p>
+      <form id="upscale-form">
+        <label class="dropzone" id="dropzone" for="photo">
+          <input id="photo" name="photo" type="file" accept="image/jpeg,image/png,image/webp" hidden>
+          <span class="upload-icon">↥</span>
+          <strong id="file-label">Перетащите фото сюда</strong>
+          <small>или нажмите для выбора · JPG, PNG, WebP · до 10 МБ</small>
+        </label>
+        <button id="submit" type="submit" disabled><span>Увеличить ×2</span><b>→</b></button>
+      </form>
+      <p id="status" class="status" aria-live="polite"></p>
+      <section id="result" class="result" hidden>
+        <img id="result-image" alt="Увеличенное изображение" />
+        <div><span class="done">Готово</span><h2>Ваше фото увеличено ×2</h2><p>Файл сохранён в папке <code>outputs</code> проекта.</p><a id="download" class="download" download>Скачать изображение</a></div>
+      </section>
+    </section>
+    <footer>Один снимок · один результат · в 2 раза больше разрешение</footer>
+  </main>
+  <script src="/app.js"></script>
+</body>
+</html>

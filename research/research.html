@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Исследование: апскейлинг-API с наименьшей ценой</title>
+<style>
+  :root{--accent:#2563eb;--ok:#16a34a;--warn:#d97706;--bad:#dc2626;--bg:#f8fafc;--card:#fff;--line:#e2e8f0;--text:#0f172a;--muted:#64748b;}
+  *{box-sizing:border-box;}
+  body{margin:0;font-family:-apple-system,"Segoe UI",Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);line-height:1.6;}
+  header{background:linear-gradient(135deg,#1e3a8a,#2563eb);color:#fff;padding:32px 24px;}
+  header .wrap{max-width:1100px;margin:0 auto;}
+  .head-row{display:flex;align-items:center;gap:18px;}
+  .head-icon{flex:0 0 auto;filter:drop-shadow(0 4px 12px rgba(0,0,0,.35));}
+  header h1{margin:0 0 8px;font-size:26px;}
+  header p{margin:4px 0;opacity:.92;}
+  main{max-width:1100px;margin:0 auto;padding:24px;}
+  section{margin:32px 0;}
+  h2{font-size:20px;border-bottom:2px solid var(--line);padding-bottom:8px;margin-top:40px;}
+  h3{font-size:16px;margin-bottom:6px;}
+  .tag{display:inline-block;font-size:12px;font-weight:600;padding:2px 8px;border-radius:999px;margin-right:6px;}
+  .t-ok{background:#dcfce7;color:#15803d;}
+  .t-warn{background:#fef3c7;color:#b45309;}
+  .t-bad{background:#fee2e2;color:#b91c1c;}
+  .t-note{background:#e2e8f0;color:#334155;}
+  table{width:100%;border-collapse:collapse;background:var(--card);}
+  th,td{text-align:left;padding:10px 12px;border:1px solid var(--line);font-size:14px;vertical-align:top;}
+  th{background:#eff6ff;font-weight:600;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:18px 20px;margin:14px 0;}
+  .metrics{display:flex;flex-wrap:wrap;gap:10px;margin:10px 0;}
+  .metric{flex:1 1 180px;background:#f1f5f9;border:1px solid var(--line);border-radius:8px;padding:10px 12px;}
+  .metric .lbl{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.03em;}
+  .metric .val{font-size:18px;font-weight:700;margin-top:2px;}
+  .metric .val small{font-size:12px;color:var(--muted);font-weight:500;}
+  code{background:#f1f5f9;padding:1px 6px;border-radius:5px;font-size:13px;}
+  ul{margin:8px 0;padding-left:20px;}
+  li{margin:4px 0;}
+  .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px;}
+  .callout{border-left:4px solid var(--accent);background:#eff6ff;padding:12px 16px;border-radius:0 8px 8px 0;margin:12px 0;}
+  .callout.warn{border-color:var(--warn);background:#fffbeb;}
+  .foot{color:var(--muted);font-size:13px;border-top:1px solid var(--line);margin-top:48px;padding:20px 0;}
+  .src{color:var(--muted);font-size:13px;}
+  .src a{color:var(--accent);word-break:break-all;}
+  .price-cell{font-weight:700;color:#1e40af;}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <div class="head-row">
+      <svg class="head-icon" width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Иконка апскейлинга">
+        <defs>
+          <linearGradient id="g1" x1="0" y1="0" x2="64" y2="64" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#93c5fd"/><stop offset="1" stop-color="#ffffff"/>
+          </linearGradient>
+        </defs>
+        <!-- внешняя рамка квадрата -->
+        <rect x="14" y="14" width="36" height="36" rx="3" stroke="url(#g1)" stroke-width="4"/>
+        <!-- центральный маленький квадрат (оригинал) -->
+        <rect x="27" y="27" width="10" height="10" rx="2" fill="#0b1f4b"/>
+        <!-- 4 диагональные стрелки расширения -->
+        <path d="M20 4 4 4 4 20" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M20 60 4 60 4 44" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M44 4 60 4 60 20" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M44 60 60 60 60 44" fill="none" stroke="#ffffff" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <div>
+        <h1>Исследование: апскейлинг-сервисы с минимальной ценой</h1>
+        <p>Оплата за генерацию (pay-per-generation) + подключение по API</p>
+        <p>Дата исследования: 13 августа 2026 · Цены проверены вручную</p>
+      </div>
+    </div>
+  </div>
+</header>
+
+<main>
+
+<section>
+  <h2>1. Задача и методология</h2>
+  <div class="callout">
+    <b>Требования задачи:</b> найти сервисы апскейлинга изображений (super-resolution / upscaling) с
+    <b>наименьшей ценой за генерацию</b>, с <b>оплатой по генерациям</b> и <b>подключением по API</b>.
+  </div>
+  <ul>
+    <li>Проверялись официальные страницы тарифов и паспорта конкретных моделей апскейлинга.</li>
+    <li>Для сервисов с посекундной тарификацией приведён тариф за секунду + примерная цена за 1 изображение (зависит от разрешения и времени инференса).</li>
+    <li>Подтверждённое цифрой на странице помечено <span class="tag t-ok">Подтверждено</span>, расчётное — <span class="tag t-warn">Оценка</span>.</li>
+  </ul>
+</section>
+
+<section>
+  <h2>2. Сводная таблица сервисов</h2>
+  <table>
+    <thead>
+      <tr><th>Сервис</th><th>Цена за генерацию</th><th>Тип оплаты</th><th>API</th><th>Пробник</th><th>Комментарий</th></tr>
+    </thead>
+    <tbody>
+      <tr><td><b>Replicate</b><br><code>cjwbw/real-esrgan</code></td><td class="price-cell">≈ $0.0049 / ген.</td><td>По времени (за сек.)</td><td>REST + webhook, SDK</td><td>Триал-кредиты</td><td><span class="t-ok tag">Подтверждено</span> 204 ген./$1, T4</td></tr>
+      <tr><td><b>Replicate</b> быстрые ESRGAN</td><td class="price-cell">≈ $0.0005–0.001</td><td>По времени</td><td>REST + webhook, SDK</td><td>Триал-кредиты</td><td><span class="t-warn tag">Оценка</span> $0.000225/c × ~2–4 c</td></tr>
+      <tr><td><b>fal.ai</b><br><code>fal-ai/esrgan</code></td><td class="price-cell">≈ $0.001–0.003</td><td>$0.00111 / вычисл. сек.</td><td>REST + WebSocket, SDK</td><td>Free-тир</td><td><span class="t-ok tag">Подтверждено</span> тариф $0.00111/c</td></tr>
+      <tr><td><b>Runware</b></td><td class="price-cell">≈ $0.0006–0.24 / изобр.</td><td>PAYG, за модель</td><td>REST, GraphQL, WS</td><td><b>$2 бесплатно</b></td><td><span class="t-ok tag">Подтверждено</span> 13 upscale-моделей</td></tr>
+      <tr><td><b>DeepAI</b></td><td class="price-cell">≈ $0.01 / изобр.</td><td>Кредиты / PAYG</td><td>REST (api-key)</td><td>Старт от $5</td><td><span class="t-warn tag">Оценка</span> из Pro PAYG: $1 = 100 HD</td></tr>
+      <tr><td><b>Segmind</b> (ESRGAN и др.)</td><td>цена на странице модели</td><td>Кредиты (PAYG), от $10</td><td>REST</td><td>—</td><td>GPU от $0.68/ч; ESRGAN ~5 c</td></tr>
+      <tr><td><b>Stable Horde</b></td><td class="price-cell">$0 (бесплатно)</td><td>Kudos</td><td>REST (открытый)</td><td>Аноним <code>0000000000</code></td><td><span class="t-note tag">Бесплатно</span> очередь, переменная скорость</td></tr>
+      <tr><td><b>Stability AI</b></td><td>по кредитам (модельно)</td><td>Кредиты / подписка</td><td>REST</td><td>Фри-тир</td><td>Brand Studio $19 / $50 в мес</td></tr>
+      <tr><td><b>Photoroom</b></td><td>по кредитам</td><td>PAYG / enterprise</td><td>REST</td><td>Sandbox (watermark)</td><td>Опен e-commerce, цена по запросу</td></tr>
+      <tr><td><b>Picsart</b></td><td>по кредитам</td><td>PAYG / enterprise</td><td>REST</td><td>Регистрация</td><td>Цены за авторизацией (401)</td></tr>
+      <tr><td><b>Clipdrop (Jasper)</b></td><td>по подписке</td><td>Subscription</td><td>REST</td><td>—</td><td>Упскейл до x16; часть Jasper</td></tr>
+      <tr><td><b>Cloudflare Workers AI</b></td><td class="price-cell">нет upscale</td><td>—</td><td>—</td><td>—</td><td><span class="t-bad tag">Нет</span> апскейлов (проверено)</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h2>3. Детальные карточки сервисов</h2>
+
+  <div class="card"><h3>Replicate — replicate.com <span class="t-ok tag">Подтверждено</span></h3>
+    <div class="metrics"><div class="metric"><div class="lbl">real-esrgan</div><div class="val">$0.0049 <small>/ ген.</small></div></div><div class="metric"><div class="lbl">runs за $1</div><div class="val">204</div></div><div class="metric"><div class="lbl">GPU</div><div class="val">T4</div></div><div class="metric"><div class="lbl">Типично</div><div class="val">~22 c <small>зависит от входа</small></div></div></div>
+    <p><b>Real-ESRGAN</b> — реставрация/апскейл, хорошо для лиц. Цифра с карточки: «$0.0049 to run, 204 runs per $1, Nvidia T4, typically within 22 seconds».</p>
+    <p><b>Тариф по железу (за сек.):</b> CPU $0.0001; T4 $0.000225; L40S $0.000975; A100 $0.0014; H100 $0.001525. Плата за время вычислений. Быстрые ESRGAN на T4 (~1–4 c) → <span class="t-warn tag">Оценка</span> <b>≈ $0.0005–0.001/изобр.</b></p>
+    <p><b>API:</b> REST, асинхронные прогоны, webhooks, официальные SDK (Node/Python). Хорош для бэкенда.</p>
+  </div>
+
+  <div class="card"><h3>fal.ai — fal-ai/esrgan <span class="t-ok tag">Подтверждено</span></h3>
+    <div class="metrics"><div class="metric"><div class="lbl">Тариф</div><div class="val">$0.00111 <small>/ вычисл. сек.</small></div></div><div class="metric"><div class="lbl">Пробник</div><div class="val">Free-тир</div></div><div class="metric"><div class="lbl">API</div><div class="val">REST + WS</div></div></div>
+    <p><b>Модель:</b> «Upscale Images (Image to Image)» — увеличение на коэффициент. На странице: «Your request will cost <b>$0.00111 per compute second</b>». Типичный апскейл 1–3 c <span class="t-warn tag">Оценка</span> → <b>≈ $0.001–0.003/изобр.</b></p>
+    <p>Есть и другие upscale-модели (в т.ч. Flux-based). Серверлесс JSON API, низкая цена.</p>
+  </div>
+
+  <div class="card"><h3>Runware — runware.ai <span class="t-ok tag">Подтверждено</span></h3>
+    <div class="metrics"><div class="metric"><div class="lbl">Генерация</div><div class="val">$0.0006–0.24 <small>/ изобр.</small></div></div><div class="metric"><div class="lbl">Бесплатно</div><div class="val">$2 кредита</div></div><div class="metric"><div class="lbl">Upscale-моделей</div><div class="val">13</div></div></div>
+    <p>«Lowest-cost API for AI developers». 13 upscale-моделей среди 300+ платформенных. PAYG, цена зависит от модели/разрешения. Изображения $0.0006–0.24. <b>API:</b> REST, GraphQL, WebSocket. Новым — $2 бесплатно.</p>
+  </div>
+
+  <div class="card"><h3>DeepAI — Super Resolution / Waifu2x / Creative Upscale <span class="t-warn tag">Оценка ≈ $0.01</span></h3>
+    <div class="metrics"><div class="metric"><div class="lbl">За изображение</div><div class="val">≈ $0.01</div></div><div class="metric"><div class="lbl">Pro</div><div class="val">$9.99 <small>/ мес</small></div></div><div class="metric"><div class="lbl">Старт</div><div class="val">от $5</div></div></div>
+    <p>Три upscale-API: <b>Super Resolution</b>, <b>Waifu2x</b> (2x + шум), <b>Creative Upscale</b>. Предоплаченный кошелёк/кредиты. Тариф: «$1 per 100 additional HD images (<b>$0.01 each</b>)». <span class="t-warn tag">Оценка</span>: 1 вызов ≈ $0.01 (схема «1 кредит = 1 изображение» — подтвердить в дашборде).</p>
+    <p><b>API:</b> простой REST: POST <code>api.deepai.org/api/super-resolution</code> с заголовком <code>api-key</code>. Простая фиксированная цена без «секунд».</p>
+  </div>
+
+  <div class="card"><h3>Segmind — segmind.com <span class="t-note tag">PAYG</span></h3>
+    <div class="metrics"><div class="metric"><div class="lbl">Вход</div><div class="val">$10 PAYG</div></div><div class="metric"><div class="lbl">ESRGAN</div><div class="val">~5.1 c <small>среднее</small></div></div><div class="metric"><div class="lbl">Dedicated GPU</div><div class="val">от $0.68/ч</div></div></div>
+    <p>Оплата по кредитам. ESRGAN через API, ~5 c. Цена за генерацию — на странице модели (Pricing / «Model Price Explorer», нужен JS/логин). Выделенный endpoint: A5000 $0.68/ч, A40/A6000 $1.73/ч, A100 $4.32/ч, H100 $9/ч. <b>API:</b> REST + ключ.</p>
+  </div>
+
+  <div class="card"><h3>Stable Horde — stablehorde.net <span class="t-note tag">Бесплатно</span></h3>
+    <div class="metrics"><div class="metric"><div class="lbl">Цена</div><div class="val">$0</div></div><div class="metric"><div class="lbl">Аноним</div><div class="val"><code>0000000000</code></div></div><div class="metric"><div class="lbl">API</div><div class="val">REST, открытый</div></div></div>
+    <p>Децентрализованная сеть волонтёрских мощностей. Генерация/апскейл бесплатно, приоритет через kudos (за вклад в сеть). Рекомендуется регистрация для уникального ключа. Минус — очередь, изменчивые скорость/качество.</p>
+  </div>
+
+  <div class="card"><h3>Stability AI / Photoroom / Clipdrop / Picsart <span class="t-note tag">Кредиты / Enterprise</span></h3>
+    <ul>
+      <li><b>Stability AI</b> — upscale в API (в т.ч. ESRGAN x2plus), кредиты за изображение. Brand Studio: Trial free (до 1000), Creator $19/мес (2000), Core $50/мес (5000).</li>
+      <li><b>Photoroom</b> — Image-editing API (Product Beautifier/Enhance), credits per successful call; sandbox бесплатно (watermark) + 10 вызовов bg-removal; цены по запросу.</li>
+      <li><b>Clipdrop</b> — Image upscaling до x16; часть Jasper.ai, contact sales.</li>
+      <li><b>Picsart</b> — Upscale по кредитам; тарифы за авторизацией (HTTP 401).</li>
+    </ul>
+  </div>
+</section>
+
+<section>
+  <h2>4. Сравнение по цене за 1 изображение</h2>
+  <table>
+    <thead><tr><th>Сервис</th><th>Типичная цена / изображение</th><th>Тип цены</th><th>Точность</th></tr></thead>
+    <tbody>
+      <tr><td>Runware</td><td class="price-cell">от ≈ $0.0006–0.003</td><td>за модель/разрешение</td><td><span class="t-warn tag">Оценка</span></td></tr>
+      <tr><td>fal.ai (esrgan)</td><td class="price-cell">≈ $0.001–0.003</td><td>$0.00111 / сек</td><td><span class="t-ok tag">Подтверждено</span></td></tr>
+      <tr><td>Replicate (быстрые ESRGAN)</td><td class="price-cell">≈ $0.0005–0.001</td><td>$0.000225 / сек (T4)</td><td><span class="t-warn tag">Оценка</span></td></tr>
+      <tr><td>Replicate (real-esrgan)</td><td class="price-cell">≈ $0.0049</td><td>по времени</td><td><span class="t-ok tag">Подтверждено</span></td></tr>
+      <tr><td>DeepAI</td><td class="price-cell">≈ $0.01</td><td>фиксир. за изображение</td><td><span class="t-warn tag">Оценка</span></td></tr>
+      <tr><td>Stable Horde</td><td class="price-cell">$0</td><td>бесплатно</td><td><span class="t-ok tag">Подтверждено</span></td></tr>
+      <tr><td>Segmind / Stability / Photoroom / Picsart</td><td>по кредитам (модельно)</td><td>—</td><td><span class="t-note tag">По запросу</span></td></tr>
+    </tbody>
+  </table>
+  <div class="callout warn">Сервисы с посекундной тарификацией (Replicate, fal.ai) считают по времени инференса — итоговая цена зависит от разрешения входа. Для точного сравнения нужен прогон одинакового тестового изображения на каждом сервисе.</div>
+</section>
+
+<section>
+  <h2>5. Рекомендации и выбор</h2>
+  <div class="grid">
+    <div class="card"><h3>🥇 Минимальная цена</h3><p><b>fal.ai</b> (<code>fal-ai/esrgan</code>, $0.00111/c) и <b>Replicate</b> (real-esrgan ≈ $0.005; быстрые ESRGAN дешевле). Оба — полноценный REST API, оплата за фактические генерации, без абонплаты.</p></div>
+    <div class="card"><h3>🥈 Простота и фикс. цена</h3><p><b>DeepAI</b> — ~$0.01/изображение, предельно простой API, предоплаченный кошелёк от $5. Идеален для прототипа.</p></div>
+    <div class="card"><h3>🥉 Выбор моделей</h3><p><b>Runware</b> (13 upscale-моделей, от $0.0006) и <b>Segmind</b> (полный каталог, $10 PAYG, GPU от $0.68/ч).</p></div>
+    <div class="card"><h3>🎁 Бесплатно (оговорки)</h3><p><b>Stable Horde</b> — бесплатный открытый REST API, но очереди и переменная скорость/качество. Для некоммерческих/экспериментальных сценариев.</p></div>
+  </div>
+
+  <h3>Риски и критерии</h3>
+  <ul>
+    <li><b>Секундная тарификация</b> — итоговая цена не фиксирована, зависит от объёма/разрешения.</li>
+    <li><b>Минимальные пополнения</b> — почти везде нужна стартовая сумма (DeepAI от $5; Segmind от $10; Replicate/fal — нужен баланс, но без абонплаты).</li>
+    <li><b>Лимиты и rate-limit</b> — на дешёвых тирах ограничен RPM (Segmind Flexible 60 RPM и т.п.).</li>
+    <li><b>Качество/лицензии</b> — часть моделей (классический ESRGAN) имеет CC BY-NC-ND (только некоммерческое); для продакшена проверить лицензию модели и условия сервиса.</li>
+    <li><b>Надёжность на масштабе</b> — рассмотреть выделенные endpoints (Segmind GPU от $0.68/ч) либо enterprise (Photoroom/Picsart).</li>
+  </ul>
+</section>
+
+<section>
+  <h2>6. Хронология исследования (шаги и источники)</h2>
+  <table>
+    <thead><tr><th>№</th><th>Шаг / что проверено</th><th>Источник</th><th>Результат</th></tr></thead>
+    <tbody>
+      <tr><td>1</td><td>Тарифы по железу (секундные цены GPU)</td><td><span class="src"><a href="https://replicate.com/pricing">replicate.com/pricing</a></span></td><td>T4 $0.81/ч ($0.000225/c), A100 $5.04/ч, H100 $5.49/ч, CPU $0.36/ч</td></tr>
+      <tr><td>2</td><td>Цена real-esrgan по генерации</td><td><span class="src"><a href="https://replicate.com/cjwbw/real-esrgan">replicate.com/cjwbw/real-esrgan</a></span></td><td>$0.0049 / ген., 204 ген./$1, T4, ~22 c</td></tr>
+      <tr><td>3</td><td>Цена esrgan на fal.ai</td><td><span class="src"><a href="https://fal.ai/models/fal-ai/esrgan">fal.ai/fal-ai/esrgan</a></span></td><td>$0.00111 / вычисл. сек.</td></tr>
+      <tr><td>4</td><td>Каталог и расчёты Runware</td><td><span class="src"><a href="https://runware.ai/pricing">runware.ai/pricing</a>, <a href="https://runware.ai/models?category=upscaling">runware.ai/models</a></span></td><td>13 upscale-моделей; изображения $0.0006–0.24; $2 кредита</td></tr>
+      <tr><td>5</td><td>PAYG DeepAI ($/изображение)</td><td><span class="src"><a href="https://deepai.org/pricing">deepai.org/pricing</a></span></td><td>Pro $9.99/мес; PAYG $1 = 100 HD (≈ $0.01)</td></tr>
+      <tr><td>6</td><td>API-интерфейсы DeepAI</td><td><span class="src"><a href="https://deepai.org/api-docs/">deepai.org/api-docs</a></span></td><td>3 upscale-API (Super Resolution, Waifu2x, Creative Upscale), REST + api-key</td></tr>
+      <tr><td>7</td><td>PAYG Segmind, ESRGAN, GPU</td><td><span class="src"><a href="https://www.segmind.com/pricing">segmind.com/pricing</a>, <a href="https://www.segmind.com/models/esrgan">segmind.com/models/esrgan</a></span></td><td>Кредиты от $10; ESRGAN ~5 c; GPU от $0.68/ч</td></tr>
+      <tr><td>8</td><td>Бесплатный API Stable Horde</td><td><span class="src"><a href="https://stablehorde.net/">stablehorde.net</a></span></td><td>Бесплатно, kudos, REST, анонимный ключ</td></tr>
+      <tr><td>9</td><td>Photoroom API</td><td><span class="src"><a href="https://www.photoroom.com/api/">photoroom.com/api</a></span></td><td>Sandbox бесплатно (watermark), credits per call</td></tr>
+      <tr><td>10</td><td>Cloudflare Workers AI (наличие upscale)</td><td><span class="src"><a href="https://developers.cloudflare.com/workers-ai/models/">developers.cloudflare.com</a></span></td><td>81 модель, upscaling отсутствует — исключён</td></tr>
+      <tr><td>11</td><td>Stability API / Brand Studio</td><td><span class="src"><a href="https://stability.ai/pricing">stability.ai/pricing</a></span></td><td>Trial free; Creator $19; Core $50/мес</td></tr>
+      <tr><td>12</td><td>Clipdrop / Picsart</td><td><span class="src"><a href="https://clipdrop.co/apis">clipdrop.co/apis</a>, api.picsart.io</span></td><td>Коммерческие, цены по запросу / за авторизацией</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<section>
+  <h2>7. Оговорки и источники</h2>
+  <div class="callout warn">Цены собраны вручную 13.08.2026 с официальных страниц и могут измениться. Значения, помеченные «Оценка», — расчётные и требуют подтверждения реальным прогоном. Актуальной является информация на страницах сервисов на момент покупки.</div>
+  <ul class="src">
+    <li><a href="https://replicate.com/pricing">https://replicate.com/pricing</a></li>
+    <li><a href="https://replicate.com/cjwbw/real-esrgan">https://replicate.com/cjwbw/real-esrgan</a></li>
+    <li><a href="https://fal.ai/models/fal-ai/esrgan">https://fal.ai/models/fal-ai/esrgan</a></li>
+    <li><a href="https://runware.ai/pricing">https://runware.ai/pricing</a></li>
+    <li><a href="https://runware.ai/models?category=upscaling">https://runware.ai/models?category=upscaling</a></li>
+    <li><a href="https://deepai.org/pricing">https://deepai.org/pricing</a></li>
+    <li><a href="https://deepai.org/api-docs/">https://deepai.org/api-docs/</a></li>
+    <li><a href="https://www.segmind.com/pricing">https://www.segmind.com/pricing</a></li>
+    <li><a href="https://www.segmind.com/models/esrgan">https://www.segmind.com/models/esrgan</a></li>
+    <li><a href="https://stablehorde.net/">https://stablehorde.net/</a></li>
+    <li><a href="https://www.photoroom.com/api/">https://www.photoroom.com/api/</a></li>
+    <li><a href="https://stability.ai/pricing">https://stability.ai/pricing</a></li>
+    <li><a href="https://clipdrop.co/apis">https://clipdrop.co/apis</a></li>
+  </ul>
+</section>
+
+<footer class="foot">
+  Сгенерировано автоматически в ходе исследования · 13 августа 2026 · Проект «Upscaler».
+</footer>
+</main>
+</body>
+</html>

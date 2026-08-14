@@ -1,0 +1,31 @@
+# Dependencies
+node_modules/
+
+# Secrets and local configuration
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Generated upscale results (keep the directory itself)
+outputs/*
+!outputs/.gitkeep
+
+# Logs
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Test and build artefacts
+coverage/
+dist/
+build/
+.cache/
+
+# Operating system and editor files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
