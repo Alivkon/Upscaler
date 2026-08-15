@@ -7,9 +7,15 @@ import multer from 'multer';
 import sharp from 'sharp';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const OUTPUTS_DIR = path.join(__dirname, 'outputs');
+const IMAGES_DIR = path.join(__dirname, 'images');
+const STORAGE_DIR = path.resolve(__dirname, process.env.INTERNAL_IMAGE_STORAGE_DIR || 'images/storage');
+const GALLERY_DIR = path.join(IMAGES_DIR, 'gallery');
+const GENERATED_DIR = path.join(IMAGES_DIR, 'generated');
+const SHARED_DIR = path.join(IMAGES_DIR, 'shared');
+const OUTPUTS_DIR = GENERATED_DIR;
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const ACCEPTED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+const IMAGE_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.webp']);
 const app = express();
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -17,9 +23,46 @@ const upload = multer({
   fileFilter: (_req, file, done) => done(null, ACCEPTED_TYPES.has(file.mimetype))
 });
 
-await fs.mkdir(OUTPUTS_DIR, { recursive: true });
+await Promise.all([STORAGE_DIR, GALLERY_DIR, GENERATED_DIR, SHARED_DIR].map(directory => fs.mkdir(directory, { recursive: true })));
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/outputs', express.static(OUTPUTS_DIR, { fallthrough: false }));
+app.use('/images', express.static(IMAGES_DIR, { fallthrough: false }));
+
+function isImage(filename) {
+  return IMAGE_EXTENSIONS.has(path.extname(filename).toLowerCase());
+}
+
+async function listImageFiles(directory) {
+  const entries = await fs.readdir(directory, { withFileTypes: true });
+  const images = await Promise.all(entries.filter(entry => entry.isFile() && isImage(entry.name)).map(async entry => ({
+    name: entry.name,
+    modified: (await fs.stat(path.join(directory, entry.name))).mtimeMs
+  })));
+  return images.sort((a, b) => b.modified - a.modified);
+}
+
+async function galleryItems() {
+  const [shared, gallery] = await Promise.all([listImageFiles(SHARED_DIR), listImageFiles(GALLERY_DIR)]);
+  return [...shared.map(file => ({ ...file, source: 'shared', folder: 'shared' })), ...gallery.map(file => ({ ...file, source: 'llm', folder: 'gallery' }))]
+    .sort((a, b) => b.modified - a.modified)
+    .slice(0, 10)
+    .map(file => ({
+      id: `${file.source}-${file.name}`,
+      url: `/images/${file.folder}/${encodeURIComponent(file.name)}`,
+      title: file.source === 'shared' ? 'Работа сообщества' : 'Новая LLM-генерация',
+      source: file.source
+    }));
+}
+
+async function addStorageImageToGallery() {
+  const [storage, gallery] = await Promise.all([listImageFiles(STORAGE_DIR), listImageFiles(GALLERY_DIR)]);
+  const existing = new Set(gallery.map(file => file.name.replace(/^llm-\d+-/, '')));
+  const next = storage.find(file => !existing.has(file.name));
+  if (!next) return null;
+  const galleryName = `llm-${Date.now()}-${next.name}`;
+  await fs.copyFile(path.join(STORAGE_DIR, next.name), path.join(GALLERY_DIR, galleryName));
+  return galleryName;
+}
 
 const MODELS = {
   real_esrgan: {
@@ -141,6 +184,38 @@ app.post('/api/upscale', upload.single('photo'), async (req, res) => {
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: error.message || 'Не удалось обработать изображение.' });
+  }
+});
+
+app.get('/api/gallery', async (_req, res, next) => {
+  try {
+    res.json({ images: await galleryItems() });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.post('/api/gallery/refresh', async (_req, res, next) => {
+  try {
+    await addStorageImageToGallery();
+    res.json({ images: await galleryItems() });
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.post('/api/gallery/share/:filename', async (req, res, next) => {
+  try {
+    const filename = path.basename(req.params.filename);
+    if (!isImage(filename)) return res.status(400).json({ error: 'Можно опубликовать только изображение.' });
+    const source = path.join(GENERATED_DIR, filename);
+    await fs.access(source);
+    const target = path.join(SHARED_DIR, `shared-${Date.now()}-${filename}`);
+    await fs.copyFile(source, target);
+    res.json({ message: 'Изображение добавлено в начало коллекции.', images: await galleryItems() });
+  } catch (error) {
+    if (error.code === 'ENOENT') return res.status(404).json({ error: 'Изображение для публикации не найдено.' });
+    next(error);
   }
 });
 
