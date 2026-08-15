@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ограничение Google Upscaler из-за ошибки провайдера</title>
+</head>
+<body>
+  <h1>Ограничение Google Upscaler из-за ошибки провайдера</h1>
+  <h2>Цель и решение</h2>
+  <p>Задача завершалась ошибкой 404 на стороне Google Vertex AI при вызове <code>imagen-4.0-upscale-preview:predict</code> из проекта Replicate. Google Upscaler временно отключён, чтобы не создавать заведомо неуспешные задачи.</p>
+  <h2>Изменения</h2>
+  <ul>
+    <li><code>server.js</code>: ручной запрос Google Upscaler получает HTTP 503 с понятным сообщением.</li>
+    <li><code>public/index.html</code>: опция выбора отключена и содержит пояснение.</li>
+  </ul>
+  <h2>Ограничения</h2>
+  <p>Для возврата модели необходимо исправление интеграции Replicate или отдельная прямая интеграция с Google Cloud/Vertex AI.</p>
+  <h2>Источники</h2>
+  <ul>
+    <li><a href="https://docs.cloud.google.com/vertex-ai/generative-ai/docs/models/imagen/4-0-upscale">Google Cloud: Imagen 4.0 Upscale Preview</a></li>
+    <li><a href="https://docs.cloud.google.com/vertex-ai/generative-ai/docs/image/upscale-image">Google Cloud: Upscale images with Imagen</a></li>
+  </ul>
+</body>
+</html>

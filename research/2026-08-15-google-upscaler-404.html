@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Исправление 404 Google Upscaler</title>
+</head>
+<body>
+  <h1>Исправление 404 Google Upscaler</h1>
+  <h2>Цель и решение</h2>
+  <p>Проверить HTTP 404 при запуске Google Upscaler через Replicate. Вызов был переведён на опубликованную версию модели через общий endpoint <code>POST /v1/predictions</code>, но фактическая ошибка оказалась внешней.</p>
+  <h2>Изменения</h2>
+  <ul>
+    <li><code>server.js</code>: заменён модельный endpoint Google Upscaler на версию <code>cea869a892f010576b7965457511a08c7534d4992f1250a46499f36ec681fcd1</code>.</li>
+    <li>Параметры обработки сохранены: <code>x2</code>, качество <code>90</code>.</li>
+  </ul>
+  <h2>Проверки и ограничения</h2>
+  <p><code>yarn test</code> успешно выполнил синтаксическую проверку. Фактический запуск подтвердил 404 Google Vertex AI для <code>imagen-4.0-upscale-preview:predict</code>; итоговое защитное изменение описано в <code>2026-08-15-google-upscaler-provider-404.md</code>.</p>
+  <h2>Источники</h2>
+  <ul>
+    <li><a href="https://replicate.com/google/upscaler/api">Replicate: Google Upscaler API</a></li>
+    <li><a href="https://replicate.com/docs/reference/http">Replicate: HTTP API</a></li>
+  </ul>
+</body>
+</html>

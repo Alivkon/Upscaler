@@ -12,6 +12,22 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/styles.css" />
+  <style>
+    .prompt-field { display: block; margin: 0 0 18px; }
+    .prompt-field > span { display: block; font-size: 12px; font-weight: 800; letter-spacing: .1em; margin-bottom: 8px; text-transform: uppercase; }
+    .prompt-field textarea { background: var(--white); border: 1px solid var(--line); border-radius: 12px; color: var(--ink); display: block; font: 500 14px/1.5 Manrope, Arial, sans-serif; padding: 12px; resize: vertical; width: 100%; }
+    .prompt-field textarea:focus { outline: 2px solid #b8d846; outline-offset: 2px; }
+    .prompt-field small { color: #61766d; display: block; font-size: 10px; line-height: 1.35; margin-top: 5px; }
+    .result-link { cursor: zoom-in; display: block; }
+    .model-tabs { display: flex; gap: 8px; margin-bottom: 10px; }
+    .model-tab { background: var(--white); border: 1px solid var(--line); border-radius: 999px; color: var(--ink); cursor: pointer; font: 700 12px Manrope, Arial, sans-serif; margin: 0; padding: 9px 13px; }
+    .model-tab[aria-selected="true"] { background: var(--ink); border-color: var(--ink); color: #fff; }
+    .resolution-options { display: flex; gap: 8px; margin: 0 0 18px; }
+    .resolution-option { background: var(--white); border: 1px solid var(--line); border-radius: 999px; cursor: pointer; font: 700 12px Manrope, Arial, sans-serif; padding: 9px 13px; }
+    .resolution-option:has(input:checked) { background: var(--lime); border-color: #799544; }
+    .resolution-option:has(input:disabled) { cursor: not-allowed; opacity: .45; }
+    .resolution-option input { position: absolute; opacity: 0; }
+  </style>
 </head>
 <body>
   <main class="shell">
@@ -19,18 +35,44 @@
     <section class="hero">
       <div class="eyebrow">REPLICATE · AI UPSCALE</div>
       <h1>Дайте фотографии<br><em>больше деталей.</em></h1>
-      <p class="lead">Загрузите снимок, выберите алгоритм — сервис увеличит изображение в два раза и сохранит файл на вашем сервере.</p>
+      <p class="lead">Загрузите снимок, выберите тип обработки и размер — сервис улучшит изображение и сохранит файл на вашем сервере.</p>
       <form id="upscale-form">
-        <fieldset class="models">
-          <legend>Выберите модель</legend>
-          <div class="model-grid">
-            <label class="model-card"><input type="radio" name="model" value="topaz" checked><span><b>Topaz Image Upscale</b><small>Профессиональная универсальная обработка</small></span></label>
-            <label class="model-card"><input type="radio" name="model" value="google"><span><b>Google Upscaler</b><small>Чистое увеличение изображения</small></span></label>
-            <label class="model-card"><input type="radio" name="model" value="real_esrgan"><span><b>Real-ESRGAN</b><small>Универсальные фотографии и детали</small></span></label>
-            <label class="model-card"><input type="radio" name="model" value="gfpgan"><span><b>GFPGAN</b><small>Портреты и восстановление лиц</small></span></label>
-            <label class="model-card"><input type="radio" name="model" value="codeformer"><span><b>CodeFormer</b><small>Старые и повреждённые портреты</small></span></label>
-          </div>
+        <input type="hidden" name="model" value="real_esrgan">
+        <div class="model-tabs" role="tablist" aria-label="Тип изображения">
+          <button class="model-tab" id="ordinary-tab" type="button" role="tab" aria-selected="true" aria-controls="ordinary-settings">Обычные изображения</button>
+          <button class="model-tab" id="portrait-tab" type="button" role="tab" aria-selected="false" aria-controls="portrait-settings">Портреты</button>
+        </div>
+        <section id="ordinary-settings" role="tabpanel" aria-labelledby="ordinary-tab">
+        <fieldset class="resolution-options">
+          <legend>Размер результата · Real-ESRGAN</legend>
+          <label class="resolution-option"><input type="radio" name="output_size" value="x2" checked>×2</label>
+          <label class="resolution-option"><input type="radio" name="output_size" value="x4">×4</label>
+          <label class="resolution-option"><input type="radio" name="output_size" value="2k">2K</label>
+          <label class="resolution-option"><input type="radio" name="output_size" value="4k">4K</label>
         </fieldset>
+        </section>
+        <section id="portrait-settings" role="tabpanel" aria-labelledby="portrait-tab" hidden>
+          <fieldset class="models">
+            <legend>Модель для портрета</legend>
+            <div class="model-grid">
+              <label class="model-card"><input type="radio" name="portrait_model" value="nano_banana" checked><span><b>Nano Banana</b><small>Gemini 2.5 Flash Image</small></span></label>
+              <label class="model-card"><input type="radio" name="portrait_model" value="nano_banana_pro"><span><b>Nano Banana Pro</b><small>Более детальный результат</small></span></label>
+            </div>
+          </fieldset>
+          <fieldset class="resolution-options">
+            <legend>Размер результата</legend>
+            <label class="resolution-option"><input type="radio" name="portrait_output_size" value="x2">×2</label>
+            <label class="resolution-option"><input type="radio" name="portrait_output_size" value="x4">×4</label>
+            <label class="resolution-option"><input type="radio" name="portrait_output_size" value="1k" checked>1K</label>
+            <label class="resolution-option"><input type="radio" name="portrait_output_size" value="2k">2K</label>
+            <label class="resolution-option"><input type="radio" name="portrait_output_size" value="4k">4K</label>
+          </fieldset>
+          <label class="prompt-field" for="prompt">
+            <span>Инструкция для портрета</span>
+            <textarea id="prompt" name="prompt" rows="3" maxlength="2000">Увеличь разрешение изображения, сохрани композицию и детали, не меняй содержание</textarea>
+            <small>Здесь можно изменить инструкцию: например, заменить одежду, фон или выражение лица.</small>
+          </label>
+        </section>
         <label class="dropzone" id="dropzone" for="photo">
           <input id="photo" name="photo" type="file" accept="image/jpeg,image/png,image/webp" hidden>
           <span class="upload-icon">↥</span>
@@ -52,14 +94,16 @@
             </svg>
             <span>Увеличенное изображение появится здесь</span>
           </div>
-          <img id="result-image" class="preview-image" alt="Увеличенное изображение" hidden />
+          <a id="result-link" class="result-link" target="_blank" rel="noopener" aria-label="Открыть увеличенное изображение" hidden>
+            <img id="result-image" class="preview-image" alt="Увеличенное изображение" />
+          </a>
         </div>
       </section>
       <section id="result" class="result" hidden>
         <div><span class="done">Готово</span><h2>Ваше фото увеличено ×2</h2><p>Файл сохранён в папке <code>outputs</code> проекта.</p><a id="download" class="download" download>Скачать изображение</a></div>
       </section>
     </section>
-    <footer>Один снимок · один результат · в 2 раза больше разрешение</footer>
+      <footer>Один снимок · один результат · Real-ESRGAN</footer>
   </main>
   <script src="/app.js"></script>
 </body>

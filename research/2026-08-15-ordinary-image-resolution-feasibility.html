@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Проверка 2K и 4K для обычных изображений</title>
+</head>
+<body>
+  <h1>Проверка 2K и 4K для обычных изображений</h1>
+  <h2>Результат</h2>
+  <p>Real-ESRGAN, GFPGAN и CodeFormer поддерживают коэффициент масштабирования, а не фиксированный размер в пикселях. Поэтому 2K и 4K нельзя гарантировать без постобработки.</p>
+  <h2>Параметры моделей</h2>
+  <ul>
+    <li>Real-ESRGAN: <code>scale</code> от 0 до 10.</li>
+    <li>GFPGAN: <code>scale</code>.</li>
+    <li>CodeFormer: <code>upscale</code>.</li>
+  </ul>
+  <h2>Варианты</h2>
+  <ol>
+    <li>Добавить корректные кнопки масштаба ×2 и ×4.</li>
+    <li>Добавить 2K и 4K с серверной постобработкой и приведением длинной стороны к 2048 или 4096 пикселям.</li>
+  </ol>
+  <h2>Источники</h2>
+  <ul>
+    <li><a href="https://replicate.com/nightmareai/real-esrgan">Real-ESRGAN на Replicate</a></li>
+    <li><a href="https://replicate.com/tencentarc/gfpgan">GFPGAN на Replicate</a></li>
+    <li><a href="https://replicate.com/sczhou/codeformer">CodeFormer на Replicate</a></li>
+  </ul>
+</body>
+</html>

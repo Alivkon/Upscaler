@@ -4,6 +4,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import express from 'express';
 import multer from 'multer';
+import sharp from 'sharp';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const OUTPUTS_DIR = path.join(__dirname, 'outputs');
@@ -21,30 +22,22 @@ app.use(express.static(path.join(__dirname, 'public')));
 app.use('/outputs', express.static(OUTPUTS_DIR, { fallthrough: false }));
 
 const MODELS = {
-  topaz: {
-    title: 'Topaz Image Upscale',
-    endpoint: 'models/topazlabs/image-upscale/predictions',
-    input: image => ({ image, enhance_model: 'Standard V2', output_format: 'jpg', upscale_factor: '2x', face_enhancement: false, subject_detection: 'None' })
-  },
-  google: {
-    title: 'Google Upscaler',
-    endpoint: 'models/google/upscaler/predictions',
-    input: image => ({ image, upscale_factor: 'x2', compression_quality: 90 })
-  },
   real_esrgan: {
     title: 'Real-ESRGAN',
     endpoint: 'models/nightmareai/real-esrgan/predictions',
-    input: image => ({ image, scale: 2, face_enhance: false })
+    input: (image, _prompt, scale = 2) => ({ image, scale, face_enhance: false })
   },
-  gfpgan: {
-    title: 'GFPGAN',
-    version: 'tencentarc/gfpgan:297a243ce8643961d52f745f9b6c8c1bd96850a51c92be5f43628a0d3e08321a',
-    input: image => ({ img: image, scale: 2, version: 'v1.4' })
+  nano_banana: {
+    title: 'Nano Banana',
+    endpoint: 'models/google/nano-banana/predictions',
+    requiresPrompt: true,
+    input: (image, prompt) => ({ prompt, image_input: [image], aspect_ratio: 'match_input_image', output_format: 'jpg' })
   },
-  codeformer: {
-    title: 'CodeFormer',
-    version: 'sczhou/codeformer:cc4956dd26fa5a7185d5660cc9100fab1b8070a1d1654a8bb5eb6d443b020bb2',
-    input: image => ({ image, upscale: 2, face_upsample: true, background_enhance: true, codeformer_fidelity: 0.7 })
+  nano_banana_pro: {
+    title: 'Nano Banana Pro',
+    endpoint: 'models/google/nano-banana-pro/predictions',
+    requiresPrompt: true,
+    input: (image, prompt, resolution) => ({ prompt, image_input: [image], aspect_ratio: 'match_input_image', output_format: 'jpg', ...(resolution ? { resolution } : {}) })
   }
 };
 
@@ -67,8 +60,8 @@ function asDataUrl(file) {
   return `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
 }
 
-async function createPrediction(model, image) {
-  const body = { input: model.input(image) };
+async function createPrediction(model, image, prompt, resolution) {
+  const body = { input: model.input(image, prompt, resolution) };
   const endpoint = model.endpoint || 'predictions';
   if (model.version) body.version = model.version;
   const response = await fetch(`https://api.replicate.com/v1/${endpoint}`, {
@@ -79,6 +72,24 @@ async function createPrediction(model, image) {
   const data = await parseResponse(response);
   if (!data.id) throw new Error('Replicate не вернул идентификатор задачи.');
   return data;
+}
+
+async function getTargetLongestSide(file, outputSize) {
+  const metadata = await sharp(file.buffer).metadata();
+  const longestSide = Math.max(metadata.width || 0, metadata.height || 0);
+  if (!longestSide) throw new Error('Не удалось определить размеры исходного изображения.');
+  if (outputSize === 'x2') return longestSide * 2;
+  if (outputSize === 'x4') return longestSide * 4;
+  return outputSize === '1k' ? 1024 : outputSize === '2k' ? 2048 : 4096;
+}
+
+async function getRealEsrganOptions(file, outputSize) {
+  if (outputSize === 'x2') return { scale: 2, targetLongestSide: null };
+  if (outputSize === 'x4') return { scale: 4, targetLongestSide: null };
+  const targetLongestSide = await getTargetLongestSide(file, outputSize);
+  const metadata = await sharp(file.buffer).metadata();
+  const longestSide = Math.max(metadata.width || 0, metadata.height || 0);
+  return { scale: Math.min(10, Math.max(2, Math.ceil(targetLongestSide / longestSide))), targetLongestSide };
 }
 
 async function waitForResult(prediction) {
@@ -98,26 +109,34 @@ async function waitForResult(prediction) {
   throw new Error('Время ожидания результата истекло. Попробуйте ещё раз.');
 }
 
-async function saveResult(sourceUrl, originalName, mimeType) {
+async function saveResult(sourceUrl, originalName, mimeType, targetLongestSide = null, outputSize = 'x2') {
   const response = await fetch(sourceUrl, { headers: apiHeaders() });
   if (!response.ok) throw new Error('Не удалось скачать готовое изображение с Replicate.');
   const contentType = response.headers.get('content-type') || mimeType;
   if (!contentType.startsWith('image/')) throw new Error('Replicate вернул файл, который не является изображением.');
   const extension = contentType.includes('png') ? '.png' : contentType.includes('webp') ? '.webp' : '.jpg';
   const baseName = path.basename(originalName, path.extname(originalName)).replace(/[^a-zA-Z0-9_-]/g, '_') || 'photo';
-  const filename = `${baseName}-replicate-x2-${Date.now()}${extension}`;
-  await fs.writeFile(path.join(OUTPUTS_DIR, filename), Buffer.from(await response.arrayBuffer()));
+  const filename = `${baseName}-real-esrgan-${outputSize}-${Date.now()}${extension}`;
+  let output = Buffer.from(await response.arrayBuffer());
+  if (targetLongestSide) output = await sharp(output).resize(targetLongestSide, targetLongestSide, { fit: 'inside' }).toBuffer();
+  await fs.writeFile(path.join(OUTPUTS_DIR, filename), output);
   return filename;
 }
 
 app.post('/api/upscale', upload.single('photo'), async (req, res) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'Выберите JPG, PNG или WebP размером до 10 МБ.' });
-    const model = MODELS[req.body.model];
-    if (!model) return res.status(400).json({ error: 'Выберите один из доступных методов обработки.' });
-    const prediction = await createPrediction(model, asDataUrl(req.file));
+    const model = MODELS[req.body.model] || MODELS.real_esrgan;
+    const selectedOutputSize = model === MODELS.real_esrgan ? req.body.output_size : req.body.portrait_output_size;
+    const outputSize = ['x2', 'x4', '1k', '2k', '4k'].includes(selectedOutputSize) ? selectedOutputSize : 'x2';
+    const prompt = typeof req.body.prompt === 'string' ? req.body.prompt.trim() : '';
+    if (model.requiresPrompt && !prompt) return res.status(400).json({ error: 'Введите инструкцию для обработки портрета.' });
+    const realEsrganOptions = model === MODELS.real_esrgan ? await getRealEsrganOptions(req.file, outputSize) : null;
+    const targetLongestSide = realEsrganOptions?.targetLongestSide ?? await getTargetLongestSide(req.file, outputSize);
+    const nativeResolution = model === MODELS.nano_banana_pro && ['1k', '2k', '4k'].includes(outputSize) ? outputSize.toUpperCase() : undefined;
+    const prediction = await createPrediction(model, asDataUrl(req.file), prompt, realEsrganOptions?.scale ?? nativeResolution);
     const resultUrl = await waitForResult(prediction);
-    const filename = await saveResult(resultUrl, req.file.originalname, req.file.mimetype);
+    const filename = await saveResult(resultUrl, req.file.originalname, req.file.mimetype, targetLongestSide, outputSize);
     res.json({ filename, url: `/outputs/${encodeURIComponent(filename)}`, taskId: prediction.id, model: model.title });
   } catch (error) {
     console.error(error);

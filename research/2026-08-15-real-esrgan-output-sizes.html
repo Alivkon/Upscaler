@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Real-ESRGAN: ×2, ×4, 2K и 4K</title>
+</head>
+<body>
+  <h1>Real-ESRGAN: ×2, ×4, 2K и 4K</h1>
+  <h2>Цель и решение</h2>
+  <p>В интерфейсе оставлен только Real-ESRGAN. Кнопки ×2 и ×4 используют нативный коэффициент модели, а 2K/4K приводят длинную сторону результата к 2048/4096 пикселям на сервере.</p>
+  <h2>Изменения</h2>
+  <ul>
+    <li><code>public/index.html</code>: добавлены четыре кнопки размера.</li>
+    <li><code>server.js</code>: добавлен расчёт масштаба и обработка Sharp.</li>
+    <li><code>package.json</code>: добавлена зависимость Sharp.</li>
+  </ul>
+  <h2>Ограничения</h2>
+  <p>При 2K/4K фиксируется длинная сторона; короткая зависит от пропорций исходного изображения.</p>
+  <h2>Источники</h2>
+  <ul>
+    <li><a href="https://replicate.com/nightmareai/real-esrgan">Real-ESRGAN на Replicate</a></li>
+    <li><a href="https://sharp.pixelplumbing.com/api-resize">Sharp: Resize images</a></li>
+  </ul>
+</body>
+</html>

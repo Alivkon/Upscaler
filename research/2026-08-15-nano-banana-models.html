@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Добавление Nano Banana в Upscaler</title>
+</head>
+<body>
+  <h1>Добавление Nano Banana в Upscaler</h1>
+  <h2>Цель и решение</h2>
+  <p>В приложение добавлены модели <code>google/nano-banana</code>, <code>google/nano-banana-pro</code>, <code>google/nano-banana-2</code> и <code>google/nano-banana-2-lite</code>. Изображение передаётся через <code>image_input</code>, инструкция — через <code>prompt</code>.</p>
+  <h2>Изменения</h2>
+  <ul>
+    <li><code>server.js</code>: добавлены конфигурации моделей и проверка обязательной инструкции.</li>
+    <li><code>public/index.html</code>: добавлены карточки моделей, поле с инструкцией по умолчанию и его оформление.</li>
+  </ul>
+  <h2>Ограничения</h2>
+  <p>Nano Banana — генеративные модели редактирования, поэтому результат может отличаться от строгого пиксельного апскейла.</p>
+  <h2>Источники</h2>
+  <ul>
+    <li><a href="https://replicate.com/google/nano-banana">Nano Banana на Replicate</a></li>
+    <li><a href="https://replicate.com/google/nano-banana-2/api">Nano Banana 2 API на Replicate</a></li>
+    <li><a href="https://replicate.com/google/nano-banana-pro/api">Nano Banana Pro API на Replicate</a></li>
+  </ul>
+</body>
+</html>
