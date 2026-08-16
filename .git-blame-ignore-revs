@@ -1,0 +1,5 @@
+# Коммиты, которые меняли только форматирование.
+# Настроить один раз:  git config blame.ignoreRevsFile .git-blame-ignore-revs
+
+# Форматирование: развернуть public/ и server.js через prettier
+bb56ed674633885f7881f6639dd6b21b5a25ff06
