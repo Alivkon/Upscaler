@@ -10,7 +10,7 @@ import {
   IMAGES_DIR,
   STORAGE_DIR,
   GENERATED_DIR,
-  PAGE_SIZE,
+  ADJACENT,
   ensureImageDirectories,
   galleryItems,
   isImage
@@ -84,33 +84,30 @@ app.use('/images', express.static(IMAGES_DIR, { fallthrough: false, setHeaders: 
 
 const html = (res, status, body) => res.status(status).type('html').send(body);
 
-// Указатель. `page` из адреса, а не из запроса: страница со своим адресом —
-// то, что можно проиндексировать.
-async function showCollection(req, res, next) {
+// Указатель. Вся коллекция одной страницей: постраничность была и снята.
+// Она делила один список между несколькими адресами, и посетитель видел
+// первые десять работ — то есть, пока каталог пополнялся с конца, всегда
+// одни и те же десять. Карточки ниже сгиба грузятся лениво, поэтому длина
+// страницы стоит разметки, а не байтов.
+async function showCollection(_req, res, next) {
   try {
-    const items = await galleryItems();
-    const pageCount = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
-    const page = Number(req.params.page || 1);
-    if (!Number.isInteger(page) || page < 1 || page > pageCount) return next();
-    // Первая страница живёт по `/`, иначе один и тот же список лежал бы
-    // по двум адресам и делил бы между ними всё, что накопил.
-    if (req.params.page && page === 1) return res.redirect(301, '/');
-    const shown = items.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-    html(res, 200, collectionPage({ items: shown, page, pageCount, origin: SITE_ORIGIN }));
+    html(res, 200, collectionPage({ items: await galleryItems(), origin: SITE_ORIGIN }));
   } catch (error) {
     next(error);
   }
 }
 
 app.get('/', showCollection);
-app.get('/page/:page', showCollection);
+// Адреса страниц указателя существовали и могли быть кем-то сохранены.
+// Отвечать им 404 — терять то, что они накопили; ведём на указатель.
+app.get('/page/:page', (_req, res) => res.redirect(301, '/'));
 
 app.get('/w/:slug', async (req, res, next) => {
   try {
     const items = await galleryItems();
     const item = items.find(work => work.slug === req.params.slug);
     if (!item) return next();
-    const others = items.filter(work => work !== item).slice(0, PAGE_SIZE);
+    const others = items.filter(work => work !== item).slice(0, ADJACENT);
     html(res, 200, workPage({ item, others, origin: SITE_ORIGIN }));
   } catch (error) {
     next(error);
@@ -126,7 +123,7 @@ app.get('/robots.txt', (_req, res) => res.type('text/plain').send(robots({ origi
 app.get('/sitemap.xml', async (_req, res, next) => {
   try {
     const items = await galleryItems();
-    res.type('application/xml').send(sitemap({ items, pageSize: PAGE_SIZE, origin: SITE_ORIGIN }));
+    res.type('application/xml').send(sitemap({ items, origin: SITE_ORIGIN }));
   } catch (error) {
     next(error);
   }

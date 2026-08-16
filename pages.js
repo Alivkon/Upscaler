@@ -163,35 +163,24 @@ const grid = (items, eager = 0) =>
     .map((item, index) => card(item, { eager: index < eager, priority: eager > 0 && index === 0 }))
     .join('\n        ')}\n      </div>`;
 
-// Постраничность: `/` — первая страница, дальше `/page/2`. У первой страницы
-// второго адреса нет, иначе один и тот же список лежал бы по двум адресам.
-function pager(page, pageCount) {
-  if (pageCount < 2) return '';
-  const href = number => (number === 1 ? '/' : `/page/${number}`);
-  const link = (number, label) =>
-    number >= 1 && number <= pageCount ? `<a class="link" href="${href(number)}">${label}</a>` : '';
-  return `<nav class="pages" aria-label="Pages">
-        ${link(page - 1, 'Previous')}
-        <span>Page ${page} of ${pageCount}</span>
-        ${link(page + 1, 'Next')}
-      </nav>`;
-}
-
-export function collectionPage({ items, page, pageCount, origin }) {
-  const suffix = page > 1 ? ` — page ${page}` : '';
+// Указатель — вся коллекция одной страницей. Постраничность была и снята:
+// она показывала первые десять работ, то есть, пока каталог пополняется
+// с конца, всегда одни и те же десять, а остальное пряталось за «Next»,
+// куда не ходят. Длина страницы стоит разметки, а не байтов: всё, кроме
+// первых карточек, грузится лениво.
+export function collectionPage({ items, origin }) {
   return layout({
     current: 'collection',
-    title: `${SITE_NAME} — phone and 4K desktop wallpapers at full resolution${suffix}`,
+    title: `${SITE_NAME} — phone and 4K desktop wallpapers at full resolution`,
     description: DESCRIPTION,
-    canonical: `${origin}${page > 1 ? `/page/${page}` : '/'}`,
+    canonical: `${origin}/`,
     // Превью для мессенджеров и соцсетей: без него ссылка на коллекцию идёт
-    // голой строкой. Берём первую работу страницы — она же и первое, что
-    // видит открывший.
+    // голой строкой. Берём первую работу — она же и первое, что видит
+    // открывший.
     image: items.length ? `${origin}${items[0].url}` : undefined,
     body: `
       <p class="heading">The collection</p>
       ${grid(items, EAGER_CARDS)}
-      ${pager(page, pageCount)}
       <p class="outro">${restoreLink}</p>
     `
   });
@@ -473,8 +462,7 @@ export function missingPage({ origin }) {
 // адресов страниц называет изображения лишь косвенно. Изображения объявлены
 // у страницы работы (оба её кадра) и не продублированы у указателя: страница
 // работы и есть то место, куда мы хотим привести пришедшего из поиска.
-export function sitemap({ items, pageSize, origin }) {
-  const pageCount = Math.max(1, Math.ceil(items.length / pageSize));
+export function sitemap({ items, origin }) {
   // Даты сравниваются как строки: и `2026-08-16`, и полный ISO начинаются
   // с года, месяца и дня, поэтому порядок совпадает с хронологическим.
   const latestOf = list =>
@@ -483,9 +471,8 @@ export function sitemap({ items, pageSize, origin }) {
       .filter(Boolean)
       .sort()
       .at(-1);
-  // `images` — сколько кадров у страницы: у работы их два, телефонный
-  // и экранный, и объявлены оба. Google берёт из карты именно файлы, а не
-  // выводит их из страницы, так что не названный здесь кадр остаётся
+  // `images` — файл, который у страницы показан. Google берёт из карты именно
+  // файлы, а не выводит их из страницы, так что не названный здесь остаётся
   // ненайденным до тех пор, пока обход не дойдёт до самой страницы.
   const url = (loc, { lastmod, images = [] } = {}) =>
     [
@@ -498,12 +485,9 @@ export function sitemap({ items, pageSize, origin }) {
       .filter(Boolean)
       .join('\n');
 
-  const pageUrl = number => {
-    const shown = items.slice((number - 1) * pageSize, number * pageSize);
-    return url(`${origin}${number === 1 ? '/' : `/page/${number}`}`, { lastmod: latestOf(shown) });
-  };
   const entries = [
-    ...Array.from({ length: pageCount }, (_, index) => pageUrl(index + 1)),
+    // Указатель один, и его `lastmod` — день последнего пополнения коллекции.
+    url(`${origin}/`, { lastmod: latestOf(items) }),
     ...items.map(item =>
       url(`${origin}/w/${item.slug}`, {
         lastmod: item.added,
