@@ -1,0 +1,23 @@
+{
+  "ref": "vl-0171",
+  "slug": "wind-power-satellite-desktop-wallpaper",
+  "title": "Wind Power — satellite desktop wallpaper",
+  "alt": "Satellite desktop wallpaper: Wind Power, a false-colour Landsat image — USGS Earth as Art",
+  "added": "2026-08-16",
+  "tags": [
+    "satellite",
+    "abstract",
+    "landsat",
+    "aerial",
+    "usgs",
+    "earth"
+  ],
+  "license": "public-domain",
+  "provenance": {
+    "creator": "U.S. Geological Survey",
+    "creatorKind": "organization",
+    "work": "Wind Power",
+    "credit": "USGS EROS, Earth as Art 4",
+    "page": "https://eros.usgs.gov/media-gallery/earth-as-art/4/wind-power"
+  }
+}

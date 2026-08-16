@@ -1,0 +1,23 @@
+{
+  "ref": "vl-0172",
+  "slug": "crimson-streams-satellite-desktop-wallpaper",
+  "title": "Crimson Streams — satellite desktop wallpaper",
+  "alt": "Satellite desktop wallpaper: Crimson Streams, a false-colour Landsat image — USGS Earth as Art",
+  "added": "2026-08-16",
+  "tags": [
+    "satellite",
+    "abstract",
+    "landsat",
+    "aerial",
+    "usgs",
+    "earth"
+  ],
+  "license": "public-domain",
+  "provenance": {
+    "creator": "U.S. Geological Survey",
+    "creatorKind": "organization",
+    "work": "Crimson Streams",
+    "credit": "USGS EROS, Earth as Art 5",
+    "page": "https://eros.usgs.gov/media-gallery/earth-as-art/5/crimson-streams"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "ref": "vl-0170",
+  "slug": "slessor-glacier-satellite-desktop-wallpaper",
+  "title": "Slessor Glacier — satellite desktop wallpaper",
+  "alt": "Satellite desktop wallpaper: Slessor Glacier, a false-colour Landsat image of the Slessor Glacier, Antarctica — USGS Earth as Art",
+  "added": "2026-08-16",
+  "tags": [
+    "satellite",
+    "abstract",
+    "landsat",
+    "aerial",
+    "usgs",
+    "earth"
+  ],
+  "license": "public-domain",
+  "provenance": {
+    "creator": "U.S. Geological Survey",
+    "creatorKind": "organization",
+    "work": "Slessor Glacier",
+    "credit": "USGS EROS, Earth as Art 4",
+    "page": "https://eros.usgs.gov/media-gallery/earth-as-art/4/slessor-glacier"
+  }
+}

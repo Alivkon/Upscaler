@@ -1,0 +1,23 @@
+{
+  "ref": "vl-0168",
+  "slug": "volcanoes-satellite-desktop-wallpaper",
+  "title": "Volcanoes — satellite desktop wallpaper",
+  "alt": "Satellite desktop wallpaper: Volcanoes, a false-colour Landsat image — USGS Earth as Art",
+  "added": "2026-08-16",
+  "tags": [
+    "satellite",
+    "abstract",
+    "landsat",
+    "aerial",
+    "usgs",
+    "earth"
+  ],
+  "license": "public-domain",
+  "provenance": {
+    "creator": "U.S. Geological Survey",
+    "creatorKind": "organization",
+    "work": "Volcanoes",
+    "credit": "USGS EROS, Earth as Art 2",
+    "page": "https://eros.usgs.gov/media-gallery/earth-as-art/2/volcanoes"
+  }
+}
