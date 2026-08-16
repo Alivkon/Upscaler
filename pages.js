@@ -95,18 +95,31 @@ function layout({ title, description, canonical, image, body, ld, script, curren
 `;
 }
 
+// Сколько карточек грузится сразу. Ленивая загрузка изображения, видного без
+// прокрутки, откладывает LCP ровно той страницы, которую мы хотим ранжировать:
+// браузер узнаёт о картинке только после раскладки. Сколько карточек в первом
+// ряду — зависит от ширины экрана (сетка `repeat(auto-fill, minmax(200px, 1fr))`),
+// поэтому берём безусловно четыре: на широком экране это и есть первый ряд,
+// на узком три лишние догрузятся чуть раньше, чем понадобятся.
+//
+// `fetchpriority="high"` — только первой: приоритет имеет смысл, пока он
+// у немногих. Проставленный всем четырём, он ставит их в очередь со стилями
+// и шрифтом и замедляет ту самую первую.
+const EAGER_CARDS = 4;
+
 // Карточка указателя. Ссылок на работу две: изображение и номер. Номер несёт
 // текст ссылки, а изображение — единственное, на что посетитель целится.
 //
 // `--ratio` проставлен здесь, а не по загрузке файла: размеры работы известны
 // из каталога, и проём принимает её пропорции ещё до того, как что-то
 // загрузилось. Иначе указатель прыгал бы по мере загрузки картинок.
-function card(item) {
+function card(item, { eager = false, priority = false } = {}) {
   const ratio = `${item.width} / ${item.height}`;
+  const loading = ` loading="${eager ? 'eager' : 'lazy'}"${priority ? ' fetchpriority="high"' : ''}`;
   return `<figure class="item">
           <div class="record">
             <a class="record__image" href="/w/${escape(item.slug)}" style="--ratio: ${ratio}" tabindex="-1">
-              <img src="${escape(item.url)}" alt="${escape(item.alt)}" width="${item.width}" height="${item.height}" loading="lazy" />
+              <img src="${escape(item.url)}" alt="${escape(item.alt)}" width="${item.width}" height="${item.height}"${loading} />
             </a>
           </div>
           <figcaption class="caption">
@@ -117,7 +130,13 @@ function card(item) {
         </figure>`;
 }
 
-const grid = items => `<div class="collection">\n        ${items.map(card).join('\n        ')}\n      </div>`;
+// `eager` — сколько первых карточек грузить сразу. По умолчанию ни одной:
+// сетка «ещё из коллекции» на странице работы стоит ниже сгиба, и торопить
+// её значит отнимать канал у самой работы.
+const grid = (items, eager = 0) =>
+  `<div class="collection">\n        ${items
+    .map((item, index) => card(item, { eager: index < eager, priority: eager > 0 && index === 0 }))
+    .join('\n        ')}\n      </div>`;
 
 // Постраничность: `/` — первая страница, дальше `/page/2`. У первой страницы
 // второго адреса нет, иначе один и тот же список лежал бы по двум адресам.
@@ -140,9 +159,13 @@ export function collectionPage({ items, page, pageCount, origin }) {
     title: `${SITE_NAME} — phone wallpapers at full resolution${suffix}`,
     description: DESCRIPTION,
     canonical: `${origin}${page > 1 ? `/page/${page}` : '/'}`,
+    // Превью для мессенджеров и соцсетей: без него ссылка на коллекцию идёт
+    // голой строкой. Берём первую работу страницы — она же и первое, что
+    // видит открывший.
+    image: items.length ? `${origin}${items[0].url}` : undefined,
     body: `
       <p class="heading">The collection</p>
-      ${grid(items)}
+      ${grid(items, EAGER_CARDS)}
       ${pager(page, pageCount)}
       <p class="outro">${restoreLink}</p>
     `
@@ -201,8 +224,8 @@ export function workPage({ item, others, origin }) {
       <div class="plate">
         <figure class="record record--plate">
           <div ${frame} id="work-frame">
-            <img id="work-picture" src="${escape(item.url)}" alt="${escape(item.alt)}" width="${item.width}" height="${item.height}" />
-            ${item.before ? `<img class="before" id="work-before" src="${escape(item.before)}" alt="" aria-hidden="true" />` : ''}
+            <img id="work-picture" src="${escape(item.url)}" alt="${escape(item.alt)}" width="${item.width}" height="${item.height}" fetchpriority="high" />
+            ${item.before ? `<img class="before" id="work-before" src="${escape(item.before)}" alt="" aria-hidden="true" fetchpriority="low" />` : ''}
           </div>
         </figure>
         <div class="label">
@@ -351,17 +374,54 @@ export function missingPage({ origin }) {
 
 // Карта и robots строятся из того же `SITE_ORIGIN`, поэтому верны в день
 // появления домена и безвредны до него.
-export function sitemap({ items, pageCount, origin }) {
-  const urls = [
-    `${origin}/`,
-    ...Array.from({ length: pageCount - 1 }, (_, index) => `${origin}/page/${index + 2}`),
-    ...items.map(item => `${origin}/w/${item.slug}`),
-    `${origin}/restore`,
-    `${origin}/license`
+//
+// Сверх списка адресов карта несёт две вещи.
+//
+// `lastmod` — чтобы обход возвращался к изменившемуся, а не ко всему подряд.
+// Стоит он только там, где дата действительно известна: у работы это день,
+// когда она вошла в коллекцию, у страницы указателя — самая поздняя дата
+// на этой самой странице. У `/restore` и `/license` даты нет, и выдумывать
+// её нельзя — Google перестаёт учитывать `lastmod` по всему сайту, если
+// однажды застал его неверным.
+//
+// `<image:image>` — весь канал коллекции это поиск по картинкам, а список
+// адресов страниц называет изображения лишь косвенно. Изображение объявлено
+// у страницы работы и не продублировано у указателя: страница работы и есть
+// то место, куда мы хотим привести пришедшего из поиска.
+export function sitemap({ items, pageSize, origin }) {
+  const pageCount = Math.max(1, Math.ceil(items.length / pageSize));
+  // Даты сравниваются как строки: и `2026-08-16`, и полный ISO начинаются
+  // с года, месяца и дня, поэтому порядок совпадает с хронологическим.
+  const latestOf = list =>
+    list
+      .map(item => item.added)
+      .filter(Boolean)
+      .sort()
+      .at(-1);
+  const url = (loc, { lastmod, image } = {}) =>
+    [
+      '  <url>',
+      `    <loc>${escape(loc)}</loc>`,
+      lastmod ? `    <lastmod>${escape(lastmod)}</lastmod>` : '',
+      image ? `    <image:image><image:loc>${escape(image)}</image:loc></image:image>` : '',
+      '  </url>'
+    ]
+      .filter(Boolean)
+      .join('\n');
+
+  const pageUrl = number => {
+    const shown = items.slice((number - 1) * pageSize, number * pageSize);
+    return url(`${origin}${number === 1 ? '/' : `/page/${number}`}`, { lastmod: latestOf(shown) });
+  };
+  const entries = [
+    ...Array.from({ length: pageCount }, (_, index) => pageUrl(index + 1)),
+    ...items.map(item => url(`${origin}/w/${item.slug}`, { lastmod: item.added, image: `${origin}${item.url}` })),
+    url(`${origin}/restore`),
+    url(`${origin}/license`)
   ];
   return `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-${urls.map(url => `  <url><loc>${escape(url)}</loc></url>`).join('\n')}
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
+${entries.join('\n')}
 </urlset>
 `;
 }

@@ -175,6 +175,10 @@ async function catalogueItems() {
       width: work.dims[0],
       height: work.dims[1],
       bytes: stat.size,
+      // День, когда работа вошла в коллекцию, — для `lastmod` в карте сайта.
+      // Берётся из каталога, а не из `mtime` файла: рендер детерминирован,
+      // но переписывает файл при каждом запуске.
+      added: work.added || null,
       before: hasBefore ? imageUrl(`before/${beforeFile(work)}`) : null,
       from: hasBefore ? work.from : null,
       license: LICENSES[work.license || DEFAULT_LICENSE],
@@ -212,6 +216,8 @@ async function uploadedItems() {
       width,
       height,
       bytes: stat.size,
+      // У записей индекса дата стоит с самого начала — её пишет публикация.
+      added: typeof entry.added === 'string' ? entry.added : null,
       before: await beforeUrl(entry),
       from: null,
       // Лицензии нет: работа не наша, и условий на неё мы назначить не можем.

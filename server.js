@@ -2,6 +2,7 @@ import 'dotenv/config';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import compression from 'compression';
 import express from 'express';
 import multer from 'multer';
 import sharp from 'sharp';
@@ -41,7 +42,31 @@ const upload = multer({
   fileFilter: (_req, file, done) => done(null, ACCEPTED_TYPES.has(file.mimetype))
 });
 
+// Каталоги, файлы в которых после появления не меняются. Плашки и файлы «до»
+// названы слугом и размерами, рендер детерминирован, а у опубликованной работы
+// файл больше не правится (works.js). Имя результата апскейла содержит время
+// и второй раз не возникает.
+//
+// Присланных посетителями `gallery` и `shared` здесь нет: их имена приходят
+// снаружи, и одно и то же имя однажды может оказаться другим файлом. Они
+// отдаются как раньше — с проверкой на каждый запрос.
+//
+// По умолчанию express.static ставит `max-age=0`, то есть указатель на десять
+// работ спрашивает сервер о каждой картинке при каждом заходе.
+const IMMUTABLE_FOLDERS = new Set(['plates', 'before', 'generated']);
+const A_YEAR = 60 * 60 * 24 * 365;
+
+function setImageHeaders(res, file) {
+  if (IMMUTABLE_FOLDERS.has(path.basename(path.dirname(file)))) {
+    res.setHeader('Cache-Control', `public, max-age=${A_YEAR}, immutable`);
+  }
+}
+
 await ensureImageDirectories();
+// Разметка собирается из шаблонных строк и потому повторяется сама в себе:
+// страница работы сжимается с 13 668 до 2 411 байт. Изображения проходят мимо —
+// `compression` смотрит на тип и JPEG не трогает.
+app.use(compression());
 app.use(express.static(path.join(__dirname, 'public')));
 // Наружу отдаются только сами изображения: рядом с ними лежит индекс витрины,
 // а пул вообще может оказаться каталогом вне проекта с чем угодно внутри.
@@ -49,7 +74,7 @@ app.use('/images', (req, _res, next) => next(isImage(req.path) ? undefined : new
 // Пул может лежать вне проекта (INTERNAL_IMAGE_STORAGE_DIR), поэтому он
 // раздаётся отдельно и до общего маршрута — иначе `/images` ответит 404 первым.
 app.use('/images/storage', express.static(STORAGE_DIR, { fallthrough: false }));
-app.use('/images', express.static(IMAGES_DIR, { fallthrough: false }));
+app.use('/images', express.static(IMAGES_DIR, { fallthrough: false, setHeaders: setImageHeaders }));
 
 // ── страницы ───────────────────────────────────────────────────
 // Каждая собирается на запрос из `galleryItems()`: разметка приходит готовой,
@@ -101,8 +126,7 @@ app.get('/robots.txt', (_req, res) => res.type('text/plain').send(robots({ origi
 app.get('/sitemap.xml', async (_req, res, next) => {
   try {
     const items = await galleryItems();
-    const pageCount = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
-    res.type('application/xml').send(sitemap({ items, pageCount, origin: SITE_ORIGIN }));
+    res.type('application/xml').send(sitemap({ items, pageSize: PAGE_SIZE, origin: SITE_ORIGIN }));
   } catch (error) {
     next(error);
   }
