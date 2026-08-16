@@ -11,7 +11,7 @@ const $ = s => document.querySelector(s),
   ordinary = $('#ordinary-settings'),
   portrait = $('#portrait-settings'),
   result = $('#result'),
-  status = $('#status');
+  statusLine = $('#status');
 let filename, timer;
 function view(n) {
   let g = n === 'gallery';
@@ -46,14 +46,20 @@ function refreshTimer() {
       }
     }, 300000);
 }
+// Размер результата берётся из того набора переключателей, который сейчас показан.
+function currentOutputSize() {
+  return $(`input[name="${portrait.hidden ? 'output_size' : 'portrait_output_size'}"]:checked`).value;
+}
+function updateSubmitLabel() {
+  submit.querySelector('span').textContent = `Улучшить ${currentOutputSize().replace('x', '×').toUpperCase()}`;
+}
 function setMode(p) {
   ordinary.hidden = p;
   portrait.hidden = !p;
   $('#ordinary-tab').classList.toggle('active', !p);
   $('#portrait-tab').classList.toggle('active', p);
   active.value = p ? $('input[name="portrait_model"]:checked').value : 'real_esrgan';
-  let v = p ? $('input[name="portrait_output_size"]:checked').value : $('input[name="output_size"]:checked').value;
-  submit.querySelector('span').textContent = `Улучшить ${v.replace('x', '×').toUpperCase()}`;
+  updateSubmitLabel();
 }
 function select(f) {
   if (!f) return;
@@ -82,14 +88,13 @@ file.onchange = () => select(file.files[0]);
 drop.addEventListener('drop', e => select(e.dataTransfer.files[0]));
 form.onchange = e => {
   if (e.target.name === 'portrait_model') active.value = e.target.value;
-  if (/output_size/.test(e.target.name))
-    submit.querySelector('span').textContent = `Улучшить ${e.target.value.replace('x', '×').toUpperCase()}`;
+  if (/output_size/.test(e.target.name)) updateSubmitLabel();
 };
 form.onsubmit = async e => {
   e.preventDefault();
   if (!file.files[0]) return;
   submit.disabled = true;
-  status.textContent = 'Запускаем обработку…';
+  statusLine.textContent = 'Запускаем обработку…';
   try {
     let r = await fetch('/api/upscale', { method: 'POST', body: new FormData(form) }),
       d = await r.json();
@@ -101,9 +106,9 @@ form.onsubmit = async e => {
     $('#download').download = d.filename;
     $('#share').disabled = false;
     result.hidden = false;
-    status.textContent = '';
+    statusLine.textContent = '';
   } catch (x) {
-    status.textContent = `Ошибка: ${x.message}`;
+    statusLine.textContent = `Ошибка: ${x.message}`;
   } finally {
     submit.disabled = false;
   }
@@ -121,7 +126,7 @@ $('#share').onclick = async () => {
 document.onvisibilitychange = () => (document.hidden ? clearTimeout(timer) : !gallery.hidden && refreshTimer());
 const box = document.createElement('div'),
   boxImg = document.createElement('img'),
-  close = document.createElement('button');
+  boxClose = document.createElement('button');
 Object.assign(box.style, {
   position: 'fixed',
   inset: 0,
@@ -133,9 +138,9 @@ Object.assign(box.style, {
   padding: '24px'
 });
 Object.assign(boxImg.style, { maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' });
-close.textContent = '×';
-close.type = 'button';
-Object.assign(close.style, {
+boxClose.textContent = '×';
+boxClose.type = 'button';
+Object.assign(boxClose.style, {
   position: 'absolute',
   top: '18px',
   right: '22px',
@@ -146,28 +151,28 @@ Object.assign(close.style, {
   fontSize: '32px',
   cursor: 'pointer'
 });
-box.append(boxImg, close);
+box.append(boxImg, boxClose);
 document.body.append(box);
-function open(url, alt) {
+function openLightbox(url, alt) {
   boxImg.src = url;
   boxImg.alt = alt;
   box.style.display = 'flex';
   document.body.style.overflow = 'hidden';
-  close.focus();
+  boxClose.focus();
 }
-function shut() {
+function closeLightbox() {
   box.style.display = 'none';
   boxImg.removeAttribute('src');
   document.body.style.overflow = '';
 }
-close.onclick = shut;
-box.onclick = e => e.target === box && shut();
-document.onkeydown = e => e.key === 'Escape' && box.style.display === 'flex' && shut();
+boxClose.onclick = closeLightbox;
+box.onclick = e => e.target === box && closeLightbox();
+document.onkeydown = e => e.key === 'Escape' && box.style.display === 'flex' && closeLightbox();
 grid.onclick = e => {
   let img = e.target.closest('.card img');
   if (img) {
     e.preventDefault();
-    open(img.src, img.alt);
+    openLightbox(img.src, img.alt);
   }
 };
 load().catch(() => (grid.textContent = 'Коллекция временно недоступна.'));
