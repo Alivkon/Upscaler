@@ -18,10 +18,12 @@ import {
 import { collectionPage, intakePage, licensePage, missingPage, robots, sitemap, workPage } from './pages.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-// Канонический адрес: домена ещё нет, и до него всё, что строится из origin —
-// canonical, og:url, sitemap, — просто указывает на локальный сервер. Заводить
-// это заранее ничего не стоит и делает день покупки домена однострочным.
-const SITE_ORIGIN = (process.env.SITE_ORIGIN || 'http://127.0.0.1:3000').replace(/\/$/, '');
+// Канонический адрес. Умолчание — настоящий домен, а не локальный сервер:
+// забытая переменная окружения на боевой машине увела бы canonical, og:url,
+// карту сайта и `license` для значка «Licensable» на 127.0.0.1, то есть
+// обесценила бы разом всё, ради чего страницы собираются на сервере.
+// Для местной работы переменная задаётся в `.env`.
+const SITE_ORIGIN = (process.env.SITE_ORIGIN || 'https://tessarum.com').replace(/\/$/, '');
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const ACCEPTED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 const FILE_NOT_FOUND = 'File not found.';

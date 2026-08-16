@@ -235,7 +235,7 @@ async function catalogueItems() {
       // Откуда работа взялась, если взялась не у нас. Есть только у чужих:
       // у своих создатель — сайт, и повторять это в каждой записи незачем.
       provenance: work.provenance || null,
-      source: 'vellum'
+      source: 'tessarum'
     });
   }
   return items;

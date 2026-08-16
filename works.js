@@ -82,9 +82,9 @@ export async function loadWorks() {
 // значило бы умолчать, что свободен он по решению держателя, а не по возрасту.
 // Возраст сам по себе ничего не решает: гравюра свободна, а снимок гравюры
 // бывает новым произведением с живым правообладателем.
-export const DEFAULT_LICENSE = 'vellum';
+export const DEFAULT_LICENSE = 'tessarum';
 export const LICENSES = {
-  vellum: { path: '/license', name: 'Vellum License' },
+  tessarum: { path: '/license', name: 'Tessarum License' },
   'public-domain': { path: '/license#public-domain', name: 'Public domain' },
   cc0: { path: '/license#public-domain', name: 'CC0 1.0' }
 };
