@@ -34,3 +34,7 @@ build/
 Thumbs.db
 .idea/
 .vscode/
+# Отрисованные плашки: в репозитории живёт скрипт, а не его результат.
+# `scripts/render-plates.mjs` собирает их заново за несколько секунд.
+images/plates/*
+!images/plates/.gitkeep
