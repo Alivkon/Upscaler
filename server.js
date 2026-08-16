@@ -12,10 +12,19 @@ const STORAGE_DIR = path.resolve(__dirname, process.env.INTERNAL_IMAGE_STORAGE_D
 const GALLERY_DIR = path.join(IMAGES_DIR, 'gallery');
 const GENERATED_DIR = path.join(IMAGES_DIR, 'generated');
 const SHARED_DIR = path.join(IMAGES_DIR, 'shared');
-const OUTPUTS_DIR = GENERATED_DIR;
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const ACCEPTED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 const IMAGE_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.webp']);
+
+// Ошибка, текст которой предназначен посетителю. Всё остальное превращается
+// в «Внутренняя ошибка сервера», чтобы наружу не попадали детали конфигурации.
+class HttpError extends Error {
+  constructor(status, message) {
+    super(message);
+    this.status = status;
+  }
+}
+
 const app = express();
 const upload = multer({
   storage: multer.memoryStorage(),
@@ -25,7 +34,6 @@ const upload = multer({
 
 await Promise.all([STORAGE_DIR, GALLERY_DIR, GENERATED_DIR, SHARED_DIR].map(directory => fs.mkdir(directory, { recursive: true })));
 app.use(express.static(path.join(__dirname, 'public')));
-app.use('/outputs', express.static(OUTPUTS_DIR, { fallthrough: false }));
 app.use('/images', express.static(IMAGES_DIR, { fallthrough: false }));
 
 function isImage(filename) {
@@ -67,17 +75,20 @@ async function addStorageImageToGallery() {
 const MODELS = {
   real_esrgan: {
     title: 'Real-ESRGAN',
+    slug: 'real-esrgan',
     endpoint: 'models/nightmareai/real-esrgan/predictions',
     input: (image, _prompt, scale = 2) => ({ image, scale, face_enhance: false })
   },
   nano_banana: {
     title: 'Nano Banana',
+    slug: 'nano-banana',
     endpoint: 'models/google/nano-banana/predictions',
     requiresPrompt: true,
     input: (image, prompt) => ({ prompt, image_input: [image], aspect_ratio: 'match_input_image', output_format: 'jpg' })
   },
   nano_banana_pro: {
     title: 'Nano Banana Pro',
+    slug: 'nano-banana-pro',
     endpoint: 'models/google/nano-banana-pro/predictions',
     requiresPrompt: true,
     input: (image, prompt, resolution) => ({ prompt, image_input: [image], aspect_ratio: 'match_input_image', output_format: 'jpg', ...(resolution ? { resolution } : {}) })
@@ -94,7 +105,7 @@ function apiHeaders() {
 async function parseResponse(response) {
   const data = await response.json().catch(() => ({}));
   if (!response.ok || data.code >= 400 || data.success === false) {
-    throw new Error(data.detail || data.error || data.msg || data.message || `Replicate вернул HTTP ${response.status}`);
+    throw new HttpError(502, data.detail || data.error || data.msg || data.message || `Replicate вернул HTTP ${response.status}`);
   }
   return data;
 }
@@ -105,34 +116,36 @@ function asDataUrl(file) {
 
 async function createPrediction(model, image, prompt, resolution) {
   const body = { input: model.input(image, prompt, resolution) };
-  const endpoint = model.endpoint || 'predictions';
-  if (model.version) body.version = model.version;
-  const response = await fetch(`https://api.replicate.com/v1/${endpoint}`, {
+  const response = await fetch(`https://api.replicate.com/v1/${model.endpoint}`, {
     method: 'POST',
     headers: { ...apiHeaders(), 'Content-Type': 'application/json', Prefer: 'wait=60', 'Cancel-After': '10m' },
     body: JSON.stringify(body)
   });
   const data = await parseResponse(response);
-  if (!data.id) throw new Error('Replicate не вернул идентификатор задачи.');
+  if (!data.id) throw new HttpError(502, 'Replicate не вернул идентификатор задачи.');
   return data;
 }
 
-async function getTargetLongestSide(file, outputSize) {
+async function readLongestSide(file) {
   const metadata = await sharp(file.buffer).metadata();
   const longestSide = Math.max(metadata.width || 0, metadata.height || 0);
-  if (!longestSide) throw new Error('Не удалось определить размеры исходного изображения.');
-  if (outputSize === 'x2') return longestSide * 2;
-  if (outputSize === 'x4') return longestSide * 4;
+  if (!longestSide) throw new HttpError(400, 'Не удалось определить размеры исходного изображения.');
+  return longestSide;
+}
+
+// Во что упирается длинная сторона результата: кратность исходнику или фиксированный размер.
+function targetLongestSideFor(outputSize, sourceLongestSide) {
+  if (outputSize === 'x2') return sourceLongestSide * 2;
+  if (outputSize === 'x4') return sourceLongestSide * 4;
   return outputSize === '1k' ? 1024 : outputSize === '2k' ? 2048 : 4096;
 }
 
-async function getRealEsrganOptions(file, outputSize) {
-  if (outputSize === 'x2') return { scale: 2, targetLongestSide: null };
-  if (outputSize === 'x4') return { scale: 4, targetLongestSide: null };
-  const targetLongestSide = await getTargetLongestSide(file, outputSize);
-  const metadata = await sharp(file.buffer).metadata();
-  const longestSide = Math.max(metadata.width || 0, metadata.height || 0);
-  return { scale: Math.min(10, Math.max(2, Math.ceil(targetLongestSide / longestSide))), targetLongestSide };
+// Real-ESRGAN принимает целочисленный множитель, поэтому для фиксированных
+// размеров берём ближайший больший и обрезаем результат до нужной стороны.
+function realEsrganScale(outputSize, sourceLongestSide, targetLongestSide) {
+  if (outputSize === 'x2') return 2;
+  if (outputSize === 'x4') return 4;
+  return Math.min(10, Math.max(2, Math.ceil(targetLongestSide / sourceLongestSide)));
 }
 
 async function waitForResult(prediction) {
@@ -141,32 +154,32 @@ async function waitForResult(prediction) {
   while (Date.now() < deadline) {
     if (task.status === 'succeeded') {
       const url = Array.isArray(task.output) ? task.output[0] : task.output;
-      if (!url) throw new Error('Задача завершилась, но ссылка на изображение отсутствует.');
+      if (!url) throw new HttpError(502, 'Задача завершилась, но ссылка на изображение отсутствует.');
       return url;
     }
-    if (task.status === 'failed' || task.status === 'canceled') throw new Error(task.error || 'Апскейлинг не выполнен сервисом Replicate.');
+    if (task.status === 'failed' || task.status === 'canceled') throw new HttpError(502, task.error || 'Апскейлинг не выполнен сервисом Replicate.');
     await new Promise(resolve => setTimeout(resolve, 2000));
     const response = await fetch(task.urls?.get || `https://api.replicate.com/v1/predictions/${task.id}`, { headers: apiHeaders() });
     task = await parseResponse(response);
   }
-  throw new Error('Время ожидания результата истекло. Попробуйте ещё раз.');
+  throw new HttpError(504, 'Время ожидания результата истекло. Попробуйте ещё раз.');
 }
 
-async function saveResult(sourceUrl, originalName, mimeType, targetLongestSide = null, outputSize = 'x2') {
+async function saveResult(sourceUrl, file, { model, outputSize, targetLongestSide }) {
   const response = await fetch(sourceUrl, { headers: apiHeaders() });
-  if (!response.ok) throw new Error('Не удалось скачать готовое изображение с Replicate.');
-  const contentType = response.headers.get('content-type') || mimeType;
-  if (!contentType.startsWith('image/')) throw new Error('Replicate вернул файл, который не является изображением.');
+  if (!response.ok) throw new HttpError(502, 'Не удалось скачать готовое изображение с Replicate.');
+  const contentType = response.headers.get('content-type') || file.mimetype;
+  if (!contentType.startsWith('image/')) throw new HttpError(502, 'Replicate вернул файл, который не является изображением.');
   const extension = contentType.includes('png') ? '.png' : contentType.includes('webp') ? '.webp' : '.jpg';
-  const baseName = path.basename(originalName, path.extname(originalName)).replace(/[^a-zA-Z0-9_-]/g, '_') || 'photo';
-  const filename = `${baseName}-real-esrgan-${outputSize}-${Date.now()}${extension}`;
+  const baseName = path.basename(file.originalname, path.extname(file.originalname)).replace(/[^a-zA-Z0-9_-]/g, '_') || 'photo';
+  const filename = `${baseName}-${model.slug}-${outputSize}-${Date.now()}${extension}`;
   let output = Buffer.from(await response.arrayBuffer());
   if (targetLongestSide) output = await sharp(output).resize(targetLongestSide, targetLongestSide, { fit: 'inside' }).toBuffer();
-  await fs.writeFile(path.join(OUTPUTS_DIR, filename), output);
+  await fs.writeFile(path.join(GENERATED_DIR, filename), output);
   return filename;
 }
 
-app.post('/api/upscale', upload.single('photo'), async (req, res) => {
+app.post('/api/upscale', upload.single('photo'), async (req, res, next) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'Выберите JPG, PNG или WebP размером до 10 МБ.' });
     const model = MODELS[req.body.model] || MODELS.real_esrgan;
@@ -174,16 +187,16 @@ app.post('/api/upscale', upload.single('photo'), async (req, res) => {
     const outputSize = ['x2', 'x4', '1k', '2k', '4k'].includes(selectedOutputSize) ? selectedOutputSize : 'x2';
     const prompt = typeof req.body.prompt === 'string' ? req.body.prompt.trim() : '';
     if (model.requiresPrompt && !prompt) return res.status(400).json({ error: 'Введите инструкцию для обработки портрета.' });
-    const realEsrganOptions = model === MODELS.real_esrgan ? await getRealEsrganOptions(req.file, outputSize) : null;
-    const targetLongestSide = realEsrganOptions?.targetLongestSide ?? await getTargetLongestSide(req.file, outputSize);
+    const sourceLongestSide = await readLongestSide(req.file);
+    const targetLongestSide = targetLongestSideFor(outputSize, sourceLongestSide);
+    const scale = model === MODELS.real_esrgan ? realEsrganScale(outputSize, sourceLongestSide, targetLongestSide) : undefined;
     const nativeResolution = model === MODELS.nano_banana_pro && ['1k', '2k', '4k'].includes(outputSize) ? outputSize.toUpperCase() : undefined;
-    const prediction = await createPrediction(model, asDataUrl(req.file), prompt, realEsrganOptions?.scale ?? nativeResolution);
+    const prediction = await createPrediction(model, asDataUrl(req.file), prompt, scale ?? nativeResolution);
     const resultUrl = await waitForResult(prediction);
-    const filename = await saveResult(resultUrl, req.file.originalname, req.file.mimetype, targetLongestSide, outputSize);
-    res.json({ filename, url: `/outputs/${encodeURIComponent(filename)}`, taskId: prediction.id, model: model.title });
+    const filename = await saveResult(resultUrl, req.file, { model, outputSize, targetLongestSide });
+    res.json({ filename, url: `/images/generated/${encodeURIComponent(filename)}`, taskId: prediction.id, model: model.title });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: error.message || 'Не удалось обработать изображение.' });
+    next(error);
   }
 });
 
@@ -220,9 +233,17 @@ app.post('/api/gallery/share/:filename', async (req, res, next) => {
 });
 
 app.use((error, _req, res, _next) => {
-  if (error instanceof multer.MulterError || error?.message === 'Only images are allowed') {
+  if (error instanceof multer.MulterError) {
     return res.status(400).json({ error: 'Допустимы JPG, PNG и WebP до 10 МБ.' });
   }
+  if (error instanceof HttpError) {
+    return res.status(error.status).json({ error: error.message });
+  }
+  // express.static с fallthrough: false отдаёт отсутствующий файл как ошибку со статусом 404.
+  if (error?.status === 404 || error?.statusCode === 404) {
+    return res.status(404).json({ error: 'Файл не найден.' });
+  }
+  console.error(error);
   res.status(500).json({ error: 'Внутренняя ошибка сервера.' });
 });
 

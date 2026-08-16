@@ -7,10 +7,6 @@ node_modules/
 .env.*.local
 !.env.example
 
-# Generated upscale results (keep the directory itself)
-outputs/*
-!outputs/.gitkeep
-
 # Logs
 *.log
 logs/
