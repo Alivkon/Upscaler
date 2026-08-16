@@ -120,8 +120,14 @@ const EAGER_CARDS = 4;
 // не выигрывают от 1440×3120 ни при какой плотности экрана, а стоит он
 // 1,06 МБ против 26 КБ у копии. Десять карточек тянули 10,1 МБ картинок
 // при 1,8 КБ разметки.
-const shownWith = (preview, sizes) =>
-  preview ? ` srcset="${escape(preview.url)} ${preview.width}w" sizes="${sizes}"` : '';
+//
+// Копий бывает несколько, и тогда браузер выбирает по `sizes` сам. Одна
+// ступень обслуживает либо обычный экран, либо плотный, но не оба сразу:
+// карточка в 220 px просит 220 px при DPR 1 и 660 px при DPR 3.
+const shownWith = (copies, sizes) =>
+  copies.length
+    ? ` srcset="${copies.map(copy => `${escape(copy.url)} ${copy.width}w`).join(', ')}" sizes="${sizes}"`
+    : '';
 
 // Карточка указателя. Ссылок на работу две: изображение и номер. Номер несёт
 // текст ссылки, а изображение — единственное, на что посетитель целится.
@@ -134,7 +140,7 @@ function card(item, { eager = false, priority = false } = {}) {
   const loading = ` loading="${eager ? 'eager' : 'lazy'}"${priority ? ' fetchpriority="high"' : ''}`;
   // Сетка — `repeat(auto-fill, minmax(200px, 1fr))`: на телефоне это одна
   // колонка почти во всю ширину, дальше карточка держится около 200–220 px.
-  const shown = shownWith(item.preview, '(max-width: 520px) 90vw, 220px');
+  const shown = shownWith(item.copies, '(max-width: 520px) 90vw, 220px');
   return `<figure class="item">
           <div class="record">
             <a class="record__image" href="/w/${escape(item.slug)}" style="--ratio: ${ratio}" tabindex="-1">
@@ -200,6 +206,20 @@ export function collectionPage({ items, page, pageCount, origin }) {
 const licenseFields = (item, origin) =>
   item.license ? { license: `${origin}${item.license.path}`, acquireLicensePage: `${origin}/w/${item.slug}` } : {};
 
+// Кто работу сделал. У своих — сайт; у гравюры из открытого собрания — тот,
+// кто её награвировал, и подставить сюда `Vellum` значило бы приписать себе
+// чужое авторство в машиночитаемом виде, где его прочтут не глядя. Крой
+// авторства не создаёт: выбрать кадр и уменьшить — действие механическое.
+const creatorFields = item =>
+  item.provenance
+    ? {
+        creator: { '@type': 'Person', name: item.provenance.creator },
+        creditText: item.provenance.credit || item.provenance.creator,
+        ...(item.provenance.date ? { dateCreated: item.provenance.date } : {}),
+        isBasedOn: item.provenance.page
+      }
+    : { creator: { '@type': 'Organization', name: SITE_NAME }, creditText: SITE_NAME };
+
 // Одно изображение на страницу, поэтому и разметка одна. Раньше их было две:
 // телефонный и экранный кадры делили страницу. Разобрано это из-за музейных
 // работ, у которых кадр ровно один по устройству самой картины, — а раз
@@ -218,10 +238,29 @@ const imageObject = (item, origin) => ({
   // они вредят. Здесь они всё же читаются — иначе поле было бы мёртвым.
   ...(item.tags.length ? { keywords: item.tags.join(', ') } : {}),
   identifier: item.ref,
-  creditText: SITE_NAME,
-  creator: { '@type': 'Organization', name: SITE_NAME },
+  ...creatorFields(item),
   ...licenseFields(item, origin)
 });
+
+// Что о чужой работе говорит её страница: кто автор, из какого собрания файл
+// и на каких условиях он свободен. Это обещано на странице условий — «каждая
+// такая работа называет автора, собрание и адрес, откуда пришла», — а обещание
+// стоит ровно столько, сколько стоит его исполнение. Ссылка ведёт на страницу
+// первоисточника, чтобы сказанное можно было проверить, не поверив нам на слово.
+//
+// У своих работ блока нет: автор у них один на всю коллекцию, и повторять его
+// на каждой странице — шум.
+function provenance(item) {
+  if (!item.provenance) return '';
+  const { creator, date, work, credit, page } = item.provenance;
+  const made = [creator, date].filter(Boolean).join(', ');
+  const held = [work, credit].filter(Boolean).join(' · ');
+  const terms = item.license ? `${escape(item.license.name)} · ` : '';
+  return `
+            <p class="terms__line">${escape(made)}</p>
+            ${held ? `<p class="terms__note">${escape(held)}</p>` : ''}
+            <p class="terms__note">${terms}<a href="${escape(page)}">Source file</a></p>`;
+}
 
 export function workPage({ item, others, origin }) {
   const size = formatDims(item.width, item.height);
@@ -238,7 +277,7 @@ export function workPage({ item, others, origin }) {
   // Проём работы задан высотой (`min(72vh, 620px)`), а ширина берётся из
   // пропорции: у телефонного кадра это около 290 px на большом экране
   // и примерно 70vw на телефоне.
-  const shownPlate = shownWith(item.preview, '(max-width: 860px) 70vw, 290px');
+  const shownPlate = shownWith(item.copies, '(max-width: 860px) 70vw, 290px');
   return layout({
     current: 'collection',
     title: `${item.title}, ${size}`,
@@ -267,7 +306,7 @@ export function workPage({ item, others, origin }) {
             </div>
           </div>
           <div class="terms" id="work-terms">
-            ${restored ? `<p class="terms__line">${restored}</p>` : ''}
+            ${restored ? `<p class="terms__line">${restored}</p>` : ''}${provenance(item)}
             <p class="terms__cta">${restoreLink}</p>
           </div>
         </div>
@@ -339,9 +378,10 @@ export function licensePage({ origin }) {
       <p class="heading">The Vellum License</p>
       <div class="prose">
         <p class="prose__lead">
-          Every work in this collection is drawn by our own generator. Take it, use it, change it,
-          sell what you make with it. Two things only are off limits, and both are about the
-          collection rather than the picture.
+          Works drawn by our own generator come to you under the terms below. Take one, use it,
+          change it, sell what you make with it. Two things only are off limits, and both are about
+          the collection rather than the picture. Works from open collections are not ours to license
+          at all — <a href="#public-domain">those are free of us entirely</a>.
         </p>
 
         <h2>You can</h2>
@@ -367,12 +407,28 @@ export function licensePage({ origin }) {
 
         <h2>What this covers</h2>
         <p>
-          Works published by Vellum, which is every work in the collection today. Images sent in by
+          Works drawn by Vellum. They are generated by a program we wrote, from palettes and settings
+          we chose, and the rights in them are ours to give away on these terms. Images sent in by
           visitors are not ours and we license nothing on their behalf; none are published at present.
         </p>
+
+        <h2 id="public-domain">Works from open collections</h2>
         <p>
-          The works are generated by a program we wrote, from palettes and settings we chose,
-          and the rights in them are ours to give away on these terms.
+          The collection also holds engravings, drawings and paintings that are out of copyright, or
+          whose holder has released the photograph of them under CC0. Those carry no terms from us.
+          You may do anything with them that you could do with the original file, and nothing on this
+          page restricts you.
+        </p>
+        <p>
+          We claim nothing over them by having framed them. Choosing a crop and resizing it is a
+          mechanical act and creates no new work, so the file you download is the holder's, not ours.
+          Each such work names its author, its source collection and the page it came from, so the
+          claim can be checked rather than taken on trust.
+        </p>
+        <p>
+          Age alone is not what makes them free. An engraving from 1705 is out of copyright, but a
+          photograph of that engraving can be a new work with a living owner — which is why the
+          collection takes only files whose holder has said otherwise in as many words.
         </p>
 
         <h2>The ordinary small print</h2>

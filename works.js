@@ -75,7 +75,16 @@ export async function loadWorks() {
 //
 // Присланные посетителями работы не наши, и лицензии у них нет вовсе:
 // `gallery.js` не подставляет им ничего.
+//
+// Public domain и CC0 ведут в один раздел условий и различаются именем: сказать
+// «CC0» про гравюру 1705 года было бы неверно — её никто не выпускал под CC0,
+// она просто вышла из-под права; а сказать «public domain» про снимок из Getty
+// значило бы умолчать, что свободен он по решению держателя, а не по возрасту.
+// Возраст сам по себе ничего не решает: гравюра свободна, а снимок гравюры
+// бывает новым произведением с живым правообладателем.
 export const DEFAULT_LICENSE = 'vellum';
 export const LICENSES = {
-  vellum: { path: '/license', name: 'Vellum License' }
+  vellum: { path: '/license', name: 'Vellum License' },
+  'public-domain': { path: '/license#public-domain', name: 'Public domain' },
+  cc0: { path: '/license#public-domain', name: 'CC0 1.0' }
 };

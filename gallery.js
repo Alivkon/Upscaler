@@ -205,7 +205,8 @@ async function catalogueItems() {
     const plate = made.get(work.ref);
     if (!(await madeFile(plate))) continue;
     const before = (await madeFile(plate.before)) && plate.before;
-    const preview = (await madeFile(plate.preview)) && plate.preview;
+    const copies = [];
+    for (const copy of plate.copies || []) if (await madeFile(copy)) copies.push(copy);
     items.push({
       ref: accession(work.ref),
       slug: work.slug,
@@ -217,9 +218,10 @@ async function catalogueItems() {
       width: plate.width,
       height: plate.height,
       bytes: plate.bytes,
-      // Чем страница работу показывает. Отдаёт она всё равно `url`: копия
-      // существует только ради проёма, в котором работа стоит.
-      preview: preview && { url: imageUrl(preview.file), width: preview.width, height: preview.height },
+      // Чем страница работу показывает. Отдаёт она всё равно `url`: копии
+      // существуют только ради проёма, в котором работа стоит, и в разметке
+      // объявлены лишь как варианты `srcset`.
+      copies: copies.map(copy => ({ url: imageUrl(copy.file), width: copy.width, height: copy.height })),
       // День, когда работа вошла в коллекцию, — для `lastmod` в карте сайта.
       // Берётся из каталога, а не из `mtime` файла: рендер детерминирован,
       // но переписывает файл при каждом запуске.
@@ -230,6 +232,9 @@ async function catalogueItems() {
       before: before ? imageUrl(before.file) : null,
       from: before ? [before.width, before.height] : null,
       license: LICENSES[work.license || DEFAULT_LICENSE],
+      // Откуда работа взялась, если взялась не у нас. Есть только у чужих:
+      // у своих создатель — сайт, и повторять это в каждой записи незачем.
+      provenance: work.provenance || null,
       source: 'vellum'
     });
   }
@@ -264,9 +269,9 @@ async function uploadedItems() {
       width,
       height,
       bytes: stat.size,
-      // Копии для показа у присланной работы нет: рендер её не делал, а файл
+      // Копий для показа у присланной работы нет: рендер её не делал, а файл
       // лежит такой, каким пришёл. Страница покажет сам файл.
-      preview: null,
+      copies: [],
       // У записей индекса дата стоит с самого начала — её пишет публикация.
       added: typeof entry.added === 'string' ? entry.added : null,
       // Второго кадра у присланной работы нет: перерисовать её нечем, она
@@ -276,6 +281,7 @@ async function uploadedItems() {
       from: null,
       // Лицензии нет: работа не наша, и условий на неё мы назначить не можем.
       license: null,
+      provenance: null,
       source: entry.source === 'shared' ? 'shared' : 'llm'
     });
   }

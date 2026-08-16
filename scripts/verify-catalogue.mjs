@@ -16,22 +16,24 @@ import { CATALOGUE_DIR, LICENSES, ORDER_FILE, REF_PATTERN, workFile } from '../w
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const DAY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const REQUIRED = ['ref', 'slug', 'title', 'alt', 'added'];
-const OPTIONAL = ['tags', 'license', 'source'];
+const OPTIONAL = ['tags', 'license', 'provenance'];
 
 const problems = [];
 const complain = (where, what) => problems.push(`${where}: ${what}`);
 
 const text = value => typeof value === 'string' && value.trim().length > 0;
 
-// Происхождение музейной работы. Читатель страницы имеет право проверить, что
-// мы не выдумали ни музей, ни автора, поэтому `page` обязателен: без адреса
-// первоисточника остальные поля — просто наши слова.
-function checkSource(where, source) {
-  if (typeof source !== 'object' || source === null || Array.isArray(source)) {
-    return complain(where, '`source` должен быть объектом');
+// Происхождение чужой работы. Обязательны двое: автор и адрес, по которому
+// сказанное можно проверить. Без автора страница молча приписывает гравюру
+// нам — разметка `ImageObject` подставляет создателем сайт, — а без адреса
+// остальные поля просто наши слова. `date`, `work` и `credit` необязательны:
+// у листа из книги бывает не известно ничего, кроме автора.
+function checkProvenance(where, provenance) {
+  if (typeof provenance !== 'object' || provenance === null || Array.isArray(provenance)) {
+    return complain(where, '`provenance` должен быть объектом');
   }
-  if (!text(source.holder)) complain(where, '`source.holder` пуст — чьё это собрание');
-  if (!text(source.page)) complain(where, '`source.page` пуст — где это проверить');
+  if (!text(provenance.creator)) complain(where, '`provenance.creator` пуст — чья это работа');
+  if (!text(provenance.page)) complain(where, '`provenance.page` пуст — где это проверить');
 }
 
 function checkWork(ref, work) {
@@ -59,7 +61,7 @@ function checkWork(ref, work) {
   if ('license' in work && !(work.license in LICENSES)) {
     complain(where, `лицензия ${JSON.stringify(work.license)} не заведена в LICENSES (works.js)`);
   }
-  if ('source' in work) checkSource(where, work.source);
+  if ('provenance' in work) checkProvenance(where, work.provenance);
 }
 
 const order = JSON.parse(await fs.readFile(ORDER_FILE, 'utf8'));
