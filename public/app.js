@@ -7,9 +7,6 @@ const $ = s => document.querySelector(s),
   file = $('#photo'),
   drop = $('#dropzone'),
   submit = $('#submit'),
-  active = $('#active-model'),
-  ordinary = $('#ordinary-settings'),
-  portrait = $('#portrait-settings'),
   result = $('#result'),
   statusLine = $('#status');
 let filename, timer;
@@ -46,20 +43,10 @@ function refreshTimer() {
       }
     }, 300000);
 }
-// Размер результата берётся из того набора переключателей, который сейчас показан.
-function currentOutputSize() {
-  return $(`input[name="${portrait.hidden ? 'output_size' : 'portrait_output_size'}"]:checked`).value;
-}
+// Кнопка называет выбранный размер: «Улучшить ×2», «Улучшить 4K».
 function updateSubmitLabel() {
-  submit.querySelector('span').textContent = `Улучшить ${currentOutputSize().replace('x', '×').toUpperCase()}`;
-}
-function setMode(p) {
-  ordinary.hidden = p;
-  portrait.hidden = !p;
-  $('#ordinary-tab').classList.toggle('active', !p);
-  $('#portrait-tab').classList.toggle('active', p);
-  active.value = p ? $('input[name="portrait_model"]:checked').value : 'real_esrgan';
-  updateSubmitLabel();
+  const outputSize = $('input[name="output_size"]:checked').value;
+  submit.querySelector('span').textContent = `Улучшить ${outputSize.replace('x', '×').toUpperCase()}`;
 }
 function select(f) {
   if (!f) return;
@@ -70,8 +57,6 @@ function select(f) {
   submit.disabled = false;
 }
 $$('[data-view]').forEach(b => (b.onclick = () => view(b.dataset.view)));
-$('#ordinary-tab').onclick = () => setMode(false);
-$('#portrait-tab').onclick = () => setMode(true);
 file.onchange = () => select(file.files[0]);
 ['dragenter', 'dragover'].forEach(t =>
   drop.addEventListener(t, e => {
@@ -87,8 +72,7 @@ file.onchange = () => select(file.files[0]);
 );
 drop.addEventListener('drop', e => select(e.dataTransfer.files[0]));
 form.onchange = e => {
-  if (e.target.name === 'portrait_model') active.value = e.target.value;
-  if (/output_size/.test(e.target.name)) updateSubmitLabel();
+  if (e.target.name === 'output_size') updateSubmitLabel();
 };
 form.onsubmit = async e => {
   e.preventDefault();
@@ -175,5 +159,6 @@ grid.onclick = e => {
     openLightbox(img.src, img.alt);
   }
 };
+updateSubmitLabel();
 load().catch(() => (grid.textContent = 'Коллекция временно недоступна.'));
 refreshTimer();

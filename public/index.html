@@ -47,15 +47,10 @@
         <div class="hero studio">
           <p class="eyebrow">WALLORA STUDIO</p>
           <h1>Ваш снимок.<br /><em>Новый масштаб.</em></h1>
-          <p>Улучшите личное фото или обработайте портрет.</p>
+          <p>Улучшите личное фото.</p>
         </div>
         <form id="upscale-form" class="panel">
-          <input id="active-model" type="hidden" name="model" value="real_esrgan" />
-          <div class="tabs">
-            <button id="ordinary-tab" class="tab active" type="button">Изображение</button
-            ><button id="portrait-tab" class="tab" type="button">Портрет</button>
-          </div>
-          <section id="ordinary-settings">
+          <section>
             <p>Real-ESRGAN · естественное увеличение детализации</p>
             <fieldset>
               <legend>Размер результата</legend>
@@ -64,26 +59,6 @@
               ><label><input type="radio" name="output_size" value="2k" />2K</label
               ><label><input type="radio" name="output_size" value="4k" />4K</label>
             </fieldset>
-          </section>
-          <section id="portrait-settings" hidden>
-            <fieldset>
-              <legend>Модель для портрета</legend>
-              <label><input type="radio" name="portrait_model" value="nano_banana" checked />Nano Banana</label
-              ><label><input type="radio" name="portrait_model" value="nano_banana_pro" />Nano Banana Pro</label>
-            </fieldset>
-            <fieldset>
-              <legend>Размер результата</legend>
-              <label><input type="radio" name="portrait_output_size" value="x2" />×2</label
-              ><label><input type="radio" name="portrait_output_size" value="x4" />×4</label
-              ><label><input type="radio" name="portrait_output_size" value="1k" checked />1K</label
-              ><label><input type="radio" name="portrait_output_size" value="2k" />2K</label
-              ><label><input type="radio" name="portrait_output_size" value="4k" />4K</label>
-            </fieldset>
-            <label class="prompt"
-              >Инструкция<textarea id="prompt" name="prompt" rows="3">
-Увеличь разрешение изображения, сохрани композицию и детали, не меняй содержание</textarea
-              ><small>Можно заменить одежду, фон или выражение лица.</small></label
-            >
           </section>
           <label id="dropzone" class="drop" for="photo"
             ><input id="photo" name="photo" type="file" accept="image/jpeg,image/png,image/webp" hidden /><b

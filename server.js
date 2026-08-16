@@ -47,39 +47,15 @@ app.use('/images', (req, _res, next) => next(isImage(req.path) ? undefined : new
 app.use('/images/storage', express.static(STORAGE_DIR, { fallthrough: false }));
 app.use('/images', express.static(IMAGES_DIR, { fallthrough: false }));
 
-const MODELS = {
-  real_esrgan: {
-    title: 'Real-ESRGAN',
-    slug: 'real-esrgan',
-    endpoint: 'models/nightmareai/real-esrgan/predictions',
-    input: (image, _prompt, scale = 2) => ({ image, scale, face_enhance: false })
-  },
-  nano_banana: {
-    title: 'Nano Banana',
-    slug: 'nano-banana',
-    endpoint: 'models/google/nano-banana/predictions',
-    requiresPrompt: true,
-    input: (image, prompt) => ({
-      prompt,
-      image_input: [image],
-      aspect_ratio: 'match_input_image',
-      output_format: 'jpg'
-    })
-  },
-  nano_banana_pro: {
-    title: 'Nano Banana Pro',
-    slug: 'nano-banana-pro',
-    endpoint: 'models/google/nano-banana-pro/predictions',
-    requiresPrompt: true,
-    input: (image, prompt, resolution) => ({
-      prompt,
-      image_input: [image],
-      aspect_ratio: 'match_input_image',
-      output_format: 'jpg',
-      ...(resolution ? { resolution } : {})
-    })
-  }
+// Строки, зависящие от модели, живут только здесь: эндпоинт для запроса
+// и `slug` для имени файла результата.
+const MODEL = {
+  title: 'Real-ESRGAN',
+  slug: 'real-esrgan',
+  endpoint: 'models/nightmareai/real-esrgan/predictions'
 };
+// Размеры результата — те же, что предлагает страница.
+const OUTPUT_SIZES = ['x2', 'x4', '2k', '4k'];
 
 function apiHeaders() {
   if (
@@ -106,12 +82,11 @@ function asDataUrl(file) {
   return `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
 }
 
-async function createPrediction(model, image, prompt, resolution) {
-  const body = { input: model.input(image, prompt, resolution) };
-  const response = await fetch(`https://api.replicate.com/v1/${model.endpoint}`, {
+async function createPrediction(image, scale) {
+  const response = await fetch(`https://api.replicate.com/v1/${MODEL.endpoint}`, {
     method: 'POST',
     headers: { ...apiHeaders(), 'Content-Type': 'application/json', Prefer: 'wait=60', 'Cancel-After': '10m' },
-    body: JSON.stringify(body)
+    body: JSON.stringify({ input: { image, scale, face_enhance: false } })
   });
   const data = await parseResponse(response);
   if (!data.id) throw new HttpError(502, 'Replicate не вернул идентификатор задачи.');
@@ -129,7 +104,7 @@ async function readLongestSide(file) {
 function targetLongestSideFor(outputSize, sourceLongestSide) {
   if (outputSize === 'x2') return sourceLongestSide * 2;
   if (outputSize === 'x4') return sourceLongestSide * 4;
-  return outputSize === '1k' ? 1024 : outputSize === '2k' ? 2048 : 4096;
+  return outputSize === '2k' ? 2048 : 4096;
 }
 
 // Real-ESRGAN принимает целочисленный множитель, поэтому для фиксированных
@@ -160,7 +135,7 @@ async function waitForResult(prediction) {
   throw new HttpError(504, 'Время ожидания результата истекло. Попробуйте ещё раз.');
 }
 
-async function saveResult(sourceUrl, file, { model, outputSize, targetLongestSide }) {
+async function saveResult(sourceUrl, file, { outputSize, targetLongestSide }) {
   const response = await fetch(sourceUrl, { headers: apiHeaders() });
   if (!response.ok) throw new HttpError(502, 'Не удалось скачать готовое изображение с Replicate.');
   const contentType = response.headers.get('content-type') || file.mimetype;
@@ -169,7 +144,7 @@ async function saveResult(sourceUrl, file, { model, outputSize, targetLongestSid
   const extension = contentType.includes('png') ? '.png' : contentType.includes('webp') ? '.webp' : '.jpg';
   const baseName =
     path.basename(file.originalname, path.extname(file.originalname)).replace(/[^a-zA-Z0-9_-]/g, '_') || 'photo';
-  const filename = `${baseName}-${model.slug}-${outputSize}-${Date.now()}${extension}`;
+  const filename = `${baseName}-${MODEL.slug}-${outputSize}-${Date.now()}${extension}`;
   let output = Buffer.from(await response.arrayBuffer());
   if (targetLongestSide)
     output = await sharp(output).resize(targetLongestSide, targetLongestSide, { fit: 'inside' }).toBuffer();
@@ -180,28 +155,18 @@ async function saveResult(sourceUrl, file, { model, outputSize, targetLongestSid
 app.post('/api/upscale', upload.single('photo'), async (req, res, next) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'Выберите JPG, PNG или WebP размером до 10 МБ.' });
-    const model = MODELS[req.body.model] || MODELS.real_esrgan;
-    const selectedOutputSize = model === MODELS.real_esrgan ? req.body.output_size : req.body.portrait_output_size;
-    const outputSize = ['x2', 'x4', '1k', '2k', '4k'].includes(selectedOutputSize) ? selectedOutputSize : 'x2';
-    const prompt = typeof req.body.prompt === 'string' ? req.body.prompt.trim() : '';
-    if (model.requiresPrompt && !prompt)
-      return res.status(400).json({ error: 'Введите инструкцию для обработки портрета.' });
+    const outputSize = OUTPUT_SIZES.includes(req.body.output_size) ? req.body.output_size : 'x2';
     const sourceLongestSide = await readLongestSide(req.file);
     const targetLongestSide = targetLongestSideFor(outputSize, sourceLongestSide);
-    const scale =
-      model === MODELS.real_esrgan ? realEsrganScale(outputSize, sourceLongestSide, targetLongestSide) : undefined;
-    const nativeResolution =
-      model === MODELS.nano_banana_pro && ['1k', '2k', '4k'].includes(outputSize)
-        ? outputSize.toUpperCase()
-        : undefined;
-    const prediction = await createPrediction(model, asDataUrl(req.file), prompt, scale ?? nativeResolution);
+    const scale = realEsrganScale(outputSize, sourceLongestSide, targetLongestSide);
+    const prediction = await createPrediction(asDataUrl(req.file), scale);
     const resultUrl = await waitForResult(prediction);
-    const filename = await saveResult(resultUrl, req.file, { model, outputSize, targetLongestSide });
+    const filename = await saveResult(resultUrl, req.file, { outputSize, targetLongestSide });
     res.json({
       filename,
       url: `/images/generated/${encodeURIComponent(filename)}`,
       taskId: prediction.id,
-      model: model.title
+      model: MODEL.title
     });
   } catch (error) {
     next(error);
