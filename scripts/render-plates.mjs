@@ -7,10 +7,18 @@
  * generator rewritten against a raw RGBA buffer so it can run without a
  * browser and be encoded by sharp at each work's actual dimensions.
  *
- *   node scripts/render-plates.mjs [--out images/plates] [--before images/before] [--jpeg]
+ *   node scripts/render-plates.mjs [--out images/plates] [--before images/before] [--png]
+ *
+ * Runs at deploy: the catalogue is in git, the files are not, and the render
+ * is deterministic, so this reproduces exactly what the site serves.
  *
  * Each work is written twice: the restored file at its full dimensions, and
  * the "before" it was restored from, at `work.from`. See renderBefore below.
+ *
+ * JPEG q92 4:4:4 is the shipped format, so it is what runs by default — a
+ * default output the site does not serve would be a trap. `--png` adds the
+ * lossless master beside it. Measurements behind the choice:
+ * research/2026-08-16-indexable-collection.md, "Данные: формат файла".
  *
  * The random sequence is consumed in the same order as the canvas version,
  * and the ridgelines are sampled at w/160 regardless of size, so the shapes
@@ -20,21 +28,7 @@
 import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 import sharp from 'sharp';
-
-const WORKS = [
-  { from: [564, 1220], stops: ['#2E3350', '#6E5A6B', '#C89B85', '#E8CBAE'], sun: 0.72, dims: [1170, 2532] },
-  { from: [640, 1385], stops: ['#10161C', '#1E3038', '#456068', '#8FA6A4'], sun: 0.34, dims: [1170, 2532] },
-  { from: [736, 1595], stops: ['#2A2622', '#5C5147', '#9C8C79', '#E4D8C6'], sun: 0.61, dims: [1290, 2796] },
-  { from: [500, 1082], stops: ['#151B2B', '#2C3A55', '#5D6F8C', '#A9B6C4'], sun: 0.48, dims: [1170, 2532] },
-  { from: [564, 1222], stops: ['#1B1315', '#4A2225', '#8E4535', '#D68C5C'], sun: 0.66, dims: [1080, 2340] },
-  { from: [600, 1298], stops: ['#181A1D', '#31363B', '#5A6167', '#93999C'], sun: 0.28, dims: [1170, 2532] },
-  { from: [564, 1222], stops: ['#20242B', '#4C5058', '#8A8377', '#D8C8AE'], sun: 0.55, dims: [1290, 2796] },
-  { from: [736, 1593], stops: ['#0E1712', '#1F3324', '#47613F', '#93A97C'], sun: 0.44, dims: [1170, 2532] },
-  { from: [540, 1170], stops: ['#1C1B22', '#3A3646', '#6B6478', '#B0A6B4'], sun: 0.38, dims: [1080, 2340] },
-  { from: [640, 1387], stops: ['#191722', '#3D3350', '#7E5F76', '#E0AE96'], sun: 0.69, dims: [1290, 2796] },
-  { from: [564, 1220], stops: ['#0C1114', '#1D2A30', '#3E555C', '#7E9296'], sun: 0.31, dims: [1170, 2532] },
-  { from: [500, 1082], stops: ['#22252B', '#474C57', '#7C828E', '#C6CBD2'], sun: 0.51, dims: [1170, 2532] }
-];
+import { WORKS, beforeFile, plateFile } from '../works.js';
 
 const rng = seed => {
   let s = seed >>> 0;
@@ -175,7 +169,7 @@ const args = process.argv.slice(2);
 const flag = (name, fallback) => (args.includes(name) ? args[args.indexOf(name) + 1] : fallback);
 const outDir = path.resolve(flag('--out', 'images/plates'));
 const beforeDir = path.resolve(flag('--before', 'images/before'));
-const alsoJpeg = args.includes('--jpeg');
+const alsoPng = args.includes('--png');
 
 await mkdir(outDir, { recursive: true });
 await mkdir(beforeDir, { recursive: true });
@@ -196,33 +190,32 @@ await mkdir(beforeDir, { recursive: true });
  * Quality is the one dial here that is a judgement rather than a measurement.
  * Kept mild on purpose — such a file is soft and a little blocky, not ruined.
  */
-async function renderBefore(image, work, ref) {
+async function renderBefore(image, work) {
   const [w, h] = work.from;
   const first = await image
     .clone()
     .resize(Math.round(w * 1.06), Math.round(h * 1.06))
     .jpeg({ quality: 72 })
     .toBuffer();
-  const file = path.join(beforeDir, `${ref}.jpg`);
+  const file = path.join(beforeDir, beforeFile(work));
   const { size } = await sharp(first).resize(w, h).jpeg({ quality: 66 }).toFile(file);
   return `${w}×${h} ${Math.round(size / 1e3)} KB`;
 }
 
 for (const [index, work] of WORKS.entries()) {
   const [w, h] = work.dims;
-  const ref = 'vl-' + String(index + 1).padStart(4, '0');
   const raw = paint(w, h, work, index);
   const image = sharp(raw, { raw: { width: w, height: h, channels: 3 } });
 
-  const png = path.join(outDir, `${ref}-${w}x${h}.png`);
-  const { size } = await image.clone().png({ compressionLevel: 9 }).toFile(png);
-  let line = `${path.relative(process.cwd(), png)}  ${(size / 1e6).toFixed(1)} MB`;
+  const jpg = path.join(outDir, plateFile(work));
+  const { size } = await image.clone().jpeg({ quality: 92, chromaSubsampling: '4:4:4' }).toFile(jpg);
+  let line = `${path.relative(process.cwd(), jpg)}  ${(size / 1e6).toFixed(1)} MB`;
 
-  if (alsoJpeg) {
-    const jpg = png.replace(/\.png$/, '.jpg');
-    const j = await image.clone().jpeg({ quality: 92, chromaSubsampling: '4:4:4' }).toFile(jpg);
-    line += `  ·  jpg ${(j.size / 1e6).toFixed(1)} MB`;
+  if (alsoPng) {
+    const png = jpg.replace(/\.jpg$/, '.png');
+    const p = await image.clone().png({ compressionLevel: 9 }).toFile(png);
+    line += `  ·  png ${(p.size / 1e6).toFixed(1)} MB`;
   }
-  line += `  ·  before ${await renderBefore(image, work, ref)}`;
+  line += `  ·  before ${await renderBefore(image, work)}`;
   console.log(line);
 }

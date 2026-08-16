@@ -1,11 +1,10 @@
 // Приёмка: один файл проходит через измерение, обработку и выдачу.
 
 import { BLANK_ACCESSION, accession, button, formatBytes, formatDims, formatType, specLine } from './record.js';
-import { show as showCollection } from './collection.js';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const ACCEPTED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
-const FILE_REQUIREMENTS = 'Допустимы JPG, PNG и WebP до 10 МБ.';
+const FILE_REQUIREMENTS = 'JPG, PNG and WebP up to 10 MB.';
 // Размеры результата — те же, что принимает server.js.
 const OUTPUT_SIZES = [
   ['x2', '×2'],
@@ -15,7 +14,6 @@ const OUTPUT_SIZES = [
 ];
 
 const els = {
-  view: document.querySelector('#intake-view'),
   frame: document.querySelector('#intake-frame'),
   picture: document.querySelector('#intake-picture'),
   ref: document.querySelector('#intake-ref'),
@@ -25,7 +23,6 @@ const els = {
   terms: document.querySelector('#intake-terms'),
   note: document.querySelector('#intake-note'),
   share: document.querySelector('#intake-share'),
-  publish: document.querySelector('#intake-publish'),
   shareNote: document.querySelector('#intake-share-note')
 };
 let received = null; // выбранный файл и его измеренные размеры
@@ -50,7 +47,7 @@ function showPicture(source) {
     els.picture.onerror = () => {
       els.picture.hidden = true;
       els.frame.classList.remove('has-work');
-      reject(new Error('Не удалось показать изображение.'));
+      reject(new Error('That image could not be displayed.'));
     };
     els.picture.src = source;
   });
@@ -88,7 +85,7 @@ function scaleSwitch() {
   const group = document.createElement('span');
   group.className = 'scale';
   group.setAttribute('role', 'group');
-  group.setAttribute('aria-label', 'Размер результата');
+  group.setAttribute('aria-label', 'Output size');
   for (const [value, label] of OUTPUT_SIZES) {
     const choice = button(label, '', () => {
       outputSize = value;
@@ -100,13 +97,13 @@ function scaleSwitch() {
   return group;
 }
 
-export function renderEmpty() {
+function renderEmpty() {
   els.ref.textContent = BLANK_ACCESSION;
   els.ref.classList.add('is-blank');
-  specLine(els.spec, ['Изображения пока нет']);
-  els.actions.replaceChildren(button('Выбрать изображение', 'btn', chooseFile));
-  els.terms.textContent = 'Перетащите файл в любое место страницы';
-  els.note.textContent = `${FILE_REQUIREMENTS} Ничего не публикуется без вашего согласия.`;
+  specLine(els.spec, ['No image yet']);
+  els.actions.replaceChildren(button('Choose an image', 'btn', chooseFile));
+  els.terms.textContent = 'Drop a file anywhere on the page';
+  els.note.textContent = `${FILE_REQUIREMENTS} Nothing is published without your consent.`;
   els.note.classList.remove('is-error');
   els.share.hidden = true;
 }
@@ -117,25 +114,25 @@ function renderMeasured() {
   els.ref.classList.add('is-blank');
   specLine(els.spec, [formatDims(width, height), formatType(file.name, file.type), formatBytes(file.size)]);
   els.actions.replaceChildren(
-    button('Реставрировать', 'btn', restore),
-    button('Выбрать другое', 'btn btn--ghost', chooseFile)
+    button('Restore', 'btn', restore),
+    button('Choose another', 'btn btn--ghost', chooseFile)
   );
-  els.terms.replaceChildren(`Результат — ${formatDims(...resultSize(width, height))} `, scaleSwitch());
-  els.note.textContent = 'Пока бесплатно: оплата и аккаунты появятся позже.';
+  els.terms.replaceChildren(`Result — ${formatDims(...resultSize(width, height))} `, scaleSwitch());
+  els.note.textContent = 'Free for now: payment and accounts come later.';
   els.note.classList.remove('is-error');
   els.share.hidden = true;
 }
 
 function renderWorking() {
   els.frame.classList.add('is-working');
-  const waiting = button('Обработка…', 'btn');
+  const waiting = button('Working…', 'btn');
   waiting.disabled = true;
   els.actions.replaceChildren(waiting);
   // Переключатель размера убирается вместе с кнопкой: пока задача выполняется,
   // размер уже выбран, а нажатие на него перерисовало бы страницу в состояние
   // «измерено» — и с неё можно было бы отправить вторую задачу поверх первой.
-  els.terms.textContent = `Результат — ${formatDims(...resultSize(received.width, received.height))}`;
-  els.note.textContent = 'Обработка идёт на сервере и может занять несколько минут.';
+  els.terms.textContent = `Result — ${formatDims(...resultSize(received.width, received.height))}`;
+  els.note.textContent = 'Processing runs on the server and can take a few minutes.';
   els.note.classList.remove('is-error');
 }
 
@@ -149,16 +146,14 @@ function renderFinished() {
   download.className = 'btn';
   download.href = restored.url;
   download.download = restored.filename;
-  download.textContent = 'Скачать';
-  els.actions.replaceChildren(download, button('Реставрировать ещё', 'btn btn--ghost', chooseFile));
-  els.terms.textContent = `Исходник — ${formatDims(received.width, received.height)}`;
+  download.textContent = 'Download';
+  els.actions.replaceChildren(download, button('Restore another', 'btn btn--ghost', chooseFile));
+  els.terms.textContent = `Source — ${formatDims(received.width, received.height)}`;
   // Скачивание ничем не закрыто: показан тот же файл полного разрешения,
   // который отдаёт кнопка. Гейтинг — признак ad-фермы.
-  els.note.textContent = 'На странице показан файл полного разрешения — тот же, что скачивается.';
+  els.note.textContent = 'This page shows the full-resolution file — the same one you download.';
   els.note.classList.remove('is-error');
-  els.publish.checked = false;
-  els.publish.disabled = false;
-  els.shareNote.textContent = 'Только если изображение ваше и вы вправе его публиковать.';
+  els.shareNote.textContent = 'Not available at the moment: the work stays with you and is deleted after 30 days.';
   els.share.hidden = false;
 }
 
@@ -198,44 +193,31 @@ els.frame.addEventListener('keydown', event => {
   }
 });
 
-// Флажок выключен по умолчанию, и это делает настоящую работу: витрина остаётся
-// кураторской, а не потоком пользовательских загрузок. Отменить публикацию
-// нечем, поэтому после успеха флажок больше не трогается.
-els.publish.addEventListener('change', async () => {
-  if (!els.publish.checked || !restored) return;
-  els.publish.disabled = true;
-  try {
-    const response = await fetch(`/api/gallery/share/${encodeURIComponent(restored.filename)}`, { method: 'POST' });
-    const data = await response.json();
-    if (!response.ok) throw new Error(data.error);
-    showCollection(data.images);
-    els.shareNote.textContent = 'Работа встала первой в коллекции.';
-  } catch (error) {
-    els.publish.checked = false;
-    els.publish.disabled = false;
-    els.shareNote.textContent = error.message;
-  }
-});
+// Обработчика у флажка нет: публикация пользовательских загрузок закрыта, пока
+// не пройден чек-лист из LEGAL.md, и включать её нечем. Строка на странице всё
+// же остаётся — намерение видно, а обещание «пока недоступно» выполняется тем,
+// что нажимать не на что. Отказывает и сам маршрут в server.js: «выключено» на
+// одной разметке держаться не может.
 
-// Файл принимает вся страница целиком, но только когда открыта приёмка:
-// на витрине перехватывать перетаскивание не за чем.
+// Файл принимает вся страница целиком: приёмка — это отдельный адрес, и
+// перехватывать перетаскивание здесь больше не у кого.
 let dragDepth = 0;
 addEventListener('dragenter', event => {
-  if (els.view.hidden) return;
   event.preventDefault();
   dragDepth++;
   document.body.classList.add('is-dragging');
 });
-addEventListener('dragover', event => {
-  if (!els.view.hidden) event.preventDefault();
-});
+addEventListener('dragover', event => event.preventDefault());
 addEventListener('dragleave', () => {
   if (--dragDepth <= 0) document.body.classList.remove('is-dragging');
 });
 addEventListener('drop', event => {
-  if (els.view.hidden) return;
   event.preventDefault();
   dragDepth = 0;
   document.body.classList.remove('is-dragging');
   receive(event.dataTransfer.files[0]);
 });
+
+// Пустая запись рисуется скриптом, а не приходит с сервера: номера у неё ещё
+// нет, характеристик тоже, и всё, что тут есть, зависит от выбранного файла.
+renderEmpty();

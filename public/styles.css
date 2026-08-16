@@ -74,21 +74,21 @@ button {
   display: flex;
   gap: 22px;
 }
-.masthead__nav button {
-  border: 0;
-  padding: 0;
-  background: none;
+/* Пункты шапки — настоящие ссылки: страницы теперь отдаёт сервер, и переход
+   между ними должен работать средним кликом, «открыть в новой вкладке»
+   и без скрипта. */
+.masthead__nav a {
   color: var(--fg-dim);
   font-size: 11px;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  cursor: pointer;
+  text-decoration: none;
 }
-.masthead__nav button:hover,
-.masthead__nav button[aria-current] {
+.masthead__nav a:hover,
+.masthead__nav a[aria-current] {
   color: var(--fg);
 }
-.masthead__nav button:focus-visible {
+.masthead__nav a:focus-visible {
   outline: 2px solid var(--fg);
   outline-offset: 3px;
 }
@@ -134,6 +134,17 @@ button {
 .outro {
   padding: 0 var(--gutter);
   margin: clamp(32px, 5vw, 52px) 0 0;
+}
+/* Постраничность: из коллекции ничего не уходит, поэтому у указателя есть
+   продолжение. Набрана она строкой характеристик — это служебная строка,
+   а не призыв. */
+.pages {
+  display: flex;
+  gap: 22px;
+  align-items: baseline;
+  padding: clamp(28px, 4vw, 44px) var(--gutter) 0;
+  font-size: 12px;
+  color: var(--fg-dim);
 }
 /* призыв выглядит ссылкой, а не кнопкой: страница ничего не продаёт.
    Правило рассчитано и на `a`, и на `button`, поэтому сбрасывает и то и другое. */
@@ -237,6 +248,15 @@ button {
 /* пока изображения нет, номер не присвоен */
 .caption__title.is-blank {
   color: var(--fg-dim);
+}
+/* Номер — вторая ссылка карточки, и текстовая: словами ссылки поисковик
+   пользуется, а изображением — нет. Подчёркивания у неё нет, потому что
+   номер и так набран крупнее строки характеристик. */
+.caption__title a {
+  text-decoration: none;
+}
+.caption__title a:hover {
+  border-bottom: 1px solid var(--rule);
 }
 .caption__spec {
   font-size: 12px;
@@ -488,6 +508,12 @@ body.is-dragging .record--plate {
   gap: 11px;
   align-items: flex-start;
   cursor: pointer;
+}
+/* Выключенная галочка не притворяется нажимаемой: курсор над ней обычный,
+   а сама строка приглушена до яркости мелкого текста рядом. */
+.share__row:has(input:disabled) {
+  cursor: default;
+  color: var(--fg-dim);
 }
 .share__box {
   flex: 0 0 auto;

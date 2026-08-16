@@ -9,17 +9,21 @@ import {
   IMAGES_DIR,
   STORAGE_DIR,
   GENERATED_DIR,
+  PAGE_SIZE,
   ensureImageDirectories,
   galleryItems,
-  isImage,
-  promoteNextStorageImage,
-  publishGeneratedImage
+  isImage
 } from './gallery.js';
+import { collectionPage, intakePage, missingPage, robots, sitemap, workPage } from './pages.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+// Канонический адрес: домена ещё нет, и до него всё, что строится из origin —
+// canonical, og:url, sitemap, — просто указывает на локальный сервер. Заводить
+// это заранее ничего не стоит и делает день покупки домена однострочным.
+const SITE_ORIGIN = (process.env.SITE_ORIGIN || 'http://127.0.0.1:3000').replace(/\/$/, '');
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const ACCEPTED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
-const FILE_NOT_FOUND = 'Файл не найден.';
+const FILE_NOT_FOUND = 'File not found.';
 
 // Ошибка, текст которой предназначен посетителю. Всё остальное превращается
 // в «Внутренняя ошибка сервера», чтобы наружу не попадали детали конфигурации.
@@ -46,10 +50,61 @@ app.use('/images', (req, _res, next) => next(isImage(req.path) ? undefined : new
 // раздаётся отдельно и до общего маршрута — иначе `/images` ответит 404 первым.
 app.use('/images/storage', express.static(STORAGE_DIR, { fallthrough: false }));
 app.use('/images', express.static(IMAGES_DIR, { fallthrough: false }));
-// Страница одной работы и приёмка — тот же index.html, адрес разбирает клиент.
-// Без этого маршрута `/w/vl-0001` дошёл бы до express.static и получил 404,
-// то есть страницу нельзя было бы ни открыть по ссылке, ни проиндексировать.
-app.get(['/w/:ref', '/restore'], (_req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+
+// ── страницы ───────────────────────────────────────────────────
+// Каждая собирается на запрос из `galleryItems()`: разметка приходит готовой,
+// потому что изображение индексируется по странице, на которой оно стоит,
+// а собранную скриптом страницу Googlebot обходит вторым проходом и без
+// гарантий по времени. Разбор — research/2026-08-16-indexable-collection.md.
+
+const html = (res, status, body) => res.status(status).type('html').send(body);
+
+// Указатель. `page` из адреса, а не из запроса: страница со своим адресом —
+// то, что можно проиндексировать.
+async function showCollection(req, res, next) {
+  try {
+    const items = await galleryItems();
+    const pageCount = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
+    const page = Number(req.params.page || 1);
+    if (!Number.isInteger(page) || page < 1 || page > pageCount) return next();
+    // Первая страница живёт по `/`, иначе один и тот же список лежал бы
+    // по двум адресам и делил бы между ними всё, что накопил.
+    if (req.params.page && page === 1) return res.redirect(301, '/');
+    const shown = items.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
+    html(res, 200, collectionPage({ items: shown, page, pageCount, origin: SITE_ORIGIN }));
+  } catch (error) {
+    next(error);
+  }
+}
+
+app.get('/', showCollection);
+app.get('/page/:page', showCollection);
+
+app.get('/w/:slug', async (req, res, next) => {
+  try {
+    const items = await galleryItems();
+    const item = items.find(work => work.slug === req.params.slug);
+    if (!item) return next();
+    const others = items.filter(work => work !== item).slice(0, PAGE_SIZE);
+    html(res, 200, workPage({ item, others, origin: SITE_ORIGIN }));
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.get('/restore', (_req, res) => html(res, 200, intakePage({ origin: SITE_ORIGIN })));
+
+app.get('/robots.txt', (_req, res) => res.type('text/plain').send(robots({ origin: SITE_ORIGIN })));
+
+app.get('/sitemap.xml', async (_req, res, next) => {
+  try {
+    const items = await galleryItems();
+    const pageCount = Math.max(1, Math.ceil(items.length / PAGE_SIZE));
+    res.type('application/xml').send(sitemap({ items, pageCount, origin: SITE_ORIGIN }));
+  } catch (error) {
+    next(error);
+  }
+});
 
 // Строки, зависящие от модели, живут только здесь: эндпоинт для запроса
 // и `slug` для имени файла результата.
@@ -76,7 +131,7 @@ async function parseResponse(response) {
   if (!response.ok || data.code >= 400 || data.success === false) {
     throw new HttpError(
       502,
-      data.detail || data.error || data.msg || data.message || `Replicate вернул HTTP ${response.status}`
+      data.detail || data.error || data.msg || data.message || `Replicate returned HTTP ${response.status}`
     );
   }
   return data;
@@ -93,14 +148,14 @@ async function createPrediction(image, scale) {
     body: JSON.stringify({ input: { image, scale, face_enhance: false } })
   });
   const data = await parseResponse(response);
-  if (!data.id) throw new HttpError(502, 'Replicate не вернул идентификатор задачи.');
+  if (!data.id) throw new HttpError(502, 'Replicate did not return a task id.');
   return data;
 }
 
 async function readLongestSide(file) {
   const metadata = await sharp(file.buffer).metadata();
   const longestSide = Math.max(metadata.width || 0, metadata.height || 0);
-  if (!longestSide) throw new HttpError(400, 'Не удалось определить размеры исходного изображения.');
+  if (!longestSide) throw new HttpError(400, 'The size of that image could not be read.');
   return longestSide;
 }
 
@@ -125,26 +180,25 @@ async function waitForResult(prediction) {
   while (Date.now() < deadline) {
     if (task.status === 'succeeded') {
       const url = Array.isArray(task.output) ? task.output[0] : task.output;
-      if (!url) throw new HttpError(502, 'Задача завершилась, но ссылка на изображение отсутствует.');
+      if (!url) throw new HttpError(502, 'The task finished without an image.');
       return url;
     }
     if (task.status === 'failed' || task.status === 'canceled')
-      throw new HttpError(502, task.error || 'Апскейлинг не выполнен сервисом Replicate.');
+      throw new HttpError(502, task.error || 'Replicate did not complete the upscale.');
     await new Promise(resolve => setTimeout(resolve, 2000));
     const response = await fetch(task.urls?.get || `https://api.replicate.com/v1/predictions/${task.id}`, {
       headers: apiHeaders()
     });
     task = await parseResponse(response);
   }
-  throw new HttpError(504, 'Время ожидания результата истекло. Попробуйте ещё раз.');
+  throw new HttpError(504, 'Timed out waiting for the result. Try again.');
 }
 
 async function saveResult(sourceUrl, file, { outputSize, targetLongestSide }) {
   const response = await fetch(sourceUrl, { headers: apiHeaders() });
-  if (!response.ok) throw new HttpError(502, 'Не удалось скачать готовое изображение с Replicate.');
+  if (!response.ok) throw new HttpError(502, 'The finished image could not be downloaded from Replicate.');
   const contentType = response.headers.get('content-type') || file.mimetype;
-  if (!contentType.startsWith('image/'))
-    throw new HttpError(502, 'Replicate вернул файл, который не является изображением.');
+  if (!contentType.startsWith('image/')) throw new HttpError(502, 'Replicate returned a file that is not an image.');
   const extension = contentType.includes('png') ? '.png' : contentType.includes('webp') ? '.webp' : '.jpg';
   const baseName =
     path.basename(file.originalname, path.extname(file.originalname)).replace(/[^a-zA-Z0-9_-]/g, '_') || 'photo';
@@ -158,7 +212,7 @@ async function saveResult(sourceUrl, file, { outputSize, targetLongestSide }) {
 
 app.post('/api/upscale', upload.single('photo'), async (req, res, next) => {
   try {
-    if (!req.file) return res.status(400).json({ error: 'Выберите JPG, PNG или WebP размером до 10 МБ.' });
+    if (!req.file) return res.status(400).json({ error: 'Choose a JPG, PNG or WebP up to 10 MB.' });
     const outputSize = OUTPUT_SIZES.includes(req.body.output_size) ? req.body.output_size : 'x2';
     const sourceLongestSide = await readLongestSide(req.file);
     const targetLongestSide = targetLongestSideFor(outputSize, sourceLongestSide);
@@ -177,38 +231,28 @@ app.post('/api/upscale', upload.single('photo'), async (req, res, next) => {
   }
 });
 
-app.get('/api/gallery', async (_req, res, next) => {
-  try {
-    res.json({ images: await galleryItems() });
-  } catch (error) {
-    next(error);
-  }
-});
+// Публикация пользовательских загрузок закрыта. LEGAL.md обещает, что пока
+// галочка выключена, чужие файлы не публикуются никогда, — а выключенная в
+// разметке галочка такого обещания не даёт: маршрут виден из консоли браузера.
+// Отказ стоит здесь, чтобы обещание было правдой; включать его вместе с
+// галочкой и не раньше, чем пройден чек-лист из LEGAL.md.
+// Сама публикация никуда не делась и лежит в `publishGeneratedImage`.
+app.post('/api/gallery/share/:filename', (_req, res) =>
+  res.status(403).json({ error: 'Adding works to the collection is not available at the moment.' })
+);
 
-app.post('/api/gallery/refresh', async (_req, res, next) => {
-  try {
-    await promoteNextStorageImage();
-    res.json({ images: await galleryItems() });
-  } catch (error) {
-    next(error);
-  }
-});
+// Ненайденный адрес. Посетителю нужна страница, а скрипту приёмки — JSON:
+// отвечать разметкой на `fetch` значит показать в аварии кусок HTML.
+const wantsJson = req => req.path.startsWith('/api/') || req.path.startsWith('/images/');
 
-app.post('/api/gallery/share/:filename', async (req, res, next) => {
-  try {
-    const filename = path.basename(req.params.filename);
-    if (!isImage(filename)) return res.status(400).json({ error: 'Можно опубликовать только изображение.' });
-    await publishGeneratedImage(filename);
-    res.json({ message: 'Изображение добавлено в начало коллекции.', images: await galleryItems() });
-  } catch (error) {
-    if (error.code === 'ENOENT') return res.status(404).json({ error: 'Изображение для публикации не найдено.' });
-    next(error);
-  }
+app.use((req, res) => {
+  if (wantsJson(req)) return res.status(404).json({ error: FILE_NOT_FOUND });
+  html(res, 404, missingPage({ origin: SITE_ORIGIN }));
 });
 
 app.use((error, _req, res, _next) => {
   if (error instanceof multer.MulterError) {
-    return res.status(400).json({ error: 'Допустимы JPG, PNG и WebP до 10 МБ.' });
+    return res.status(400).json({ error: 'JPG, PNG and WebP up to 10 MB.' });
   }
   if (error instanceof HttpError) {
     // Ответ посетителю сам по себе следа не оставляет: во время аварии
@@ -224,7 +268,7 @@ app.use((error, _req, res, _next) => {
     return res.status(404).json({ error: FILE_NOT_FOUND });
   }
   console.error(error);
-  res.status(500).json({ error: 'Внутренняя ошибка сервера.' });
+  res.status(500).json({ error: 'Server error.' });
 });
 
 const port = Number(process.env.PORT || 3000);

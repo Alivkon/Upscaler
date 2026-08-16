@@ -1,11 +1,19 @@
-// Где лежат изображения и что из них показано на витрине.
+// Где лежат изображения и что из них показано в коллекции.
 //
-// Витрина описана явным списком `images/gallery.json`: порядок записей в файле
-// и есть порядок карточек на странице. Файлы при этом не копируются — запись
-// ссылается на уже существующий файл в одном из известных каталогов.
+// Источников два, и сливаются они здесь. Кураторские работы описаны каталогом
+// `works.js`, который лежит в git; файлы к ним детерминированно отрисовывает
+// `scripts/render-plates.mjs`. Присланные посетителями работы описаны списком
+// `images/gallery.json`: порядок записей в файле и есть их порядок на странице.
+// Файлы при этом не копируются — запись ссылается на уже существующий файл
+// в одном из известных каталогов.
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import sharp from 'sharp';
+import { WORKS, beforeFile, plateFile } from './works.js';
+// Номер работы и её адрес считаются одинаково на сервере и в браузере: то же
+// правило применяет приёмка к готовому файлу, и разойтись они не должны.
+import { accession, workRef } from './public/record.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -15,22 +23,32 @@ export const GENERATED_DIR = path.join(IMAGES_DIR, 'generated');
 
 const GALLERY_DIR = path.join(IMAGES_DIR, 'gallery');
 const SHARED_DIR = path.join(IMAGES_DIR, 'shared');
+// Кураторские работы: сюда пишет `scripts/render-plates.mjs`.
+const PLATES_DIR = path.join(IMAGES_DIR, 'plates');
 // Работа до реставрации. Лежит отдельно, потому что это не экспонат: показать
-// её можно только рядом с самой работой, и на витрину она не попадает.
+// её можно только рядом с самой работой, и в коллекцию она не попадает.
 const BEFORE_DIR = path.join(IMAGES_DIR, 'before');
 const GALLERY_INDEX_FILE = path.join(IMAGES_DIR, 'gallery.json');
-const GALLERY_SIZE = 10;
+// Размер страницы указателя, а не размер коллекции: из коллекции ничего
+// не уходит. Адрес, переставший существовать, теряет всё, что накопил
+// в поиске, — а накопить его и есть цель (research/2026-08-16-indexable-collection.md).
+export const PAGE_SIZE = 10;
 const IMAGE_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.webp']);
 
 // Каталоги, на которые может ссылаться запись индекса. Заодно ограничивает
 // список допустимых путей: всё, чего здесь нет, индекс показать не сможет.
 // `gallery` и `shared` остались только для чтения — новые записи туда не пишутся,
 // но у работающих установок там лежат уже опубликованные работы.
+//
+// Пула `storage` здесь нет намеренно: там лежат файлы Depositphotos и Adobe
+// Stock, публиковать которые нельзя никогда (LEGAL.md). Пока он был в списке,
+// индекс мог на них сослаться, а `promoteNextStorageImage` подставлял их
+// в коллекцию сам, раз в пять минут.
 const GALLERY_FOLDERS = {
-  storage: STORAGE_DIR,
   gallery: GALLERY_DIR,
   generated: GENERATED_DIR,
   shared: SHARED_DIR,
+  plates: PLATES_DIR,
   before: BEFORE_DIR
 };
 
@@ -41,7 +59,8 @@ export function isImage(filename) {
 }
 
 export async function ensureImageDirectories() {
-  await Promise.all(Object.values(GALLERY_FOLDERS).map(directory => fs.mkdir(directory, { recursive: true })));
+  const directories = [...Object.values(GALLERY_FOLDERS), STORAGE_DIR];
+  await Promise.all(directories.map(directory => fs.mkdir(directory, { recursive: true })));
 }
 
 async function listImageFiles(directory) {
@@ -135,48 +154,82 @@ async function beforeUrl(entry) {
   return imageUrl(entry.before);
 }
 
-export async function galleryItems() {
-  const entries = await readGalleryIndex();
+// Кураторские работы. Отрисованного файла может не быть — в свежей копии
+// репозитория `images/` пуст, — и такая работа просто не показывается: страница
+// с изображением, которого нет, хуже отсутствующей страницы.
+async function catalogueItems() {
   const items = [];
-  for (const entry of entries) {
-    if (items.length === GALLERY_SIZE) break;
-    const filePath = resolveEntryPath(entry.file);
-    if (!filePath || !(await fs.stat(filePath).catch(() => null))) continue;
+  for (const work of WORKS) {
+    const file = `plates/${plateFile(work)}`;
+    const stat = await fs.stat(path.join(PLATES_DIR, plateFile(work))).catch(() => null);
+    if (!stat) continue;
+    const hasBefore = await fs.stat(path.join(BEFORE_DIR, beforeFile(work))).catch(() => null);
     items.push({
-      id: entry.file,
-      url: imageUrl(entry.file),
-      title: entry.source === 'shared' ? 'Работа сообщества' : 'Новая LLM-генерация',
-      source: entry.source,
-      before: await beforeUrl(entry)
+      ref: accession(work.ref),
+      slug: work.slug,
+      url: imageUrl(file),
+      filename: plateFile(work),
+      title: work.title,
+      alt: work.alt,
+      tags: work.tags,
+      width: work.dims[0],
+      height: work.dims[1],
+      bytes: stat.size,
+      before: hasBefore ? imageUrl(`before/${beforeFile(work)}`) : null,
+      from: hasBefore ? work.from : null,
+      source: 'vellum'
     });
   }
   return items;
 }
 
-// Что из пула уже показывалось. До индекса продвижение было копированием
-// в `gallery` с префиксом `llm-<время>-`, поэтому такие записи тоже считаются
-// показанным исходником — иначе после переноса пул пошёл бы по второму кругу.
-function shownStorageNames(entries) {
-  const shown = new Set();
+// Присланные работы. Заголовок и `alt` им пишет машина: посетитель не станет
+// писать ни того, ни другого, а страница без них — пустая для поиска. Текст
+// механический и потому слабый, но он не врёт и не требует ничьей работы.
+// Пополнения тут больше не будет, пока публикация закрыта (LEGAL.md).
+async function uploadedItems() {
+  const entries = await readGalleryIndex();
+  const items = [];
   for (const entry of entries) {
-    shown.add(entry.file);
-    if (entry.file.startsWith('gallery/')) {
-      shown.add(`storage/${entry.file.slice('gallery/'.length).replace(/^llm-\d+-/, '')}`);
-    }
+    const filePath = resolveEntryPath(entry.file);
+    const stat = filePath && (await fs.stat(filePath).catch(() => null));
+    if (!stat) continue;
+    const { width = 0, height = 0 } = await sharp(filePath)
+      .metadata()
+      .catch(() => ({}));
+    if (!width || !height) continue;
+    items.push({
+      ref: accession(entry.file),
+      slug: workRef(entry.file),
+      url: imageUrl(entry.file),
+      filename: path.basename(entry.file),
+      // Размеры сюда не входят: их дописывает страница, как и заголовкам
+      // из каталога, — иначе они встанут в `<title>` дважды.
+      title: 'Restored wallpaper',
+      alt: `Restored wallpaper at ${width} × ${height}`,
+      tags: [],
+      width,
+      height,
+      bytes: stat.size,
+      before: await beforeUrl(entry),
+      from: null,
+      source: entry.source === 'shared' ? 'shared' : 'llm'
+    });
   }
-  return shown;
+  return items;
 }
 
-export async function promoteNextStorageImage() {
-  const storage = await listImageFiles(STORAGE_DIR);
-  return updateGalleryIndex(entries => {
-    const shown = shownStorageNames(entries);
-    const next = storage.find(file => !shown.has(`storage/${file.name}`));
-    if (!next) return null;
-    return [{ file: `storage/${next.name}`, source: 'llm', added: new Date().toISOString() }, ...entries];
-  });
+// Каталог идёт первым: это то, за что мы отвечаем сами и ради чего заведена
+// коллекция. Присланные работы — закрытый список позади него, и ничего
+// не вытесняют: постраничность у указателя, а не окно на десять мест.
+export async function galleryItems() {
+  return [...(await catalogueItems()), ...(await uploadedItems())];
 }
 
+// Вызывать сейчас некому: маршрут публикации в server.js отказывает, пока не
+// пройден чек-лист из LEGAL.md. Функция оставлена целой, чтобы включение было
+// снятием отказа, а не восстановлением по памяти того, как индекс пополняется.
+//
 // Бросает ошибку с `code: 'ENOENT'`, если публиковать нечего.
 export async function publishGeneratedImage(filename) {
   await fs.access(path.join(GENERATED_DIR, filename));
