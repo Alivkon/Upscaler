@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Своя лицензия вместо CC0, и значок Licensable — 2026-08-16</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;line-height:1.55;padding:24px;max-width:860px;margin:0 auto;color:#111}
+    h1{margin-bottom:4px} h2{margin-top:32px;border-bottom:1px solid #e2e8f0;padding-bottom:4px}
+    table{border-collapse:collapse;margin:12px 0;width:100%}
+    th,td{border:1px solid #d8dee4;padding:6px 10px;text-align:left;vertical-align:top}
+    th{background:#f6f8fa}
+    tr.pick td{background:#f0fff4}
+    .note{margin:18px 0;padding:12px;background:#f6f8fa;border-left:4px solid #2b6cb0}
+    .warn{margin:18px 0;padding:12px;background:#fffaf0;border-left:4px solid #dd6b20}
+    code{background:#f6f8fa;padding:1px 5px;border-radius:3px}
+    pre{background:#f6f8fa;padding:12px;border-radius:4px;overflow-x:auto}
+    pre code{background:none;padding:0}
+  </style>
+</head>
+<body>
+  <h1>Своя лицензия вместо CC0, и значок Licensable</h1>
+  <p>Дата: 16 августа 2026 · продолжение
+  <a href="2026-08-16-indexable-collection.html">записки об индексируемой коллекции</a></p>
+
+  <p>Там значок «Licensable» был назван как выгода, но поля <code>license</code>
+  не появилось — не было решено, на каких условиях отдаются наши собственные работы.
+  Теперь решено.</p>
+
+  <h2>Выбор</h2>
+  <p>Разбирались шесть вариантов. Отбор шёл по одному вопросу: <strong>может ли конкурент
+  скачать коллекцию целиком и переопубликовать её под теми же запросами.</strong>
+  Коллекция как находимый поиском набор — и есть актив.</p>
+
+  <table>
+    <tr><th>Лицензия</th><th>Трение у посетителя</th><th>Зеркало возможно</th><th>Подпись</th></tr>
+    <tr><td>CC0 1.0</td><td>нет</td><td><strong>да</strong></td><td>нет</td></tr>
+    <tr><td>CC BY 4.0</td><td>нужна подпись</td><td>да</td><td>обязательна</td></tr>
+    <tr><td>CC BY-SA 4.0</td><td>подпись + вирусность</td><td>да</td><td>обязательна</td></tr>
+    <tr><td>CC BY-NC 4.0</td><td>нет коммерции</td><td>нет</td><td>обязательна</td></tr>
+    <tr><td>CC BY-ND 4.0</td><td>нет производных</td><td>нет</td><td>обязательна</td></tr>
+    <tr class="pick"><td><strong>Своя, по образцу Unsplash/Pexels</strong></td><td><strong>нет</strong></td><td><strong>нет</strong></td><td><strong>нет</strong></td></tr>
+  </table>
+
+  <p>Отпали сразу три. <code>ND</code> запрещает производные, а обрезка под свой экран —
+  производное, то есть запрет ровно того, ради чего файл скачивают. <code>SA</code> вирусна
+  и для картинки бессмысленна. <code>NC</code> — известная неоднозначность (коммерческий ли
+  блог с рекламой) и заодно запрет посетителю положить обои в платное приложение.</p>
+
+  <p>CC0 — честный ответ «отдаём даром», и именно под ним придут будущие музейные работы.
+  Но он оставляет средний столбец открытым, а средний столбец здесь и есть весь риск.</p>
+
+  <div class="note">
+    Выбрана своя. Ровно то же и по той же причине выбрали Unsplash, Pexels и Pixabay:
+    посетителю ноль трения (бесплатно, коммерция можно, подпись не нужна), а отдельным
+    пунктом — запрет собирать из работ конкурирующий сервис. Google при этом всё равно:
+    <code>license</code> принимает любой адрес, описывающий условия.
+  </div>
+
+  <h2>Что сделано</h2>
+  <ul>
+    <li><strong><code>/license</code></strong> — страница условий. Два запрета:
+    не переопубликовывать коллекцию и не продавать файл без изменений.</li>
+    <li><strong><code>works.js</code></strong>: <code>LICENSES</code>
+    и <code>DEFAULT_LICENSE</code>. Условия — свойство работы, а не сайта: музейная картина
+    придёт под CC0, и один адрес на обе не годится. Запись в таблице сейчас одна, потому что
+    и работы пока все наши.</li>
+    <li><strong><code>gallery.js</code></strong>: кураторская работа получает лицензию
+    по умолчанию, присланная — <code>null</code>. Присланная работа не наша, и назначать ей
+    условия мы не можем.</li>
+    <li><strong><code>pages.js</code></strong>: <code>license</code>
+    и <code>acquireLicensePage</code> в разметке <code>ImageObject</code>. Обязательно из двух
+    только <code>license</code>. <code>acquireLicensePage</code> ведёт на саму страницу работы:
+    получают файл именно там, а не на странице условий.</li>
+    <li>Ссылка на условия в выходных данных на каждой странице, адрес — в карте.</li>
+  </ul>
+
+  <h2>Чего лицензия не делает</h2>
+  <p>Запрет на зеркало — условие лицензии, то есть договор. Скачавший файл прямо по адресу
+  ни на что не соглашался, и его связывает авторское право, а не наша страница. Работает
+  запрет ровно настолько, насколько на плашки распространяется авторское право.</p>
+  <p>Оснований считать, что распространяется, достаточно: плашки рисует написанная нами
+  программа по выбранным нами палитрам — обычное машинно-ассистированное авторство, а не
+  сгенерированное моделью изображение с открытым вопросом об авторе. Это стоит записать
+  в <a href="../LEGAL.md">LEGAL.md</a> отдельной строкой; сейчас там чужая незавершённая
+  правка, поэтому файл не тронут.</p>
+
+  <h2>Проверка</h2>
+  <p>Разметка снята со всех страниц работ и разобрана как JSON:</p>
+<pre><code>страниц работ: 13, разметка валидна: 13
+с license (значок Licensable): 12
+без license: 1 — vl-4009</code></pre>
+  <p>Двенадцать — наши работы, тринадцатая — присланная, и поля у неё правильно нет.
+  Обязательные поля Google (<code>contentUrl</code> плюс одно из <code>creator</code>,
+  <code>creditText</code>, <code>copyrightNotice</code>, <code>license</code>) на месте
+  у всех тринадцати.</p>
+  <p><code>GET /license</code> — 200, адрес в <code>sitemap.xml</code>.
+  <code>yarn verify</code> — код 0.</p>
+
+  <div class="warn">
+    <strong>Значка не будет, пока нет домена.</strong> <code>SITE_ORIGIN</code> указывает
+    на localhost, и <code>license</code> сейчас ссылается туда же.
+  </div>
+
+  <h2>Источники</h2>
+  <ul>
+    <li><a href="https://unsplash.com/license">Unsplash License</a> — образец формулировок.</li>
+    <li><a href="https://www.pexels.com/license/">Pexels License</a> и
+    <a href="https://help.pexels.com/hc/en-us/articles/360042332714">правила использования</a> —
+    там обои названы прямо как запрещённое обособленное распространение.</li>
+    <li><a href="https://developers.google.com/search/docs/appearance/structured-data/image-license-metadata">Google,
+    метаданные лицензии изображения</a> — <code>license</code> обязателен для значка,
+    <code>acquireLicensePage</code> рекомендован.</li>
+  </ul>
+</body>
+</html>
