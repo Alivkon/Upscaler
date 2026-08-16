@@ -119,15 +119,18 @@ body.is-dragging .record{box-shadow:0 24px 60px -28px rgba(0,0,0,.85), 0 2px 0 0
 /* ── the label ────────────────────────────────────────────── */
 .caption{margin:0}
 .caption__title{
-  font-family:var(--ff-display);
-  font-weight:300; font-size:clamp(24px,3.2vw,30px);
-  line-height:1.05; letter-spacing:.04em; margin:0 0 12px;
+  /* on trial in the mono. The serif is still loaded and --ff-display is
+     still defined, so this is a one-line revert. If it stays, the serif
+     comes out of the <link> and the site is down to a single face. */
+  font-family:var(--ff-mono);
+  font-weight:500; font-size:clamp(23px,3vw,28px);
+  line-height:1.1; letter-spacing:.02em; margin:0 0 12px;
   font-variant-numeric:lining-nums tabular-nums;
   /* the number is the finish line: it arrives filled in */
   transition:color .5s ease;
 }
 /* spaced out so it reads as four empty digit slots rather than a rule */
-.caption__title.is-blank{color:var(--fg-dim); letter-spacing:.16em}
+.caption__title.is-blank{color:var(--fg-dim)}
 .caption__spec{
   font-size:12px; letter-spacing:.02em;
   color:var(--fg-dim); margin:0;
@@ -219,7 +222,7 @@ body.is-dragging .record{box-shadow:0 24px 60px -28px rgba(0,0,0,.85), 0 2px 0 0
   .record{height:min(46vh, 380px); width:auto}
   .caption, .terms, .share{width:min(380px,84vw)}
   .terms, .share{margin-left:auto; margin-right:auto}
-  .caption__title{font-size:clamp(21px,5vw,25px)}
+  .caption__title{font-size:clamp(20px,5vw,24px)}
   .masthead{padding-inline:20px}
   .masthead__nav{gap:16px; font-size:11px}
 }

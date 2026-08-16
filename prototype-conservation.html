@@ -142,9 +142,12 @@ a{color:inherit}
    is the one thing on the page that is unique to it.          */
 .caption{ margin:0 }
 .caption__title{
-  font-family:var(--ff-display);
-  font-weight:300; font-size:clamp(24px,3.2vw,30px);
-  line-height:1.05; letter-spacing:.04em; margin:0 0 12px;
+  /* on trial in the mono. The serif is still loaded and --ff-display is
+     still defined, so this is a one-line revert. If it stays, the serif
+     comes out of the <link> and the site is down to a single face. */
+  font-family:var(--ff-mono);
+  font-weight:500; font-size:clamp(23px,3vw,28px);
+  line-height:1.1; letter-spacing:.02em; margin:0 0 12px;
   font-variant-numeric:lining-nums tabular-nums;
 }
 .caption__spec{
@@ -255,7 +258,7 @@ a{color:inherit}
   .record__image canvas{height:100%; width:auto}
   .caption, .provenance{width:min(360px,80vw)}
   .provenance{margin-left:auto; margin-right:auto; margin-top:20px; padding-top:14px}
-  .caption__title{font-size:clamp(21px,5vw,25px)}
+  .caption__title{font-size:clamp(20px,5vw,24px)}
   .masthead{padding-inline:20px}
   .masthead__nav{gap:16px; font-size:11px}
 }
