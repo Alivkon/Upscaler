@@ -22,7 +22,7 @@ const SITE_NAME = 'Vellum';
 // Сказано про оба вида работ: описание страницы попадает в выдачу,
 // а «4k desktop wallpaper» спрашивают отдельно от «phone wallpaper».
 const DESCRIPTION =
-  'Phone wallpapers at 1440 × 3120 and 4K desktop wallpapers at 3840 × 2160. ' +
+  'Phone wallpapers at 1440 × 3120, 4K desktop at 3840 × 2160, and engravings from open collections. ' +
   'Free to download, no sign-up. Restore your own image up to 4× its size.';
 
 // Единственное место, где текст становится разметкой. Имена присланных файлов
