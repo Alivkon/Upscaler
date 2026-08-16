@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Витрина под Google Images: что из записки сделано — 2026-08-16</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;line-height:1.55;padding:24px;max-width:860px;margin:0 auto;color:#111}
+    h1{margin-bottom:4px} h2{margin-top:32px;border-bottom:1px solid #e2e8f0;padding-bottom:4px}
+    h3{margin-top:24px}
+    table{border-collapse:collapse;margin:12px 0;width:100%}
+    th,td{border:1px solid #d8dee4;padding:6px 10px;text-align:left;vertical-align:top}
+    th{background:#f6f8fa}
+    .note{margin:18px 0;padding:12px;background:#f6f8fa;border-left:4px solid #2b6cb0}
+    .warn{margin:18px 0;padding:12px;background:#fffaf0;border-left:4px solid #dd6b20}
+    code{background:#f6f8fa;padding:1px 5px;border-radius:3px}
+    pre{background:#f6f8fa;padding:12px;border-radius:4px;overflow-x:auto}
+    pre code{background:none;padding:0}
+  </style>
+</head>
+<body>
+  <h1>Витрина под Google Images: что из записки сделано</h1>
+  <p>Дата: 16 августа 2026 · исполнение
+  <a href="2026-08-16-indexable-collection.html">записки об индексируемой коллекции</a></p>
+
+  <p>Записка — план; здесь то, что из него получилось, и семь мест, где сделано
+  не так, как было написано.</p>
+
+  <h2>Цель</h2>
+  <p>Три причины, по которым коллекцию нельзя было найти, назывались в записке.
+  Все три закрыты:</p>
+
+  <table>
+    <tr><th>Было</th><th>Стало</th></tr>
+    <tr><td>Витрина собиралась в браузере</td><td>Разметку отдаёт сервер: <code>pages.js</code></td></tr>
+    <tr><td>У работы не было своего адреса</td><td><code>/w/&lt;slug&gt;</code>, постоянный, из каталога в git</td></tr>
+    <tr><td>Показанное менялось каждые пять минут</td><td>Из коллекции ничего не уходит; <code>PAGE_SIZE</code> — размер страницы указателя</td></tr>
+  </table>
+
+  <div class="note">
+    <strong>Проверка:</strong> в HTML первой страницы <strong>10 тегов
+    <code>&lt;img src="/images/plates/…"&gt;</code></strong> без единой строки JavaScript.
+  </div>
+
+  <h2>Что сделано</h2>
+
+  <h3>Каталог: <code>works.js</code></h3>
+  <p>Двенадцать работ, у каждой то, чем она рисуется (<code>stops</code>, <code>sun</code>,
+  <code>dims</code>, <code>from</code>), и то, чем описывается (<code>ref</code>,
+  <code>slug</code>, <code>title</code>, <code>alt</code>, <code>tags</code>). Раньше первое
+  лежало в <code>scripts/render-plates.mjs</code>, а второго не было вовсе.</p>
+  <p>Имена файлов складываются там же — <code>plateFile()</code> и <code>beforeFile()</code>, —
+  потому что складывают их двое: скрипт рендера и сервер. Разойдись они, страница
+  сослалась бы на несуществующий файл.</p>
+
+  <h3>Файлы: <code>scripts/render-plates.mjs</code></h3>
+  <p>Импортирует каталог, пишет <code>&lt;slug&gt;-&lt;ш&gt;x&lt;в&gt;.jpg</code> и
+  <code>&lt;slug&gt;.jpg</code>. Проверено, что переименование ничего не сдвинуло: 12 работ
+  и 12 файлов «до», отрисованные после правки, <strong>побайтово совпали</strong>
+  с отрисованными до неё (<code>md5sum</code>, 24 из 24 совпадений).</p>
+
+  <h3>Страницы: <code>pages.js</code></h3>
+  <p>Указатель, страница работы, приёмка, <code>sitemap.xml</code>, <code>robots.txt</code>.
+  Из пяти несущих деталей записки сделаны все пять: настоящий файл в <code>src</code>,
+  слова в имени файла, <code>alt</code>, заданные <code>width</code>/<code>height</code>,
+  разметка <code>ImageObject</code>. Плюс <code>canonical</code> и <code>og:</code>,
+  собранные из <code>SITE_ORIGIN</code>.</p>
+  <p><code>--ratio</code> проставляется сервером из размеров каталога, а не по загрузке
+  файла: проём принимает пропорции работы до того, как что-то загрузилось, и указатель
+  не прыгает.</p>
+
+  <h3>Слияние двух источников: <code>gallery.js</code></h3>
+  <p><code>galleryItems()</code> возвращает каталог, за ним — присланные работы из
+  <code>images/gallery.json</code>. Форма записи одна на оба источника.</p>
+
+  <h3>Английский</h3>
+  <p>Вся видимая посетителю строка: страницы, приёмка и тексты ошибок сервера.
+  Комментарии и записки остались русскими — их читаем мы.</p>
+
+  <h3>Удалено</h3>
+  <p><code>public/app.js</code>, <code>public/index.html</code>, <code>public/collection.js</code>,
+  <code>/api/gallery</code>, <code>/api/gallery/refresh</code>. Маршрутизация в браузере,
+  сборка карточек в браузере и обновление витрины раз в пять минут — всё это делал сервер
+  уже во время исполнения. <code>public/work.js</code> из 208 строк стал 48: страница приходит
+  готовой, и скрипту остаётся жест «подержать, чтобы увидеть, что было».</p>
+
+  <h2>Семь отступлений от записки</h2>
+  <ol>
+    <li><strong><code>--jpeg</code> стал <code>--png</code>.</strong> Формат выбран:
+    JPEG q92 4:4:4. Значит, он и должен получаться по умолчанию — прогон, дающий файлы,
+    которых сайт не отдаёт, это ловушка. PNG остался под флагом как эталон без потерь.</li>
+
+    <li><strong>Значка «Licensable» нет.</strong> Для него нужны <code>license</code>
+    и <code>acquireLicensePage</code>, то есть выбранная лицензия и страница с ней.
+    <a href="../LEGAL.md">LEGAL.md</a> не говорит, на каких условиях отдаются наши
+    собственные работы, и придумывать это в коде нельзя. <code>ImageObject</code> без
+    этих полей остаётся валидным — значка не будет, остальное работает.</li>
+
+    <li><strong>Пул <code>images/storage</code> убран из коллекции целиком.</strong>
+    В записке сказано, что там лежат файлы Depositphotos и Adobe Stock, «которые
+    публиковать нельзя никогда». При этом <code>promoteNextStorageImage</code> подставлял
+    оттуда файл в витрину сам, раз в пять минут. Удалены и функция, и маршрут
+    <code>/api/gallery/refresh</code>, и сам <code>storage</code> из
+    <code>GALLERY_FOLDERS</code> — иначе на него мог бы сослаться индекс.</li>
+
+    <li><strong>Адрес постраничности <code>/page/2</code>.</strong> В списке адресов
+    записки его не было, а постраничность есть. Первая страница живёт по <code>/</code>;
+    <code>/page/1</code> отвечает 301 на <code>/</code>, иначе один список лежал бы
+    по двум адресам.</li>
+
+    <li><strong>Пятого поля у работы не заведено.</strong> В записке <code>&lt;title&gt;</code>
+    состоит из названия, ключевой фразы и размеров, а полей названо четыре. Ключевая фраза
+    сложена в <code>title</code> целиком (<code>Dusk Ridge — dark gradient phone wallpaper</code>),
+    размеры дописывает страница.</li>
+
+    <li><strong><code>iphone</code> или <code>android</code> в адресе — по разрешению
+    работы.</strong> Пример в записке — <code>…-iphone-wallpaper</code> для 1170×2532.
+    У 1080×2340 это было бы неправдой, поэтому у трёх работ в адресе <code>android</code>.</li>
+
+    <li><strong>Заголовки присланных работ проще, чем спроектировано.</strong> Записка
+    описывает вывод цвета через <code>sharp().stats()</code> и сама же говорит: для MVP
+    механизм проектируется, но не включается. Присланная работа получает
+    <code>Restored wallpaper</code> и размеры; цвет не считается.</li>
+  </ol>
+
+  <h2>Известные ограничения</h2>
+  <div class="warn">
+    <strong>Ничего не индексируется, пока нет домена.</strong> <code>SITE_ORIGIN</code>
+    по умолчанию указывает на localhost. Это по-прежнему главное открытое место записки.
+  </div>
+  <ul>
+    <li><strong>Теги не образуют страниц.</strong> Поле <code>tags</code> заполнено
+    и читается только в <code>keywords</code> разметки <code>ImageObject</code>;
+    <code>/t/&lt;tag&gt;</code> не открывается — на 12 работах вышло бы пять списков
+    по две работы.</li>
+    <li><strong>Сравнение с исходником есть только у кураторских работ.</strong>
+    У присланной исходника не остаётся вовсе: загрузка живёт в памяти.</li>
+    <li><strong>Страница работы держит в себе десять соседних карточек.</strong> Это
+    внутренние ссылки, ради которых всё и делалось, но разметки на странице получается
+    много.</li>
+  </ul>
+
+  <h2>Результаты проверок</h2>
+<pre><code>yarn verify                                      код 0
+GET  /                                           200
+GET  /page/2                                     200
+GET  /page/1                                     301 → /
+GET  /w/dusk-ridge-dark-gradient-iphone-wallpaper 200
+GET  /w/nope                                     404
+GET  /sitemap.xml                                200   16 адресов
+GET  /robots.txt                                 200
+POST /api/gallery/share/&lt;файл&gt;                   403</code></pre>
+
+  <ul>
+    <li>Рендер после переименования: 24 файла из 24 побайтово совпали с прежними.</li>
+    <li>Сравнение «до/после» на странице работы: <code>opacity</code> наложенного файла
+    0 → 1 при нажатии, 1 → 0 при отпускании; файл «до» загружен как 564×1220.</li>
+    <li>У работы без исходника (<code>/w/vl-4009</code>) нажатие открывает лайтбокс,
+    кнопки «Before» и слоя «до» в разметке нет вовсе.</li>
+    <li>Приёмка: выбранный файл 800×1200 PNG измерен, строка «Result — 1600 × 2400»
+    и переключатель размера собрались, ошибок в консоли нет. До Replicate проверка
+    не доходила — вызовов не было.</li>
+    <li>Галочка «Add to the collection» приглушена и не нажимается; маршрут публикации
+    отвечает 403.</li>
+  </ul>
+
+  <h2>Что осталось сделать руками</h2>
+  <p><code>images/plates</code> и <code>images/before</code> содержат ещё и файлы под
+  старыми именами (<code>vl-0001-1170x2532.png</code> и подобные): удалить их не дала
+  песочница. На них никто не ссылается, но место они занимают.</p>
+<pre><code>rm images/plates/vl-*.png images/plates/vl-*.jpg images/before/vl-*.jpg</code></pre>
+</body>
+</html>
