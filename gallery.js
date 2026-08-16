@@ -10,7 +10,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
-import { WORKS, beforeFile, plateFile } from './works.js';
+import { DEFAULT_LICENSE, LICENSES, WORKS, beforeFile, plateFile } from './works.js';
 // Номер работы и её адрес считаются одинаково на сервере и в браузере: то же
 // правило применяет приёмка к готовому файлу, и разойтись они не должны.
 import { accession, workRef } from './public/record.js';
@@ -177,6 +177,7 @@ async function catalogueItems() {
       bytes: stat.size,
       before: hasBefore ? imageUrl(`before/${beforeFile(work)}`) : null,
       from: hasBefore ? work.from : null,
+      license: LICENSES[work.license || DEFAULT_LICENSE],
       source: 'vellum'
     });
   }
@@ -213,6 +214,8 @@ async function uploadedItems() {
       bytes: stat.size,
       before: await beforeUrl(entry),
       from: null,
+      // Лицензии нет: работа не наша, и условий на неё мы назначить не можем.
+      license: null,
       source: entry.source === 'shared' ? 'shared' : 'llm'
     });
   }

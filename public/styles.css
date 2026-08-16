@@ -600,7 +600,64 @@ body.is-locked {
   outline-offset: 3px;
 }
 
+/* ── сплошной текст: условия ──────────────────────────────────
+   Единственная страница, которую читают строку за строкой, поэтому мера
+   строки здесь узкая. Заголовки разделов набраны как строка характеристик,
+   а не крупнее текста: документ короткий, и иерархия ему не нужна. */
+.prose {
+  padding: 0 var(--gutter);
+  max-width: calc(62ch + 2 * var(--gutter));
+}
+.prose__lead {
+  color: var(--fg);
+  margin: 0 0 4px;
+}
+.prose h2 {
+  margin: 32px 0 10px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+}
+.prose p,
+.prose li {
+  color: var(--fg-dim);
+}
+.prose p {
+  margin: 0 0 12px;
+}
+.prose ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+/* маркер — та же точка-разделитель, что в строке характеристик */
+.prose li {
+  position: relative;
+  padding-left: 18px;
+  margin-bottom: 8px;
+}
+.prose li::before {
+  content: '·';
+  position: absolute;
+  left: 4px;
+  opacity: 0.45;
+}
+.prose strong {
+  font-weight: 500;
+  color: var(--fg);
+}
+
 /* ── выходные данные ──────────────────────────────────────── */
+.colophon a {
+  color: inherit;
+  text-decoration: none;
+  border-bottom: 1px solid var(--rule);
+}
+.colophon a:hover {
+  border-bottom-color: var(--fg);
+}
 .colophon {
   border-top: 1px solid var(--rule);
   margin-top: clamp(48px, 9vw, 96px);

@@ -14,7 +14,7 @@ import {
   galleryItems,
   isImage
 } from './gallery.js';
-import { collectionPage, intakePage, missingPage, robots, sitemap, workPage } from './pages.js';
+import { collectionPage, intakePage, licensePage, missingPage, robots, sitemap, workPage } from './pages.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // Канонический адрес: домена ещё нет, и до него всё, что строится из origin —
@@ -93,6 +93,8 @@ app.get('/w/:slug', async (req, res, next) => {
 });
 
 app.get('/restore', (_req, res) => html(res, 200, intakePage({ origin: SITE_ORIGIN })));
+
+app.get('/license', (_req, res) => html(res, 200, licensePage({ origin: SITE_ORIGIN })));
 
 app.get('/robots.txt', (_req, res) => res.type('text/plain').send(robots({ origin: SITE_ORIGIN })));
 
