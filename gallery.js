@@ -1,8 +1,8 @@
 // Где лежат изображения и что из них показано в коллекции.
 //
 // Источников два, и сливаются они здесь. Кураторские работы описаны словами
-// в `works.js`, а их файлы делает соседний репозиторий `wallpaper-gen`
-// и перечисляет в `images/manifest.json`; соединяются две половины по `ref`.
+// в `catalogue/`, а их файлы делает соседний репозиторий `wallpaper-gen`
+// и перечисляет в `images/manifest/`; соединяются две половины по `ref`.
 // Присланные посетителями работы описаны списком `images/gallery.json`:
 // порядок записей в файле и есть их порядок на странице. Файлы при этом
 // не копируются — запись ссылается на уже существующий файл в одном
@@ -11,7 +11,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
-import { DEFAULT_LICENSE, LICENSES, WORKS } from './works.js';
+import { DEFAULT_LICENSE, LICENSES, loadWorks } from './works.js';
 // Номер работы и её адрес считаются одинаково на сервере и в браузере: то же
 // правило применяет приёмка к готовому файлу, и разойтись они не должны.
 import { accession, workRef } from './public/record.js';
@@ -32,7 +32,12 @@ const BEFORE_DIR = path.join(IMAGES_DIR, 'before');
 const GALLERY_INDEX_FILE = path.join(IMAGES_DIR, 'gallery.json');
 // Что о своих файлах сообщает их изготовитель. Пишется туда же, куда картинки,
 // и путешествует вместе с ними: без картинок манифест не значит ничего.
-const MANIFEST_FILE = path.join(IMAGES_DIR, 'manifest.json');
+//
+// Каталог, а не файл: изготовителей несколько. `wallpaper-gen` рисует плашки,
+// он же кроит музейные сканы, и однажды добавится третий. Каждый владеет ровно
+// одним файлом и переписывает только его — общий файл они затирали бы по
+// очереди, и последний запуск оставлял бы от коллекции свою десятую часть.
+const MANIFEST_DIR = path.join(IMAGES_DIR, 'manifest');
 // Размер страницы указателя, а не размер коллекции: из коллекции ничего
 // не уходит. Адрес, переставший существовать, теряет всё, что накопил
 // в поиске, — а накопить его и есть цель (research/2026-08-16-indexable-collection.md).
@@ -158,9 +163,9 @@ async function beforeUrl(entry) {
   return imageUrl(entry.before);
 }
 
-// Манифест — то, что о файлах сообщает их изготовитель. Пишет его
-// `wallpaper-gen`: какие файлы сделаны, с какими настоящими размерами
-// и какой у каждого есть копия для показа и файл «до».
+// Манифест — то, что о файлах сообщает их изготовитель: какие файлы сделаны,
+// с какими настоящими размерами и какие у каждого есть копия для показа
+// и файл «до». Пишет его `wallpaper-gen`, по файлу на изготовителя.
 //
 // Сайт имён файлов не складывает и размеров не измеряет. Складывал бы —
 // два репозитория однажды разошлись бы в правилах, и страница сослалась бы
@@ -168,29 +173,35 @@ async function beforeUrl(entry) {
 // нет: работа не всегда выходит той, какой её просили, музейный скан
 // кончается там, где кончается скан музея.
 //
-// Манифеста может не быть: в свежей копии `images/` пуст, пока не отработал
-// генератор. Тогда кураторских работ на сайте просто нет — страница
-// с изображением, которого нет, хуже отсутствующей страницы.
+// Манифестов может не быть вовсе: в свежей копии `images/` пуст, пока
+// не отработал генератор. Тогда кураторских работ на сайте просто нет —
+// страница с изображением, которого нет, хуже отсутствующей страницы.
 async function readManifest() {
+  let names;
   try {
-    const parsed = JSON.parse(await fs.readFile(MANIFEST_FILE, 'utf8'));
-    return Array.isArray(parsed) ? parsed : [];
+    names = await fs.readdir(MANIFEST_DIR);
   } catch (error) {
     if (error.code === 'ENOENT') return [];
     throw error;
   }
+  const parts = await Promise.all(
+    names
+      .filter(name => name.endsWith('.json'))
+      .map(async name => JSON.parse(await fs.readFile(path.join(MANIFEST_DIR, name), 'utf8')))
+  );
+  return parts.filter(Array.isArray).flat();
 }
 
 // Файл из манифеста существует не всегда: манифест мог пережить каталог
 // картинок. Проверяем перед тем, как обещать адрес.
 const madeFile = async entry => (entry && (await fs.stat(path.join(IMAGES_DIR, entry.file)).catch(() => null))) || null;
 
-// Кураторские работы. Порядок — этого массива, а не манифеста: манифест
-// про файлы, а порядок на указателе — про развеску.
+// Кураторские работы. Порядок — каталога, а не манифеста: манифест про файлы,
+// а порядок на указателе — про развеску.
 async function catalogueItems() {
   const made = new Map((await readManifest()).map(entry => [entry.ref, entry]));
   const items = [];
-  for (const work of WORKS) {
+  for (const work of await loadWorks()) {
     const plate = made.get(work.ref);
     if (!(await madeFile(plate))) continue;
     const before = (await madeFile(plate.before)) && plate.before;
