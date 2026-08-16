@@ -1,0 +1,472 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Upscale a photo to 4K — Restore your own | Vellum</title>
+<meta name="description" content="Upload a small or blurry picture and get it back at up to 4× the resolution, ready to use as a phone wallpaper. First one free." />
+<meta property="og:title" content="Restore your own — Vellum" />
+<meta property="og:description" content="Upload a small picture, get it back at up to 4× the resolution." />
+<meta property="og:type" content="website" />
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,300&family=Sometype+Mono:wght@400..500&display=swap" rel="stylesheet">
+<style>
+/* ───────────────────────────────────────────────────────────
+   Intake for the same archive. Identical ground, identical
+   surround, identical record — the only difference is that the
+   record starts empty and no accession number has been assigned
+   to it yet.
+   ─────────────────────────────────────────────────────────── */
+:root{
+  --ground:    #232326;
+  --card:      #9A9A94;
+  --card-edge: #86867F;
+  --fg:        #EDEAE3;
+  --fg-dim:    #8E8B84;
+  --rule:      rgba(237,234,227,.13);
+
+  /* two faces: the number in the serif, the whole rest of the page in
+     the mono, which is the default and is not restated per rule */
+  --ff-display: "Newsreader", Georgia, serif;
+  --ff-mono:    "Sometype Mono", ui-monospace, monospace;
+
+  --gutter: clamp(20px, 5vw, 64px);
+}
+
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:var(--ground);
+  color:var(--fg);
+  /* a monospace runs optically larger than a sans at the same size */
+  font-family:var(--ff-mono);
+  font-size:13px;
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:inherit}
+
+.masthead{
+  display:flex; align-items:baseline; justify-content:space-between;
+  gap:24px; padding:22px var(--gutter);
+  border-bottom:1px solid var(--rule);
+}
+/* a monospace is already wide, so the tracking that opened up a sans
+   wordmark has to come back down or the mark reads as spaced-out */
+.masthead__mark{
+  font-weight:500;
+  font-size:12px; letter-spacing:.16em; text-transform:uppercase;
+}
+.masthead__nav{
+  display:flex; gap:22px;
+  font-size:11px; letter-spacing:.06em; text-transform:uppercase;
+  color:var(--fg-dim);
+}
+.masthead__nav a{text-decoration:none}
+.masthead__nav a:hover,.masthead__nav a[aria-current]{color:var(--fg)}
+
+.plate{
+  padding:clamp(24px,4vw,56px) var(--gutter);
+  display:grid;
+  grid-template-columns:auto minmax(280px, 380px);
+  gap:clamp(28px,5vw,72px);
+  align-items:center;
+  justify-content:center;
+}
+
+/* ── the record, empty until a file is read into it ───────── */
+.record{
+  margin:0;
+  background:var(--card);
+  padding:clamp(12px,1.6vw,20px);
+  padding-bottom:clamp(22px,3vw,38px);
+  height:min(72vh, 620px);
+  display:flex; flex-direction:column;
+  box-shadow:0 24px 60px -28px rgba(0,0,0,.85), 0 2px 0 0 var(--card-edge);
+  transition:box-shadow .2s ease;
+}
+.record__image{
+  position:relative; display:block; height:100%;
+  /* an empty record shows the ground through it */
+  background:var(--ground);
+  aspect-ratio:780 / 1690;
+  outline:1px solid var(--card-edge);
+  /* the inner edge catches light on two sides and falls into
+     shadow on the other two, so the opening reads as an opening */
+  box-shadow:
+    inset 2px 2px 0 0 rgba(0,0,0,.30),
+    inset -2px -2px 0 0 rgba(255,255,255,.14);
+  overflow:hidden;
+}
+.record__image.has-work{aspect-ratio:auto}
+.record__image canvas{display:block; height:100%; width:auto}
+.record__image:focus-visible{outline:2px solid var(--fg); outline-offset:3px}
+
+/* the whole page is the drop target */
+body.is-dragging .record{box-shadow:0 24px 60px -28px rgba(0,0,0,.85), 0 2px 0 0 var(--card-edge), 0 0 0 3px var(--fg)}
+
+/* a scan pass moving down the frame */
+.record__image.is-working::after{
+  content:""; position:absolute; inset:0;
+  background:linear-gradient(180deg,
+    transparent 0%, rgba(255,255,255,.05) 44%,
+    rgba(255,255,255,.32) 50%, rgba(255,255,255,.05) 56%, transparent 100%);
+  animation:rake 1.6s linear infinite;
+}
+@keyframes rake{ from{transform:translateY(-100%)} to{transform:translateY(100%)} }
+
+/* ── the label ────────────────────────────────────────────── */
+.caption{margin:0}
+.caption__title{
+  font-family:var(--ff-display);
+  font-weight:300; font-size:clamp(24px,3.2vw,30px);
+  line-height:1.05; letter-spacing:.04em; margin:0 0 12px;
+  font-variant-numeric:lining-nums tabular-nums;
+  /* the number is the finish line: it arrives filled in */
+  transition:color .5s ease;
+}
+/* spaced out so it reads as four empty digit slots rather than a rule */
+.caption__title.is-blank{color:var(--fg-dim); letter-spacing:.16em}
+.caption__spec{
+  font-size:12px; letter-spacing:.02em;
+  color:var(--fg-dim); margin:0;
+  display:flex; flex-wrap:wrap; align-items:center; gap:0 10px;
+}
+.caption__spec .lead{font-weight:500; color:var(--fg)}
+.caption__spec span::after{content:"·"; margin-left:10px; opacity:.45}
+.caption__spec span:last-child::after{content:""}
+
+/* ── the enlargement choice, set as part of the specification ── */
+.scale{
+  display:inline-flex; gap:0; margin-left:2px;
+  border:1px solid var(--rule);
+}
+.scale button{
+  font-size:11px; letter-spacing:.06em;
+  background:transparent; color:var(--fg-dim); border:0;
+  padding:3px 9px; cursor:pointer;
+}
+.scale button[aria-pressed="true"]{background:var(--fg); color:var(--ground)}
+.scale button:focus-visible{outline:2px solid var(--fg); outline-offset:2px}
+
+.actions{display:flex; gap:10px; align-items:stretch; margin:22px 0 0}
+.btn{
+  font-size:12px; font-weight:500;
+  letter-spacing:.04em; text-transform:uppercase;
+  padding:13px 18px; border:1px solid var(--fg);
+  background:var(--fg); color:var(--ground);
+  text-decoration:none; cursor:pointer; flex:1 1 auto; text-align:center;
+  white-space:nowrap;
+  transition:background .15s ease, color .15s ease, opacity .15s ease;
+}
+.btn:hover{background:transparent; color:var(--fg)}
+.btn[disabled]{opacity:.4; cursor:default}
+.btn[disabled]:hover{background:var(--fg); color:var(--ground)}
+.btn--ghost{
+  background:transparent; color:var(--fg);
+  border-color:var(--rule); flex:0 0 auto;
+}
+.btn--ghost:hover{border-color:var(--fg); background:transparent; color:var(--fg)}
+.btn:focus-visible{outline:2px solid var(--fg); outline-offset:3px}
+
+.terms{
+  border-top:1px solid var(--rule);
+  margin-top:26px; padding-top:16px;
+}
+.terms__line{
+  font-size:12px; color:var(--fg-dim); margin:0 0 4px;
+}
+.terms__note{font-size:12px; color:var(--fg-dim); margin:6px 0 0}
+
+/* ── the rights question, asked where it belongs: at the point
+      of publishing, not at the door ───────────────────────── */
+.share{
+  border-top:1px solid var(--rule);
+  margin-top:20px; padding-top:16px;
+}
+.share__row{display:flex; gap:11px; align-items:flex-start; cursor:pointer}
+.share__box{
+  flex:0 0 auto; width:15px; height:15px; margin-top:3px;
+  border:1px solid var(--fg-dim); background:transparent;
+  display:grid; place-items:center;
+}
+.share input{position:absolute; opacity:0; width:0; height:0}
+.share input:checked + .share__box{background:var(--fg); border-color:var(--fg)}
+.share input:checked + .share__box::after{content:""; width:7px; height:7px; background:var(--ground)}
+.share input:focus-visible + .share__box{outline:2px solid var(--fg); outline-offset:2px}
+.share__text{font-size:12px; line-height:1.5}
+.share__fine{
+  display:block; margin-top:3px;
+  font-size:11px; color:var(--fg-dim);
+}
+
+.colophon{
+  border-top:1px solid var(--rule);
+  margin-top:clamp(48px,9vw,96px);
+  padding:20px var(--gutter) 40px;
+  font-size:11px; color:var(--fg-dim);
+  display:flex; flex-wrap:wrap; gap:8px 22px;
+}
+
+.visually-hidden{
+  position:absolute; width:1px; height:1px; overflow:hidden;
+  clip:rect(0 0 0 0); clip-path:inset(50%); white-space:nowrap;
+}
+
+@media (max-width: 860px){
+  .plate{grid-template-columns:minmax(0,1fr); gap:22px; justify-items:center; padding-top:20px}
+  .record{height:min(46vh, 380px); width:auto}
+  .caption, .terms, .share{width:min(380px,84vw)}
+  .terms, .share{margin-left:auto; margin-right:auto}
+  .caption__title{font-size:clamp(21px,5vw,25px)}
+  .masthead{padding-inline:20px}
+  .masthead__nav{gap:16px; font-size:11px}
+}
+
+@media (prefers-reduced-motion: reduce){
+  *{transition:none !important; animation:none !important}
+}
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="masthead__mark">Vellum</div>
+  <nav class="masthead__nav">
+    <a href="prototype-conservation.html">Collection</a>
+    <a href="#" aria-current="page">Restore your own</a>
+  </nav>
+</header>
+
+<main>
+  <div class="plate">
+    <figure class="record">
+      <div class="record__image" id="image">
+        <canvas id="canvas" width="780" height="1690" hidden></canvas>
+      </div>
+    </figure>
+
+    <div class="label">
+      <div class="caption">
+        <!-- Before a picture exists there is no number to give it. The
+             blank is the state of the page, stated in its own language. -->
+        <h1 class="caption__title is-blank" id="ref">VL·––––</h1>
+        <p class="caption__spec" id="spec">
+          <span id="specMain">No picture yet</span>
+        </p>
+
+        <div class="actions" id="actions">
+          <button class="btn" id="primary" type="button">Choose a picture</button>
+        </div>
+        <input class="visually-hidden" type="file" id="file" accept="image/*" />
+      </div>
+
+      <div class="terms">
+        <p class="terms__line" id="termsLine">Drop a file anywhere on this page</p>
+        <p class="terms__note" id="termsNote">JPEG, PNG or HEIC. Nothing is published unless you ask for it.</p>
+      </div>
+
+      <div class="share" id="share" hidden>
+        <label class="share__row">
+          <input type="checkbox" id="publish" />
+          <span class="share__box" aria-hidden="true"></span>
+          <span class="share__text">
+            Add to the collection
+            <span class="share__fine">Only if the picture is yours to share.</span>
+          </span>
+        </label>
+      </div>
+    </div>
+  </div>
+</main>
+
+<footer class="colophon">
+  <span>Vellum</span>
+  <span>Prototype — intake</span>
+  <span>Restoration is simulated; nothing is uploaded</span>
+</footer>
+
+<script>
+/* ───────────────────────────────────────────────────────────
+   Everything measured here is measured from the actual file the
+   visitor drops: dimensions, type, weight. Nothing is estimated
+   and nothing is sent anywhere — the picture is read locally and
+   drawn to a canvas.
+
+   The one thing this prototype cannot do is invent detail, so the
+   "restored" state shows the same picture with a finished label
+   rather than a fake before/after. Faking the after here would be
+   the single most misleading thing the mock could do.
+   ─────────────────────────────────────────────────────────── */
+
+const els = {
+  image:     document.getElementById("image"),
+  canvas:    document.getElementById("canvas"),
+  ref:       document.getElementById("ref"),
+  spec:      document.getElementById("spec"),
+  specMain:  document.getElementById("specMain"),
+  actions:   document.getElementById("actions"),
+  primary:   document.getElementById("primary"),
+  file:      document.getElementById("file"),
+  termsLine: document.getElementById("termsLine"),
+  termsNote: document.getElementById("termsNote"),
+  share:     document.getElementById("share"),
+};
+
+let received = null;   // { width, height, type, bytes, name, bitmap }
+let factor   = 4;      // the backend supports ×2 and ×4
+
+const fmtBytes = b =>
+  b >= 1e6 ? (b / 1e6).toFixed(1) + " MB" : Math.round(b / 1e3) + " KB";
+const fmtDims = (w, h) => w + " × " + h;
+
+/* ── intake ─────────────────────────────────────────────── */
+async function receive(fileObj){
+  if (!fileObj || !fileObj.type.startsWith("image/")) return;
+  const bitmap = await createImageBitmap(fileObj);
+  received = {
+    width: bitmap.width, height: bitmap.height,
+    type: (fileObj.type.split("/")[1] || "image").toUpperCase(),
+    bytes: fileObj.size, name: fileObj.name, bitmap,
+  };
+  show(bitmap);
+  renderMeasured();
+}
+
+/* Show it at the picture's own proportions, in the same height every
+   record on the site uses. A small file therefore appears at the size
+   it is actually going to be used at: the condition report you can see
+   rather than read. */
+function show(bitmap){
+  const c = els.canvas;
+  c.width = bitmap.width; c.height = bitmap.height;
+  const ctx = c.getContext("2d");
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
+  ctx.drawImage(bitmap, 0, 0);
+  c.hidden = false;
+  els.image.classList.add("has-work");
+}
+
+/* ── states ─────────────────────────────────────────────── */
+function renderMeasured(){
+  const { width, height, type, bytes } = received;
+  els.ref.textContent = "VL·––––";
+  els.ref.classList.add("is-blank");
+
+  els.spec.innerHTML = "";
+  add(els.spec, fmtDims(width, height), "lead");
+  add(els.spec, type);
+  add(els.spec, fmtBytes(bytes));
+
+  els.actions.innerHTML = "";
+  const go = button("Restore", "btn");
+  go.addEventListener("click", restore);
+  const again = button("Choose another", "btn btn--ghost");
+  again.addEventListener("click", () => els.file.click());
+  els.actions.append(go, again);
+
+  els.termsLine.innerHTML = "";
+  els.termsLine.append("Restores to " + fmtDims(width * factor, height * factor) + "  ");
+  els.termsLine.append(scaleSwitch());
+  els.termsNote.textContent = "Your first restoration is free.";
+  els.share.hidden = true;
+}
+
+function renderWorking(){
+  els.image.classList.add("is-working");
+  els.actions.innerHTML = "";
+  const b = button("Restoring…", "btn");
+  b.disabled = true;
+  els.actions.append(b);
+  els.termsNote.textContent = "Usually about twenty seconds.";
+}
+
+function renderFinished(){
+  els.image.classList.remove("is-working");
+  const { width, height } = received;
+
+  /* the number arrives filled in — the only moment on the page
+     that is allowed to feel like an event */
+  els.ref.textContent = "VL·0013";
+  els.ref.classList.remove("is-blank");
+
+  els.spec.innerHTML = "";
+  add(els.spec, fmtDims(width * factor, height * factor), "lead");
+  add(els.spec, "PNG");
+
+  els.actions.innerHTML = "";
+  const dl = button("Download", "btn");
+  dl.addEventListener("click", () => {
+    /* a mock: hands back what it was given, at its original size */
+    const a = document.createElement("a");
+    a.href = els.canvas.toDataURL("image/png");
+    a.download = "vellum-0013.png";
+    a.click();
+  });
+  const another = button("Restore another", "btn btn--ghost");
+  another.addEventListener("click", () => els.file.click());
+  els.actions.append(dl, another);
+
+  els.termsLine.textContent = "Restored from " + fmtDims(width, height);
+  els.termsNote.textContent = "Kept for thirty days, then deleted.";
+  els.share.hidden = false;
+}
+
+function restore(){
+  renderWorking();
+  setTimeout(renderFinished, 2200);
+}
+
+/* ── small builders ─────────────────────────────────────── */
+function add(parent, text, cls){
+  const s = document.createElement("span");
+  if (cls) s.className = cls;
+  s.textContent = text;
+  parent.appendChild(s);
+}
+function button(text, cls){
+  const b = document.createElement("button");
+  b.type = "button"; b.className = cls; b.textContent = text;
+  return b;
+}
+/* ×2 / ×4 belongs in the specification line, not in a settings panel:
+   it is a property of the object being made, and it is the natural
+   place for the price to differ later. */
+function scaleSwitch(){
+  const wrap = document.createElement("span");
+  wrap.className = "scale";
+  wrap.setAttribute("role", "group");
+  wrap.setAttribute("aria-label", "Enlargement");
+  [2, 4].forEach(n => {
+    const b = button("×" + n, "");
+    b.setAttribute("aria-pressed", String(n === factor));
+    b.addEventListener("click", () => { factor = n; renderMeasured(); });
+    wrap.appendChild(b);
+  });
+  return wrap;
+}
+
+/* ── input ──────────────────────────────────────────────── */
+els.primary.addEventListener("click", () => els.file.click());
+els.image.addEventListener("click", () => { if (!received) els.file.click(); });
+els.file.addEventListener("change", e => receive(e.target.files[0]));
+
+let dragDepth = 0;
+addEventListener("dragenter", e => {
+  e.preventDefault(); dragDepth++;
+  document.body.classList.add("is-dragging");
+});
+addEventListener("dragover", e => e.preventDefault());
+addEventListener("dragleave", () => {
+  if (--dragDepth <= 0) document.body.classList.remove("is-dragging");
+});
+addEventListener("drop", e => {
+  e.preventDefault(); dragDepth = 0;
+  document.body.classList.remove("is-dragging");
+  receive(e.dataTransfer.files[0]);
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,592 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<!-- Keywords live here, where crawlers and LLMs read them, and stay out
+     of the visible copy. This is metadata doing its job — not hidden text,
+     which would be cloaking and a deindexing risk. -->
+<title>Dusk, long horizon — 1170 × 2532 phone wallpaper | Vellum</title>
+<meta name="description" content="A 1170 × 2532 4K phone wallpaper, AI upscaled from a 264 × 571 original. Free download, full resolution, no sign-up." />
+<meta property="og:title" content="Dusk, long horizon — 4K phone wallpaper" />
+<meta property="og:description" content="Upscaled from 264 × 571 to 1170 × 2532. Free full-resolution download." />
+<meta property="og:type" content="website" />
+<script type="application/ld+json" id="ld">
+{
+  "@context": "https://schema.org",
+  "@type": "ImageObject",
+  "name": "Dusk, long horizon",
+  "description": "A 4K vertical phone wallpaper, AI upscaled from a 264 × 571 original to 1170 × 2532.",
+  "width": "1170",
+  "height": "2532",
+  "encodingFormat": "image/png",
+  "keywords": "4k phone wallpaper, aesthetic wallpaper, upscaled wallpaper, iphone wallpaper, ai upscaled image",
+  "acquireLicensePage": "/licence",
+  "creditText": "Vellum"
+}
+</script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Newsreader:opsz,wght@6..72,300&family=Sometype+Mono:wght@400..500&display=swap" rel="stylesheet">
+<style>
+/* ───────────────────────────────────────────────────────────
+   An archive, not a room. The vocabulary is records, accession
+   numbers and provenance — nothing here pretends to be paper.
+   The mid-grey surround is borrowed from conservation practice
+   for one measurable reason: it is neutral to the eye and does
+   not bias colour perception, which matters when the content is
+   arbitrary user images. No chromatic accent anywhere either:
+   hierarchy is luminance only, so nothing competes with the
+   image it surrounds.
+   ─────────────────────────────────────────────────────────── */
+:root{
+  --ground:    #232326;   /* page ground, deep graphite    */
+  --card:      #9A9A94;   /* neutral surround for an image */
+  --card-edge: #86867F;   /* its inner edge                */
+  --fg:        #EDEAE3;   /* type                          */
+  --fg-dim:    #8E8B84;   /* secondary type                */
+  --rule:      rgba(237,234,227,.13);
+
+  /* Two faces. The number is set in the display serif; everything else
+     on the page is the mono, which is the default and so is not
+     restated on individual rules.
+
+     Sometype Mono rather than a machine-shop mono: it descends from
+     typewriter proportions, which is what an accession label was
+     actually typed on, and it has not been on every site this year.
+     A neutral sans in the middle would only have made the page look
+     like every other one — the pairing has to carry the register. */
+  --ff-display: "Newsreader", Georgia, serif;
+  --ff-mono:    "Sometype Mono", ui-monospace, monospace;
+
+  --gutter: clamp(20px, 5vw, 64px);
+}
+
+*{box-sizing:border-box}
+html,body{margin:0}
+body{
+  background:var(--ground);
+  color:var(--fg);
+  /* a monospace runs optically larger than a sans at the same size */
+  font-family:var(--ff-mono);
+  font-size:13px;
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+}
+a{color:inherit}
+
+/* ── masthead ───────────────────────────────────────────── */
+.masthead{
+  display:flex; align-items:baseline; justify-content:space-between;
+  gap:24px; padding:22px var(--gutter);
+  border-bottom:1px solid var(--rule);
+}
+/* a monospace is already wide, so the tracking that opened up a sans
+   wordmark has to come back down or the mark reads as spaced-out */
+.masthead__mark{
+  font-weight:500;
+  font-size:12px; letter-spacing:.16em; text-transform:uppercase;
+}
+.masthead__nav{
+  display:flex; gap:22px;
+  font-size:11px; letter-spacing:.06em; text-transform:uppercase;
+  color:var(--fg-dim);
+}
+.masthead__nav a{text-decoration:none}
+.masthead__nav a:hover{color:var(--fg)}
+
+/* ── the plate: image on the left, its record beside it ──
+   The record sits next to the image rather than under it, which
+   keeps the image, the specs and the download inside one screen.
+   The page has about two seconds to deliver.                  */
+.plate{
+  padding:clamp(24px,4vw,56px) var(--gutter);
+  display:grid;
+  grid-template-columns:auto minmax(260px, 360px);
+  gap:clamp(28px,5vw,72px);
+  align-items:center;
+  justify-content:center;
+}
+.record{
+  margin:0;
+  background:var(--card);
+  /* uneven surround: sides equal, more weight along the bottom */
+  padding:clamp(12px,1.6vw,20px);
+  padding-bottom:clamp(22px,3vw,38px);
+  height:min(72vh, 620px);
+  display:flex; flex-direction:column;
+  box-shadow:0 24px 60px -28px rgba(0,0,0,.85), 0 2px 0 0 var(--card-edge);
+}
+.record__image{
+  position:relative;
+  display:block;
+  height:100%;
+  background:#1a1a1c;
+  outline:1px solid var(--card-edge);
+  touch-action:none;
+  cursor:grab;
+}
+.record__image:active{cursor:grabbing}
+.record__image canvas{display:block; height:100%; width:auto}
+.record__image .degraded{
+  position:absolute; inset:0; width:100%; height:100%;
+  opacity:0; transition:opacity .18s ease;
+  pointer-events:none;
+}
+.record__image.is-degraded .degraded{opacity:1}
+.record__image:focus-visible{outline:2px solid var(--fg); outline-offset:3px}
+
+/* ── the record ───────────────────────────────────────────
+   No titles: the accession number is the identity. A catalogue
+   entry is numbered first and described second, and the number
+   is the one thing on the page that is unique to it.          */
+.caption{ margin:0 }
+.caption__title{
+  font-family:var(--ff-display);
+  font-weight:300; font-size:clamp(24px,3.2vw,30px);
+  line-height:1.05; letter-spacing:.04em; margin:0 0 12px;
+  font-variant-numeric:lining-nums tabular-nums;
+}
+.caption__spec{
+  font-size:12px; letter-spacing:.02em;
+  color:var(--fg-dim); margin:0;
+  display:flex; flex-wrap:wrap; gap:0 10px;
+}
+/* the resolution stays the brightest thing in the row: it is the
+   one fact Google Images cannot show, and the reason for the click */
+.caption__spec .lead{font-weight:500; color:var(--fg)}
+.caption__spec span::after{content:"·"; margin-left:10px; opacity:.45}
+.caption__spec span:last-child::after{content:""}
+
+/* ── actions ────────────────────────────────────────────── */
+.actions{
+  display:flex; gap:10px; align-items:stretch; margin:22px 0 0;
+}
+.btn{
+  font-size:12px; font-weight:500;
+  letter-spacing:.04em; text-transform:uppercase;
+  padding:13px 18px; border:1px solid var(--fg);
+  background:var(--fg); color:var(--ground);
+  text-decoration:none; cursor:pointer; flex:1 1 auto; text-align:center;
+  white-space:nowrap;
+  transition:background .15s ease, color .15s ease;
+}
+.btn:hover{background:transparent; color:var(--fg)}
+.btn--ghost{
+  background:transparent; color:var(--fg);
+  border-color:var(--rule); flex:0 0 auto;
+  user-select:none;
+}
+.btn--ghost:hover{border-color:var(--fg); background:transparent; color:var(--fg)}
+.btn:focus-visible{outline:2px solid var(--fg); outline-offset:3px}
+
+/* ── provenance: the argument, stated quietly ───────────── */
+.provenance{
+  border-top:1px solid var(--rule);
+  margin-top:26px; padding-top:16px;
+}
+.provenance__line{
+  font-size:12px; color:var(--fg-dim);
+  margin:0 0 4px;
+  /* degrades in sync with the image — see script */
+  transition:filter .18s ease, opacity .18s ease, letter-spacing .18s ease;
+}
+.is-degraded-type .provenance__line{
+  filter:blur(1.4px) contrast(.7);
+  letter-spacing:.06em;
+  opacity:.72;
+}
+.provenance__note{
+  font-size:12px; color:var(--fg-dim); margin:0;
+}
+.provenance__cta{
+  display:inline-block; margin-top:14px;
+  font-size:13px; letter-spacing:.02em;
+  text-decoration:none; border-bottom:1px solid var(--rule);
+  padding-bottom:2px;
+}
+.provenance__cta:hover{border-bottom-color:var(--fg)}
+
+/* ── adjacent works ─────────────────────────────────────── */
+.adjacent{
+  margin-top:clamp(48px,9vw,96px);
+  border-top:1px solid var(--rule);
+  padding:26px var(--gutter) clamp(48px,8vw,88px);
+}
+.adjacent__label{
+  font-size:11px; letter-spacing:.12em;
+  text-transform:uppercase; color:var(--fg-dim); margin:0 0 18px;
+}
+.adjacent__strip{
+  display:grid; gap:14px;
+  grid-template-columns:repeat(auto-fill, minmax(132px,1fr));
+}
+.adjacent__item{
+  background:var(--card); padding:7px 7px 14px;
+  border:0; cursor:pointer; display:block; width:100%;
+  transition:transform .18s ease;
+}
+.adjacent__item:hover{transform:translateY(-3px)}
+.adjacent__item canvas{display:block; width:100%; height:auto; outline:1px solid var(--card-edge)}
+.adjacent__item:focus-visible{outline:2px solid var(--fg); outline-offset:3px}
+
+/* ── colophon ───────────────────────────────────────────── */
+.colophon{
+  border-top:1px solid var(--rule);
+  padding:20px var(--gutter) 40px;
+  font-size:11px; color:var(--fg-dim);
+  display:flex; flex-wrap:wrap; gap:8px 22px;
+}
+
+/* ── stack below the two-column threshold ───────────────── */
+@media (max-width: 860px){
+  .plate{
+    grid-template-columns:minmax(0,1fr);
+    gap:22px;
+    justify-items:center;
+    padding-top:20px;
+  }
+  /* still height-capped: the download has to stay reachable
+     without scrolling on the device most people arrive on */
+  .record{
+    height:min(52vh, 430px);
+    width:auto;
+  }
+  .record__image canvas{height:100%; width:auto}
+  .caption, .provenance{width:min(360px,80vw)}
+  .provenance{margin-left:auto; margin-right:auto; margin-top:20px; padding-top:14px}
+  .caption__title{font-size:clamp(21px,5vw,25px)}
+  .masthead{padding-inline:20px}
+  .masthead__nav{gap:16px; font-size:11px}
+}
+
+@media (prefers-reduced-motion: reduce){
+  *{transition:none !important; animation:none !important}
+}
+</style>
+</head>
+<body>
+
+<header class="masthead">
+  <div class="masthead__mark">Vellum</div>
+  <nav class="masthead__nav">
+    <a href="#">Collection</a>
+    <a href="#">Restore your own</a>
+  </nav>
+</header>
+
+<main>
+  <div class="plate">
+    <figure class="record">
+      <div class="record__image" id="image" tabindex="0"
+           role="button" aria-label="Hold to see the original before restoration">
+        <canvas id="full" width="780" height="1690"></canvas>
+        <canvas id="degraded" class="degraded" width="780" height="1690" aria-hidden="true"></canvas>
+      </div>
+    </figure>
+
+    <div class="label">
+  <div class="caption">
+    <h1 class="caption__title" id="ref">VL·0001</h1>
+    <p class="caption__spec">
+      <span class="lead" id="specDims">1170 × 2532</span>
+      <span>PNG</span>
+      <span id="specSize">2.4 MB</span>
+    </p>
+    <div class="actions">
+      <a class="btn" href="#" id="download">Download</a>
+      <button class="btn btn--ghost" id="compare" type="button">Hold to compare</button>
+    </div>
+  </div>
+
+  <div class="provenance">
+    <p class="provenance__line" id="provLine">Restored from 264 × 571</p>
+    <a class="provenance__cta" href="prototype-restore.html">Restore a picture of your own</a>
+  </div>
+    </div>
+  </div>
+
+  <section class="adjacent">
+    <p class="adjacent__label">Elsewhere in the collection</p>
+    <div class="adjacent__strip" id="strip"></div>
+  </section>
+</main>
+
+<footer class="colophon">
+  <span>Vellum</span>
+  <span>Prototype — collection record</span>
+  <span>Images generated procedurally for layout only</span>
+</footer>
+
+<script>
+/* ───────────────────────────────────────────────────────────
+   Wallpapers are generated on canvas rather than loaded, so the
+   prototype is self-contained and carries no licensing or
+   likeness questions. Each is a seeded gradient field with film
+   grain — the minimalist register the research pointed at.
+   ─────────────────────────────────────────────────────────── */
+
+const WORKS = [
+  { title:"Dusk, long horizon",  from:[564,1220],  stops:["#2E3350","#6E5A6B","#C89B85","#E8CBAE"], sun:.72, dims:[1170,2532], size:"2.4 MB" },
+  { title:"Cold field",          from:[640,1385],  stops:["#10161C","#1E3038","#456068","#8FA6A4"], sun:.34, dims:[1170,2532], size:"1.9 MB" },
+  { title:"Paper light",         from:[736,1595],  stops:["#2A2622","#5C5147","#9C8C79","#E4D8C6"], sun:.61, dims:[1290,2796], size:"3.1 MB" },
+  { title:"Still water",         from:[500,1082],  stops:["#151B2B","#2C3A55","#5D6F8C","#A9B6C4"], sun:.48, dims:[1170,2532], size:"2.2 MB" },
+  { title:"Ember",               from:[564,1222],  stops:["#1B1315","#4A2225","#8E4535","#D68C5C"], sun:.66, dims:[1080,2340], size:"2.7 MB" },
+  { title:"Rain, evening",       from:[600,1298],  stops:["#181A1D","#31363B","#5A6167","#93999C"], sun:.28, dims:[1170,2532], size:"1.7 MB" },
+  { title:"Salt flat",           from:[564,1222],  stops:["#20242B","#4C5058","#8A8377","#D8C8AE"], sun:.55, dims:[1290,2796], size:"2.9 MB" },
+  { title:"Green hour",          from:[736,1593],  stops:["#0E1712","#1F3324","#47613F","#93A97C"], sun:.44, dims:[1170,2532], size:"2.1 MB" },
+  { title:"Low cloud",           from:[540,1170],  stops:["#1C1B22","#3A3646","#6B6478","#B0A6B4"], sun:.38, dims:[1080,2340], size:"1.8 MB" },
+  { title:"First light",         from:[640,1387],  stops:["#191722","#3D3350","#7E5F76","#E0AE96"], sun:.69, dims:[1290,2796], size:"3.3 MB" },
+  { title:"Iron sea",            from:[564,1220],  stops:["#0C1114","#1D2A30","#3E555C","#7E9296"], sun:.31, dims:[1170,2532], size:"2.0 MB" },
+  { title:"Late snow",           from:[500,1082],  stops:["#22252B","#474C57","#7C828E","#C6CBD2"], sun:.51, dims:[1170,2532], size:"2.3 MB" },
+];
+
+/* deterministic pseudo-random so every reload looks the same */
+function rng(seed){ let s = seed >>> 0; return () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296; }
+
+function paint(ctx, w, h, work, seedIndex, grain = 1){
+  const rand = rng(97 + seedIndex * 3803);
+
+  // vertical gradient field
+  const g = ctx.createLinearGradient(0, 0, 0, h);
+  work.stops.forEach((c, i) => g.addColorStop(i / (work.stops.length - 1), c));
+  ctx.fillStyle = g;
+  ctx.fillRect(0, 0, w, h);
+
+  // soft luminous body, low on the frame
+  const cx = w * (0.34 + rand() * 0.32);
+  const cy = h * work.sun;
+  const r  = Math.min(w, h) * (0.30 + rand() * 0.16);
+  const halo = ctx.createRadialGradient(cx, cy, 0, cx, cy, r);
+  halo.addColorStop(0,   "rgba(255,244,226,.50)");
+  halo.addColorStop(.42, "rgba(255,238,214,.16)");
+  halo.addColorStop(1,   "rgba(255,238,214,0)");
+  ctx.fillStyle = halo;
+  ctx.fillRect(0, 0, w, h);
+
+  /* Ridgelines. These exist to give the image fine detail —
+     a pure gradient survives downsampling almost perfectly, so
+     without real edges the before/after would prove nothing. */
+  const layers = 3;
+  for (let L = 0; L < layers; L++){
+    const baseY = h * (0.52 + L * 0.13);
+    const amp   = h * (0.055 - L * 0.012);
+    const step  = Math.max(1, w / 160);
+    ctx.beginPath();
+    ctx.moveTo(0, h);
+    let y = baseY;
+    for (let x = 0; x <= w; x += step){
+      y += (rand() - 0.5) * amp * 0.42;
+      y = y * 0.86 + baseY * 0.14;                 // pull back toward the base
+      ctx.lineTo(x, y + Math.sin(x / (w / 5) + L) * amp * 0.3);
+    }
+    ctx.lineTo(w, h); ctx.closePath();
+    const shade = 0.30 - L * 0.085;
+    ctx.fillStyle = `rgba(12,10,14,${shade})`;
+    ctx.fill();
+  }
+
+  // fine speckle: the first thing lost at low resolution
+  ctx.globalAlpha = .5;
+  const specks = Math.round((w * h) / 5200);
+  for (let i = 0; i < specks; i++){
+    const sx = rand() * w, sy = rand() * h * 0.5;
+    ctx.fillStyle = rand() > .5 ? "rgba(255,250,240,.5)" : "rgba(255,250,240,.22)";
+    ctx.fillRect(sx, sy, Math.max(1, w / 700), Math.max(1, w / 700));
+  }
+  ctx.globalAlpha = 1;
+
+  // film grain
+  if (grain > 0.01){
+    const img = ctx.getImageData(0, 0, w, h);
+    const d = img.data;
+    const amt = 15 * grain;
+    for (let i = 0; i < d.length; i += 4){
+      const n = (rand() - 0.5) * amt;
+      d[i] += n; d[i+1] += n; d[i+2] += n;
+    }
+    ctx.putImageData(img, 0, 0);
+  }
+}
+
+/* ── the "before" ─────────────────────────────────────────
+   Not a blur, and not nearest-neighbour pixels either. Nearest
+   neighbour is what a screenshot of pixel art looks like; it is
+   not what a picture saved off Pinterest looks like. That file
+   has been through a real chain: exported small, JPEG'd, reposted
+   at some other size, JPEG'd again — and it is finally displayed
+   scaled UP by a browser, which resamples smoothly.
+
+   So we run the actual chain. canvas.toDataURL("image/jpeg", q)
+   is a real encoder, so the blocking, the ringing along the ridge
+   edges and the chroma bleed are the genuine artefacts rather
+   than an impression of them.                                  */
+function jpeg(canvas, quality){
+  return new Promise(resolve => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.src = canvas.toDataURL("image/jpeg", quality);
+  });
+}
+
+function scaled(source, w, h){
+  const c = document.createElement("canvas");
+  c.width = w; c.height = h;
+  const cx = c.getContext("2d");
+  cx.imageSmoothingEnabled = true;
+  cx.imageSmoothingQuality = "high";
+  cx.drawImage(source, 0, 0, w, h);
+  return c;
+}
+
+async function paintDegraded(ctx, work, seedIndex, token){
+  /* The canvas is sized to the pixels it actually occupies. Drawing the
+     "before" oversized and letting the browser shrink it would filter the
+     artefacts back out — the shrink is a resample, and resampling is the
+     thing we are trying to show the absence of. */
+  const canvas = ctx.canvas;
+  const dpr = Math.min(2, devicePixelRatio || 1);
+  const w = Math.max(1, Math.round(canvas.clientWidth  * dpr));
+  const h = Math.max(1, Math.round(canvas.clientHeight * dpr));
+  if (!w || !h) return;
+  canvas.width = w; canvas.height = h;
+
+  // the picture, before anybody saved it
+  const origin = document.createElement("canvas");
+  origin.width = w; origin.height = h;
+  paint(origin.getContext("2d", { willReadFrequently:true }), w, h, work, seedIndex, 0.10);
+
+  /* Scale the whole chain by however far the real file had to stretch to
+     fill a phone. 564px across a 1170px screen is roughly a 2× stretch,
+     so the preview stretches by 2× too — what you see is what that source
+     would look like on your own screen, neither more nor less. */
+  const stretch = work.dims[0] / work.from[0];
+  const sw = Math.max(16, Math.round(w / stretch));
+  const sh = Math.max(16, Math.round(h / stretch));
+
+  /* Quality is the one dial that is a judgement rather than a measurement.
+     Kept mild on purpose: a file off Pinterest is soft and a little
+     blocky, not destroyed. Overstating the damage would make the
+     comparison a sales pitch instead of a fact. */
+  // first save — exported small as a JPEG by whoever posted it
+  let img = await jpeg(scaled(origin, sw, sh), 0.72);
+  if (token !== paintToken) return;
+
+  // reposted: rescaled by a hair, saved again. Generational loss is most
+  // of why these files look the way they do.
+  img = await jpeg(scaled(img, Math.round(sw * 0.94), Math.round(sh * 0.94)), 0.66);
+  if (token !== paintToken) return;
+
+  // and now it is being asked to fill a screen
+  ctx.imageSmoothingEnabled = true;
+  ctx.imageSmoothingQuality = "high";
+  ctx.clearRect(0, 0, w, h);
+  ctx.drawImage(img, 0, 0, w, h);
+}
+
+const full     = document.getElementById("full");
+const degraded = document.getElementById("degraded");
+const imageEl = document.getElementById("image");
+let current = 0;
+/* the "before" is built asynchronously through a JPEG encoder, so a
+   fast click through the strip could land an old one on the canvas */
+let paintToken = 0;
+
+function load(index){
+  current = index;
+  const work = WORKS[index];
+  paint(full.getContext("2d", { willReadFrequently:true }), full.width, full.height, work, index);
+  paintDegraded(degraded.getContext("2d"), work, index, ++paintToken);
+  const ref = "VL·" + String(index + 1).padStart(4, "0");
+  document.getElementById("ref").textContent = ref;
+  document.getElementById("specDims").textContent = work.dims[0] + " × " + work.dims[1];
+  document.getElementById("specSize").textContent = work.size;
+  document.getElementById("provLine").textContent =
+    "Restored from " + work.from[0] + " × " + work.from[1];
+
+  /* Visible copy says "restored". The metadata says "upscaled",
+     "4K" and the rest — same page, different readers. */
+  const dims = work.dims[0] + " × " + work.dims[1];
+  const from = work.from[0] + " × " + work.from[1];
+  /* The ref keeps every page's title unique. Without titles or tags
+     yet, dimensions repeat across the collection, and near-identical
+     <title>s across pages are a genuine SEO problem. */
+  document.title = "4K phone wallpaper, " + dims + " — " + ref + " | Vellum";
+  document.querySelector('meta[name="description"]').content =
+    "A " + dims + " 4K phone wallpaper, AI upscaled from a " + from +
+    " original. Free download, full resolution, no sign-up.";
+  document.querySelector('meta[property="og:title"]').content =
+    dims + " phone wallpaper — " + ref;
+  document.querySelector('meta[property="og:description"]').content =
+    "Upscaled from " + from + " to " + dims + ". Free full-resolution download.";
+  document.getElementById("ld").textContent = JSON.stringify({
+    "@context":"https://schema.org", "@type":"ImageObject",
+    name: dims + " phone wallpaper (" + ref + ")",
+    description: "A 4K vertical phone wallpaper, AI upscaled from a " + from + " original to " + dims + ".",
+    width: String(work.dims[0]), height: String(work.dims[1]),
+    encodingFormat: "image/png",
+    identifier: ref,
+    keywords: "4k phone wallpaper, aesthetic wallpaper, upscaled wallpaper, iphone wallpaper, ai upscaled image",
+    acquireLicensePage: "/licence", creditText: "Vellum"
+  }, null, 2);
+
+  /* The accessible name describes the picture — it is read aloud,
+     so it describes rather than sells. */
+  imageEl.setAttribute("aria-label",
+    ref + ", a " + dims + " wallpaper. Hold to see the " + from + " original.");
+}
+
+/* ── the signature: hold, and the page un-restores itself ── */
+function degrade(on){
+  imageEl.classList.toggle("is-degraded", on);
+  document.body.classList.toggle("is-degraded-type", on);
+}
+["pointerdown","pointerenter"].forEach(() => {});
+imageEl.addEventListener("pointerdown", e => { e.preventDefault(); degrade(true); });
+const compareBtn = document.getElementById("compare");
+compareBtn.addEventListener("pointerdown", e => { e.preventDefault(); degrade(true); });
+["pointerup","pointercancel","pointerleave"].forEach(ev => {
+  imageEl.addEventListener(ev, () => degrade(false));
+  compareBtn.addEventListener(ev, () => degrade(false));
+});
+/* keyboard parity */
+[imageEl, compareBtn].forEach(el => {
+  el.addEventListener("keydown", e => {
+    if (e.key === " " || e.key === "Enter"){ e.preventDefault(); degrade(true); }
+  });
+  el.addEventListener("keyup", e => {
+    if (e.key === " " || e.key === "Enter"){ degrade(false); }
+  });
+  el.addEventListener("blur", () => degrade(false));
+});
+
+/* ── adjacent works ─────────────────────────────────────── */
+const strip = document.getElementById("strip");
+WORKS.forEach((work, i) => {
+  const b = document.createElement("button");
+  b.className = "adjacent__item";
+  b.type = "button";
+  b.setAttribute("aria-label",
+    "View VL·" + String(i + 1).padStart(4, "0") + ", " + work.dims[0] + " × " + work.dims[1]);
+  const c = document.createElement("canvas");
+  c.width = 220; c.height = 476;
+  paint(c.getContext("2d", { willReadFrequently:true }), c.width, c.height, work, i);
+  b.appendChild(c);
+  b.addEventListener("click", () => { load(i); window.scrollTo({ top:0, behavior:"smooth" }); });
+  strip.appendChild(b);
+});
+
+load(0);
+
+/* the "before" is tied to how much room it has, so it is rebuilt when
+   that changes — otherwise it would stretch and stop being accurate */
+let resizeTimer;
+addEventListener("resize", () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => {
+    paintDegraded(degraded.getContext("2d"), WORKS[current], current, ++paintToken);
+  }, 180);
+});
+</script>
+</body>
+</html>
