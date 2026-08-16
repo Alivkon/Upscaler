@@ -34,6 +34,11 @@ function checkProvenance(where, provenance) {
   }
   if (!text(provenance.creator)) complain(where, '`provenance.creator` пуст — чья это работа');
   if (!text(provenance.page)) complain(where, '`provenance.page` пуст — где это проверить');
+  // Признак, а не сравнение строки с «Unknown»: имя автора — свободный текст,
+  // и «Unknown», «Anonymous», «Неизвестный мастер» пришлось бы перечислять.
+  if ('anonymous' in provenance && typeof provenance.anonymous !== 'boolean') {
+    complain(where, '`provenance.anonymous` — это да или нет');
+  }
 }
 
 function checkWork(ref, work) {
