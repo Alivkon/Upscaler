@@ -6,8 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "format": "prettier --write server.js scripts public",
-    "verify": "node --check server.js && prettier --check server.js scripts public",
+    "format": "prettier --write server.js gallery.js scripts public",
+    "verify": "node --check server.js && node --check gallery.js && prettier --check server.js gallery.js scripts public",
     "test": "yarn run verify"
   },
   "dependencies": {

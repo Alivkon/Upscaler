@@ -69,9 +69,10 @@ function resolveEntryPath(entryFile) {
   return path.join(directory, name);
 }
 
-// Одноразовый перенос: до появления индекса витрина строилась из содержимого
-// каталогов по времени изменения файла. Сохраняем тот порядок, который
-// посетитель видит прямо сейчас, и дальше он уже никуда не уплывёт.
+// Переход со старой схемы: до появления индекса витрина строилась из содержимого
+// каталогов по времени изменения файла. Пока файла индекса нет, повторяем тот
+// порядок, который посетитель видит прямо сейчас; на диск он попадёт при первом
+// изменении витрины и дальше уже никуда не уплывёт.
 async function buildIndexFromDisk() {
   const found = [];
   for (const [folder, source] of [
@@ -87,16 +88,18 @@ async function buildIndexFromDisk() {
     .map(({ file, source, modified }) => ({ file, source, added: new Date(modified).toISOString() }));
 }
 
+// Чтение ничего не пишет: запись идёт только через `updateGalleryIndex`, иначе
+// перенос со старой схемы мог бы затереть одновременное изменение витрины.
 async function readGalleryIndex() {
+  let parsed;
   try {
-    const parsed = JSON.parse(await fs.readFile(GALLERY_INDEX_FILE, 'utf8'));
-    return Array.isArray(parsed) ? parsed : [];
+    parsed = JSON.parse(await fs.readFile(GALLERY_INDEX_FILE, 'utf8'));
   } catch (error) {
     if (error.code !== 'ENOENT') throw error;
-    const migrated = await buildIndexFromDisk();
-    await fs.writeFile(GALLERY_INDEX_FILE, JSON.stringify(migrated, null, 2));
-    return migrated;
+    return buildIndexFromDisk();
   }
+  // Индекс правится руками: строка без `file` не должна ронять всю витрину.
+  return Array.isArray(parsed) ? parsed.filter(entry => typeof entry?.file === 'string') : [];
 }
 
 // Изменения идут по очереди: два одновременных запроса, прочитавшие индекс

@@ -19,6 +19,7 @@ import {
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const ACCEPTED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+const FILE_NOT_FOUND = 'Файл не найден.';
 
 // Ошибка, текст которой предназначен посетителю. Всё остальное превращается
 // в «Внутренняя ошибка сервера», чтобы наружу не попадали детали конфигурации.
@@ -38,6 +39,9 @@ const upload = multer({
 
 await ensureImageDirectories();
 app.use(express.static(path.join(__dirname, 'public')));
+// Наружу отдаются только сами изображения: рядом с ними лежит индекс витрины,
+// а пул вообще может оказаться каталогом вне проекта с чем угодно внутри.
+app.use('/images', (req, _res, next) => next(isImage(req.path) ? undefined : new HttpError(404, FILE_NOT_FOUND)));
 // Пул может лежать вне проекта (INTERNAL_IMAGE_STORAGE_DIR), поэтому он
 // раздаётся отдельно и до общего маршрута — иначе `/images` ответит 404 первым.
 app.use('/images/storage', express.static(STORAGE_DIR, { fallthrough: false }));
@@ -238,11 +242,17 @@ app.use((error, _req, res, _next) => {
     return res.status(400).json({ error: 'Допустимы JPG, PNG и WebP до 10 МБ.' });
   }
   if (error instanceof HttpError) {
+    // Ответ посетителю сам по себе следа не оставляет: во время аварии
+    // у Replicate в логе иначе не будет вообще ничего.
+    if (error.status >= 500) console.error(error);
     return res.status(error.status).json({ error: error.message });
   }
-  // express.static с fallthrough: false отдаёт отсутствующий файл как ошибку со статусом 404.
-  if (error?.status === 404 || error?.statusCode === 404) {
-    return res.status(404).json({ error: 'Файл не найден.' });
+  // express.static с fallthrough: false сообщает об отсутствующем файле статусом 404,
+  // а о попытке выйти за пределы каталога — 403. И то и другое — ошибка запроса,
+  // а не сервера; отвечаем одинаково, чтобы наружу не уходило, чем именно путь не понравился.
+  const status = error?.status ?? error?.statusCode;
+  if (status >= 400 && status < 500) {
+    return res.status(404).json({ error: FILE_NOT_FOUND });
   }
   console.error(error);
   res.status(500).json({ error: 'Внутренняя ошибка сервера.' });
