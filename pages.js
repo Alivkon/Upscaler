@@ -19,11 +19,10 @@
 import { formatBytes, formatDims, formatType } from './public/record.js';
 
 const SITE_NAME = 'Vellum';
-// Указатель показывает телефонный кадр, но у каждой работы есть и экранный,
-// 3840×2160, — и сказано об этом здесь: описание страницы попадает в выдачу,
+// Сказано про оба вида работ: описание страницы попадает в выдачу,
 // а «4k desktop wallpaper» спрашивают отдельно от «phone wallpaper».
 const DESCRIPTION =
-  'Vertical phone wallpapers at 1440 × 3120, each with a 4K desktop version. ' +
+  'Phone wallpapers at 1440 × 3120 and 4K desktop wallpapers at 3840 × 2160. ' +
   'Free to download, no sign-up. Restore your own image up to 4× its size.';
 
 // Единственное место, где текст становится разметкой. Имена присланных файлов
@@ -116,14 +115,11 @@ const EAGER_CARDS = 4;
 // в `contentUrl` и в карте сайта, его отдаёт «Download», его открывает
 // лайтбокс, и он достаётся браузеру, который `srcset` не понимает.
 //
-// В самом `srcset` полного файла нет намеренно. Проёмы, в которых стоит
-// телефонный кадр, — ~200 px в карточке указателя и ~290 px на странице
-// работы, — не выигрывают от 1440×3120 ни при какой плотности экрана,
-// а стоит он 1,06 МБ против 26 КБ у копии. Десять карточек тянули 10,1 МБ
-// картинок при 1,8 КБ разметки.
-//
-// Отличие от экранного кадра, где 4K в `srcset` есть: там проём шириной
-// до 1080 px, и на плотном экране полный файл действительно виден.
+// В самом `srcset` полного файла нет намеренно. Проёмы, в которых работа
+// стоит, — ~200 px в карточке указателя и ~290 px на странице работы, —
+// не выигрывают от 1440×3120 ни при какой плотности экрана, а стоит он
+// 1,06 МБ против 26 КБ у копии. Десять карточек тянули 10,1 МБ картинок
+// при 1,8 КБ разметки.
 const shownWith = (preview, sizes) =>
   preview ? ` srcset="${escape(preview.url)} ${preview.width}w" sizes="${sizes}"` : '';
 
@@ -204,18 +200,19 @@ export function collectionPage({ items, page, pageCount, origin }) {
 const licenseFields = (item, origin) =>
   item.license ? { license: `${origin}${item.license.path}`, acquireLicensePage: `${origin}/w/${item.slug}` } : {};
 
-// `picture` — кадр работы: сама запись (телефонный) или `item.desktop`
-// (экранный). Инвентарный номер у обоих один: это одна работа в двух кадрах,
-// а не две работы, и разные номера сказали бы обратное.
-const imageObject = (item, picture, origin) => ({
+// Одно изображение на страницу, поэтому и разметка одна. Раньше их было две:
+// телефонный и экранный кадры делили страницу. Разобрано это из-за музейных
+// работ, у которых кадр ровно один по устройству самой картины, — а раз
+// у одних одна картинка на страницу, то у всех.
+const imageObject = (item, origin) => ({
   '@context': 'https://schema.org',
   '@type': 'ImageObject',
-  name: picture.title,
-  description: picture.alt,
-  contentUrl: `${origin}${picture.url}`,
-  width: String(picture.width),
-  height: String(picture.height),
-  encodingFormat: `image/${formatType(picture.url).toLowerCase()}`,
+  name: item.title,
+  description: item.alt,
+  contentUrl: `${origin}${item.url}`,
+  width: String(item.width),
+  height: String(item.height),
+  encodingFormat: `image/${formatType(item.url).toLowerCase()}`,
   // Теги пока нигде не образуют страниц: на двенадцати работах вышло бы пять
   // списков по две работы, а тонкие страницы-списки не просто не ранжируются,
   // они вредят. Здесь они всё же читаются — иначе поле было бы мёртвым.
@@ -226,53 +223,9 @@ const imageObject = (item, picture, origin) => ({
   ...licenseFields(item, origin)
 });
 
-// Второй кадр той же работы — под первым, отдельным блоком со своей кнопкой.
-// Он не превью и не вариант размера: это тот же вид, посчитанный заново под
-// пропорцию монитора, и потому показан целиком, а не полоской.
-//
-// Стоит он ниже работы и грузится лениво: пришедший из поиска пришёл за
-// телефонным кадром, и торопить экранный значит отнимать канал у того,
-// ради чего страница открыта.
-//
-// Показан он уменьшенной копией, а скачивается полным: в разметке кадр стоит
-// в колонке шириной самое большее 1080 px, и телефон, дотянувший до этого
-// блока, иначе выкачивал бы 2 МБ ради картинки в 430 px. В `src` при этом
-// остаётся сам 4K — им работа объявлена поиску, и подменять его нельзя;
-// выбор делает `srcset`, а `src` достаётся браузеру, который его не понимает.
-function wideFrame(desktop) {
-  if (!desktop) return '';
-  const spec = specLine([
-    formatDims(desktop.width, desktop.height),
-    formatType(desktop.url),
-    formatBytes(desktop.bytes)
-  ]);
-  const responsive = desktop.preview
-    ? ` srcset="${escape(desktop.preview.url)} ${desktop.preview.width}w, ${escape(desktop.url)} ${desktop.width}w"` +
-      // Ширина проёма: до 1160 px — колонка за вычетом полей, дальше упирается
-      // в 1080 px (`.record--wide` в styles.css).
-      ' sizes="(max-width: 1160px) 92vw, 1080px"'
-    : '';
-  return `<section class="wide">
-        <p class="heading">4K desktop wallpaper</p>
-        <figure class="record record--wide">
-          <div class="record__image has-work record__image--zoom" id="wide-frame">
-            <img id="wide-picture" src="${escape(desktop.url)}"${responsive} alt="${escape(desktop.alt)}"
-              width="${desktop.width}" height="${desktop.height}" loading="lazy" />
-          </div>
-        </figure>
-        <div class="caption">
-          <p class="caption__spec">${spec}</p>
-          <a class="btn" href="${escape(desktop.url)}" download="${escape(desktop.filename)}">Download 4K</a>
-        </div>
-      </section>`;
-}
-
 export function workPage({ item, others, origin }) {
   const size = formatDims(item.width, item.height);
   const restored = item.from ? `Restored from ${formatDims(...item.from)}` : '';
-  const alsoDesktop = item.desktop
-    ? ` Also as a ${formatDims(item.desktop.width, item.desktop.height)} desktop wallpaper.`
-    : '';
   // Держать и щёлкать — один жест, поэтому увеличение и сравнение на одном
   // элементе не уживаются: где есть «до», изображение показывает «до»;
   // где нет — открывается во весь экран. Обработчики вешает work.js, а вот
@@ -289,14 +242,12 @@ export function workPage({ item, others, origin }) {
   return layout({
     current: 'collection',
     title: `${item.title}, ${size}`,
-    description: `${item.alt}. ${size}, ${formatType(item.url)}, ${formatBytes(item.bytes)}.${restored ? ` ${restored}.` : ''}${alsoDesktop} Free download, no sign-up.`,
+    description: `${item.alt}. ${size}, ${formatType(item.url)}, ${formatBytes(item.bytes)}.${restored ? ` ${restored}.` : ''} Free download, no sign-up.`,
     canonical: `${origin}/w/${item.slug}`,
     image: `${origin}${item.url}`,
     // Оба кадра объявлены разметкой: в поиск по картинкам попадает файл, а их
     // на странице два, и об экранном иначе не сказано ничего.
-    ld: item.desktop
-      ? [imageObject(item, item, origin), imageObject(item, item.desktop, origin)]
-      : imageObject(item, item, origin),
+    ld: imageObject(item, origin),
     script: '/work.js',
     body: `
       <div class="plate">
@@ -321,7 +272,6 @@ export function workPage({ item, others, origin }) {
           </div>
         </div>
       </div>
-      ${wideFrame(item.desktop)}
       ${others.length ? `<section class="adjacent"><p class="heading">More in the collection</p>${grid(others)}</section>` : ''}
     `
   });
@@ -501,7 +451,7 @@ export function sitemap({ items, pageSize, origin }) {
     ...items.map(item =>
       url(`${origin}/w/${item.slug}`, {
         lastmod: item.added,
-        images: [`${origin}${item.url}`, item.desktop && `${origin}${item.desktop.url}`].filter(Boolean)
+        images: [`${origin}${item.url}`]
       })
     ),
     url(`${origin}/restore`),

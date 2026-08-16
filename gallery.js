@@ -1,25 +1,17 @@
 // Где лежат изображения и что из них показано в коллекции.
 //
-// Источников два, и сливаются они здесь. Кураторские работы описаны каталогом
-// `works.js`, который лежит в git; файлы к ним детерминированно отрисовывает
-// `scripts/render-plates.mjs`. Присланные посетителями работы описаны списком
-// `images/gallery.json`: порядок записей в файле и есть их порядок на странице.
-// Файлы при этом не копируются — запись ссылается на уже существующий файл
-// в одном из известных каталогов.
+// Источников два, и сливаются они здесь. Кураторские работы описаны словами
+// в `works.js`, а их файлы делает соседний репозиторий `wallpaper-gen`
+// и перечисляет в `images/manifest.json`; соединяются две половины по `ref`.
+// Присланные посетителями работы описаны списком `images/gallery.json`:
+// порядок записей в файле и есть их порядок на странице. Файлы при этом
+// не копируются — запись ссылается на уже существующий файл в одном
+// из известных каталогов.
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
-import {
-  DEFAULT_LICENSE,
-  LICENSES,
-  RENDITIONS,
-  WORKS,
-  beforeFile,
-  desktopText,
-  plateFile,
-  previewFile
-} from './works.js';
+import { DEFAULT_LICENSE, LICENSES, WORKS } from './works.js';
 // Номер работы и её адрес считаются одинаково на сервере и в браузере: то же
 // правило применяет приёмка к готовому файлу, и разойтись они не должны.
 import { accession, workRef } from './public/record.js';
@@ -32,12 +24,15 @@ export const GENERATED_DIR = path.join(IMAGES_DIR, 'generated');
 
 const GALLERY_DIR = path.join(IMAGES_DIR, 'gallery');
 const SHARED_DIR = path.join(IMAGES_DIR, 'shared');
-// Кураторские работы: сюда пишет `scripts/render-plates.mjs`.
+// Кураторские работы: сюда пишет `wallpaper-gen`.
 const PLATES_DIR = path.join(IMAGES_DIR, 'plates');
 // Работа до реставрации. Лежит отдельно, потому что это не экспонат: показать
 // её можно только рядом с самой работой, и в коллекцию она не попадает.
 const BEFORE_DIR = path.join(IMAGES_DIR, 'before');
 const GALLERY_INDEX_FILE = path.join(IMAGES_DIR, 'gallery.json');
+// Что о своих файлах сообщает их изготовитель. Пишется туда же, куда картинки,
+// и путешествует вместе с ними: без картинок манифест не значит ничего.
+const MANIFEST_FILE = path.join(IMAGES_DIR, 'manifest.json');
 // Размер страницы указателя, а не размер коллекции: из коллекции ничего
 // не уходит. Адрес, переставший существовать, теряет всё, что накопил
 // в поиске, — а накопить его и есть цель (research/2026-08-16-indexable-collection.md).
@@ -163,66 +158,66 @@ async function beforeUrl(entry) {
   return imageUrl(entry.before);
 }
 
-// Один кадр работы: файл, его адрес и размеры. Файла может не быть — в свежей
-// копии репозитория `images/` пуст, — и тогда возвращается null.
-const [PHONE, DESKTOP] = RENDITIONS;
-async function plateOf(work, rendition) {
-  const name = plateFile(work, rendition);
-  const stat = await fs.stat(path.join(PLATES_DIR, name)).catch(() => null);
-  if (!stat) return null;
-  const [width, height] = rendition.dims;
-  return { url: imageUrl(`plates/${name}`), filename: name, width, height, bytes: stat.size };
+// Манифест — то, что о файлах сообщает их изготовитель. Пишет его
+// `wallpaper-gen`: какие файлы сделаны, с какими настоящими размерами
+// и какой у каждого есть копия для показа и файл «до».
+//
+// Сайт имён файлов не складывает и размеров не измеряет. Складывал бы —
+// два репозитория однажды разошлись бы в правилах, и страница сослалась бы
+// на несуществующий файл. Измерял бы — заявил бы размер, которого у файла
+// нет: работа не всегда выходит той, какой её просили, музейный скан
+// кончается там, где кончается скан музея.
+//
+// Манифеста может не быть: в свежей копии `images/` пуст, пока не отработал
+// генератор. Тогда кураторских работ на сайте просто нет — страница
+// с изображением, которого нет, хуже отсутствующей страницы.
+async function readManifest() {
+  try {
+    const parsed = JSON.parse(await fs.readFile(MANIFEST_FILE, 'utf8'));
+    return Array.isArray(parsed) ? parsed : [];
+  } catch (error) {
+    if (error.code === 'ENOENT') return [];
+    throw error;
+  }
 }
 
-// Уменьшенная копия кадра для показа. Её нет у кадра, которому она
-// не заведена (`preview` в `RENDITIONS`), и нет, пока файл не отрисован, —
-// в обоих случаях страница показывает сам кадр, как показывала всегда.
-async function previewOf(work, rendition) {
-  const name = previewFile(work, rendition);
-  if (!name || !(await fs.stat(path.join(PLATES_DIR, name)).catch(() => null))) return null;
-  const [width, height] = rendition.preview;
-  return { url: imageUrl(`plates/${name}`), width, height };
-}
+// Файл из манифеста существует не всегда: манифест мог пережить каталог
+// картинок. Проверяем перед тем, как обещать адрес.
+const madeFile = async entry => (entry && (await fs.stat(path.join(IMAGES_DIR, entry.file)).catch(() => null))) || null;
 
-// Кураторские работы. Работа без телефонного кадра не показывается вовсе:
-// страница с изображением, которого нет, хуже отсутствующей страницы.
-// Экранный кадр необязателен — без него страница просто не предлагает 4K.
+// Кураторские работы. Порядок — этого массива, а не манифеста: манифест
+// про файлы, а порядок на указателе — про развеску.
 async function catalogueItems() {
+  const made = new Map((await readManifest()).map(entry => [entry.ref, entry]));
   const items = [];
   for (const work of WORKS) {
-    const phone = await plateOf(work, PHONE);
-    if (!phone) continue;
-    const desktop = await plateOf(work, DESKTOP);
-    const hasBefore = await fs.stat(path.join(BEFORE_DIR, beforeFile(work))).catch(() => null);
+    const plate = made.get(work.ref);
+    if (!(await madeFile(plate))) continue;
+    const before = (await madeFile(plate.before)) && plate.before;
+    const preview = (await madeFile(plate.preview)) && plate.preview;
     items.push({
       ref: accession(work.ref),
       slug: work.slug,
-      url: phone.url,
-      filename: phone.filename,
+      url: imageUrl(plate.file),
+      filename: path.basename(plate.file),
       title: work.title,
       alt: work.alt,
       tags: work.tags,
-      width: phone.width,
-      height: phone.height,
-      bytes: phone.bytes,
-      // Чем страница показывает телефонный кадр. Отдаёт она всё равно `url`:
-      // копия существует только ради проёма, в котором кадр стоит.
-      preview: await previewOf(work, PHONE),
-      // Тот же кадр для монитора. Заголовок и alt те же с точностью до слова
-      // об устройстве (`desktopText` в works.js): это одна работа, а не две.
-      // `preview` — чем страница его показывает; отдаёт она всё равно `url`.
-      desktop: desktop && {
-        ...desktop,
-        title: desktopText(work.title),
-        alt: desktopText(work.alt),
-        preview: await previewOf(work, DESKTOP)
-      },
+      width: plate.width,
+      height: plate.height,
+      bytes: plate.bytes,
+      // Чем страница работу показывает. Отдаёт она всё равно `url`: копия
+      // существует только ради проёма, в котором работа стоит.
+      preview: preview && { url: imageUrl(preview.file), width: preview.width, height: preview.height },
       // День, когда работа вошла в коллекцию, — для `lastmod` в карте сайта.
       // Берётся из каталога, а не из `mtime` файла: рендер детерминирован,
       // но переписывает файл при каждом запуске.
       added: work.added || null,
-      before: hasBefore ? imageUrl(`before/${beforeFile(work)}`) : null,
-      from: hasBefore ? work.from : null,
+      // Работа до реставрации и размеры, с которых она восстановлена. Размеры
+      // взяты из самого файла «до», а не из настроек: страница утверждает ими
+      // факт, и утверждать она должна измеренное.
+      before: before ? imageUrl(before.file) : null,
+      from: before ? [before.width, before.height] : null,
       license: LICENSES[work.license || DEFAULT_LICENSE],
       source: 'vellum'
     });

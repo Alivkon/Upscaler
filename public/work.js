@@ -63,11 +63,3 @@ if (comparable) {
 } else {
   frame.addEventListener('click', () => openFull(picture));
 }
-
-// Второй кадр работы — экранный. Сравнивать в нём нечего: файл «до» один
-// на работу и сделан из телефонного кадра, — поэтому щелчок просто открывает
-// его во весь экран, как и работу без «до».
-const widePicture = document.querySelector('#wide-picture');
-if (widePicture) {
-  document.querySelector('#wide-frame').addEventListener('click', () => openFull(widePicture));
-}
