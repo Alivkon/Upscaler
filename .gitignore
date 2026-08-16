@@ -13,6 +13,9 @@ node_modules/
 images/*/*
 !images/*/.gitkeep
 
+# Список работ на витрине — тоже состояние работающего сервера.
+images/gallery.json
+
 # Logs
 *.log
 logs/
