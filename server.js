@@ -32,7 +32,9 @@ const upload = multer({
   fileFilter: (_req, file, done) => done(null, ACCEPTED_TYPES.has(file.mimetype))
 });
 
-await Promise.all([STORAGE_DIR, GALLERY_DIR, GENERATED_DIR, SHARED_DIR].map(directory => fs.mkdir(directory, { recursive: true })));
+await Promise.all(
+  [STORAGE_DIR, GALLERY_DIR, GENERATED_DIR, SHARED_DIR].map(directory => fs.mkdir(directory, { recursive: true }))
+);
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/images', express.static(IMAGES_DIR, { fallthrough: false }));
 
@@ -42,16 +44,23 @@ function isImage(filename) {
 
 async function listImageFiles(directory) {
   const entries = await fs.readdir(directory, { withFileTypes: true });
-  const images = await Promise.all(entries.filter(entry => entry.isFile() && isImage(entry.name)).map(async entry => ({
-    name: entry.name,
-    modified: (await fs.stat(path.join(directory, entry.name))).mtimeMs
-  })));
+  const images = await Promise.all(
+    entries
+      .filter(entry => entry.isFile() && isImage(entry.name))
+      .map(async entry => ({
+        name: entry.name,
+        modified: (await fs.stat(path.join(directory, entry.name))).mtimeMs
+      }))
+  );
   return images.sort((a, b) => b.modified - a.modified);
 }
 
 async function galleryItems() {
   const [shared, gallery] = await Promise.all([listImageFiles(SHARED_DIR), listImageFiles(GALLERY_DIR)]);
-  return [...shared.map(file => ({ ...file, source: 'shared', folder: 'shared' })), ...gallery.map(file => ({ ...file, source: 'llm', folder: 'gallery' }))]
+  return [
+    ...shared.map(file => ({ ...file, source: 'shared', folder: 'shared' })),
+    ...gallery.map(file => ({ ...file, source: 'llm', folder: 'gallery' }))
+  ]
     .sort((a, b) => b.modified - a.modified)
     .slice(0, 10)
     .map(file => ({
@@ -84,19 +93,33 @@ const MODELS = {
     slug: 'nano-banana',
     endpoint: 'models/google/nano-banana/predictions',
     requiresPrompt: true,
-    input: (image, prompt) => ({ prompt, image_input: [image], aspect_ratio: 'match_input_image', output_format: 'jpg' })
+    input: (image, prompt) => ({
+      prompt,
+      image_input: [image],
+      aspect_ratio: 'match_input_image',
+      output_format: 'jpg'
+    })
   },
   nano_banana_pro: {
     title: 'Nano Banana Pro',
     slug: 'nano-banana-pro',
     endpoint: 'models/google/nano-banana-pro/predictions',
     requiresPrompt: true,
-    input: (image, prompt, resolution) => ({ prompt, image_input: [image], aspect_ratio: 'match_input_image', output_format: 'jpg', ...(resolution ? { resolution } : {}) })
+    input: (image, prompt, resolution) => ({
+      prompt,
+      image_input: [image],
+      aspect_ratio: 'match_input_image',
+      output_format: 'jpg',
+      ...(resolution ? { resolution } : {})
+    })
   }
 };
 
 function apiHeaders() {
-  if (!process.env.REPLICATE_API_TOKEN || process.env.REPLICATE_API_TOKEN === 'r8_replace_with_your_replicate_api_token') {
+  if (
+    !process.env.REPLICATE_API_TOKEN ||
+    process.env.REPLICATE_API_TOKEN === 'r8_replace_with_your_replicate_api_token'
+  ) {
     throw new Error('Добавьте действительный REPLICATE_API_TOKEN в файл .env.');
   }
   return { Authorization: `Bearer ${process.env.REPLICATE_API_TOKEN}` };
@@ -105,7 +128,10 @@ function apiHeaders() {
 async function parseResponse(response) {
   const data = await response.json().catch(() => ({}));
   if (!response.ok || data.code >= 400 || data.success === false) {
-    throw new HttpError(502, data.detail || data.error || data.msg || data.message || `Replicate вернул HTTP ${response.status}`);
+    throw new HttpError(
+      502,
+      data.detail || data.error || data.msg || data.message || `Replicate вернул HTTP ${response.status}`
+    );
   }
   return data;
 }
@@ -157,9 +183,12 @@ async function waitForResult(prediction) {
       if (!url) throw new HttpError(502, 'Задача завершилась, но ссылка на изображение отсутствует.');
       return url;
     }
-    if (task.status === 'failed' || task.status === 'canceled') throw new HttpError(502, task.error || 'Апскейлинг не выполнен сервисом Replicate.');
+    if (task.status === 'failed' || task.status === 'canceled')
+      throw new HttpError(502, task.error || 'Апскейлинг не выполнен сервисом Replicate.');
     await new Promise(resolve => setTimeout(resolve, 2000));
-    const response = await fetch(task.urls?.get || `https://api.replicate.com/v1/predictions/${task.id}`, { headers: apiHeaders() });
+    const response = await fetch(task.urls?.get || `https://api.replicate.com/v1/predictions/${task.id}`, {
+      headers: apiHeaders()
+    });
     task = await parseResponse(response);
   }
   throw new HttpError(504, 'Время ожидания результата истекло. Попробуйте ещё раз.');
@@ -169,12 +198,15 @@ async function saveResult(sourceUrl, file, { model, outputSize, targetLongestSid
   const response = await fetch(sourceUrl, { headers: apiHeaders() });
   if (!response.ok) throw new HttpError(502, 'Не удалось скачать готовое изображение с Replicate.');
   const contentType = response.headers.get('content-type') || file.mimetype;
-  if (!contentType.startsWith('image/')) throw new HttpError(502, 'Replicate вернул файл, который не является изображением.');
+  if (!contentType.startsWith('image/'))
+    throw new HttpError(502, 'Replicate вернул файл, который не является изображением.');
   const extension = contentType.includes('png') ? '.png' : contentType.includes('webp') ? '.webp' : '.jpg';
-  const baseName = path.basename(file.originalname, path.extname(file.originalname)).replace(/[^a-zA-Z0-9_-]/g, '_') || 'photo';
+  const baseName =
+    path.basename(file.originalname, path.extname(file.originalname)).replace(/[^a-zA-Z0-9_-]/g, '_') || 'photo';
   const filename = `${baseName}-${model.slug}-${outputSize}-${Date.now()}${extension}`;
   let output = Buffer.from(await response.arrayBuffer());
-  if (targetLongestSide) output = await sharp(output).resize(targetLongestSide, targetLongestSide, { fit: 'inside' }).toBuffer();
+  if (targetLongestSide)
+    output = await sharp(output).resize(targetLongestSide, targetLongestSide, { fit: 'inside' }).toBuffer();
   await fs.writeFile(path.join(GENERATED_DIR, filename), output);
   return filename;
 }
@@ -186,15 +218,25 @@ app.post('/api/upscale', upload.single('photo'), async (req, res, next) => {
     const selectedOutputSize = model === MODELS.real_esrgan ? req.body.output_size : req.body.portrait_output_size;
     const outputSize = ['x2', 'x4', '1k', '2k', '4k'].includes(selectedOutputSize) ? selectedOutputSize : 'x2';
     const prompt = typeof req.body.prompt === 'string' ? req.body.prompt.trim() : '';
-    if (model.requiresPrompt && !prompt) return res.status(400).json({ error: 'Введите инструкцию для обработки портрета.' });
+    if (model.requiresPrompt && !prompt)
+      return res.status(400).json({ error: 'Введите инструкцию для обработки портрета.' });
     const sourceLongestSide = await readLongestSide(req.file);
     const targetLongestSide = targetLongestSideFor(outputSize, sourceLongestSide);
-    const scale = model === MODELS.real_esrgan ? realEsrganScale(outputSize, sourceLongestSide, targetLongestSide) : undefined;
-    const nativeResolution = model === MODELS.nano_banana_pro && ['1k', '2k', '4k'].includes(outputSize) ? outputSize.toUpperCase() : undefined;
+    const scale =
+      model === MODELS.real_esrgan ? realEsrganScale(outputSize, sourceLongestSide, targetLongestSide) : undefined;
+    const nativeResolution =
+      model === MODELS.nano_banana_pro && ['1k', '2k', '4k'].includes(outputSize)
+        ? outputSize.toUpperCase()
+        : undefined;
     const prediction = await createPrediction(model, asDataUrl(req.file), prompt, scale ?? nativeResolution);
     const resultUrl = await waitForResult(prediction);
     const filename = await saveResult(resultUrl, req.file, { model, outputSize, targetLongestSide });
-    res.json({ filename, url: `/images/generated/${encodeURIComponent(filename)}`, taskId: prediction.id, model: model.title });
+    res.json({
+      filename,
+      url: `/images/generated/${encodeURIComponent(filename)}`,
+      taskId: prediction.id,
+      model: model.title
+    });
   } catch (error) {
     next(error);
   }

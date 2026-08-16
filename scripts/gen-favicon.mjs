@@ -25,8 +25,16 @@ const MTN = { ax: 32, ay: 69, bx: 48, by: 45, cx: 64, cy: 69 };
 const SUN = { cx: 57, cy: 39, r: 4.5 };
 // углы-«расширение» (ломанные со скруглёнными концами)
 const BRACKETS = [
-  [{ x: 75, y: 19 }, { x: 75, y: 26 }, { x: 82, y: 26 }],
-  [{ x: 25, y: 81 }, { x: 25, y: 74 }, { x: 18, y: 74 }],
+  [
+    { x: 75, y: 19 },
+    { x: 75, y: 26 },
+    { x: 82, y: 26 }
+  ],
+  [
+    { x: 25, y: 81 },
+    { x: 25, y: 74 },
+    { x: 18, y: 74 }
+  ]
 ];
 const BRACKET_W = 4.5; // толщина линии
 
@@ -38,8 +46,7 @@ function rrInside(px, py, rr) {
   const hh = rr.h / 2 - rr.r;
   const dx = Math.abs(px - cx) - hw;
   const dy = Math.abs(py - cy) - hh;
-  const d =
-    Math.hypot(Math.max(dx, 0), Math.max(dy, 0)) + Math.min(Math.max(dx, dy), 0) - rr.r;
+  const d = Math.hypot(Math.max(dx, 0), Math.max(dy, 0)) + Math.min(Math.max(dx, dy), 0) - rr.r;
   return d <= 0;
 }
 
@@ -95,7 +102,10 @@ function render(size, ss = 4) {
   const hi = size * ss;
   for (let y = 0; y < size; y++) {
     for (let x = 0; x < size; x++) {
-      let r = 0, g = 0, b = 0, a = 0;
+      let r = 0,
+        g = 0,
+        b = 0,
+        a = 0;
       for (let sy = 0; sy < ss; sy++) {
         for (let sx = 0; sx < ss; sx++) {
           const px = ((x * ss + sx + 0.5) / hi) * 100;
@@ -158,12 +168,7 @@ function pngEncode(width, height, rgba) {
     rgba.copy(raw, y * (stride + 1) + 1, y * stride, y * stride + stride);
   }
   const idat = deflateSync(raw, { level: 9 });
-  return Buffer.concat([
-    sig,
-    chunk('IHDR', ihdr),
-    chunk('IDAT', idat),
-    chunk('IEND', Buffer.alloc(0)),
-  ]);
+  return Buffer.concat([sig, chunk('IHDR', ihdr), chunk('IDAT', idat), chunk('IEND', Buffer.alloc(0))]);
 }
 
 // ---- Генерация файлов ----
@@ -171,7 +176,7 @@ const sizes = [
   { name: 'favicon-16.png', size: 16 },
   { name: 'favicon-32.png', size: 32 },
   { name: 'favicon-48.png', size: 48 },
-  { name: 'apple-touch-icon.png', size: 180 },
+  { name: 'apple-touch-icon.png', size: 180 }
 ];
 mkdirSync(PUBLIC, { recursive: true });
 for (const { name, size } of sizes) {

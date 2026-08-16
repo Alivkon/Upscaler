@@ -1,4 +1,114 @@
-<!doctype html><html lang="ru"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>WALLORA — AI-обои</title><link rel="icon" type="image/svg+xml" href="/favicon.svg"><link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png"><link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png"><link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"><link rel="stylesheet" href="/styles.css"></head><body>
-<header><a class="brand" href="#">WALL<span>ORA</span></a><nav><button class="nav active" data-view="gallery">Коллекция</button><button class="nav" data-view="studio">Создать</button></nav><button disabled>Скоро</button></header>
-<main><section id="gallery-view"><div class="hero"><p class="eyebrow">ОБОИ ДЛЯ ВАШЕГО ЭКРАНА</p><h1>Ваш следующий экран<br><em>уже здесь.</em></h1><p>Вертикальные обои для телефона, рабочего стола и телевизора. Сохраняйте понравившееся бесплатно.</p><aside>✦ Все работы в коллекции вновь созданы или обработаны с помощью LLM по запросам пользователей.</aside></div><div class="heading"><div><p class="eyebrow">СВЕЖИЕ РАБОТЫ</p><h2>Для вашего экрана</h2></div><small>Новая работа появляется первой каждые 5 минут, пока страница активна.</small></div><div id="gallery-grid" class="grid"></div><section class="cta"><div><p class="eyebrow">НЕ НАШЛИ СВОЁ?</p><h2>Сделайте обои из своего снимка.</h2></div><button class="primary" data-view="studio">Открыть студию →</button></section></section>
-<section id="studio-view" hidden><div class="hero studio"><p class="eyebrow">WALLORA STUDIO</p><h1>Ваш снимок.<br><em>Новый масштаб.</em></h1><p>Улучшите личное фото или обработайте портрет.</p></div><form id="upscale-form" class="panel"><input id="active-model" type="hidden" name="model" value="real_esrgan"><div class="tabs"><button id="ordinary-tab" class="tab active" type="button">Изображение</button><button id="portrait-tab" class="tab" type="button">Портрет</button></div><section id="ordinary-settings"><p>Real-ESRGAN · естественное увеличение детализации</p><fieldset><legend>Размер результата</legend><label><input type="radio" name="output_size" value="x2" checked>×2</label><label><input type="radio" name="output_size" value="x4">×4</label><label><input type="radio" name="output_size" value="2k">2K</label><label><input type="radio" name="output_size" value="4k">4K</label></fieldset></section><section id="portrait-settings" hidden><fieldset><legend>Модель для портрета</legend><label><input type="radio" name="portrait_model" value="nano_banana" checked>Nano Banana</label><label><input type="radio" name="portrait_model" value="nano_banana_pro">Nano Banana Pro</label></fieldset><fieldset><legend>Размер результата</legend><label><input type="radio" name="portrait_output_size" value="x2">×2</label><label><input type="radio" name="portrait_output_size" value="x4">×4</label><label><input type="radio" name="portrait_output_size" value="1k" checked>1K</label><label><input type="radio" name="portrait_output_size" value="2k">2K</label><label><input type="radio" name="portrait_output_size" value="4k">4K</label></fieldset><label class="prompt">Инструкция<textarea id="prompt" name="prompt" rows="3">Увеличь разрешение изображения, сохрани композицию и детали, не меняй содержание</textarea><small>Можно заменить одежду, фон или выражение лица.</small></label></section><label id="dropzone" class="drop" for="photo"><input id="photo" name="photo" type="file" accept="image/jpeg,image/png,image/webp" hidden><b id="file-label">Перетащите фото сюда</b><small>JPG, PNG, WebP · до 10 МБ</small></label><button id="submit" class="primary" type="submit" disabled><span>Улучшить ×2</span> →</button><p id="status"></p></form><section id="result" class="result" hidden><a id="result-link" target="_blank"><img id="result-image" alt="Готовое изображение"></a><div><p class="eyebrow">ГОТОВО</p><h2>Ваше изображение готово.</h2><p>Откройте или сохраните его на устройство.</p><a id="download" class="button" download>Скачать</a><button id="share" class="primary" type="button">Поделиться · −50%</button><small id="share-status">Поделитесь работой с коллекцией и получите скидку 50% на будущую платную функцию.</small></div></section></section></main><footer>WALLORA · Обои, созданные с помощью LLM · Оплата и аккаунты появятся позже</footer><script src="/app.js"></script></body></html>
+<!doctype html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>WALLORA — AI-обои</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <header>
+      <a class="brand" href="#">WALL<span>ORA</span></a>
+      <nav>
+        <button class="nav active" data-view="gallery">Коллекция</button
+        ><button class="nav" data-view="studio">Создать</button>
+      </nav>
+      <button disabled>Скоро</button>
+    </header>
+    <main>
+      <section id="gallery-view">
+        <div class="hero">
+          <p class="eyebrow">ОБОИ ДЛЯ ВАШЕГО ЭКРАНА</p>
+          <h1>Ваш следующий экран<br /><em>уже здесь.</em></h1>
+          <p>Вертикальные обои для телефона, рабочего стола и телевизора. Сохраняйте понравившееся бесплатно.</p>
+          <aside>✦ Все работы в коллекции вновь созданы или обработаны с помощью LLM по запросам пользователей.</aside>
+        </div>
+        <div class="heading">
+          <div>
+            <p class="eyebrow">СВЕЖИЕ РАБОТЫ</p>
+            <h2>Для вашего экрана</h2>
+          </div>
+          <small>Новая работа появляется первой каждые 5 минут, пока страница активна.</small>
+        </div>
+        <div id="gallery-grid" class="grid"></div>
+        <section class="cta">
+          <div>
+            <p class="eyebrow">НЕ НАШЛИ СВОЁ?</p>
+            <h2>Сделайте обои из своего снимка.</h2>
+          </div>
+          <button class="primary" data-view="studio">Открыть студию →</button>
+        </section>
+      </section>
+      <section id="studio-view" hidden>
+        <div class="hero studio">
+          <p class="eyebrow">WALLORA STUDIO</p>
+          <h1>Ваш снимок.<br /><em>Новый масштаб.</em></h1>
+          <p>Улучшите личное фото или обработайте портрет.</p>
+        </div>
+        <form id="upscale-form" class="panel">
+          <input id="active-model" type="hidden" name="model" value="real_esrgan" />
+          <div class="tabs">
+            <button id="ordinary-tab" class="tab active" type="button">Изображение</button
+            ><button id="portrait-tab" class="tab" type="button">Портрет</button>
+          </div>
+          <section id="ordinary-settings">
+            <p>Real-ESRGAN · естественное увеличение детализации</p>
+            <fieldset>
+              <legend>Размер результата</legend>
+              <label><input type="radio" name="output_size" value="x2" checked />×2</label
+              ><label><input type="radio" name="output_size" value="x4" />×4</label
+              ><label><input type="radio" name="output_size" value="2k" />2K</label
+              ><label><input type="radio" name="output_size" value="4k" />4K</label>
+            </fieldset>
+          </section>
+          <section id="portrait-settings" hidden>
+            <fieldset>
+              <legend>Модель для портрета</legend>
+              <label><input type="radio" name="portrait_model" value="nano_banana" checked />Nano Banana</label
+              ><label><input type="radio" name="portrait_model" value="nano_banana_pro" />Nano Banana Pro</label>
+            </fieldset>
+            <fieldset>
+              <legend>Размер результата</legend>
+              <label><input type="radio" name="portrait_output_size" value="x2" />×2</label
+              ><label><input type="radio" name="portrait_output_size" value="x4" />×4</label
+              ><label><input type="radio" name="portrait_output_size" value="1k" checked />1K</label
+              ><label><input type="radio" name="portrait_output_size" value="2k" />2K</label
+              ><label><input type="radio" name="portrait_output_size" value="4k" />4K</label>
+            </fieldset>
+            <label class="prompt"
+              >Инструкция<textarea id="prompt" name="prompt" rows="3">
+Увеличь разрешение изображения, сохрани композицию и детали, не меняй содержание</textarea
+              ><small>Можно заменить одежду, фон или выражение лица.</small></label
+            >
+          </section>
+          <label id="dropzone" class="drop" for="photo"
+            ><input id="photo" name="photo" type="file" accept="image/jpeg,image/png,image/webp" hidden /><b
+              id="file-label"
+              >Перетащите фото сюда</b
+            ><small>JPG, PNG, WebP · до 10 МБ</small></label
+          ><button id="submit" class="primary" type="submit" disabled><span>Улучшить ×2</span> →</button>
+          <p id="status"></p>
+        </form>
+        <section id="result" class="result" hidden>
+          <a id="result-link" target="_blank"><img id="result-image" alt="Готовое изображение" /></a>
+          <div>
+            <p class="eyebrow">ГОТОВО</p>
+            <h2>Ваше изображение готово.</h2>
+            <p>Откройте или сохраните его на устройство.</p>
+            <a id="download" class="button" download>Скачать</a
+            ><button id="share" class="primary" type="button">Поделиться · −50%</button
+            ><small id="share-status"
+              >Поделитесь работой с коллекцией и получите скидку 50% на будущую платную функцию.</small
+            >
+          </div>
+        </section>
+      </section>
+    </main>
+    <footer>WALLORA · Обои, созданные с помощью LLM · Оплата и аккаунты появятся позже</footer>
+    <script src="/app.js"></script>
+  </body>
+</html>
