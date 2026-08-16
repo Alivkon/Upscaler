@@ -19,9 +19,12 @@
 import { formatBytes, formatDims, formatType } from './public/record.js';
 
 const SITE_NAME = 'Vellum';
+// Указатель показывает телефонный кадр, но у каждой работы есть и экранный,
+// 3840×2160, — и сказано об этом здесь: описание страницы попадает в выдачу,
+// а «4k desktop wallpaper» спрашивают отдельно от «phone wallpaper».
 const DESCRIPTION =
-  'Vertical phone wallpapers at full resolution, free to download, no sign-up. ' +
-  'Restore your own image up to 4× its size.';
+  'Vertical phone wallpapers at 1440 × 3120, each with a 4K desktop version. ' +
+  'Free to download, no sign-up. Restore your own image up to 4× its size.';
 
 // Единственное место, где текст становится разметкой. Имена присланных файлов
 // попадают на страницу, а они приходят снаружи.
@@ -107,6 +110,23 @@ function layout({ title, description, canonical, image, body, ld, script, curren
 // и шрифтом и замедляет ту самую первую.
 const EAGER_CARDS = 4;
 
+// Чем показывается кадр, в отличие от того, чем он отдаётся.
+//
+// Полный файл остаётся в `src`: им работа объявлена поиску, он же стоит
+// в `contentUrl` и в карте сайта, его отдаёт «Download», его открывает
+// лайтбокс, и он достаётся браузеру, который `srcset` не понимает.
+//
+// В самом `srcset` полного файла нет намеренно. Проёмы, в которых стоит
+// телефонный кадр, — ~200 px в карточке указателя и ~290 px на странице
+// работы, — не выигрывают от 1440×3120 ни при какой плотности экрана,
+// а стоит он 1,06 МБ против 26 КБ у копии. Десять карточек тянули 10,1 МБ
+// картинок при 1,8 КБ разметки.
+//
+// Отличие от экранного кадра, где 4K в `srcset` есть: там проём шириной
+// до 1080 px, и на плотном экране полный файл действительно виден.
+const shownWith = (preview, sizes) =>
+  preview ? ` srcset="${escape(preview.url)} ${preview.width}w" sizes="${sizes}"` : '';
+
 // Карточка указателя. Ссылок на работу две: изображение и номер. Номер несёт
 // текст ссылки, а изображение — единственное, на что посетитель целится.
 //
@@ -116,10 +136,13 @@ const EAGER_CARDS = 4;
 function card(item, { eager = false, priority = false } = {}) {
   const ratio = `${item.width} / ${item.height}`;
   const loading = ` loading="${eager ? 'eager' : 'lazy'}"${priority ? ' fetchpriority="high"' : ''}`;
+  // Сетка — `repeat(auto-fill, minmax(200px, 1fr))`: на телефоне это одна
+  // колонка почти во всю ширину, дальше карточка держится около 200–220 px.
+  const shown = shownWith(item.preview, '(max-width: 520px) 90vw, 220px');
   return `<figure class="item">
           <div class="record">
             <a class="record__image" href="/w/${escape(item.slug)}" style="--ratio: ${ratio}" tabindex="-1">
-              <img src="${escape(item.url)}" alt="${escape(item.alt)}" width="${item.width}" height="${item.height}"${loading} />
+              <img src="${escape(item.url)}"${shown} alt="${escape(item.alt)}" width="${item.width}" height="${item.height}"${loading} />
             </a>
           </div>
           <figcaption class="caption">
@@ -156,7 +179,7 @@ export function collectionPage({ items, page, pageCount, origin }) {
   const suffix = page > 1 ? ` — page ${page}` : '';
   return layout({
     current: 'collection',
-    title: `${SITE_NAME} — phone wallpapers at full resolution${suffix}`,
+    title: `${SITE_NAME} — phone and 4K desktop wallpapers at full resolution${suffix}`,
     description: DESCRIPTION,
     canonical: `${origin}${page > 1 ? `/page/${page}` : '/'}`,
     // Превью для мессенджеров и соцсетей: без него ссылка на коллекцию идёт
@@ -181,15 +204,18 @@ export function collectionPage({ items, page, pageCount, origin }) {
 const licenseFields = (item, origin) =>
   item.license ? { license: `${origin}${item.license.path}`, acquireLicensePage: `${origin}/w/${item.slug}` } : {};
 
-const imageObject = (item, origin) => ({
+// `picture` — кадр работы: сама запись (телефонный) или `item.desktop`
+// (экранный). Инвентарный номер у обоих один: это одна работа в двух кадрах,
+// а не две работы, и разные номера сказали бы обратное.
+const imageObject = (item, picture, origin) => ({
   '@context': 'https://schema.org',
   '@type': 'ImageObject',
-  name: item.title,
-  description: item.alt,
-  contentUrl: `${origin}${item.url}`,
-  width: String(item.width),
-  height: String(item.height),
-  encodingFormat: `image/${formatType(item.url).toLowerCase()}`,
+  name: picture.title,
+  description: picture.alt,
+  contentUrl: `${origin}${picture.url}`,
+  width: String(picture.width),
+  height: String(picture.height),
+  encodingFormat: `image/${formatType(picture.url).toLowerCase()}`,
   // Теги пока нигде не образуют страниц: на двенадцати работах вышло бы пять
   // списков по две работы, а тонкие страницы-списки не просто не ранжируются,
   // они вредят. Здесь они всё же читаются — иначе поле было бы мёртвым.
@@ -200,9 +226,53 @@ const imageObject = (item, origin) => ({
   ...licenseFields(item, origin)
 });
 
+// Второй кадр той же работы — под первым, отдельным блоком со своей кнопкой.
+// Он не превью и не вариант размера: это тот же вид, посчитанный заново под
+// пропорцию монитора, и потому показан целиком, а не полоской.
+//
+// Стоит он ниже работы и грузится лениво: пришедший из поиска пришёл за
+// телефонным кадром, и торопить экранный значит отнимать канал у того,
+// ради чего страница открыта.
+//
+// Показан он уменьшенной копией, а скачивается полным: в разметке кадр стоит
+// в колонке шириной самое большее 1080 px, и телефон, дотянувший до этого
+// блока, иначе выкачивал бы 2 МБ ради картинки в 430 px. В `src` при этом
+// остаётся сам 4K — им работа объявлена поиску, и подменять его нельзя;
+// выбор делает `srcset`, а `src` достаётся браузеру, который его не понимает.
+function wideFrame(desktop) {
+  if (!desktop) return '';
+  const spec = specLine([
+    formatDims(desktop.width, desktop.height),
+    formatType(desktop.url),
+    formatBytes(desktop.bytes)
+  ]);
+  const responsive = desktop.preview
+    ? ` srcset="${escape(desktop.preview.url)} ${desktop.preview.width}w, ${escape(desktop.url)} ${desktop.width}w"` +
+      // Ширина проёма: до 1160 px — колонка за вычетом полей, дальше упирается
+      // в 1080 px (`.record--wide` в styles.css).
+      ' sizes="(max-width: 1160px) 92vw, 1080px"'
+    : '';
+  return `<section class="wide">
+        <p class="heading">4K desktop wallpaper</p>
+        <figure class="record record--wide">
+          <div class="record__image has-work record__image--zoom" id="wide-frame">
+            <img id="wide-picture" src="${escape(desktop.url)}"${responsive} alt="${escape(desktop.alt)}"
+              width="${desktop.width}" height="${desktop.height}" loading="lazy" />
+          </div>
+        </figure>
+        <div class="caption">
+          <p class="caption__spec">${spec}</p>
+          <a class="btn" href="${escape(desktop.url)}" download="${escape(desktop.filename)}">Download 4K</a>
+        </div>
+      </section>`;
+}
+
 export function workPage({ item, others, origin }) {
   const size = formatDims(item.width, item.height);
   const restored = item.from ? `Restored from ${formatDims(...item.from)}` : '';
+  const alsoDesktop = item.desktop
+    ? ` Also as a ${formatDims(item.desktop.width, item.desktop.height)} desktop wallpaper.`
+    : '';
   // Держать и щёлкать — один жест, поэтому увеличение и сравнение на одном
   // элементе не уживаются: где есть «до», изображение показывает «до»;
   // где нет — открывается во весь экран. Обработчики вешает work.js, а вот
@@ -212,19 +282,27 @@ export function workPage({ item, others, origin }) {
     ? 'class="record__image has-work is-comparable" role="button" tabindex="0" ' +
       'aria-label="Hold to see this work before restoration"'
     : 'class="record__image has-work record__image--zoom"';
+  // Проём работы задан высотой (`min(72vh, 620px)`), а ширина берётся из
+  // пропорции: у телефонного кадра это около 290 px на большом экране
+  // и примерно 70vw на телефоне.
+  const shownPlate = shownWith(item.preview, '(max-width: 860px) 70vw, 290px');
   return layout({
     current: 'collection',
     title: `${item.title}, ${size}`,
-    description: `${item.alt}. ${size}, ${formatType(item.url)}, ${formatBytes(item.bytes)}.${restored ? ` ${restored}.` : ''} Free download, no sign-up.`,
+    description: `${item.alt}. ${size}, ${formatType(item.url)}, ${formatBytes(item.bytes)}.${restored ? ` ${restored}.` : ''}${alsoDesktop} Free download, no sign-up.`,
     canonical: `${origin}/w/${item.slug}`,
     image: `${origin}${item.url}`,
-    ld: imageObject(item, origin),
+    // Оба кадра объявлены разметкой: в поиск по картинкам попадает файл, а их
+    // на странице два, и об экранном иначе не сказано ничего.
+    ld: item.desktop
+      ? [imageObject(item, item, origin), imageObject(item, item.desktop, origin)]
+      : imageObject(item, item, origin),
     script: '/work.js',
     body: `
       <div class="plate">
         <figure class="record record--plate">
           <div ${frame} id="work-frame">
-            <img id="work-picture" src="${escape(item.url)}" alt="${escape(item.alt)}" width="${item.width}" height="${item.height}" fetchpriority="high" />
+            <img id="work-picture" src="${escape(item.url)}"${shownPlate} alt="${escape(item.alt)}" width="${item.width}" height="${item.height}" fetchpriority="high" />
             ${item.before ? `<img class="before" id="work-before" src="${escape(item.before)}" alt="" aria-hidden="true" fetchpriority="low" />` : ''}
           </div>
         </figure>
@@ -243,6 +321,7 @@ export function workPage({ item, others, origin }) {
           </div>
         </div>
       </div>
+      ${wideFrame(item.desktop)}
       ${others.length ? `<section class="adjacent"><p class="heading">More in the collection</p>${grid(others)}</section>` : ''}
     `
   });
@@ -385,9 +464,9 @@ export function missingPage({ origin }) {
 // однажды застал его неверным.
 //
 // `<image:image>` — весь канал коллекции это поиск по картинкам, а список
-// адресов страниц называет изображения лишь косвенно. Изображение объявлено
-// у страницы работы и не продублировано у указателя: страница работы и есть
-// то место, куда мы хотим привести пришедшего из поиска.
+// адресов страниц называет изображения лишь косвенно. Изображения объявлены
+// у страницы работы (оба её кадра) и не продублированы у указателя: страница
+// работы и есть то место, куда мы хотим привести пришедшего из поиска.
 export function sitemap({ items, pageSize, origin }) {
   const pageCount = Math.max(1, Math.ceil(items.length / pageSize));
   // Даты сравниваются как строки: и `2026-08-16`, и полный ISO начинаются
@@ -398,12 +477,16 @@ export function sitemap({ items, pageSize, origin }) {
       .filter(Boolean)
       .sort()
       .at(-1);
-  const url = (loc, { lastmod, image } = {}) =>
+  // `images` — сколько кадров у страницы: у работы их два, телефонный
+  // и экранный, и объявлены оба. Google берёт из карты именно файлы, а не
+  // выводит их из страницы, так что не названный здесь кадр остаётся
+  // ненайденным до тех пор, пока обход не дойдёт до самой страницы.
+  const url = (loc, { lastmod, images = [] } = {}) =>
     [
       '  <url>',
       `    <loc>${escape(loc)}</loc>`,
       lastmod ? `    <lastmod>${escape(lastmod)}</lastmod>` : '',
-      image ? `    <image:image><image:loc>${escape(image)}</image:loc></image:image>` : '',
+      ...images.map(image => `    <image:image><image:loc>${escape(image)}</image:loc></image:image>`),
       '  </url>'
     ]
       .filter(Boolean)
@@ -415,7 +498,12 @@ export function sitemap({ items, pageSize, origin }) {
   };
   const entries = [
     ...Array.from({ length: pageCount }, (_, index) => pageUrl(index + 1)),
-    ...items.map(item => url(`${origin}/w/${item.slug}`, { lastmod: item.added, image: `${origin}${item.url}` })),
+    ...items.map(item =>
+      url(`${origin}/w/${item.slug}`, {
+        lastmod: item.added,
+        images: [`${origin}${item.url}`, item.desktop && `${origin}${item.desktop.url}`].filter(Boolean)
+      })
+    ),
     url(`${origin}/restore`),
     url(`${origin}/license`)
   ];

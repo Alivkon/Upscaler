@@ -10,7 +10,16 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
-import { DEFAULT_LICENSE, LICENSES, WORKS, beforeFile, plateFile } from './works.js';
+import {
+  DEFAULT_LICENSE,
+  LICENSES,
+  RENDITIONS,
+  WORKS,
+  beforeFile,
+  desktopText,
+  plateFile,
+  previewFile
+} from './works.js';
 // Номер работы и её адрес считаются одинаково на сервере и в браузере: то же
 // правило применяет приёмка к готовому файлу, и разойтись они не должны.
 import { accession, workRef } from './public/record.js';
@@ -154,27 +163,60 @@ async function beforeUrl(entry) {
   return imageUrl(entry.before);
 }
 
-// Кураторские работы. Отрисованного файла может не быть — в свежей копии
-// репозитория `images/` пуст, — и такая работа просто не показывается: страница
-// с изображением, которого нет, хуже отсутствующей страницы.
+// Один кадр работы: файл, его адрес и размеры. Файла может не быть — в свежей
+// копии репозитория `images/` пуст, — и тогда возвращается null.
+const [PHONE, DESKTOP] = RENDITIONS;
+async function plateOf(work, rendition) {
+  const name = plateFile(work, rendition);
+  const stat = await fs.stat(path.join(PLATES_DIR, name)).catch(() => null);
+  if (!stat) return null;
+  const [width, height] = rendition.dims;
+  return { url: imageUrl(`plates/${name}`), filename: name, width, height, bytes: stat.size };
+}
+
+// Уменьшенная копия кадра для показа. Её нет у кадра, которому она
+// не заведена (`preview` в `RENDITIONS`), и нет, пока файл не отрисован, —
+// в обоих случаях страница показывает сам кадр, как показывала всегда.
+async function previewOf(work, rendition) {
+  const name = previewFile(work, rendition);
+  if (!name || !(await fs.stat(path.join(PLATES_DIR, name)).catch(() => null))) return null;
+  const [width, height] = rendition.preview;
+  return { url: imageUrl(`plates/${name}`), width, height };
+}
+
+// Кураторские работы. Работа без телефонного кадра не показывается вовсе:
+// страница с изображением, которого нет, хуже отсутствующей страницы.
+// Экранный кадр необязателен — без него страница просто не предлагает 4K.
 async function catalogueItems() {
   const items = [];
   for (const work of WORKS) {
-    const file = `plates/${plateFile(work)}`;
-    const stat = await fs.stat(path.join(PLATES_DIR, plateFile(work))).catch(() => null);
-    if (!stat) continue;
+    const phone = await plateOf(work, PHONE);
+    if (!phone) continue;
+    const desktop = await plateOf(work, DESKTOP);
     const hasBefore = await fs.stat(path.join(BEFORE_DIR, beforeFile(work))).catch(() => null);
     items.push({
       ref: accession(work.ref),
       slug: work.slug,
-      url: imageUrl(file),
-      filename: plateFile(work),
+      url: phone.url,
+      filename: phone.filename,
       title: work.title,
       alt: work.alt,
       tags: work.tags,
-      width: work.dims[0],
-      height: work.dims[1],
-      bytes: stat.size,
+      width: phone.width,
+      height: phone.height,
+      bytes: phone.bytes,
+      // Чем страница показывает телефонный кадр. Отдаёт она всё равно `url`:
+      // копия существует только ради проёма, в котором кадр стоит.
+      preview: await previewOf(work, PHONE),
+      // Тот же кадр для монитора. Заголовок и alt те же с точностью до слова
+      // об устройстве (`desktopText` в works.js): это одна работа, а не две.
+      // `preview` — чем страница его показывает; отдаёт она всё равно `url`.
+      desktop: desktop && {
+        ...desktop,
+        title: desktopText(work.title),
+        alt: desktopText(work.alt),
+        preview: await previewOf(work, DESKTOP)
+      },
       // День, когда работа вошла в коллекцию, — для `lastmod` в карте сайта.
       // Берётся из каталога, а не из `mtime` файла: рендер детерминирован,
       // но переписывает файл при каждом запуске.
@@ -216,8 +258,14 @@ async function uploadedItems() {
       width,
       height,
       bytes: stat.size,
+      // Копии для показа у присланной работы нет: рендер её не делал, а файл
+      // лежит такой, каким пришёл. Страница покажет сам файл.
+      preview: null,
       // У записей индекса дата стоит с самого начала — её пишет публикация.
       added: typeof entry.added === 'string' ? entry.added : null,
+      // Второго кадра у присланной работы нет: перерисовать её нечем, она
+      // не наша и рисовалась не нами.
+      desktop: null,
       before: await beforeUrl(entry),
       from: null,
       // Лицензии нет: работа не наша, и условий на неё мы назначить не можем.
