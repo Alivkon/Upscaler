@@ -209,7 +209,6 @@ export function workPage({ item, others, origin }) {
           </div>
           <div class="terms" id="work-terms">
             ${restored ? `<p class="terms__line">${restored}</p>` : ''}
-            <p class="terms__note">This page shows the full-resolution file — the same one you download.</p>
             <p class="terms__cta">${restoreLink}</p>
           </div>
         </div>

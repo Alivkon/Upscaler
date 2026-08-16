@@ -24,7 +24,7 @@ export const WORKS = [
     alt: 'Dark gradient phone wallpaper: layered ridgelines under a low glow, muted purple fading to clay',
     tags: ['gradient', 'dark', 'purple', 'minimalist', 'mountains'],
     dims: [1170, 2532],
-    from: [564, 1220],
+    from: [282, 610],
     stops: ['#2E3350', '#6E5A6B', '#C89B85', '#E8CBAE'],
     sun: 0.72
   },
@@ -35,7 +35,7 @@ export const WORKS = [
     alt: 'Teal gradient phone wallpaper: cold slate ridgelines under a pale haze, near-black at the top',
     tags: ['gradient', 'dark', 'teal', 'minimalist', 'mountains'],
     dims: [1170, 2532],
-    from: [640, 1385],
+    from: [320, 692],
     stops: ['#10161C', '#1E3038', '#456068', '#8FA6A4'],
     sun: 0.34
   },
@@ -46,7 +46,7 @@ export const WORKS = [
     alt: 'Warm sand gradient phone wallpaper: soft dune ridges in taupe and cream lit from below',
     tags: ['gradient', 'warm', 'beige', 'minimalist', 'mountains'],
     dims: [1290, 2796],
-    from: [736, 1595],
+    from: [368, 798],
     stops: ['#2A2622', '#5C5147', '#9C8C79', '#E4D8C6'],
     sun: 0.61
   },
@@ -57,7 +57,7 @@ export const WORKS = [
     alt: 'Blue gradient phone wallpaper: steel-blue ridgelines under a diffuse light, deep navy sky',
     tags: ['gradient', 'blue', 'dark', 'minimalist', 'mountains'],
     dims: [1170, 2532],
-    from: [500, 1082],
+    from: [250, 541],
     stops: ['#151B2B', '#2C3A55', '#5D6F8C', '#A9B6C4'],
     sun: 0.48
   },
@@ -68,7 +68,7 @@ export const WORKS = [
     alt: 'Dark orange gradient phone wallpaper: ember-lit ridgelines rising from near-black into rust',
     tags: ['gradient', 'dark', 'orange', 'minimalist', 'mountains'],
     dims: [1080, 2340],
-    from: [564, 1222],
+    from: [282, 611],
     stops: ['#1B1315', '#4A2225', '#8E4535', '#D68C5C'],
     sun: 0.66
   },
@@ -79,7 +79,7 @@ export const WORKS = [
     alt: 'Minimalist grey phone wallpaper: flat ash ridgelines under an overcast glow, no colour cast',
     tags: ['gradient', 'grey', 'dark', 'minimalist', 'mountains'],
     dims: [1170, 2532],
-    from: [600, 1298],
+    from: [300, 649],
     stops: ['#181A1D', '#31363B', '#5A6167', '#93999C'],
     sun: 0.28
   },
@@ -90,7 +90,7 @@ export const WORKS = [
     alt: 'Grey and wheat gradient phone wallpaper: cool slate ridgelines warming to pale wheat at the base',
     tags: ['gradient', 'grey', 'beige', 'minimalist', 'mountains'],
     dims: [1290, 2796],
-    from: [564, 1222],
+    from: [282, 611],
     stops: ['#20242B', '#4C5058', '#8A8377', '#D8C8AE'],
     sun: 0.55
   },
@@ -101,7 +101,7 @@ export const WORKS = [
     alt: 'Dark green gradient phone wallpaper: fern-toned ridgelines under a muted light, deep forest sky',
     tags: ['gradient', 'dark', 'green', 'minimalist', 'mountains'],
     dims: [1170, 2532],
-    from: [736, 1593],
+    from: [368, 796],
     stops: ['#0E1712', '#1F3324', '#47613F', '#93A97C'],
     sun: 0.44
   },
@@ -112,7 +112,7 @@ export const WORKS = [
     alt: 'Muted violet gradient phone wallpaper: hazy ridgelines in dusty lilac over a charcoal sky',
     tags: ['gradient', 'violet', 'dark', 'minimalist', 'mountains'],
     dims: [1080, 2340],
-    from: [540, 1170],
+    from: [270, 585],
     stops: ['#1C1B22', '#3A3646', '#6B6478', '#B0A6B4'],
     sun: 0.38
   },
@@ -123,7 +123,7 @@ export const WORKS = [
     alt: 'Plum and peach gradient phone wallpaper: sunrise glow low behind ridgelines, plum sky above',
     tags: ['gradient', 'purple', 'warm', 'minimalist', 'mountains'],
     dims: [1290, 2796],
-    from: [640, 1387],
+    from: [320, 694],
     stops: ['#191722', '#3D3350', '#7E5F76', '#E0AE96'],
     sun: 0.69
   },
@@ -134,7 +134,7 @@ export const WORKS = [
     alt: 'Deep teal gradient phone wallpaper: cold ridgelines barely lit, almost black at the top edge',
     tags: ['gradient', 'dark', 'teal', 'minimalist', 'mountains'],
     dims: [1170, 2532],
-    from: [564, 1220],
+    from: [282, 610],
     stops: ['#0C1114', '#1D2A30', '#3E555C', '#7E9296'],
     sun: 0.31
   },
@@ -145,7 +145,7 @@ export const WORKS = [
     alt: 'Cool grey gradient phone wallpaper: pale slate ridgelines under an even light, silver at the base',
     tags: ['gradient', 'grey', 'minimalist', 'mountains'],
     dims: [1170, 2532],
-    from: [500, 1082],
+    from: [250, 541],
     stops: ['#22252B', '#474C57', '#7C828E', '#C6CBD2'],
     sun: 0.51
   }

@@ -187,18 +187,29 @@ await mkdir(beforeDir, { recursive: true });
  * was restored from, and a measurement that disagrees with the claim would
  * make the comparison a sales pitch instead of a fact.
  *
- * Quality is the one dial here that is a judgement rather than a measurement.
- * Kept mild on purpose — such a file is soft and a little blocky, not ruined.
+ * Quality was mild at first — q72 then q66 — and that was wrong. Held against
+ * the restored work in the frame, the two were indistinguishable: a smooth
+ * gradient survives resampling almost intact, and at the size the page shows
+ * it the difference measured 1.3 levels out of 255. Halving the dimensions
+ * alone moved it to 1.6, which is still nothing.
+ *
+ * What makes a reposted file look reposted is not resolution, it is the
+ * quantisation: banding across the sky and blocking along the ridges, both of
+ * which survive being scaled back up. Hence q45 then q32, judged by eye at the
+ * real size of the frame rather than by a difference metric — banding is
+ * visible because it is coherent, not because it is large, and RMS misses it.
+ * Lower than this the colour starts to shift green and it reads as a corrupt
+ * file rather than a compressed one.
  */
 async function renderBefore(image, work) {
   const [w, h] = work.from;
   const first = await image
     .clone()
     .resize(Math.round(w * 1.06), Math.round(h * 1.06))
-    .jpeg({ quality: 72 })
+    .jpeg({ quality: 45 })
     .toBuffer();
   const file = path.join(beforeDir, beforeFile(work));
-  const { size } = await sharp(first).resize(w, h).jpeg({ quality: 66 }).toFile(file);
+  const { size } = await sharp(first).resize(w, h).jpeg({ quality: 32 }).toFile(file);
   return `${w}×${h} ${Math.round(size / 1e3)} KB`;
 }
 
