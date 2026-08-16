@@ -15,6 +15,8 @@ import { CATALOGUE_DIR, LICENSES, ORDER_FILE, REF_PATTERN, workFile } from '../w
 
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const DAY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
+const CREATOR_KINDS = ['person', 'organization', 'unknown'];
+const PROVENANCE = ['creator', 'creatorKind', 'date', 'work', 'credit', 'page'];
 const REQUIRED = ['ref', 'slug', 'title', 'alt', 'added'];
 const OPTIONAL = ['tags', 'license', 'provenance'];
 
@@ -34,10 +36,23 @@ function checkProvenance(where, provenance) {
   }
   if (!text(provenance.creator)) complain(where, '`provenance.creator` пуст — чья это работа');
   if (!text(provenance.page)) complain(where, '`provenance.page` пуст — где это проверить');
-  // Признак, а не сравнение строки с «Unknown»: имя автора — свободный текст,
-  // и «Unknown», «Anonymous», «Неизвестный мастер» пришлось бы перечислять.
-  if ('anonymous' in provenance && typeof provenance.anonymous !== 'boolean') {
-    complain(where, '`provenance.anonymous` — это да или нет');
+  // Лишние поля ловятся и здесь, а не только на верхнем уровне. Поле, которое
+  // страница не читает, — это не пустяк: `anonymous: true` после переименования
+  // в `creatorKind` выглядел бы как работающий признак, а разметка тем временем
+  // объявляла бы «Unknown (Japan, Edo period)» живым человеком.
+  for (const field of Object.keys(provenance)) {
+    if (!PROVENANCE.includes(field)) complain(where, `лишнее поле \`provenance.${field}\``);
+  }
+  // Поле, а не разбор строки: имя автора — свободный текст, и «Unknown»,
+  // «Anonymous», «Неизвестный мастер» пришлось бы перечислять. Одно поле
+  // с тремя значениями, а не два флага: «человек», «организация» и «имени нет»
+  // исключают друг друга, и парой булевых величин это выражается так, что
+  // бывает истинно и то и другое сразу.
+  if ('creatorKind' in provenance && !CREATOR_KINDS.includes(provenance.creatorKind)) {
+    complain(
+      where,
+      `\`provenance.creatorKind\` = ${JSON.stringify(provenance.creatorKind)}, а бывает ${CREATOR_KINDS.join(', ')}`
+    );
   }
 }
 

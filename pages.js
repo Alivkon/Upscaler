@@ -200,15 +200,24 @@ const licenseFields = (item, origin) =>
 // чужое авторство в машиночитаемом виде, где его прочтут не глядя. Крой
 // авторства не создаёт: выбрать кадр и уменьшить — действие механическое.
 //
-// У анонимной работы `creator` не подставляется вовсе. В каталоге на его месте
-// стоит человекочитаемое «Unknown (Japan, Edo period)» — для строки на странице
-// это правда, а для разметки это `Person` по имени Unknown, то есть утверждение
-// о существовании такого человека. Из 137 чужих работ автор известен у 62.
+// Кем именно — решает `creatorKind`, а не догадка по строке. Строка `creator`
+// человекочитаемая, и одна и та же разметка соврала бы о ней трояко:
+//
+//   `unknown` — «Unknown (Japan, Edo period)». На странице это правда, а в
+//   разметке `Person` по имени Unknown — утверждение, что такой человек был.
+//   Поэтому `creator` не подставляется вовсе: из 144 чужих работ имя есть у 72.
+//   `organization` — «U.S. Geological Survey». Имя известно, но это не человек,
+//   и `Person` здесь — та же ошибка, что `creator: Tessarum` на гравюре Мериан,
+//   только тише: неправда о том, кто именно, а не о том, кто вообще.
+//   `person` — умолчание, потому что чаще всего автор всё-таки человек.
+const CREATOR_TYPE = { person: 'Person', organization: 'Organization' };
+
 const creatorFields = item => {
   if (!item.provenance) return { creator: { '@type': 'Organization', name: SITE_NAME }, creditText: SITE_NAME };
-  const { creator, credit, date, page, anonymous } = item.provenance;
+  const { creator, credit, date, page, creatorKind } = item.provenance;
+  const type = CREATOR_TYPE[creatorKind || 'person'];
   return {
-    ...(anonymous ? {} : { creator: { '@type': 'Person', name: creator } }),
+    ...(type ? { creator: { '@type': type, name: creator } } : {}),
     creditText: credit || creator,
     ...(date ? { dateCreated: date } : {}),
     isBasedOn: page
