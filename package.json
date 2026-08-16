@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
+    "format": "prettier --write server.js scripts public",
     "test": "node --check server.js"
   },
   "dependencies": {
@@ -13,5 +14,8 @@
     "express": "^4.21.2",
     "multer": "^2.0.2",
     "sharp": "^0.35.3"
+  },
+  "devDependencies": {
+    "prettier": "^3.9.6"
   }
 }
