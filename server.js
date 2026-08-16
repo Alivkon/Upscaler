@@ -5,28 +5,20 @@ import { fileURLToPath } from 'node:url';
 import express from 'express';
 import multer from 'multer';
 import sharp from 'sharp';
+import {
+  IMAGES_DIR,
+  STORAGE_DIR,
+  GENERATED_DIR,
+  ensureImageDirectories,
+  galleryItems,
+  isImage,
+  promoteNextStorageImage,
+  publishGeneratedImage
+} from './gallery.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const IMAGES_DIR = path.join(__dirname, 'images');
-const STORAGE_DIR = path.resolve(__dirname, process.env.INTERNAL_IMAGE_STORAGE_DIR || 'images/storage');
-const GALLERY_DIR = path.join(IMAGES_DIR, 'gallery');
-const GENERATED_DIR = path.join(IMAGES_DIR, 'generated');
-const SHARED_DIR = path.join(IMAGES_DIR, 'shared');
-const GALLERY_INDEX_FILE = path.join(IMAGES_DIR, 'gallery.json');
-const GALLERY_SIZE = 10;
-// Каталоги, на которые может ссылаться запись индекса. Заодно ограничивает
-// список допустимых путей: всё, чего здесь нет, индекс показать не сможет.
-// `gallery` и `shared` остались только для чтения — новые записи туда не пишутся,
-// но у работающих установок там лежат уже опубликованные работы.
-const GALLERY_FOLDERS = {
-  storage: STORAGE_DIR,
-  gallery: GALLERY_DIR,
-  generated: GENERATED_DIR,
-  shared: SHARED_DIR
-};
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const ACCEPTED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
-const IMAGE_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.webp']);
 
 // Ошибка, текст которой предназначен посетителю. Всё остальное превращается
 // в «Внутренняя ошибка сервера», чтобы наружу не попадали детали конфигурации.
@@ -44,136 +36,12 @@ const upload = multer({
   fileFilter: (_req, file, done) => done(null, ACCEPTED_TYPES.has(file.mimetype))
 });
 
-await Promise.all(
-  [STORAGE_DIR, GALLERY_DIR, GENERATED_DIR, SHARED_DIR].map(directory => fs.mkdir(directory, { recursive: true }))
-);
+await ensureImageDirectories();
 app.use(express.static(path.join(__dirname, 'public')));
 // Пул может лежать вне проекта (INTERNAL_IMAGE_STORAGE_DIR), поэтому он
 // раздаётся отдельно и до общего маршрута — иначе `/images` ответит 404 первым.
 app.use('/images/storage', express.static(STORAGE_DIR, { fallthrough: false }));
 app.use('/images', express.static(IMAGES_DIR, { fallthrough: false }));
-
-function isImage(filename) {
-  return IMAGE_EXTENSIONS.has(path.extname(filename).toLowerCase());
-}
-
-async function listImageFiles(directory) {
-  let entries;
-  try {
-    entries = await fs.readdir(directory, { withFileTypes: true });
-  } catch (error) {
-    if (error.code === 'ENOENT') return [];
-    throw error;
-  }
-  const images = await Promise.all(
-    entries
-      .filter(entry => entry.isFile() && isImage(entry.name))
-      .map(async entry => ({
-        name: entry.name,
-        modified: (await fs.stat(path.join(directory, entry.name))).mtimeMs
-      }))
-  );
-  return images.sort((a, b) => b.modified - a.modified);
-}
-
-// Запись индекса — это `<каталог>/<файл>`. Возвращает null, если каталог
-// неизвестен или в пути есть что-то кроме имени файла: индекс редактируется
-// руками, и он не должен уметь выдать произвольный файл с диска.
-function resolveEntryPath(entryFile) {
-  const separator = entryFile.indexOf('/');
-  if (separator < 0) return null;
-  const directory = GALLERY_FOLDERS[entryFile.slice(0, separator)];
-  const name = entryFile.slice(separator + 1);
-  if (!directory || !name || name.includes('/') || !isImage(name)) return null;
-  return path.join(directory, name);
-}
-
-// Одноразовый перенос: до появления индекса витрина строилась из содержимого
-// каталогов по времени изменения файла. Сохраняем тот порядок, который
-// посетитель видит прямо сейчас, и дальше он уже никуда не уплывёт.
-async function buildIndexFromDisk() {
-  const found = [];
-  for (const [folder, source] of [
-    ['gallery', 'llm'],
-    ['shared', 'shared']
-  ]) {
-    for (const file of await listImageFiles(GALLERY_FOLDERS[folder])) {
-      found.push({ file: `${folder}/${file.name}`, source, modified: file.modified });
-    }
-  }
-  return found
-    .sort((a, b) => b.modified - a.modified)
-    .map(({ file, source, modified }) => ({ file, source, added: new Date(modified).toISOString() }));
-}
-
-async function readGalleryIndex() {
-  try {
-    const parsed = JSON.parse(await fs.readFile(GALLERY_INDEX_FILE, 'utf8'));
-    return Array.isArray(parsed) ? parsed : [];
-  } catch (error) {
-    if (error.code !== 'ENOENT') throw error;
-    const migrated = await buildIndexFromDisk();
-    await fs.writeFile(GALLERY_INDEX_FILE, JSON.stringify(migrated, null, 2));
-    return migrated;
-  }
-}
-
-// Изменения идут по очереди: два одновременных запроса, прочитавшие индекс
-// до записи, иначе затрут работу друг друга. `change` возвращает новый список
-// или null, если менять нечего.
-let galleryIndexQueue = Promise.resolve();
-function updateGalleryIndex(change) {
-  const done = galleryIndexQueue.then(async () => {
-    const entries = await readGalleryIndex();
-    const next = change(entries);
-    if (!next) return null;
-    await fs.writeFile(GALLERY_INDEX_FILE, JSON.stringify(next, null, 2));
-    return next;
-  });
-  galleryIndexQueue = done.catch(() => {});
-  return done;
-}
-
-async function galleryItems() {
-  const entries = await readGalleryIndex();
-  const items = [];
-  for (const entry of entries) {
-    if (items.length === GALLERY_SIZE) break;
-    const filePath = resolveEntryPath(entry.file);
-    if (!filePath || !(await fs.stat(filePath).catch(() => null))) continue;
-    items.push({
-      id: entry.file,
-      url: `/images/${entry.file.split('/').map(encodeURIComponent).join('/')}`,
-      title: entry.source === 'shared' ? 'Работа сообщества' : 'Новая LLM-генерация',
-      source: entry.source
-    });
-  }
-  return items;
-}
-
-// Что из пула уже показывалось. До индекса продвижение было копированием
-// в `gallery` с префиксом `llm-<время>-`, поэтому такие записи тоже считаются
-// показанным исходником — иначе после переноса пул пошёл бы по второму кругу.
-function shownStorageNames(entries) {
-  const shown = new Set();
-  for (const entry of entries) {
-    shown.add(entry.file);
-    if (entry.file.startsWith('gallery/')) {
-      shown.add(`storage/${entry.file.slice('gallery/'.length).replace(/^llm-\d+-/, '')}`);
-    }
-  }
-  return shown;
-}
-
-async function promoteNextStorageImage() {
-  const storage = await listImageFiles(STORAGE_DIR);
-  return updateGalleryIndex(entries => {
-    const shown = shownStorageNames(entries);
-    const next = storage.find(file => !shown.has(`storage/${file.name}`));
-    if (!next) return null;
-    return [{ file: `storage/${next.name}`, source: 'llm', added: new Date().toISOString() }, ...entries];
-  });
-}
 
 const MODELS = {
   real_esrgan: {
@@ -357,13 +225,7 @@ app.post('/api/gallery/share/:filename', async (req, res, next) => {
   try {
     const filename = path.basename(req.params.filename);
     if (!isImage(filename)) return res.status(400).json({ error: 'Можно опубликовать только изображение.' });
-    await fs.access(path.join(GENERATED_DIR, filename));
-    // Файл не копируется: в витрину добавляется ссылка на уже существующий результат.
-    await updateGalleryIndex(entries =>
-      entries.some(entry => entry.file === `generated/${filename}`)
-        ? null
-        : [{ file: `generated/${filename}`, source: 'shared', added: new Date().toISOString() }, ...entries]
-    );
+    await publishGeneratedImage(filename);
     res.json({ message: 'Изображение добавлено в начало коллекции.', images: await galleryItems() });
   } catch (error) {
     if (error.code === 'ENOENT') return res.status(404).json({ error: 'Изображение для публикации не найдено.' });

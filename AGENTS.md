@@ -69,11 +69,14 @@ REPLICATE_API_TOKEN в файл .env».
 объяснить одной фразой. Сжатие строк, удаление переносов и однобуквенные
 имена уменьшают счётчик и ничего не улучшают; это не рефакторинг.
 
-Швы, которые уже видны и подойдут, когда файлы вырастут:
+По этому шву уже разделено: `gallery.js` — где лежат изображения и что
+показано на витрине. `server.js` знает про HTTP и Replicate и зовёт оттуда
+`galleryItems`, `promoteNextStorageImage`, `publishGeneratedImage`.
+
+Следующие швы, когда файлы снова вырастут:
 
 - `server.js` → `replicate.js` (`apiHeaders`, `parseResponse`,
-  `createPrediction`, `waitForResult`) и `gallery.js` (`listImageFiles`,
-  `galleryItems`, `addStorageImageToGallery`);
+  `createPrediction`, `waitForResult`, `saveResult`);
 - `public/app.js` → коллекция, студия, лайтбокс.
 
 Не создавайте `utils.js`, `helpers.js` и `common.js`: в такой файл попадает
