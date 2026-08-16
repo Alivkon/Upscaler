@@ -7,7 +7,10 @@
  * generator rewritten against a raw RGBA buffer so it can run without a
  * browser and be encoded by sharp at each work's actual dimensions.
  *
- *   node scripts/render-plates.mjs [--out images/plates] [--jpeg]
+ *   node scripts/render-plates.mjs [--out images/plates] [--before images/before] [--jpeg]
+ *
+ * Each work is written twice: the restored file at its full dimensions, and
+ * the "before" it was restored from, at `work.from`. See renderBefore below.
  *
  * The random sequence is consumed in the same order as the canvas version,
  * and the ridgelines are sampled at w/160 regardless of size, so the shapes
@@ -169,10 +172,41 @@ function paint(w, h, work, seedIndex, grain = 1) {
 }
 
 const args = process.argv.slice(2);
-const outDir = path.resolve(args.includes('--out') ? args[args.indexOf('--out') + 1] : 'images/plates');
+const flag = (name, fallback) => (args.includes(name) ? args[args.indexOf(name) + 1] : fallback);
+const outDir = path.resolve(flag('--out', 'images/plates'));
+const beforeDir = path.resolve(flag('--before', 'images/before'));
 const alsoJpeg = args.includes('--jpeg');
 
 await mkdir(outDir, { recursive: true });
+await mkdir(beforeDir, { recursive: true });
+
+/**
+ * The same work as it looked before restoration — `work.from` is the size it
+ * circulated at. Not a blur: the file has been through a real chain, exported
+ * small and JPEG'd, reposted at some other size and JPEG'd again, so the
+ * blocking and the ringing along the ridges are genuine artefacts rather than
+ * an impression of them. Two generations, because generational loss is most
+ * of why a picture saved off a feed looks the way it does.
+ *
+ * The first generation is rendered slightly larger so the second one lands
+ * exactly on `work.from`: the page measures this file to state what the work
+ * was restored from, and a measurement that disagrees with the claim would
+ * make the comparison a sales pitch instead of a fact.
+ *
+ * Quality is the one dial here that is a judgement rather than a measurement.
+ * Kept mild on purpose — such a file is soft and a little blocky, not ruined.
+ */
+async function renderBefore(image, work, ref) {
+  const [w, h] = work.from;
+  const first = await image
+    .clone()
+    .resize(Math.round(w * 1.06), Math.round(h * 1.06))
+    .jpeg({ quality: 72 })
+    .toBuffer();
+  const file = path.join(beforeDir, `${ref}.jpg`);
+  const { size } = await sharp(first).resize(w, h).jpeg({ quality: 66 }).toFile(file);
+  return `${w}×${h} ${Math.round(size / 1e3)} KB`;
+}
 
 for (const [index, work] of WORKS.entries()) {
   const [w, h] = work.dims;
@@ -189,5 +223,6 @@ for (const [index, work] of WORKS.entries()) {
     const j = await image.clone().jpeg({ quality: 92, chromaSubsampling: '4:4:4' }).toFile(jpg);
     line += `  ·  jpg ${(j.size / 1e6).toFixed(1)} MB`;
   }
+  line += `  ·  before ${await renderBefore(image, work, ref)}`;
   console.log(line);
 }

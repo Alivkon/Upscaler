@@ -46,6 +46,10 @@ app.use('/images', (req, _res, next) => next(isImage(req.path) ? undefined : new
 // раздаётся отдельно и до общего маршрута — иначе `/images` ответит 404 первым.
 app.use('/images/storage', express.static(STORAGE_DIR, { fallthrough: false }));
 app.use('/images', express.static(IMAGES_DIR, { fallthrough: false }));
+// Страница одной работы и приёмка — тот же index.html, адрес разбирает клиент.
+// Без этого маршрута `/w/vl-0001` дошёл бы до express.static и получил 404,
+// то есть страницу нельзя было бы ни открыть по ссылке, ни проиндексировать.
+app.get(['/w/:ref', '/restore'], (_req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
 
 // Строки, зависящие от модели, живут только здесь: эндпоинт для запроса
 // и `slug` для имени файла результата.

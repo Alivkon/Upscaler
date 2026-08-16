@@ -1,10 +1,28 @@
+/* Архив, а не комната. Словарь — записи, инвентарные номера, происхождение.
+
+   Серый вокруг изображения взят из практики хранения по измеримой причине:
+   он нейтрален к глазу и не смещает восприятие цвета, а содержимое здесь —
+   произвольные картинки. По той же причине на странице нет ни одного
+   хроматического акцента: любой фирменный оттенок спорил бы с работой.
+   Иерархия строится только светлотой. */
 :root {
-  --ink: #17222b;
-  --violet: #7456e8;
-  --lime: #d7ff5c;
-  --paper: #f5f3ef;
-  --line: #dfe1df;
-  --muted: #65717a;
+  --ground: #232326; /* фон страницы */
+  --card: #9a9a94; /* нейтральное поле вокруг изображения */
+  --card-edge: #86867f; /* его внутренний срез */
+  --fg: #edeae3; /* текст */
+  --fg-dim: #8e8b84; /* второстепенный текст */
+  --rule: rgba(237, 234, 227, 0.13);
+
+  /* Проём один на весь сайт, и он повторяет пропорции телефона: работы
+     заполняют его целиком, а всё остальное встаёт в него с полями. */
+  --opening: 780 / 1690;
+
+  /* Одна гарнитура. Прототип загружал ещё и Newsreader под инвентарный номер,
+     но номер набран моноширинной и там, и здесь, — значит, вторая гарнитура
+     не рисует ни одного глифа, и её загрузка была бы мёртвым весом. */
+  --ff-mono: 'Sometype Mono', ui-monospace, monospace;
+
+  --gutter: clamp(20px, 5vw, 64px);
 }
 * {
   box-sizing: border-box;
@@ -15,276 +33,602 @@
 [hidden] {
   display: none !important;
 }
+html,
 body {
   margin: 0;
-  background: var(--paper);
-  color: var(--ink);
-  font:
-    15px/1.5 Arial,
-    sans-serif;
 }
-header,
-main,
-footer {
-  max-width: 1280px;
-  margin: auto;
-  padding: 0 32px;
+body {
+  background: var(--ground);
+  color: var(--fg);
+  /* моноширинная при том же кегле оптически крупнее гротеска */
+  font-family: var(--ff-mono);
+  font-size: 13px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
 }
-header {
-  height: 74px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  border-bottom: 1px solid var(--line);
+a {
+  color: inherit;
 }
 button {
   font: inherit;
 }
-header button,
-.nav {
-  border: 0;
-  background: none;
-  color: var(--muted);
-  font-weight: bold;
-  cursor: pointer;
-}
-.brand {
-  font-size: 23px;
-  font-weight: 900;
-  letter-spacing: -2px;
-  color: var(--ink);
-  text-decoration: none;
-}
-.brand span,
-.eyebrow {
-  color: var(--violet);
-}
-nav {
+
+/* ── шапка ────────────────────────────────────────────────── */
+.masthead {
   display: flex;
+  align-items: baseline;
+  justify-content: space-between;
   gap: 24px;
+  padding: 22px var(--gutter);
+  border-bottom: 1px solid var(--rule);
 }
-.nav.active {
-  color: var(--ink);
-  border-bottom: 2px solid var(--ink);
-  padding: 26px 0;
+/* моноширинная и без того широкая, поэтому трекинг, который раскрывал
+   логотип в гротеске, приходится убавлять — иначе марка читается разреженной */
+.masthead__mark {
+  font-weight: 500;
+  font-size: 12px;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
 }
-.hero {
-  padding: 100px 0 56px;
-  max-width: 800px;
-}
-.hero h1 {
-  font:
-    700 clamp(52px, 8vw, 98px)/0.9 Georgia,
-    serif;
-  letter-spacing: -0.07em;
-  margin: 0;
-}
-.hero em {
-  font-style: italic;
-  color: var(--violet);
-}
-.hero > p:not(.eyebrow) {
-  font-size: 18px;
-  color: var(--muted);
-  max-width: 560px;
-}
-.eyebrow {
-  font-size: 11px;
-  font-weight: bold;
-  letter-spacing: 0.14em;
-}
-.hero aside {
-  display: inline-block;
-  background: #e9e3ff;
-  padding: 11px 14px;
-  border-radius: 10px;
-  font-size: 13px;
-}
-.heading {
+.masthead__nav {
   display: flex;
-  justify-content: space-between;
-  align-items: end;
-  margin: 0 0 24px;
+  gap: 22px;
 }
-.heading h2,
-.cta h2,
-.result h2 {
-  font:
-    700 38px/1 Georgia,
-    serif;
-  margin: 0;
-}
-.heading small {
-  max-width: 300px;
-  color: var(--muted);
-}
-.grid {
-  display: grid;
-  grid-template-columns: repeat(5, 1fr);
-  gap: 12px;
-}
-.card {
-  aspect-ratio: 9/15;
-  position: relative;
-  overflow: hidden;
-  border-radius: 15px;
-  background: #ddd;
-}
-.card img {
-  height: 100%;
-  width: 100%;
-  object-fit: cover;
-}
-.card div {
-  position: absolute;
-  bottom: 0;
-  width: 100%;
-  padding: 32px 10px 10px;
-  background: linear-gradient(transparent, #111b);
-  color: white;
-  display: flex;
-  justify-content: space-between;
-  font-size: 11px;
-}
-.card a {
-  color: white;
-  font-weight: bold;
-}
-.cta {
-  margin: 82px 0;
-  background: var(--ink);
-  color: #fff;
-  padding: 42px;
-  border-radius: 20px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-.primary,
-.button {
-  border: 0;
-  border-radius: 99px;
-  padding: 13px 17px;
-  background: var(--lime);
-  font-weight: bold;
-  color: var(--ink);
-  text-decoration: none;
-  cursor: pointer;
-}
-.studio {
-  padding-bottom: 30px;
-}
-.panel {
-  max-width: 760px;
-  background: #fff;
-  border: 1px solid var(--line);
-  border-radius: 20px;
-  padding: 26px;
-}
-fieldset {
+.masthead__nav button {
   border: 0;
   padding: 0;
-  margin: 0 0 20px;
-}
-legend {
+  background: none;
+  color: var(--fg-dim);
   font-size: 11px;
-  font-weight: bold;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.06em;
   text-transform: uppercase;
-  margin-bottom: 9px;
-  display: block;
-}
-fieldset label {
-  display: inline-block;
-  border: 1px solid var(--line);
-  border-radius: 99px;
-  padding: 8px 12px;
-  margin: 0 6px 6px 0;
   cursor: pointer;
 }
-fieldset label:has(input:checked) {
-  border-color: var(--violet);
-  background: #eeeaff;
+.masthead__nav button:hover,
+.masthead__nav button[aria-current] {
+  color: var(--fg);
 }
-.drop {
-  display: flex;
-  min-height: 145px;
-  border: 1px dashed #9ba4a8;
-  border-radius: 14px;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  cursor: pointer;
+.masthead__nav button:focus-visible {
+  outline: 2px solid var(--fg);
+  outline-offset: 3px;
 }
-.drop small,
-#status,
-.result small {
-  color: var(--muted);
-  font-size: 12px;
-  margin-top: 5px;
+
+/* ── коллекция ────────────────────────────────────────────── */
+.heading {
+  margin: 0;
+  padding: clamp(24px, 4vw, 40px) var(--gutter) 18px;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
 }
-.result {
-  max-width: 760px;
-  background: #fff;
-  border: 1px solid var(--line);
-  border-radius: 20px;
-  overflow: hidden;
-  margin: 20px 0 80px;
+.collection {
   display: grid;
-  grid-template-columns: 40% 1fr;
+  gap: 26px 18px;
+  /* колонка шире строки характеристик: `896 × 1152 · PNG · LLM` не должен
+     переноситься, иначе точки-разделители повисают в конце строки */
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  padding: 0 var(--gutter);
+  /* Записи теперь разной высоты, и в ряду они выровнены по середине, а не по
+     верхнему краю: картины и вешают по общей средней линии, а не по общему
+     верху. Растягивать их до самой высокой в ряду нельзя — паспарту у всех
+     одинаковое, и растянутое перестало бы им быть. */
+  align-items: center;
 }
-.result > a {
-  min-height: 300px;
+/* «Коллекция недоступна», «такой работы нет» — сообщение на месте содержимого */
+.notice {
+  padding: 0 var(--gutter);
+  color: var(--fg-dim);
 }
-.result img {
+/* Соседние работы показаны той же сеткой, что и витрина: это и есть витрина,
+   просто ниже по странице. Отдельной, более мелкой сетки не заведено — в ней
+   строка характеристик переносится, и точки-разделители повисают. */
+.adjacent {
+  display: block;
+  margin-top: clamp(32px, 6vw, 64px);
+  border-top: 1px solid var(--rule);
+}
+.item {
+  margin: 0;
+}
+.outro {
+  padding: 0 var(--gutter);
+  margin: clamp(32px, 5vw, 52px) 0 0;
+}
+/* призыв выглядит ссылкой, а не кнопкой: страница ничего не продаёт.
+   Правило рассчитано и на `a`, и на `button`, поэтому сбрасывает и то и другое. */
+.link {
+  display: inline-block;
+  font: inherit;
+  font-size: 13px;
+  letter-spacing: 0.02em;
+  color: inherit;
+  background: none;
+  border: 0;
+  border-bottom: 1px solid var(--rule);
+  padding: 0 0 2px;
+  text-decoration: none;
+  cursor: pointer;
+}
+.link:hover {
+  border-bottom-color: var(--fg);
+}
+.link:focus-visible {
+  outline: 2px solid var(--fg);
+  outline-offset: 3px;
+}
+
+/* ── запись: поле, изображение и этикетка ─────────────────── */
+.record {
+  margin: 0;
+  background: var(--card);
+  /* поле неравномерное: по бокам поровну, снизу тяжелее */
+  padding: 7px 7px 14px;
+  box-shadow:
+    0 24px 60px -28px rgba(0, 0, 0, 0.85),
+    0 2px 0 0 var(--card-edge);
+  transition: box-shadow 0.2s ease;
+}
+.record__image {
+  position: relative;
+  display: block;
+  background: var(--ground);
+  outline: 1px solid var(--card-edge);
+  /* внутренний срез ловит свет с двух сторон и уходит в тень с двух других,
+     поэтому проём читается как проём, а не как рамка */
+  box-shadow:
+    inset 2px 2px 0 0 rgba(0, 0, 0, 0.3),
+    inset -2px -2px 0 0 rgba(255, 255, 255, 0.14);
+  overflow: hidden;
+}
+/* Проём повторяет пропорции работы, а не наоборот: одинаковым остаётся
+   паспарту вокруг неё, а не размер окна. Работа при этом не обрезана и не
+   лежит полосой в пустом проёме — единственные два способа уложить чужие
+   пропорции в общую рамку.
+
+   `--opening` здесь — заглушка на время загрузки: настоящие пропорции
+   известны только по загруженному файлу и проставляются в `--ratio`
+   (см. `entry` в record.js). Без заглушки нерастянутая карточка была бы
+   нулевой высоты, и витрина прыгала бы по мере загрузки. */
+.collection .record__image {
+  aspect-ratio: var(--ratio, var(--opening));
+  background: var(--card);
+}
+.record__image img {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+}
+.collection .record__image img {
   width: 100%;
   height: 100%;
+  /* проём уже в пропорциях работы, `cover` здесь только против расхождения
+     на доли пикселя при округлении */
   object-fit: cover;
 }
-.result > div {
-  padding: 25px;
+/* карточка ведёт на страницу работы */
+.collection .record__image img {
+  cursor: pointer;
 }
-.result small {
-  display: block;
-  margin-top: 12px;
+/* а там изображение открывается во весь экран */
+.record__image--zoom,
+.record__image--zoom img {
+  cursor: zoom-in;
 }
-footer {
-  border-top: 1px solid var(--line);
-  padding-top: 25px;
-  padding-bottom: 28px;
-  color: var(--muted);
+.record__image:focus-visible {
+  outline: 2px solid var(--fg);
+  outline-offset: 3px;
+}
+/* Названий нет: опознавательный признак работы — инвентарный номер.
+   В каталоге запись сначала нумеруют и только потом описывают. */
+.caption {
+  margin: 10px 0 0;
+}
+.caption__title {
+  font-weight: 500;
+  font-size: 15px;
+  line-height: 1.1;
+  letter-spacing: 0.02em;
+  margin: 0 0 6px;
+  font-variant-numeric: lining-nums tabular-nums;
+  /* номер — финишная черта: он появляется уже заполненным */
+  transition: color 0.5s ease;
+}
+/* пока изображения нет, номер не присвоен */
+.caption__title.is-blank {
+  color: var(--fg-dim);
+}
+.caption__spec {
+  font-size: 12px;
+  letter-spacing: 0.02em;
+  color: var(--fg-dim);
+  margin: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0 10px;
+}
+/* разрешение остаётся самым светлым в строке: это единственный факт,
+   которого не даёт превью в поиске, и причина клика */
+.caption__spec .lead {
+  font-weight: 500;
+  color: var(--fg);
+}
+.caption__spec span::after {
+  content: '·';
+  margin-left: 10px;
+  opacity: 0.45;
+}
+.caption__spec span:last-child::after {
+  content: '';
+}
+.caption .link {
+  margin-top: 8px;
   font-size: 12px;
 }
-@media (max-width: 700px) {
-  header,
-  main,
-  footer {
-    padding: 0 18px;
+
+/* ── приёмка: изображение слева, его запись рядом ────────────
+   Этикетка стоит сбоку, а не под работой: так изображение,
+   характеристики и кнопка помещаются в один экран. */
+.plate {
+  padding: clamp(24px, 4vw, 56px) var(--gutter);
+  display: grid;
+  grid-template-columns: auto minmax(280px, 380px);
+  gap: clamp(28px, 5vw, 72px);
+  align-items: center;
+  justify-content: center;
+}
+.record--plate {
+  padding: clamp(12px, 1.6vw, 20px);
+  padding-bottom: clamp(22px, 3vw, 38px);
+  height: min(72vh, 620px);
+  display: flex;
+  flex-direction: column;
+}
+.record--plate .record__image {
+  height: 100%;
+  /* пустая запись показывает фон страницы сквозь себя */
+  aspect-ratio: var(--opening);
+  cursor: pointer;
+}
+.record--plate .record__image.has-work {
+  aspect-ratio: auto;
+}
+.record--plate .record__image img {
+  height: 100%;
+  width: auto;
+  cursor: default;
+}
+/* «Было»: тот же файл до реставрации, лежит поверх работы и точно в её
+   границах. Браузер растягивает его до размера работы сам — именно это с
+   таким файлом и происходит, когда им закрывают экран. */
+.record--plate .record__image .before {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  opacity: 0;
+  transition: opacity 0.18s ease;
+  pointer-events: none;
+}
+.record--plate .record__image.is-degraded .before {
+  opacity: 1;
+}
+/* Держать можно само изображение, поэтому на нём не должно начинаться
+   прокручивание страницы пальцем. */
+.record--plate .record__image.is-comparable {
+  cursor: grab;
+  touch-action: none;
+}
+.record--plate .record__image.is-comparable:active {
+  cursor: grabbing;
+}
+/* принимает файл вся страница целиком */
+body.is-dragging .record--plate {
+  box-shadow:
+    0 24px 60px -28px rgba(0, 0, 0, 0.85),
+    0 2px 0 0 var(--card-edge),
+    0 0 0 3px var(--fg);
+}
+/* проход считывания сверху вниз */
+.record__image.is-working::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.05) 44%,
+    rgba(255, 255, 255, 0.32) 50%,
+    rgba(255, 255, 255, 0.05) 56%,
+    transparent 100%
+  );
+  animation: rake 1.6s linear infinite;
+}
+@keyframes rake {
+  from {
+    transform: translateY(-100%);
   }
-  .grid {
-    grid-template-columns: repeat(2, 1fr);
+  to {
+    transform: translateY(100%);
   }
-  .grid .card:nth-child(n + 7) {
-    display: none;
+}
+.plate .caption {
+  margin: 0;
+}
+.plate .caption__title {
+  font-size: clamp(23px, 3vw, 28px);
+  margin-bottom: 12px;
+}
+
+/* ── выбор размера: часть характеристик, а не настройка ───── */
+.scale {
+  display: inline-flex;
+  margin-left: 2px;
+  border: 1px solid var(--rule);
+}
+.scale button {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  background: transparent;
+  color: var(--fg-dim);
+  border: 0;
+  padding: 3px 9px;
+  cursor: pointer;
+}
+.scale button[aria-pressed='true'] {
+  background: var(--fg);
+  color: var(--ground);
+}
+.scale button:focus-visible {
+  outline: 2px solid var(--fg);
+  outline-offset: 2px;
+}
+
+/* ── действия ─────────────────────────────────────────────── */
+.actions {
+  display: flex;
+  gap: 10px;
+  align-items: stretch;
+  margin: 22px 0 0;
+}
+.btn {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  padding: 13px 18px;
+  border: 1px solid var(--fg);
+  background: var(--fg);
+  color: var(--ground);
+  text-decoration: none;
+  cursor: pointer;
+  flex: 1 1 auto;
+  text-align: center;
+  white-space: nowrap;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease,
+    opacity 0.15s ease;
+}
+.btn:hover {
+  background: transparent;
+  color: var(--fg);
+}
+.btn[disabled] {
+  opacity: 0.4;
+  cursor: default;
+}
+.btn[disabled]:hover {
+  background: var(--fg);
+  color: var(--ground);
+}
+.btn--ghost {
+  background: transparent;
+  color: var(--fg);
+  border-color: var(--rule);
+  flex: 0 0 auto;
+}
+.btn--ghost:hover {
+  border-color: var(--fg);
+  background: transparent;
+  color: var(--fg);
+}
+.btn:focus-visible {
+  outline: 2px solid var(--fg);
+  outline-offset: 3px;
+}
+
+/* ── условия ──────────────────────────────────────────────── */
+.terms {
+  border-top: 1px solid var(--rule);
+  margin-top: 26px;
+  padding-top: 16px;
+}
+.terms__line {
+  font-size: 12px;
+  color: var(--fg-dim);
+  margin: 0 0 4px;
+  transition:
+    filter 0.18s ease,
+    opacity 0.18s ease,
+    letter-spacing 0.18s ease;
+}
+/* Пока держат «Было», строка происхождения теряет разрешение вместе с
+   работой: утверждение и есть то, что показывают. */
+.terms.is-degraded-type .terms__line {
+  filter: blur(1.4px) contrast(0.7);
+  letter-spacing: 0.06em;
+  opacity: 0.72;
+}
+.terms__note {
+  font-size: 12px;
+  color: var(--fg-dim);
+  margin: 6px 0 0;
+}
+.terms__cta {
+  margin: 14px 0 0;
+}
+/* авария заметна светлотой, а не цветом: хроматического акцента на
+   странице нет вообще, и заводить его ради ошибки не стоит */
+.terms__note.is-error {
+  color: var(--fg);
+}
+
+/* ── вопрос о правах задан там, где он возникает: при публикации,
+      а не на входе ─────────────────────────────────────────── */
+.share {
+  border-top: 1px solid var(--rule);
+  margin-top: 20px;
+  padding-top: 16px;
+}
+.share__row {
+  display: flex;
+  gap: 11px;
+  align-items: flex-start;
+  cursor: pointer;
+}
+.share__box {
+  flex: 0 0 auto;
+  width: 15px;
+  height: 15px;
+  margin-top: 3px;
+  border: 1px solid var(--fg-dim);
+  background: transparent;
+  display: grid;
+  place-items: center;
+}
+.share input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.share input:checked + .share__box {
+  background: var(--fg);
+  border-color: var(--fg);
+}
+.share input:checked + .share__box::after {
+  content: '';
+  width: 7px;
+  height: 7px;
+  background: var(--ground);
+}
+.share input:focus-visible + .share__box {
+  outline: 2px solid var(--fg);
+  outline-offset: 2px;
+}
+.share input:disabled + .share__box {
+  opacity: 0.55;
+}
+.share__text {
+  font-size: 12px;
+  line-height: 1.5;
+}
+.share__fine {
+  display: block;
+  margin-top: 3px;
+  font-size: 11px;
+  color: var(--fg-dim);
+}
+
+/* ── лайтбокс ─────────────────────────────────────────────── */
+/* пока лайтбокс открыт, страница под ним не прокручивается */
+body.is-locked {
+  overflow: hidden;
+}
+.lightbox {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: var(--gutter);
+  background: rgba(20, 20, 22, 0.94);
+}
+.lightbox__image {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+.lightbox__close {
+  position: absolute;
+  top: 16px;
+  right: 20px;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--rule);
+  background: transparent;
+  color: var(--fg);
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+.lightbox__close:hover {
+  border-color: var(--fg);
+}
+.lightbox__close:focus-visible {
+  outline: 2px solid var(--fg);
+  outline-offset: 3px;
+}
+
+/* ── выходные данные ──────────────────────────────────────── */
+.colophon {
+  border-top: 1px solid var(--rule);
+  margin-top: clamp(48px, 9vw, 96px);
+  padding: 20px var(--gutter) 40px;
+  font-size: 11px;
+  color: var(--fg-dim);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 22px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/* ── ниже порога двух колонок ─────────────────────────────── */
+@media (max-width: 860px) {
+  .plate {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 22px;
+    justify-items: center;
+    padding-top: 20px;
   }
-  .heading,
-  .cta {
-    display: block;
+  /* высота всё равно ограничена: кнопка должна оставаться
+     в первом экране на устройстве, с которого чаще всего приходят */
+  .record--plate {
+    height: min(46vh, 380px);
+    width: auto;
   }
-  .heading small {
-    display: block;
-    margin-top: 12px;
+  .label {
+    width: min(380px, 84vw);
   }
-  .cta .primary {
-    margin-top: 22px;
+  .plate .caption__title {
+    font-size: clamp(20px, 5vw, 24px);
   }
-  .result {
-    grid-template-columns: 1fr;
+  .masthead {
+    padding-inline: 20px;
   }
-  .result > a {
-    max-height: 360px;
+  .masthead__nav {
+    gap: 16px;
   }
-  .hero {
-    padding-top: 65px;
+  .collection {
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    transition: none !important;
+    animation: none !important;
   }
 }

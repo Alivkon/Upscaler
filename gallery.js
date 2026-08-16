@@ -15,6 +15,9 @@ export const GENERATED_DIR = path.join(IMAGES_DIR, 'generated');
 
 const GALLERY_DIR = path.join(IMAGES_DIR, 'gallery');
 const SHARED_DIR = path.join(IMAGES_DIR, 'shared');
+// Работа до реставрации. Лежит отдельно, потому что это не экспонат: показать
+// её можно только рядом с самой работой, и на витрину она не попадает.
+const BEFORE_DIR = path.join(IMAGES_DIR, 'before');
 const GALLERY_INDEX_FILE = path.join(IMAGES_DIR, 'gallery.json');
 const GALLERY_SIZE = 10;
 const IMAGE_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.webp']);
@@ -27,8 +30,11 @@ const GALLERY_FOLDERS = {
   storage: STORAGE_DIR,
   gallery: GALLERY_DIR,
   generated: GENERATED_DIR,
-  shared: SHARED_DIR
+  shared: SHARED_DIR,
+  before: BEFORE_DIR
 };
+
+const imageUrl = file => `/images/${file.split('/').map(encodeURIComponent).join('/')}`;
 
 export function isImage(filename) {
   return IMAGE_EXTENSIONS.has(path.extname(filename).toLowerCase());
@@ -118,6 +124,17 @@ function updateGalleryIndex(change) {
   return done;
 }
 
+// Необязательное поле `before` записи индекса: работа до реставрации. Есть она
+// не у всех — у присланного посетителем исходника не остаётся вовсе (загрузка
+// живёт в памяти, см. `multer.memoryStorage` в server.js), — поэтому страница
+// работы предлагает сравнение только там, где сравнивать действительно с чем.
+async function beforeUrl(entry) {
+  if (typeof entry.before !== 'string') return null;
+  const filePath = resolveEntryPath(entry.before);
+  if (!filePath || !(await fs.stat(filePath).catch(() => null))) return null;
+  return imageUrl(entry.before);
+}
+
 export async function galleryItems() {
   const entries = await readGalleryIndex();
   const items = [];
@@ -127,9 +144,10 @@ export async function galleryItems() {
     if (!filePath || !(await fs.stat(filePath).catch(() => null))) continue;
     items.push({
       id: entry.file,
-      url: `/images/${entry.file.split('/').map(encodeURIComponent).join('/')}`,
+      url: imageUrl(entry.file),
       title: entry.source === 'shared' ? 'Работа сообщества' : 'Новая LLM-генерация',
-      source: entry.source
+      source: entry.source,
+      before: await beforeUrl(entry)
     });
   }
   return items;

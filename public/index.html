@@ -3,87 +3,118 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>WALLORA — AI-обои</title>
+    <title>Vellum — коллекция обоев в полном разрешении</title>
+    <meta
+      name="description"
+      content="Вертикальные обои в полном разрешении, без регистрации. Своё изображение можно реставрировать — до 4× исходного размера."
+    />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Sometype+Mono:wght@400..500&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="/styles.css" />
+    <!-- Заполняется на странице одной работы: там же, где заголовок и описание. -->
+    <script type="application/ld+json" id="ld"></script>
   </head>
   <body>
-    <header>
-      <a class="brand" href="#">WALL<span>ORA</span></a>
-      <nav>
-        <button class="nav active" data-view="gallery">Коллекция</button
-        ><button class="nav" data-view="studio">Создать</button>
+    <header class="masthead">
+      <div class="masthead__mark">Vellum</div>
+      <nav class="masthead__nav">
+        <button type="button" data-path="/" aria-current="page">Коллекция</button>
+        <button type="button" data-path="/restore">Реставрация</button>
       </nav>
-      <button disabled>Скоро</button>
     </header>
     <main>
-      <section id="gallery-view">
-        <div class="hero">
-          <p class="eyebrow">ОБОИ ДЛЯ ВАШЕГО ЭКРАНА</p>
-          <h1>Ваш следующий экран<br /><em>уже здесь.</em></h1>
-          <p>Вертикальные обои для телефона, рабочего стола и телевизора. Сохраняйте понравившееся бесплатно.</p>
-          <aside>✦ Все работы в коллекции вновь созданы или обработаны с помощью LLM по запросам пользователей.</aside>
-        </div>
-        <div class="heading">
-          <div>
-            <p class="eyebrow">СВЕЖИЕ РАБОТЫ</p>
-            <h2>Для вашего экрана</h2>
+      <section id="collection-view">
+        <p class="heading">Последние поступления</p>
+        <div id="collection" class="collection"></div>
+        <p class="outro">
+          <button class="link" type="button" data-path="/restore">Реставрировать своё изображение</button>
+        </p>
+      </section>
+
+      <!-- Одна работа: та же запись, что на витрине, только в полный рост.
+           Этикетка стоит сбоку, а не под работой, чтобы изображение,
+           характеристики и скачивание помещались в один экран. -->
+      <section id="work-view" hidden>
+        <div class="plate" id="work-plate">
+          <figure class="record record--plate">
+            <div class="record__image has-work" id="work-frame">
+              <img id="work-picture" alt="" />
+              <!-- Работа до реставрации, поверх самой работы. Видна, пока
+                   держат изображение или кнопку «Было». -->
+              <img class="before" id="work-before" alt="" aria-hidden="true" />
+            </div>
+          </figure>
+          <div class="label">
+            <div class="caption">
+              <h1 class="caption__title" id="work-ref"></h1>
+              <p class="caption__spec" id="work-spec"></p>
+              <div class="actions">
+                <a class="btn" id="work-download" download>Скачать</a>
+                <button class="btn btn--ghost" type="button" id="work-compare" hidden>Было</button>
+              </div>
+            </div>
+            <div class="terms" id="work-terms">
+              <p class="terms__line" id="work-origin" hidden></p>
+              <p class="terms__note">На странице показан файл полного разрешения — тот же, что скачивается.</p>
+              <p class="terms__cta">
+                <button class="link" type="button" data-path="/restore">Реставрировать своё изображение</button>
+              </p>
+            </div>
           </div>
-          <small>Новая работа появляется первой каждые 5 минут, пока страница активна.</small>
         </div>
-        <div id="gallery-grid" class="grid"></div>
-        <section class="cta">
-          <div>
-            <p class="eyebrow">НЕ НАШЛИ СВОЁ?</p>
-            <h2>Сделайте обои из своего снимка.</h2>
-          </div>
-          <button class="primary" data-view="studio">Открыть студию →</button>
+        <p class="notice" id="work-missing" hidden>Такой работы в коллекции нет.</p>
+        <section class="adjacent" id="work-adjacent-section">
+          <p class="heading">Ещё в коллекции</p>
+          <div class="collection" id="work-adjacent"></div>
         </section>
       </section>
-      <section id="studio-view" hidden>
-        <div class="hero studio">
-          <p class="eyebrow">WALLORA STUDIO</p>
-          <h1>Ваш снимок.<br /><em>Новый масштаб.</em></h1>
-          <p>Улучшите личное фото.</p>
-        </div>
-        <form id="upscale-form" class="panel">
-          <section>
-            <p>Real-ESRGAN · естественное увеличение детализации</p>
-            <fieldset>
-              <legend>Размер результата</legend>
-              <label><input type="radio" name="output_size" value="x2" checked />×2</label
-              ><label><input type="radio" name="output_size" value="x4" />×4</label
-              ><label><input type="radio" name="output_size" value="2k" />2K</label
-              ><label><input type="radio" name="output_size" value="4k" />4K</label>
-            </fieldset>
-          </section>
-          <label id="dropzone" class="drop" for="photo"
-            ><input id="photo" name="photo" type="file" accept="image/jpeg,image/png,image/webp" hidden /><b
-              id="file-label"
-              >Перетащите фото сюда</b
-            ><small>JPG, PNG, WebP · до 10 МБ</small></label
-          ><button id="submit" class="primary" type="submit" disabled><span>Улучшить ×2</span> →</button>
-          <p id="status"></p>
-        </form>
-        <section id="result" class="result" hidden>
-          <a id="result-link" target="_blank"><img id="result-image" alt="Готовое изображение" /></a>
-          <div>
-            <p class="eyebrow">ГОТОВО</p>
-            <h2>Ваше изображение готово.</h2>
-            <p>Откройте или сохраните его на устройство.</p>
-            <a id="download" class="button" download>Скачать</a
-            ><button id="share" class="primary" type="button">Поделиться · −50%</button
-            ><small id="share-status"
-              >Поделитесь работой с коллекцией и получите скидку 50% на будущую платную функцию.</small
-            >
+
+      <!-- Приёмка того же архива: то же поле, та же запись, та же этикетка.
+           Отличие одно — запись начинается пустой, и номер ей ещё не присвоен. -->
+      <section id="intake-view" hidden>
+        <div class="plate">
+          <figure class="record record--plate">
+            <div class="record__image" id="intake-frame" role="button" tabindex="0" aria-label="Выбрать изображение">
+              <img id="intake-picture" alt="" hidden />
+            </div>
+          </figure>
+          <div class="label">
+            <div class="caption">
+              <h1 class="caption__title is-blank" id="intake-ref"></h1>
+              <p class="caption__spec" id="intake-spec"></p>
+              <div class="actions" id="intake-actions"></div>
+              <input class="visually-hidden" type="file" id="intake-file" accept="image/jpeg,image/png,image/webp" />
+            </div>
+            <div class="terms">
+              <p class="terms__line" id="intake-terms"></p>
+              <p class="terms__note" id="intake-note"></p>
+            </div>
+            <div class="share" id="intake-share" hidden>
+              <label class="share__row">
+                <input type="checkbox" id="intake-publish" />
+                <span class="share__box" aria-hidden="true"></span>
+                <span class="share__text"
+                  >Добавить в коллекцию
+                  <span class="share__fine" id="intake-share-note"></span>
+                </span>
+              </label>
+            </div>
           </div>
-        </section>
+        </div>
       </section>
     </main>
-    <footer>WALLORA · Обои, созданные с помощью LLM · Оплата и аккаунты появятся позже</footer>
-    <script src="/app.js"></script>
+    <div class="lightbox" id="lightbox" hidden>
+      <button class="lightbox__close" id="lightbox-close" type="button" aria-label="Закрыть">×</button>
+      <img class="lightbox__image" id="lightbox-image" alt="" />
+    </div>
+    <footer class="colophon">
+      <span>Vellum</span>
+    </footer>
+    <script type="module" src="/app.js"></script>
   </body>
 </html>
