@@ -392,6 +392,25 @@ export function workPage({ item, others, origin }) {
       ? `<p class="terms__line">${restored}${item.before ? '<span class="terms__hint">Click for full size, hold to compare</span>' : ''}</p>`
       : ''
   }${provenance(item)}`;
+  // Предложение стоит у Download постоянно и тихо. Один раз за посещение —
+  // сразу после того, как файл взяли, — оно отвечает вслух: до скачивания
+  // такая реплика мешала бы тому, за чем пришли, а после уже ничему
+  // не мешает и попадает в единственную секунду, когда посетитель
+  // доволен и никуда не торопится.
+  //
+  // Довод не сочинён, а взят с этой же страницы: «Yours at 3887 × 3840»
+  // — то, что человек только что положил себе, и рядом с этим числом
+  // «слишком маленькая» становится не абстракцией, а сравнением. Второй
+  // строки, объясняющей выгоду, поэтому не нужно.
+  //
+  // Реплика приходит с сервера скрытой, а не собирается скриптом: тексты
+  // на сайте живут здесь, рядом друг с другом, и это единственное место,
+  // где их держат. Раскрывает её work.js — там же и «один раз».
+  const offer = `
+            <div class="offer" id="work-offer">
+              <p class="offer__note" role="status"><span>Yours at ${size}.<br />Have one that's too small to use?</span></p>
+              <p class="offer__line">${restoreLink}</p>
+            </div>`;
   return layout({
     current: 'collection',
     title: `${item.title}, ${size}`,
@@ -417,7 +436,7 @@ export function workPage({ item, others, origin }) {
             <div class="actions">
               <a class="btn" href="${escape(item.url)}" download="${escape(item.filename)}">Download</a>
             </div>
-            <p class="caption__cta">${restoreLink}</p>
+            ${offer}
           </div>
           ${terms ? `<div class="terms">${terms}</div>` : ''}
         </div>
