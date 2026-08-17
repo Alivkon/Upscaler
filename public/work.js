@@ -1,5 +1,5 @@
 // Страница одной работы приходит с сервера готовой. Здесь остаётся то, чего
-// в разметке не выразить: жест «подержать, чтобы увидеть, что было», и просмотр
+// в разметке не выразить: жест «подержать, чтобы разглядеть», и просмотр
 // во весь экран. Если скрипт не загрузился, страница остаётся страницей —
 // работа видна, характеристики на месте, файл скачивается.
 
@@ -7,7 +7,6 @@ import { openLightbox } from './lightbox.js';
 
 const frame = document.querySelector('#work-frame');
 const picture = document.querySelector('#work-picture');
-const terms = document.querySelector('#work-terms');
 const compareButton = document.querySelector('#work-compare');
 
 // Сравнение есть не у всякой работы: у присланной посетителем исходника
@@ -33,33 +32,142 @@ const comparable = frame.classList.contains('is-comparable');
  */
 const openFull = image => openLightbox(image.src, image.alt);
 
-function compare(on) {
-  frame.classList.toggle('is-degraded', on);
-  terms.classList.toggle('is-degraded-type', on);
-}
+if (!comparable) {
+  frame.addEventListener('click', () => openFull(picture));
+} else {
+  const loupe = document.querySelector('#work-loupe');
+  const afterPane = loupe.querySelector('.loupe__pane--after');
+  const beforePane = loupe.querySelector('.loupe__pane--before');
 
-if (comparable) {
-  // Держать можно и саму работу, и кнопку. Отпускание ловится вместе с уходом
-  // указателя за край: без `pointerleave` «до» осталось бы висеть на экране.
+  // Натуральные размеры мастера — из атрибутов, а не из `naturalWidth`:
+  // по причине, изложенной выше, `naturalWidth` под `srcset` отдаёт не то.
+  // В атрибутах стоит то, что измерено при сборке плашки.
+  const master = {
+    width: Number(picture.getAttribute('width')),
+    height: Number(picture.getAttribute('height'))
+  };
+
+  // `src` — это адрес из атрибута, мастер; `currentSrc` был бы выбранной
+  // копией. Стеклу нужен первый: в нём и живёт разница, которую показывают.
+  const paint = (pane, source) => {
+    pane.style.backgroundImage = `url("${source}")`;
+    // Оба файла разложены в одних координатах — координатах мастера. Для
+    // «после» это натуральный размер, для «до» — растяжение, то самое,
+    // которому файл подвергнется на большом экране. Отсюда же берётся то,
+    // что участок сцены продолжается через шов: сдвиг фона у половин общий.
+    pane.style.backgroundSize = `${master.width}px ${master.height}px`;
+  };
+  paint(afterPane, picture.src);
+  paint(beforePane, document.querySelector('#work-before').src);
+
+  // Мастер страницей не загружается: `sizes` у проёма — 562 px, и по srcset
+  // браузер берёт копию 960w. Стеклу нужен именно мастер, иначе «1:1» будет
+  // не 1:1, а враньём в четыре мегабайта. Заказываем его, пока рука идёт
+  // к работе, — за это время он обычно и приходит.
+  let warmed = false;
+  const warm = () => {
+    if (warmed) return;
+    warmed = true;
+    new Image().src = picture.src;
+  };
+
+  const clamp = (value, low, high) => Math.min(Math.max(value, low), high);
+
+  // Стекло — доля меньшей стороны работы, а не постоянная величина: у кадра
+  // телефона в проёме около 260 px ширины, и окно шире работы село бы
+  // на паспарту, где сравнивать нечего.
+  const glassSize = box => clamp(Math.round(Math.min(box.width, box.height) * 0.55), 110, 260);
+
+  /**
+   * Поставить стекло на точку и набрать в него то, что под ним оказалось.
+   *
+   * `event` — указатель; `null` означает «середина работы» и приходит
+   * с клавиатуры и с кнопки, где указателя над работой нет.
+   *
+   * Стекло показывает ровно тот участок, который собой закрывает, и на
+   * касании тоже: подъём над пальцем сдвигает и окно, и участок вместе,
+   * поэтому увеличительное стекло остаётся увеличительным стеклом, а палец
+   * его не заслоняет.
+   *
+   * Подрезок две, и они независимы. Первая держит участок внутри файла:
+   * у края стекло иначе набралось бы пустотой. Вторая держит само стекло
+   * внутри проёма, потому что проём с `overflow: hidden` срезал бы ему бок.
+   * У самого края работы они расходятся на несколько пикселей — стекло
+   * упирается в край и там останавливается.
+   *
+   * Все измерения сняты до первой записи в стиль: иначе чтение размеров
+   * после записи заставляло бы браузер пересчитывать раскладку на каждом
+   * движении пальца.
+   */
+  function place(event) {
+    const box = picture.getBoundingClientRect();
+    const frameBox = frame.getBoundingClientRect();
+    const glass = glassSize(box);
+    // Палец закрывает собой стекло, поэтому на касании оно встаёт выше точки.
+    // Мышь не закрывает ничего, и подъёма там нет.
+    const lift = event && event.pointerType === 'touch' ? glass * 0.8 : 0;
+
+    const px = event ? clamp(event.clientX - box.left, 0, box.width) : box.width / 2;
+    const py = event ? clamp(event.clientY - box.top - lift, 0, box.height) : box.height / 2;
+
+    // Работа стоит в проёме по высоте (`height: 100%` в styles.css), значит
+    // экранный масштаб — это отношение показанной высоты к натуральной.
+    const scale = box.height / master.height;
+    const originX = clamp(px / scale - glass / 2, 0, master.width - glass);
+    const originY = clamp(py / scale - glass / 2, 0, master.height - glass);
+    const inFrameX = box.left - frameBox.left + px;
+    const inFrameY = box.top - frameBox.top + py;
+
+    const offset = `${-originX}px ${-originY}px`;
+    afterPane.style.backgroundPosition = offset;
+    beforePane.style.backgroundPosition = offset;
+    loupe.style.setProperty('--glass', `${glass}px`);
+    loupe.style.left = `${clamp(inFrameX - glass / 2, 0, frameBox.width - glass)}px`;
+    loupe.style.top = `${clamp(inFrameY - glass / 2, 0, frameBox.height - glass)}px`;
+  }
+
+  const hide = () => frame.classList.remove('is-comparing');
+  function show(event) {
+    place(event);
+    frame.classList.add('is-comparing');
+  }
+
+  // Держать можно и саму работу, и кнопку. Над кнопкой указателя на работе
+  // нет, и участок берётся из середины: это не «текущее место», а просто
+  // место, с которого начинают смотреть.
+  const overWork = element => element === frame;
+
   for (const element of [frame, compareButton]) {
+    element.addEventListener('pointerenter', warm);
+    element.addEventListener('focus', warm);
+
     element.addEventListener('pointerdown', event => {
       // Иначе нажатие протащило бы за собой выделение и перетаскивание картинки.
       event.preventDefault();
-      compare(true);
+      show(overWork(element) ? event : null);
     });
+    element.addEventListener('pointermove', event => {
+      if (!frame.classList.contains('is-comparing') || !overWork(element)) return;
+      place(event);
+    });
+    // Отпускание ловится вместе с уходом указателя за край: без `pointerleave`
+    // стекло осталось бы висеть на экране.
     for (const name of ['pointerup', 'pointercancel', 'pointerleave']) {
-      element.addEventListener(name, () => compare(false));
+      element.addEventListener(name, hide);
     }
     element.addEventListener('keydown', event => {
       if (event.key !== ' ' && event.key !== 'Enter') return;
       event.preventDefault();
-      compare(true);
+      show(null);
     });
     element.addEventListener('keyup', event => {
-      if (event.key === ' ' || event.key === 'Enter') compare(false);
+      if (event.key === ' ' || event.key === 'Enter') hide();
     });
-    element.addEventListener('blur', () => compare(false));
+    element.addEventListener('blur', hide);
   }
-} else {
-  frame.addEventListener('click', () => openFull(picture));
+
+  // Стекло стоит в координатах проёма и посчитано по его размеру: при смене
+  // ширины окна и то и другое меняется, а держать в этот момент никто ничего
+  // не может — поэтому не пересчитываем, а убираем.
+  addEventListener('resize', hide);
 }

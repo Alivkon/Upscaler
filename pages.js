@@ -291,6 +291,35 @@ function provenance(item) {
             <p class="terms__note">${terms}<a href="${escape(page)}">Source file</a></p>`;
 }
 
+// Работа «до» и стекло, под которым её сравнивают с тем, что вышло.
+//
+// СРАВНИВАТЬ ЦЕЛЫЕ КАДРЫ БЕССМЫСЛЕННО, И ЭТО АРИФМЕТИКА, А НЕ ВКУС. Проём
+// ростом 562 px показывает работу с короткой стороной 3840 примерно в 1/6
+// натуральной величины, а увеличивали её как раз в 3–6 раз (`from` у записей
+// колеблется от 347×752 до 1440×1106). Проём, таким образом, ровно отменяет
+// проделанное: «после», ужатое до 562 px, несёт столько же подробностей,
+// сколько «до». Две картинки в этом масштабе обязаны совпасть, и кнопка,
+// переключавшая их целиком, честно показывала отсутствие разницы, которой
+// там и не могло быть. Разница живёт только при 1:1 — значит, на куске кадра.
+//
+// Стекло разрезано пополам и показывает ОДИН И ТОТ ЖЕ участок сцены из двух
+// файлов: слева исходник, растянутый до размера работы, справа сама работа.
+// Растягивает исходник браузер, и это не приём ради наглядности — именно это
+// происходит с маленькой фотографией, поставленной на экран 4K. Сравнение
+// поэтому показывает не лабораторный опыт, а применение.
+//
+// Сам файл «до» остаётся в разметке изображением: страница сравнивает два
+// файла, и второй из них — такая же часть страницы, как первый. Показывает
+// его стекло, фоном, поэтому изображение скрыто; но адрес знает сервер, и
+// брать его скрипту неоткуда, кроме разметки. Заодно файл успевает загрузиться
+// до того, как за него возьмутся.
+const beforeFrame = item => `
+            <img class="before" id="work-before" src="${escape(item.before)}" alt="" aria-hidden="true" fetchpriority="low" />
+            <div class="loupe" id="work-loupe" aria-hidden="true">
+              <span class="loupe__pane loupe__pane--after"></span>
+              <span class="loupe__pane loupe__pane--before"></span>
+            </div>`;
+
 export function workPage({ item, others, origin }) {
   const size = formatDims(item.width, item.height);
   const restored = item.from ? `Restored from ${formatDims(...item.from)}` : '';
@@ -301,7 +330,7 @@ export function workPage({ item, others, origin }) {
   // должен объявлять себя тем, чем он окажется.
   const frame = item.before
     ? 'class="record__image has-work is-comparable" role="button" tabindex="0" ' +
-      'aria-label="Hold to see this work before restoration"'
+      'aria-label="Hold to compare a detail at full size"'
     : 'class="record__image has-work record__image--zoom"';
   // Проём работы задан высотой (`min(72vh, 620px)`), а ширина берётся из
   // пропорции: у телефонного кадра это около 290 px на большом экране
@@ -322,7 +351,7 @@ export function workPage({ item, others, origin }) {
         <figure class="record record--plate">
           <div ${frame} id="work-frame">
             <img id="work-picture" src="${escape(item.url)}"${shownPlate} alt="${escape(item.alt)}" width="${item.width}" height="${item.height}" fetchpriority="high" />
-            ${item.before ? `<img class="before" id="work-before" src="${escape(item.before)}" alt="" aria-hidden="true" fetchpriority="low" />` : ''}
+            ${item.before ? beforeFrame(item) : ''}
           </div>
         </figure>
         <div class="label">
@@ -331,7 +360,7 @@ export function workPage({ item, others, origin }) {
             <p class="caption__spec">${specLine([size, formatType(item.url), formatBytes(item.bytes)])}</p>
             <div class="actions">
               <a class="btn" href="${escape(item.url)}" download="${escape(item.filename)}">Download</a>
-              ${item.before ? '<button class="btn btn--ghost" type="button" id="work-compare">Before</button>' : ''}
+              ${item.before ? '<button class="btn btn--ghost" type="button" id="work-compare">Compare</button>' : ''}
             </div>
           </div>
           <div class="terms" id="work-terms">
