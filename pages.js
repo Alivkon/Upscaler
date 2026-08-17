@@ -252,7 +252,15 @@ const licenseFields = (item, origin) =>
 const CREATOR_TYPE = { person: 'Person', organization: 'Organization' };
 
 const creatorFields = item => {
-  if (!item.provenance) return { creator: { '@type': 'Organization', name: SITE_NAME }, creditText: SITE_NAME };
+  // Пустое `provenance` само по себе не значит «сделали мы»: его нет ни у своих
+  // работ, ни у присланных. Присланная не наша — об этом же говорит `license`
+  // двумя строками выше, — и автор у неё неизвестен: посетитель прислал файл,
+  // а не сведения о нём. Поэтому спрашивается источник, а не происхождение:
+  // иначе разметка приписывала бы `Tessarum` чужие файлы, причём молча.
+  if (!item.provenance) {
+    if (item.source !== 'tessarum') return {};
+    return { creator: { '@type': 'Organization', name: SITE_NAME }, creditText: SITE_NAME };
+  }
   const { creator, credit, date, page, creatorKind } = item.provenance;
   const type = CREATOR_TYPE[creatorKind || 'person'];
   return {
