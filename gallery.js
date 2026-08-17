@@ -214,7 +214,11 @@ async function catalogueItems() {
       filename: path.basename(plate.file),
       title: work.title,
       alt: work.alt,
-      tags: work.tags,
+      // Пустой список, а не `undefined`: в каталоге поле необязательно
+      // (verify-catalogue.mjs), а страница работы читает у него длину. Работа
+      // без тегов роняла бы `/w/<slug>` в 500, и проверка каталога этого
+      // не видит — она о содержимом записи, а не о форме работы на выходе.
+      tags: work.tags || [],
       width: plate.width,
       height: plate.height,
       bytes: plate.bytes,
