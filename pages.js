@@ -322,15 +322,24 @@ const beforeFrame = item => `
 
 export function workPage({ item, others, origin }) {
   const size = formatDims(item.width, item.height);
+  // «Restored from 750 × 741» — утверждение, и проверить его можно только под
+  // стеклом. Поэтому подсказка стоит не у кнопки (кнопки и нет: жест живёт на
+  // самой работе) и не отдельной строкой, а вплотную к утверждению, которое
+  // ею и проверяют. Условие на `before`, а не на `from`: показывает стекло,
+  // а размеры — только повод его открыть.
   const restored = item.from ? `Restored from ${formatDims(...item.from)}` : '';
-  // Держать и щёлкать — один жест, поэтому увеличение и сравнение на одном
-  // элементе не уживаются: где есть «до», изображение показывает «до»;
-  // где нет — открывается во весь экран. Обработчики вешает work.js, а вот
-  // роль и доступное имя приходят с сервера: до загрузки скрипта проём уже
-  // должен объявлять себя тем, чем он окажется.
+  // Раньше держать и щёлкать считалось одним жестом, и работа со сравнением
+  // за это платила: она не открывалась во весь экран вовсе. Стоило это дорого
+  // и незаметно — таких работ 51 из 210, на остальных щелчок работал, и разница
+  // читалась не как замысел, а как поломка на каждой четвёртой странице.
+  //
+  // Жесты разводятся не элементом, а временем: короткое нажатие без сдвига —
+  // щелчок, всё остальное — «держат». Различает их work.js; сюда приходят
+  // роль и доступное имя, потому что до загрузки скрипта проём уже должен
+  // объявлять себя тем, чем окажется.
   const frame = item.before
     ? 'class="record__image has-work is-comparable" role="button" tabindex="0" ' +
-      'aria-label="Hold to compare a detail at full size"'
+      'aria-label="Click to view full size, hold to compare with the original"'
     : 'class="record__image has-work record__image--zoom"';
   // Проём работы задан высотой (`min(72vh, 620px)`), а ширина берётся из
   // пропорции: у телефонного кадра это около 290 px на большом экране
@@ -360,11 +369,10 @@ export function workPage({ item, others, origin }) {
             <p class="caption__spec">${specLine([size, formatType(item.url), formatBytes(item.bytes)])}</p>
             <div class="actions">
               <a class="btn" href="${escape(item.url)}" download="${escape(item.filename)}">Download</a>
-              ${item.before ? '<button class="btn btn--ghost" type="button" id="work-compare">Compare</button>' : ''}
             </div>
           </div>
           <div class="terms" id="work-terms">
-            ${restored ? `<p class="terms__line">${restored}</p>` : ''}${provenance(item)}
+            ${restored ? `<p class="terms__line">${restored}${item.before ? '<span class="terms__hint">Click for full size, hold to compare</span>' : ''}</p>` : ''}${provenance(item)}
             <p class="terms__cta">${restoreLink}</p>
           </div>
         </div>

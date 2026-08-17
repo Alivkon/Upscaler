@@ -7,7 +7,6 @@ import { openLightbox } from './lightbox.js';
 
 const frame = document.querySelector('#work-frame');
 const picture = document.querySelector('#work-picture');
-const compareButton = document.querySelector('#work-compare');
 
 // Сравнение есть не у всякой работы: у присланной посетителем исходника
 // не остаётся вовсе. Что именно делает нажатие, решено на сервере и записано
@@ -132,39 +131,70 @@ if (!comparable) {
     frame.classList.add('is-comparing');
   }
 
-  // Держать можно и саму работу, и кнопку. Над кнопкой указателя на работе
-  // нет, и участок берётся из середины: это не «текущее место», а просто
-  // место, с которого начинают смотреть.
-  const overWork = element => element === frame;
+  // Щёлкнуть и подержать — на одном элементе, и различает их не элемент,
+  // а время. Короткое нажатие, не сдвинувшееся с места, — щелчок; всё
+  // остальное — «держат».
+  //
+  // Порог сдвига нужен отдельно от порога времени: работу разглядывают,
+  // возя стеклом, и быстрый рывок мышью — это разглядывание, а не промах
+  // по щелчку. Шесть пикселей — обычный запас на дрожание руки.
+  const HOLD_MS = 250;
+  const DRIFT = 6;
 
-  for (const element of [frame, compareButton]) {
-    element.addEventListener('pointerenter', warm);
-    element.addEventListener('focus', warm);
+  let pressed = null;
 
-    element.addEventListener('pointerdown', event => {
-      // Иначе нажатие протащило бы за собой выделение и перетаскивание картинки.
-      event.preventDefault();
-      show(overWork(element) ? event : null);
-    });
-    element.addEventListener('pointermove', event => {
-      if (!frame.classList.contains('is-comparing') || !overWork(element)) return;
-      place(event);
-    });
-    // Отпускание ловится вместе с уходом указателя за край: без `pointerleave`
-    // стекло осталось бы висеть на экране.
-    for (const name of ['pointerup', 'pointercancel', 'pointerleave']) {
-      element.addEventListener(name, hide);
+  frame.addEventListener('pointerenter', warm);
+  frame.addEventListener('focus', warm);
+
+  frame.addEventListener('pointerdown', event => {
+    // Иначе нажатие протащило бы за собой выделение и перетаскивание картинки.
+    event.preventDefault();
+    pressed = { at: event.timeStamp, x: event.clientX, y: event.clientY, still: true };
+    show(event);
+  });
+
+  frame.addEventListener('pointermove', event => {
+    if (!pressed) return;
+    if (Math.abs(event.clientX - pressed.x) > DRIFT || Math.abs(event.clientY - pressed.y) > DRIFT) {
+      pressed.still = false;
     }
-    element.addEventListener('keydown', event => {
-      if (event.key !== ' ' && event.key !== 'Enter') return;
+    place(event);
+  });
+
+  frame.addEventListener('pointerup', event => {
+    const click = pressed && pressed.still && event.timeStamp - pressed.at < HOLD_MS;
+    pressed = null;
+    hide();
+    // Лайтбокс открывается после того, как стекло убрано: иначе оно осталось
+    // бы висеть под ним и вернулось бы на экран при закрытии.
+    if (click) openFull(picture);
+  });
+
+  // Уход указателя за край и отмена — не щелчок: стекло просто убирается.
+  // Без этого оно осталось бы висеть на экране.
+  for (const name of ['pointercancel', 'pointerleave']) {
+    frame.addEventListener(name, () => {
+      pressed = null;
+      hide();
+    });
+  }
+
+  // С клавиатуры два действия разводятся так же, как у обычной кнопки:
+  // Enter срабатывает на нажатии и означает «сделать», пробел удерживается
+  // и отпускается — им и держат.
+  frame.addEventListener('keydown', event => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      openFull(picture);
+    } else if (event.key === ' ') {
       event.preventDefault();
       show(null);
-    });
-    element.addEventListener('keyup', event => {
-      if (event.key === ' ' || event.key === 'Enter') hide();
-    });
-    element.addEventListener('blur', hide);
-  }
+    }
+  });
+  frame.addEventListener('keyup', event => {
+    if (event.key === ' ') hide();
+  });
+  frame.addEventListener('blur', hide);
 
   // Стекло стоит в координатах проёма и посчитано по его размеру: при смене
   // ширины окна и то и другое меняется, а держать в этот момент никто ничего
