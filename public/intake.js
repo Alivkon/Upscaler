@@ -102,8 +102,14 @@ function renderEmpty() {
   els.ref.classList.add('is-blank');
   specLine(els.spec, ['No image yet']);
   els.actions.replaceChildren(button('Choose an image', 'btn', chooseFile));
-  els.terms.textContent = 'Drop a file anywhere on the page';
-  els.note.textContent = `${FILE_REQUIREMENTS} Nothing is published without your consent.`;
+  // Строка условий во всех состояниях отвечает на один вопрос — что получится.
+  // Выбран файл: «Result — 2880 × 3840». Не выбран: то же самое, но пока
+  // о любом файле. Раньше здесь стояла подсказка про перетаскивание, и
+  // страница, на которую ведут все ссылки «Restore your own image», ни словом
+  // не говорила, что делает; узнать это можно было, только загрузив файл.
+  // Подсказка ушла к остальным практическим сведениям, в примечание.
+  els.terms.textContent = 'Up to 4× the size, or straight to 2K and 4K';
+  els.note.textContent = `Drop a file anywhere on the page. ${FILE_REQUIREMENTS} Nothing is published without your consent.`;
   els.note.classList.remove('is-error');
   els.share.hidden = true;
 }

@@ -44,7 +44,21 @@ const specLine = parts =>
 // Ссылка «Реставрировать своё» стоит после скачивания, а не перед ним:
 // пришедший из поиска картинок хочет готовую картинку, и закрыть её гейтом
 // значит потерять индексацию, то есть весь актив.
-const restoreLink = '<a class="link" href="/restore">Restore your own image</a>';
+//
+// «up to 4× its size» — не довесок, а определение, и оно едет вместе со
+// ссылкой. Restore — слово музейное, и в этом его ценность: коллекция
+// говорит на языке собрания, а не панели управления. Но в значении
+// «увеличить» его не знает никто, а объяснено оно на сайте ровно в одном
+// месте — в `<meta name="description">`, которую человек не видит. Ссылка
+// же стоит на каждой странице; пусть каждый раз и называет себя сама.
+//
+// Хвост обрезан до «up to 4×», хотя в описании страницы стоит полное «up to
+// 4× its size»: со словами «its size» ссылка занимает 312 px, а на экране
+// 320 px под неё остаётся 280 — и она рвётся, оставляя «its size» второй
+// строкой. Ссылка при этом `inline-block` с подчёркиванием снизу, так что
+// подчёркнута оказалась бы только вторая строка. «Up to 4×» — 242 px,
+// и в одну строку встаёт вплоть до 300 px экрана.
+const restoreLink = '<a class="link" href="/restore">Restore your own image up to 4×</a>';
 
 function layout({ title, description, canonical, image, body, ld, script, current }) {
   const nav = [
@@ -327,7 +341,19 @@ export function workPage({ item, others, origin }) {
   // самой работе) и не отдельной строкой, а вплотную к утверждению, которое
   // ею и проверяют. Условие на `before`, а не на `from`: показывает стекло,
   // а размеры — только повод его открыть.
-  const restored = item.from ? `Restored from ${formatDims(...item.from)}` : '';
+  //
+  // Множитель добавлен к утверждению не ради числа, а ради глагола. Это
+  // единственное место на сайте, где «restore» показано в действии, — а ниже,
+  // в `outro`, тем же словом сделано предложение. Кто прочёл «Restored 5.2×
+  // from 750 × 741», тот знает, что предлагают. Считается он по длинной
+  // стороне: пропорцию увеличение сохраняет точно (у всех 51 работы с `from`
+  // множители по сторонам совпадают), и одного числа хватает. Знак после
+  // запятой один — строкой выше стоит «3.5 MB», доля здесь в том же роде,
+  // а «5×» вместо 5.18 читалось бы как круглое обещание, которого никто
+  // не давал.
+  const restored = item.from
+    ? `Restored ${Math.round((item.width / item.from[0]) * 10) / 10}× from ${formatDims(...item.from)}`
+    : '';
   // Раньше держать и щёлкать считалось одним жестом, и работа со сравнением
   // за это платила: она не открывалась во весь экран вовсе. Стоило это дорого
   // и незаметно — таких работ 51 из 210, на остальных щелчок работал, и разница
@@ -345,6 +371,27 @@ export function workPage({ item, others, origin }) {
   // пропорции: у телефонного кадра это около 290 px на большом экране
   // и примерно 70vw на телефоне.
   const shownPlate = shownWith(item.copies, plateSizes(item));
+  // Под чертой — только то, что утверждается об этой работе: из чего она
+  // сделана, кем и на каких условиях отдаётся. Предложение «реставрируйте
+  // своё» стояло здесь же и читалось как ещё одно такое утверждение: черта
+  // на этой странице и означает «ниже говорят о работе». У работ генератора
+  // под чертой не оставалось больше ничего, и черта обрамляла один глагол,
+  // которому не за что зацепиться, — отсюда и «непонятно, что значит
+  // restore» там, где ничего не реставрировали.
+  //
+  // Предложение переехало к Download, где живут действия: рядом с кнопкой
+  // оно и читается как второе действие, а не как третья характеристика.
+  // Ниже черты — не годилось; в `outro`, как на указателе, — годилось бы,
+  // но там оно оказалось бы под сеткой «ещё из коллекции», то есть ниже
+  // экрана на каждой из 211 страниц. Просили ясности, а не убрать призыв.
+  //
+  // А блок, которому нечего сказать, не рисуется вовсе: черта без
+  // содержания — обещание, что содержание есть.
+  const terms = `${
+    restored
+      ? `<p class="terms__line">${restored}${item.before ? '<span class="terms__hint">Click for full size, hold to compare</span>' : ''}</p>`
+      : ''
+  }${provenance(item)}`;
   return layout({
     current: 'collection',
     title: `${item.title}, ${size}`,
@@ -370,11 +417,9 @@ export function workPage({ item, others, origin }) {
             <div class="actions">
               <a class="btn" href="${escape(item.url)}" download="${escape(item.filename)}">Download</a>
             </div>
+            <p class="caption__cta">${restoreLink}</p>
           </div>
-          <div class="terms" id="work-terms">
-            ${restored ? `<p class="terms__line">${restored}${item.before ? '<span class="terms__hint">Click for full size, hold to compare</span>' : ''}</p>` : ''}${provenance(item)}
-            <p class="terms__cta">${restoreLink}</p>
-          </div>
+          ${terms ? `<div class="terms">${terms}</div>` : ''}
         </div>
       </div>
       ${others.length ? `<section class="adjacent"><p class="heading">More in the collection</p>${grid(others)}</section>` : ''}
@@ -444,7 +489,7 @@ export function licensePage({ origin }) {
       <p class="heading">The Tessarum License</p>
       <div class="prose">
         <p class="prose__lead">
-          Works drawn by our own generator come to you under the terms below. Take one, use it,
+          Our own work comes to you under the terms below. Take one, use it,
           change it, sell what you make with it. Two things only are off limits, and both are about
           the collection rather than the picture. Works from open collections are not ours to license
           at all — <a href="#public-domain">those are free of us entirely</a>.
