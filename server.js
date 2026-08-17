@@ -6,15 +6,7 @@ import compression from 'compression';
 import express from 'express';
 import multer from 'multer';
 import sharp from 'sharp';
-import {
-  IMAGES_DIR,
-  STORAGE_DIR,
-  GENERATED_DIR,
-  ADJACENT,
-  ensureImageDirectories,
-  galleryItems,
-  isImage
-} from './gallery.js';
+import { IMAGES_DIR, GENERATED_DIR, ADJACENT, ensureImageDirectories, galleryItems, isImage } from './gallery.js';
 import { collectionPage, intakePage, licensePage, missingPage, robots, sitemap, workPage } from './pages.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -73,9 +65,12 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Наружу отдаются только сами изображения: рядом с ними лежит индекс витрины,
 // а пул вообще может оказаться каталогом вне проекта с чем угодно внутри.
 app.use('/images', (req, _res, next) => next(isImage(req.path) ? undefined : new HttpError(404, FILE_NOT_FOUND)));
-// Пул может лежать вне проекта (INTERNAL_IMAGE_STORAGE_DIR), поэтому он
-// раздаётся отдельно и до общего маршрута — иначе `/images` ответит 404 первым.
-app.use('/images/storage', express.static(STORAGE_DIR, { fallthrough: false }));
+// Пул наружу не отдаётся никогда: там лежат файлы Depositphotos и Adobe Stock
+// (LEGAL.md). Ни одна страница на них не ссылается — из коллекции пул убран
+// (gallery.js), — но по умолчанию он лежит внутри `images/`, и без этой
+// заглушки общий `express.static` ниже отдал бы любой файл пула тому, кто
+// угадает имя. Заглушка стоит до него, потому что порядок здесь и решает.
+app.use('/images/storage', (_req, _res, next) => next(new HttpError(404, FILE_NOT_FOUND)));
 app.use('/images', express.static(IMAGES_DIR, { fallthrough: false, setHeaders: setImageHeaders }));
 
 // ── страницы ───────────────────────────────────────────────────
