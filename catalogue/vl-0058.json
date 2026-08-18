@@ -11,6 +11,7 @@
     "painting",
     "museum"
   ],
+  "origin": "America",
   "license": "cc0",
   "provenance": {
     "creator": "Jasper F. Cropsey",
@@ -18,5 +19,6 @@
     "work": "Landscape",
     "credit": "Cleveland Museum of Art, 1917.67",
     "page": "https://www.clevelandart.org/art/1917.67"
-  }
+  },
+  "file": "plates/landscape-landscape-desktop-wallpaper-3400x1824.jpg"
 }

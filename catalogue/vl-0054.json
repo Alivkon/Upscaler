@@ -11,6 +11,7 @@
     "america",
     "museum"
   ],
+  "origin": "America",
   "license": "cc0",
   "provenance": {
     "creator": "William Stanley Haseltine",
@@ -18,5 +19,6 @@
     "work": "Capri",
     "credit": "Cleveland Museum of Art, 1975.4",
     "page": "https://www.clevelandart.org/art/1975.4"
-  }
+  },
+  "file": "plates/capri-american-painting-desktop-wallpaper-3400x2124.jpg"
 }

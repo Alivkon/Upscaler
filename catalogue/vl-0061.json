@@ -12,6 +12,7 @@
     "painting",
     "museum"
   ],
+  "origin": "England",
   "license": "cc0",
   "provenance": {
     "creator": "Thomas Gainsborough",
@@ -19,5 +20,6 @@
     "work": "Rocky, Wooded Landscape with a Dell and Weir",
     "credit": "Cleveland Museum of Art, 1984.59",
     "page": "https://www.clevelandart.org/art/1984.59"
-  }
+  },
+  "file": "plates/rocky-wooded-landscape-with-a-dell-forest-landscape-desktop-wallpaper-3400x2603.jpg"
 }

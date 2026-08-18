@@ -12,6 +12,7 @@
     "painting",
     "museum"
   ],
+  "origin": "France",
   "license": "cc0",
   "provenance": {
     "creator": "Claude-Joseph Vernet",
@@ -19,5 +20,6 @@
     "work": "The Waterfalls at Tivoli",
     "credit": "Cleveland Museum of Art, 1984.175",
     "page": "https://www.clevelandart.org/art/1984.175"
-  }
+  },
+  "file": "plates/the-waterfalls-at-tivoli-river-landscape-desktop-wallpaper-3400x2421.jpg"
 }

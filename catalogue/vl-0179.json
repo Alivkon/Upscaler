@@ -12,6 +12,7 @@
     "painting",
     "museum"
   ],
+  "origin": "Norway",
   "license": "public-domain",
   "provenance": {
     "creator": "Halfdan Egedius",
@@ -20,5 +21,6 @@
     "work": "Bondegården Åse i Telemarken, Norge",
     "credit": "SMK, National Gallery of Denmark, DEP695",
     "page": "https://open.smk.dk/artwork/image/DEP695"
-  }
+  },
+  "file": "plates/ase-farm-in-telemark-dark-landscape-desktop-wallpaper-3813x2947.jpg"
 }

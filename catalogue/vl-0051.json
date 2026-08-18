@@ -11,6 +11,7 @@
     "painting",
     "museum"
   ],
+  "origin": "America",
   "license": "cc0",
   "provenance": {
     "creator": "John James Audubon",
@@ -18,5 +19,6 @@
     "work": "Peregrine Falcons (Duck Hawks)",
     "credit": "Cleveland Museum of Art, 1964.351",
     "page": "https://www.clevelandart.org/art/1964.351"
-  }
+  },
+  "file": "plates/peregrine-falcons-bird-desktop-wallpaper-3400x2400.jpg"
 }

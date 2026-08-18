@@ -12,6 +12,7 @@
     "usgs",
     "earth"
   ],
+  "origin": "Earth",
   "license": "public-domain",
   "provenance": {
     "creator": "U.S. Geological Survey",
@@ -19,5 +20,6 @@
     "work": "Vatnajokull Glacier Ice Cap",
     "credit": "USGS EROS, Earth as Art 2",
     "page": "https://eros.usgs.gov/media-gallery/earth-as-art/2/vatnajokull-glacier-ice-cap"
-  }
+  },
+  "file": "plates/vatnajokull-glacier-ice-cap-satellite-desktop-wallpaper-3840x4135.jpg"
 }

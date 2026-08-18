@@ -12,6 +12,7 @@
     "usgs",
     "earth"
   ],
+  "origin": "Earth",
   "license": "public-domain",
   "provenance": {
     "creator": "U.S. Geological Survey",
@@ -19,5 +20,6 @@
     "work": "Crimson Streams",
     "credit": "USGS EROS, Earth as Art 5",
     "page": "https://eros.usgs.gov/media-gallery/earth-as-art/5/crimson-streams"
-  }
+  },
+  "file": "plates/crimson-streams-satellite-desktop-wallpaper-3840x4135.jpg"
 }

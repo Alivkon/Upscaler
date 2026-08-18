@@ -11,6 +11,7 @@
     "france",
     "museum"
   ],
+  "origin": "France",
   "license": "cc0",
   "provenance": {
     "creator": "Jean-Léon Gérôme",
@@ -18,5 +19,6 @@
     "work": "Lion on the Watch",
     "credit": "Cleveland Museum of Art, 1945.25",
     "page": "https://www.clevelandart.org/art/1945.25"
-  }
+  },
+  "file": "plates/lion-on-the-watch-french-painting-desktop-wallpaper-3400x2439.jpg"
 }

@@ -12,6 +12,7 @@
     "usgs",
     "earth"
   ],
+  "origin": "Earth",
   "license": "public-domain",
   "provenance": {
     "creator": "U.S. Geological Survey",
@@ -19,5 +20,6 @@
     "work": "Earth's Aquarium",
     "credit": "USGS EROS, Earth as Art 4",
     "page": "https://eros.usgs.gov/media-gallery/earth-as-art/4/earths-aquarium"
-  }
+  },
+  "file": "plates/earths-aquarium-satellite-desktop-wallpaper-3840x4135.jpg"
 }

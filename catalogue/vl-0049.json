@@ -11,6 +11,7 @@
     "painting",
     "museum"
   ],
+  "origin": "America",
   "license": "cc0",
   "provenance": {
     "creator": "George Inness",
@@ -18,5 +19,6 @@
     "work": "Cows in a Field",
     "credit": "Cleveland Museum of Art, 1955.544",
     "page": "https://www.clevelandart.org/art/1955.544"
-  }
+  },
+  "file": "plates/cows-in-a-field-landscape-desktop-wallpaper-3400x2442.jpg"
 }

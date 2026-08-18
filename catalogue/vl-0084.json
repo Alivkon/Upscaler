@@ -11,6 +11,7 @@
     "france",
     "museum"
   ],
+  "origin": "France",
   "license": "cc0",
   "provenance": {
     "creator": "Victor Coindre",
@@ -18,5 +19,6 @@
     "work": "La Tour St. Jacques",
     "credit": "Cleveland Museum of Art, 1947.144",
     "page": "https://www.clevelandart.org/art/1947.144"
-  }
+  },
+  "file": "plates/la-tour-st-jacques-french-print-iphone-wallpaper-2227x3400.jpg"
 }

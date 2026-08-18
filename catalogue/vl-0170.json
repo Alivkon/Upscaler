@@ -12,6 +12,7 @@
     "usgs",
     "earth"
   ],
+  "origin": "Earth",
   "license": "public-domain",
   "provenance": {
     "creator": "U.S. Geological Survey",
@@ -19,5 +20,6 @@
     "work": "Slessor Glacier",
     "credit": "USGS EROS, Earth as Art 4",
     "page": "https://eros.usgs.gov/media-gallery/earth-as-art/4/slessor-glacier"
-  }
+  },
+  "file": "plates/slessor-glacier-satellite-desktop-wallpaper-3840x4135.jpg"
 }
