@@ -17,8 +17,13 @@ const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/;
 const DAY_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const CREATOR_KINDS = ['person', 'organization', 'unknown'];
 const PROVENANCE = ['creator', 'creatorKind', 'date', 'work', 'credit', 'page'];
-const REQUIRED = ['ref', 'slug', 'title', 'alt', 'added'];
-const OPTIONAL = ['tags', 'license', 'provenance'];
+// `origin` обязателен, а не необязателен: заполнить его можно всегда — у чужой
+// работы это страна, у своей `Tessarum`, — а карточка указателя называет его
+// вслух, и работа без него вышла бы на витрину с пустым местом там, где
+// у соседей написано откуда. Проверка нужна потому, что заметить это можно
+// только глазами: пустая строка не роняет ни сервер, ни сборку.
+const REQUIRED = ['ref', 'slug', 'title', 'alt', 'added', 'origin'];
+const OPTIONAL = ['tags', 'license', 'provenance', 'file'];
 
 const problems = [];
 const complain = (where, what) => problems.push(`${where}: ${what}`);

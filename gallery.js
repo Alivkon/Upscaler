@@ -198,20 +198,47 @@ const madeFile = async entry => (entry && (await fs.stat(path.join(IMAGES_DIR, e
 
 // Кураторские работы. Порядок — каталога, а не манифеста: манифест про файлы,
 // а порядок на указателе — про развеску.
+//
+// У записи каталога может быть поле `file` — путь к файлу в `images/` вида
+// `plates/slug.jpg`. Тогда манифест не нужен: размеры читаются из самого файла.
+// Записи без `file` по-прежнему ищутся в манифесте — обратная совместимость.
 async function catalogueItems() {
   const made = new Map((await readManifest()).map(entry => [entry.ref, entry]));
   const items = [];
   for (const work of await loadWorks()) {
-    const plate = made.get(work.ref);
-    if (!(await madeFile(plate))) continue;
-    const before = (await madeFile(plate.before)) && plate.before;
-    const copies = [];
-    for (const copy of plate.copies || []) if (await madeFile(copy)) copies.push(copy);
+    let file, width, height, bytes, copies, before;
+    if (typeof work.file === 'string') {
+      const filePath = resolveEntryPath(work.file);
+      const stat = filePath && (await fs.stat(filePath).catch(() => null));
+      if (!stat) continue;
+      const meta = await sharp(filePath)
+        .metadata()
+        .catch(() => ({}));
+      if (!meta.width || !meta.height) continue;
+      file = work.file;
+      width = meta.width;
+      height = meta.height;
+      bytes = stat.size;
+      copies = [];
+      before = null;
+    } else {
+      const plate = made.get(work.ref);
+      if (!(await madeFile(plate))) continue;
+      const beforeEntry = (await madeFile(plate.before)) && plate.before;
+      const plateCopies = [];
+      for (const copy of plate.copies || []) if (await madeFile(copy)) plateCopies.push(copy);
+      file = plate.file;
+      width = plate.width;
+      height = plate.height;
+      bytes = plate.bytes;
+      copies = plateCopies.map(copy => ({ url: imageUrl(copy.file), width: copy.width, height: copy.height }));
+      before = beforeEntry ? imageUrl(beforeEntry.file) : null;
+    }
     items.push({
       ref: accession(work.ref),
       slug: work.slug,
-      url: imageUrl(plate.file),
-      filename: path.basename(plate.file),
+      url: imageUrl(file),
+      filename: path.basename(file),
       title: work.title,
       alt: work.alt,
       // Пустой список, а не `undefined`: в каталоге поле необязательно
@@ -219,13 +246,18 @@ async function catalogueItems() {
       // без тегов роняла бы `/w/<slug>` в 500, и проверка каталога этого
       // не видит — она о содержимом записи, а не о форме работы на выходе.
       tags: work.tags || [],
-      width: plate.width,
-      height: plate.height,
-      bytes: plate.bytes,
+      // Откуда работа: страна у чужой, `Tessarum` у своей. Выводится не из
+      // тегов на лету, а лежит полем в каталоге — теги для этого не годятся:
+      // `japan` и `japanese` там до сих пор разные, и одна и та же страна
+      // называлась бы на карточках по-разному.
+      origin: work.origin,
+      width,
+      height,
+      bytes,
       // Чем страница работу показывает. Отдаёт она всё равно `url`: копии
       // существуют только ради проёма, в котором работа стоит, и в разметке
       // объявлены лишь как варианты `srcset`.
-      copies: copies.map(copy => ({ url: imageUrl(copy.file), width: copy.width, height: copy.height })),
+      copies,
       // День, когда работа вошла в коллекцию, — для `lastmod` в карте сайта.
       // Берётся из каталога, а не из `mtime` файла: рендер детерминирован,
       // но переписывает файл при каждом запуске.
@@ -233,8 +265,8 @@ async function catalogueItems() {
       // Работа до реставрации и размеры, с которых она восстановлена. Размеры
       // взяты из самого файла «до», а не из настроек: страница утверждает ими
       // факт, и утверждать она должна измеренное.
-      before: before ? imageUrl(before.file) : null,
-      from: before ? [before.width, before.height] : null,
+      before,
+      from: null,
       license: LICENSES[work.license || DEFAULT_LICENSE],
       // Откуда работа взялась, если взялась не у нас. Есть только у чужих:
       // у своих создатель — сайт, и повторять это в каждой записи незачем.
