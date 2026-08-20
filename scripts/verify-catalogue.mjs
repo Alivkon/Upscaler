@@ -23,7 +23,7 @@ const PROVENANCE = ['creator', 'creatorKind', 'date', 'work', 'credit', 'page'];
 // у соседей написано откуда. Проверка нужна потому, что заметить это можно
 // только глазами: пустая строка не роняет ни сервер, ни сборку.
 const REQUIRED = ['ref', 'slug', 'title', 'alt', 'added', 'origin'];
-const OPTIONAL = ['tags', 'license', 'provenance', 'file'];
+const OPTIONAL = ['tags', 'license', 'provenance', 'file', 'hidden'];
 
 const problems = [];
 const complain = (where, what) => problems.push(`${where}: ${what}`);
@@ -87,6 +87,13 @@ function checkWork(ref, work) {
     complain(where, `лицензия ${JSON.stringify(work.license)} не заведена в LICENSES (works.js)`);
   }
   if ('provenance' in work) checkProvenance(where, work.provenance);
+  // Проверяется именно `=== true`, а не истинность. Поле снимает работу
+  // с витрины, и снимает молча: `"hidden": "no"` истинно, читается как отказ
+  // и спрятало бы работу навсегда — заметить это можно только пересчитав
+  // витрину руками.
+  if ('hidden' in work && work.hidden !== true) {
+    complain(where, `\`hidden\` = ${JSON.stringify(work.hidden)}, а бывает только true — иначе поля просто нет`);
+  }
 }
 
 const order = JSON.parse(await fs.readFile(ORDER_FILE, 'utf8'));

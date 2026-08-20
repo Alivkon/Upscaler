@@ -8,6 +8,7 @@ import multer from 'multer';
 import sharp from 'sharp';
 import { IMAGES_DIR, GENERATED_DIR, ADJACENT, ensureImageDirectories, galleryItems, isImage } from './gallery.js';
 import { collectionPage, intakePage, licensePage, missingPage, robots, sitemap, workPage } from './pages.js';
+import { finish } from './treatment.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // Канонический адрес. Умолчание — настоящий домен, а не локальный сервер:
@@ -47,7 +48,7 @@ const upload = multer({
 //
 // По умолчанию express.static ставит `max-age=0`, то есть указатель на десять
 // работ спрашивает сервер о каждой картинке при каждом заходе.
-const IMMUTABLE_FOLDERS = new Set(['plates', 'before', 'generated']);
+const IMMUTABLE_FOLDERS = new Set(['plates', 'crops', 'before', 'generated']);
 const A_YEAR = 60 * 60 * 24 * 365;
 
 function setImageHeaders(res, file) {
@@ -86,9 +87,17 @@ const html = (res, status, body) => res.status(status).type('html').send(body);
 // первые десять работ — то есть, пока каталог пополнялся с конца, всегда
 // одни и те же десять. Карточки ниже сгиба грузятся лениво, поэтому длина
 // страницы стоит разметки, а не байтов.
+// Снятые с витрины работы отсеиваются здесь, в одном месте на все три
+// поверхности: сетку, ленту «ещё из коллекции» и карту сайта. Не в
+// `galleryItems()` — страница работы должна их находить: адрес продолжает
+// отвечать, и в этом весь смысл поля (works.js, `hidden`). Фильтр на выдаче,
+// а не на чтении: снять работу с показа и убрать её из коллекции — разные
+// события, и одно не должно тянуть за собой другое.
+const shown = items => items.filter(item => !item.hidden);
+
 async function showCollection(_req, res, next) {
   try {
-    html(res, 200, collectionPage({ items: await galleryItems(), origin: SITE_ORIGIN }));
+    html(res, 200, collectionPage({ items: shown(await galleryItems()), origin: SITE_ORIGIN }));
   } catch (error) {
     next(error);
   }
@@ -104,7 +113,12 @@ app.get('/w/:slug', async (req, res, next) => {
     const items = await galleryItems();
     const item = items.find(work => work.slug === req.params.slug);
     if (!item) return next();
-    const others = items.filter(work => work !== item).slice(0, ADJACENT);
+    // Соседи берутся только из показанных — в том числе на странице скрытой
+    // работы: она сама с витрины снята, но вести с неё в коллекцию можно,
+    // и вести стоит именно в ту коллекцию, которая есть.
+    const others = shown(items)
+      .filter(work => work !== item)
+      .slice(0, ADJACENT);
     html(res, 200, workPage({ item, others, origin: SITE_ORIGIN }));
   } catch (error) {
     next(error);
@@ -119,7 +133,7 @@ app.get('/robots.txt', (_req, res) => res.type('text/plain').send(robots({ origi
 
 app.get('/sitemap.xml', async (_req, res, next) => {
   try {
-    const items = await galleryItems();
+    const items = shown(await galleryItems());
     res.type('application/xml').send(sitemap({ items, origin: SITE_ORIGIN }));
   } catch (error) {
     next(error);
@@ -214,7 +228,7 @@ async function waitForResult(prediction) {
   throw new HttpError(504, 'Timed out waiting for the result. Try again.');
 }
 
-async function saveResult(sourceUrl, file, { outputSize, targetLongestSide }) {
+async function saveResult(sourceUrl, file, { outputSize, targetLongestSide, treat, crop }) {
   const response = await fetch(sourceUrl, { headers: apiHeaders() });
   if (!response.ok) throw new HttpError(502, 'The finished image could not be downloaded from Replicate.');
   const contentType = response.headers.get('content-type') || file.mimetype;
@@ -226,6 +240,11 @@ async function saveResult(sourceUrl, file, { outputSize, targetLongestSide }) {
   let output = Buffer.from(await response.arrayBuffer());
   if (targetLongestSide)
     output = await sharp(output).resize(targetLongestSide, targetLongestSide, { fit: 'inside' }).toBuffer();
+  // Обработка и кадр идут последними, уже по готовому размеру: приглушение
+  // решает силу по пикселям, которые поедут на экран, а уменьшение после него
+  // мерило бы не тот файл. Обе галочки выключены — без них `finish` возвращает
+  // тот же буфер и ничего не пережимает.
+  output = await finish(output, { treat, crop });
   await fs.writeFile(path.join(GENERATED_DIR, filename), output);
   return filename;
 }
@@ -234,12 +253,17 @@ app.post('/api/upscale', upload.single('photo'), async (req, res, next) => {
   try {
     if (!req.file) return res.status(400).json({ error: 'Choose a JPG, PNG or WebP up to 10 MB.' });
     const outputSize = OUTPUT_SIZES.includes(req.body.output_size) ? req.body.output_size : 'x2';
+    // Галочки читаются строгим сравнением, а не на истинность: форма шлёт
+    // строки, и `'false'` — истинная строка. Умолчание — «не трогать», и
+    // ошибка разбора обязана падать в него, а не в «обработать».
+    const treat = req.body.treat === 'true';
+    const crop = req.body.crop === 'true';
     const sourceLongestSide = await readLongestSide(req.file);
     const targetLongestSide = targetLongestSideFor(outputSize, sourceLongestSide);
     const scale = realEsrganScale(outputSize, sourceLongestSide, targetLongestSide);
     const prediction = await createPrediction(asDataUrl(req.file), scale);
     const resultUrl = await waitForResult(prediction);
-    const filename = await saveResult(resultUrl, req.file, { outputSize, targetLongestSide });
+    const filename = await saveResult(resultUrl, req.file, { outputSize, targetLongestSide, treat, crop });
     res.json({
       filename,
       url: `/images/generated/${encodeURIComponent(filename)}`,
@@ -267,7 +291,7 @@ const wantsJson = req => req.path.startsWith('/api/') || req.path.startsWith('/i
 
 app.use((req, res) => {
   if (wantsJson(req)) return res.status(404).json({ error: FILE_NOT_FOUND });
-  html(res, 404, missingPage({ origin: SITE_ORIGIN }));
+  html(res, 404, missingPage());
 });
 
 app.use((error, _req, res, _next) => {

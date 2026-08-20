@@ -196,18 +196,83 @@ async function readManifest() {
 // картинок. Проверяем перед тем, как обещать адрес.
 const madeFile = async entry => (entry && (await fs.stat(path.join(IMAGES_DIR, entry.file)).catch(() => null))) || null;
 
+// Кадры, которые генератор режет из плиты. Плита при этом остаётся целой
+// и по-прежнему отдаётся: кроит их машина, а знает своё устройство только
+// тот, кто скачивает.
+//
+//   phone — 9:19.5, проём страницы работы и то, что отдаёт Download
+//   tall  — 9:16, карточка указателя
+//   wide  — 16:9, рабочий стол; лежит молча, спросят — есть
+//
+// Кадры настоящими файлами, а не `object-fit: cover`: в поиск по картинкам
+// попадает файл из `src`, а не то, каким его показал CSS. Обрезанная стилями
+// горизонтальная картина приходит в выдачу горизонтальной — то есть ровно
+// не тем, по какому запросу коллекция и собрана.
+//
+// Кадра может не быть: генератор доходит до работы не сразу, а работа
+// с отсутствующим кадром должна показываться плитой, а не пропадать
+// с витрины. Поэтому каждый проверяется на диске отдельно.
+const CROP_KINDS = ['phone', 'tall', 'wide'];
+
+async function cropsOf(entry) {
+  const found = {};
+  for (const kind of CROP_KINDS) {
+    const crop = entry?.crops?.[kind];
+    if (!(await madeFile(crop))) continue;
+    const copies = [];
+    for (const copy of crop.copies || []) {
+      if (await madeFile(copy)) copies.push({ url: imageUrl(copy.file), width: copy.width, height: copy.height });
+    }
+    found[kind] = {
+      url: imageUrl(crop.file),
+      filename: path.basename(crop.file),
+      width: crop.width,
+      height: crop.height,
+      bytes: crop.bytes,
+      copies
+    };
+  }
+  return found;
+}
+
 // Кураторские работы. Порядок — каталога, а не манифеста: манифест про файлы,
 // а порядок на указателе — про развеску.
 //
-// У записи каталога может быть поле `file` — путь к файлу в `images/` вида
-// `plates/slug.jpg`. Тогда манифест не нужен: размеры читаются из самого файла.
-// Записи без `file` по-прежнему ищутся в манифесте — обратная совместимость.
+// Откуда берутся сведения о файле — и в каком порядке.
+//
+// СНАЧАЛА МАНИФЕСТ. Он знает не только размеры, но и копии для показа, файл
+// «до» и кадры; сам файл не знает ничего, кроме себя. Порядок был обратный —
+// поле `file` появилось у одной работы, а потом его проставили всем разом,
+// и ветка манифеста перестала выполняться вовсе. Заметить это глазом нельзя:
+// страница выглядит правильной, просто в `src` встаёт плита, а `srcset`
+// не выходит совсем. Стоило это 156 работ из 164 показанных и 497 МБ картинок
+// на указателе вместо десятков килобайт — измерено.
+//
+// Поле `file` осталось запасным путём и работает: по нему живут 8 недавних
+// работ, добавленных руками до того, как до них дошёл генератор. Такая запись
+// описывает один файл и только его — ни копий, ни кадров у неё нет, — поэтому
+// размеры приходится мерить, и это единственное место, где сайт картинку
+// измеряет. Правило «сайт картинок не мерит» (AGENTS.md) тем и держится,
+// что путь этот запасной: как только генератор доходит до работы, она уходит
+// на манифест и мерить её перестают.
 async function catalogueItems() {
   const made = new Map((await readManifest()).map(entry => [entry.ref, entry]));
   const items = [];
   for (const work of await loadWorks()) {
-    let file, width, height, bytes, copies, before;
-    if (typeof work.file === 'string') {
+    let file, width, height, bytes, copies, before, crops;
+    const plate = made.get(work.ref);
+    if (await madeFile(plate)) {
+      const beforeEntry = (await madeFile(plate.before)) && plate.before;
+      const plateCopies = [];
+      for (const copy of plate.copies || []) if (await madeFile(copy)) plateCopies.push(copy);
+      file = plate.file;
+      width = plate.width;
+      height = plate.height;
+      bytes = plate.bytes;
+      copies = plateCopies.map(copy => ({ url: imageUrl(copy.file), width: copy.width, height: copy.height }));
+      before = beforeEntry ? imageUrl(beforeEntry.file) : null;
+      crops = await cropsOf(plate);
+    } else if (typeof work.file === 'string') {
       const filePath = resolveEntryPath(work.file);
       const stat = filePath && (await fs.stat(filePath).catch(() => null));
       if (!stat) continue;
@@ -221,18 +286,9 @@ async function catalogueItems() {
       bytes = stat.size;
       copies = [];
       before = null;
+      crops = {};
     } else {
-      const plate = made.get(work.ref);
-      if (!(await madeFile(plate))) continue;
-      const beforeEntry = (await madeFile(plate.before)) && plate.before;
-      const plateCopies = [];
-      for (const copy of plate.copies || []) if (await madeFile(copy)) plateCopies.push(copy);
-      file = plate.file;
-      width = plate.width;
-      height = plate.height;
-      bytes = plate.bytes;
-      copies = plateCopies.map(copy => ({ url: imageUrl(copy.file), width: copy.width, height: copy.height }));
-      before = beforeEntry ? imageUrl(beforeEntry.file) : null;
+      continue;
     }
     items.push({
       ref: accession(work.ref),
@@ -251,6 +307,10 @@ async function catalogueItems() {
       // `japan` и `japanese` там до сих пор разные, и одна и та же страна
       // называлась бы на карточках по-разному.
       origin: work.origin,
+      // Снята ли работа с витрины. Решает это каталог, а не отсутствие файла:
+      // работа без файла просто не показывается и это авария, а скрытая —
+      // решение, и оно записано словом.
+      hidden: work.hidden === true,
       width,
       height,
       bytes,
@@ -258,6 +318,10 @@ async function catalogueItems() {
       // существуют только ради проёма, в котором работа стоит, и в разметке
       // объявлены лишь как варианты `srcset`.
       copies,
+      // Кадры под телефон, указатель и рабочий стол. Пустой объект, а не
+      // `undefined`: страница спрашивает у него кадр по имени, и работа,
+      // до которой генератор ещё не дошёл, роняла бы `/w/<slug>` в 500.
+      crops,
       // День, когда работа вошла в коллекцию, — для `lastmod` в карте сайта.
       // Берётся из каталога, а не из `mtime` файла: рендер детерминирован,
       // но переписывает файл при каждом запуске.
@@ -302,6 +366,13 @@ async function uploadedItems() {
       title: 'Restored wallpaper',
       alt: `Restored wallpaper at ${width} × ${height}`,
       tags: [],
+      // Присланную работу не прячут, а не публикуют: список закрыт, и всё,
+      // что в нём есть, в нём есть намеренно. Поле стоит ради одинаковой формы
+      // записи — страница спрашивает его у всех, не разбирая происхождения.
+      hidden: false,
+      // Кадров нет: их режет генератор из плиты, а присланный файл лежит таким,
+      // каким пришёл.
+      crops: {},
       width,
       height,
       bytes: stat.size,

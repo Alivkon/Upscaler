@@ -69,6 +69,7 @@ button {
   font-size: 12px;
   letter-spacing: 0.16em;
   text-transform: uppercase;
+  text-decoration: none;
 }
 .masthead__nav {
   display: flex;
@@ -109,11 +110,14 @@ button {
      переноситься, иначе точки-разделители повисают в конце строки */
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   padding: 0 var(--gutter);
-  /* Записи теперь разной высоты, и в ряду они выровнены по середине, а не по
-     верхнему краю: картины и вешают по общей средней линии, а не по общему
-     верху. Растягивать их до самой высокой в ряду нельзя — паспарту у всех
-     одинаковое, и растянутое перестало бы им быть. */
-  align-items: center;
+  /* По верхнему краю, а не по середине. Средняя линия годилась, пока записи
+     были разной формы: тогда общий центр был единственным, что у них было
+     общего. Теперь в проёме стоит кадр 9:16 — у всех один и тот же, — и общей
+     стала верхняя кромка. Выравнивание по середине при равных картинках
+     означает обратное: разница в высоте этикетки уезжает наверх и разводит
+     сами картинки по высоте. Растягивать записи по-прежнему нельзя: паспарту
+     у всех одинаковое, растянутое перестало бы им быть. */
+  align-items: start;
 }
 /* «Коллекция недоступна», «такой работы нет» — сообщение на месте содержимого */
 .notice {
@@ -230,6 +234,12 @@ button {
   line-height: 1.1;
   letter-spacing: 0.02em;
   margin: 0 0 6px;
+  /* Место под две строки держится всегда. Названия работ разной длины: в
+     колонке 200 px 91 из 156 умещаются в строку, остальные 65 занимают две,
+     и в трёх ни одно не нуждается. Без запаса всё, что ниже названия, ехало
+     бы у соседей по ряду на разной высоте. На странице работы заголовок
+     свой (`.plate .caption__title`), и запас там снят. */
+  min-height: 2lh;
   font-variant-numeric: lining-nums tabular-nums;
   /* номер — финишная черта: он появляется уже заполненным */
   transition: color 0.5s ease;
@@ -246,6 +256,27 @@ button {
 }
 .caption__title a:hover {
   border-bottom: 1px solid var(--rule);
+}
+/* Автор — вторая строка этикетки, как в музее: сверху название, под ним имя,
+   ниже мелким шрифтом хранение. Своей строкой, а не через разделитель внутри
+   заголовка: в колонке 200 px «Panoramic View of the Alps · Gustave Courbet»
+   рвётся посреди имени, и половина фамилии повисает отдельной строкой.
+
+   От характеристик под ним имя отделено курсивом, а не светлотой: третья
+   градация серого на этикетке в четыре строки — это уже не иерархия, а рябь.
+   Курсив здесь единственный на сайте, и он тот же, каким имя автора набирают
+   на музейной этикетке.
+
+   Строка стоит и там, где имени нет: у 74 работ из 156 автор неизвестен, и
+   пропадающая строка разводила бы соседей по ряду по высоте на каждой второй
+   карточке. Пустая, она не видна — видна только общая для всех сетка. */
+.caption__by {
+  font-size: 12px;
+  font-style: italic;
+  letter-spacing: 0.02em;
+  color: var(--fg-dim);
+  margin: 0 0 5px;
+  min-height: 1lh;
 }
 .caption__spec {
   font-size: 12px;
@@ -293,6 +324,16 @@ button {
   height: min(72vh, 620px);
   display: flex;
   flex-direction: column;
+  /* Паспарту облегает работу и по ширине тоже. Без этого проём растягивался
+     на всю ширину записи, а работа — нет, и лишнее заливалось фоном проёма:
+     у широкой картины это две чёрные полосы сверху и снизу. */
+  align-items: center;
+}
+/* Пришла работа — высоту задаёт она, а не рамка: `min(72vh, 620px)` остаётся
+   потолком, но не полом. Пустая приёмка живёт по-прежнему на фиксированной
+   высоте: ей нечем себя мерить. */
+.record--plate:has(.has-work) {
+  height: auto;
 }
 .record--plate .record__image {
   height: 100%;
@@ -302,11 +343,27 @@ button {
 }
 .record--plate .record__image.has-work {
   aspect-ratio: auto;
+  height: auto;
+  width: auto;
 }
 .record--plate .record__image img {
   height: 100%;
   width: auto;
   cursor: default;
+}
+/* Работа задаёт размер сама: обе стороны `auto`, и браузер держит пропорции
+   по определению — так у заменяемого элемента и работает пара `max-*`.
+   Раньше высота была прибита (`height: 100%`), а ширина ограничена
+   `max-width`, и на узком экране широкая картина не уменьшалась, а сплющивалась:
+   6105 × 2841 выходила пропорцией 0.09 вместо 2.15.
+
+   Потолок — та же высота, что у рамки, минус её поля: работа с полями вместе
+   и должна укладываться в `min(72vh, 620px)`. */
+.record--plate .record__image.has-work img {
+  height: auto;
+  width: auto;
+  max-width: 100%;
+  max-height: calc(min(72vh, 620px) - clamp(34px, 4.6vw, 58px));
 }
 /* «Было» на странице не показывается целиком (почему — в `beforeFrame`,
    pages.js): в проёме оно неотличимо от «стало». Файл здесь только затем,
@@ -437,6 +494,9 @@ body.is-dragging .record--plate {
 .plate .caption__title {
   font-size: clamp(23px, 3vw, 28px);
   margin-bottom: 12px;
+  /* Заголовок здесь один на странице, и ровнять его не с чем: запас под
+     вторую строку оставил бы дыру над характеристиками. */
+  min-height: 0;
 }
 
 /* ── выбор размера: часть характеристик, а не настройка ───── */
@@ -636,14 +696,98 @@ body.is-dragging .record--plate {
   color: var(--fg);
 }
 
-/* ── вопрос о правах задан там, где он возникает: при публикации,
-      а не на входе ─────────────────────────────────────────── */
-.share {
+/* ── остальные файлы работы ───────────────────────────────────
+   Стоит ниже условий, последним в этикетке: проём наверху уже дал главный
+   ответ, а это ответ тому, кого он не устроил. Выше — под кнопкой — блок
+   спорил бы с ней за то же действие.
+
+   Файлы показаны картинками, а не перечислены словами. Дело не в красоте:
+   в поиск по картинкам попадает файл из `src`, и названный только ссылкой
+   он остаётся ненайденным. Проём — 96 px по высоте: этого хватает, чтобы
+   отличить широкий кадр от узкого, то есть чтобы выбрать. */
+.alternates {
   border-top: 1px solid var(--rule);
   margin-top: 20px;
   padding-top: 16px;
 }
-.share__row {
+.alternates__row {
+  display: flex;
+  gap: 14px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.alternates__file a {
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+/* Полка высотой в проём: картинки в ней разной высоты — широкий кадр ниже
+   узкого, — а стоят на общей нижней кромке, поэтому подписи под ними идут
+   одной строкой. */
+.alternates__shot {
+  display: flex;
+  align-items: flex-end;
+  height: 96px;
+}
+/* Обе стороны `auto` — картинка сама себе рамка. Была прибита высота
+   (`height: 96px`) при `object-fit: contain`, и широкий кадр ложился полосой
+   в чёрном поле: 16:9 занимал 120 × 68 из 120 × 96, остальное заливалось
+   фоном проёма и обводилось рамкой, будто так и надо. */
+.alternates__file img {
+  display: block;
+  height: auto;
+  width: auto;
+  max-height: 96px;
+  max-width: 120px;
+  outline: 1px solid var(--card-edge);
+}
+.alternates__label {
+  display: block;
+  margin-top: 6px;
+  font-size: 11px;
+  letter-spacing: 0.02em;
+}
+.alternates__size {
+  display: block;
+  font-size: 11px;
+  color: var(--fg-dim);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+.alternates__file a:hover .alternates__label {
+  border-bottom: 1px solid var(--rule);
+}
+.alternates__file a:focus-visible img {
+  outline: 2px solid var(--fg);
+  outline-offset: 2px;
+}
+.alternates__note {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--fg-dim);
+  margin: 12px 0 0;
+}
+
+/* ── галочки: вопрос о правах при публикации и настройки того,
+      что выйдет из приёмки ─────────────────────────────────────
+   Оба блока набраны одной и той же галочкой, и правила у них общие:
+   две реализации одного элемента расходятся молча, а стоят они на одной
+   странице, друг под другом, где расхождение и видно. Различаются только
+   имена классов — «поделиться» и «настройки» это разные вопросы. */
+.share,
+.options {
+  border-top: 1px solid var(--rule);
+  margin-top: 20px;
+  padding-top: 16px;
+}
+/* Настроек две, и стоят они в столбик с воздухом между: это выбор, а не
+   список, и слипшиеся строки читаются как один пункт с двумя половинами. */
+.options {
+  display: grid;
+  gap: 12px;
+}
+.share__row,
+.options__row {
   display: flex;
   gap: 11px;
   align-items: flex-start;
@@ -651,11 +795,13 @@ body.is-dragging .record--plate {
 }
 /* Выключенная галочка не притворяется нажимаемой: курсор над ней обычный,
    а сама строка приглушена до яркости мелкого текста рядом. */
-.share__row:has(input:disabled) {
+.share__row:has(input:disabled),
+.options__row:has(input:disabled) {
   cursor: default;
   color: var(--fg-dim);
 }
-.share__box {
+.share__box,
+.options__box {
   flex: 0 0 auto;
   width: 15px;
   height: 15px;
@@ -665,34 +811,41 @@ body.is-dragging .record--plate {
   display: grid;
   place-items: center;
 }
-.share input {
+.share input,
+.options input {
   position: absolute;
   opacity: 0;
   width: 0;
   height: 0;
 }
-.share input:checked + .share__box {
+.share input:checked + .share__box,
+.options input:checked + .options__box {
   background: var(--fg);
   border-color: var(--fg);
 }
-.share input:checked + .share__box::after {
+.share input:checked + .share__box::after,
+.options input:checked + .options__box::after {
   content: '';
   width: 7px;
   height: 7px;
   background: var(--ground);
 }
-.share input:focus-visible + .share__box {
+.share input:focus-visible + .share__box,
+.options input:focus-visible + .options__box {
   outline: 2px solid var(--fg);
   outline-offset: 2px;
 }
-.share input:disabled + .share__box {
+.share input:disabled + .share__box,
+.options input:disabled + .options__box {
   opacity: 0.55;
 }
-.share__text {
+.share__text,
+.options__text {
   font-size: 12px;
   line-height: 1.5;
 }
-.share__fine {
+.share__fine,
+.options__fine {
   display: block;
   margin-top: 3px;
   font-size: 11px;
@@ -831,6 +984,9 @@ body.is-locked {
   .record--plate {
     height: min(46vh, 380px);
     width: auto;
+  }
+  .record--plate .record__image.has-work img {
+    max-height: calc(min(46vh, 380px) - clamp(34px, 4.6vw, 58px));
   }
   .label {
     width: min(380px, 84vw);

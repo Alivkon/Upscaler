@@ -60,7 +60,37 @@ const specLine = parts =>
 // и в одну строку встаёт вплоть до 300 px экрана.
 const restoreLink = '<a class="link" href="/restore">Restore your own image up to 4×</a>';
 
-function layout({ title, description, canonical, image, body, ld, script, current }) {
+// `canonical` необязателен, и это про страницу «не найдено». Канонический адрес
+// — заявление «настоящий адрес этой страницы вот такой»; со страницы 404,
+// указывающей на указатель, оно читается как «здесь на самом деле указатель»,
+// то есть как soft-404: ответ 404 говорит одно, разметка другое. Промолчать
+// вернее, чем соврать. Заодно молчит и `og:url` — он про тот же адрес.
+//
+// `imageWidth`/`imageHeight` идут вместе с `og:image`: без размеров превью
+// собирается только после того, как мессенджер сам скачает картинку, а наши
+// картинки большие. С размерами карточка рисуется сразу и не съезжает.
+// `twitter:card` — там же и по той же причине: без него X показывает не
+// превью во всю ширину, а значок величиной с favicon, то есть картинку,
+// ради которой ссылкой и делятся, не показывает вовсе.
+//
+// `noindex` — для снятых с витрины работ. Страница при этом продолжает
+// отвечать, и это выбор, а не недоделка: удалить адрес значит потерять всё,
+// что он накопил в поиске, а 404 на месте живой страницы копится у Google
+// как soft-404. С `noindex` работа выпадает из выдачи чисто, ссылка у того,
+// кто её сохранил, продолжает работать, а возвращается работа снятием поля.
+function layout({
+  title,
+  description,
+  canonical,
+  image,
+  imageWidth,
+  imageHeight,
+  body,
+  ld,
+  script,
+  current,
+  noindex = false
+}) {
   const nav = [
     ['/', 'Collection', current !== 'restore'],
     ['/restore', 'Restore', current === 'restore']
@@ -72,13 +102,17 @@ function layout({ title, description, canonical, image, body, ld, script, curren
     <meta name="viewport" content="width=device-width,initial-scale=1" />
     <title>${escape(title)}</title>
     <meta name="description" content="${escape(description)}" />
-    <link rel="canonical" href="${escape(canonical)}" />
+    ${noindex ? '<meta name="robots" content="noindex, follow" />' : ''}
+    ${canonical ? `<link rel="canonical" href="${escape(canonical)}" />` : ''}
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="${SITE_NAME}" />
     <meta property="og:title" content="${escape(title)}" />
     <meta property="og:description" content="${escape(description)}" />
-    <meta property="og:url" content="${escape(canonical)}" />
+    ${canonical ? `<meta property="og:url" content="${escape(canonical)}" />` : ''}
     ${image ? `<meta property="og:image" content="${escape(image)}" />` : ''}
+    ${image && imageWidth ? `<meta property="og:image:width" content="${imageWidth}" />` : ''}
+    ${image && imageHeight ? `<meta property="og:image:height" content="${imageHeight}" />` : ''}
+    ${image ? '<meta name="twitter:card" content="summary_large_image" />' : ''}
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
@@ -91,7 +125,7 @@ function layout({ title, description, canonical, image, body, ld, script, curren
   </head>
   <body>
     <header class="masthead">
-      <div class="masthead__mark">${SITE_NAME}</div>
+      <a class="masthead__mark" href="/">${SITE_NAME}</a>
       <nav class="masthead__nav">
         ${nav.map(([href, label, on]) => `<a href="${href}"${on ? ' aria-current="page"' : ''}>${label}</a>`).join('\n        ')}
       </nav>
@@ -168,28 +202,89 @@ const plateSizes = item => {
   return `(max-width: 860px) ${narrow}px, ${wide}px`;
 };
 
-// Карточка указателя. Ссылок на работу две: изображение и номер. Номер несёт
-// текст ссылки, а изображение — единственное, на что посетитель целится.
+// Чем работа показана и что она отдаёт.
+//
+// Показывает указатель кадр 9:16, страница работы — 9:19.5, а Download отдаёт
+// тот же 9:19.5: коллекция стала телефонной, и то, что видно, обязано быть тем,
+// что получат. Плита при этом никуда не делась — она предлагается отдельно,
+// ниже, тому, кто хочет кроить сам.
+//
+// Кадра может не быть: генератор режет их пакетом и до новой работы доходит
+// не сразу. Тогда показывается и отдаётся плита. Это не заглушка на время,
+// а постоянное правило: работа без кадра должна выглядеть целой работой,
+// а не дырой в сетке.
+//
+// Обе половины совпадают по форме с самой записью — `url`, `filename`,
+// `width`, `height`, `bytes`, `copies`, — поэтому подстановка ничего не знает
+// о том, кадр перед ней или плита.
+const offered = item => item.crops?.phone || item;
+const tile = item => item.crops?.tall || item;
+
+// Что написано на карточке. Раньше стояли место и номер — «France · vl-0227», —
+// и оба были потрачены впустую. Место называет страну, а ищут не страну:
+// набирают «courbet» и «the brook». Номер не говорит ни человеку, ни поиску
+// ничего вовсе, а текст ссылки поиск читает и относит к той странице, куда
+// ссылка ведёт: сто шестьдесят ссылок «TS·0035» — сто шестьдесят страниц,
+// про которые сказано «номер».
+//
+// Теперь это музейная этикетка: название, под ним автор, ниже размер и номер.
+// Название — текст ссылки, потому что это единственное, что стоит относить
+// к странице целиком; автор идёт отдельной строкой и попадает на страницу
+// как самостоятельные слова.
+//
+// Хвост заголовка («— landscape phone wallpaper») на карточке отрезан: он
+// написан для выдачи и в `<title>` остаётся, а на сетке из ста шестидесяти
+// карточек повторялся бы сто шестьдесят раз, говоря каждый раз, что картинка
+// на сайте обоев годится в обои.
+//
+// Работа без имени автора — своя или присланная; имени тогда нет, но строка
+// остаётся пустой, а не исчезает. Исчезала — и сетка ломалась: этикетки
+// у соседей по ряду становились разной высоты, а из 156 работ автор известен
+// у 82, то есть строка пропадала почти у половины карточек, и картинки в ряду
+// вставали на разной высоте. Место под имя держит CSS (`.caption__by`),
+// поэтому здесь элемент выводится всегда.
+// `unknown` пропускается по той же причине, по какой его пропускает байлайн
+// страницы работы: «Unknown» — не имя, а шум.
+const cardName = item => item.title.split(' — ')[0];
+
+const cardCreator = item => {
+  const { creator, creatorKind } = item.provenance || {};
+  return creator && creatorKind !== 'unknown' ? creator : '';
+};
+
+// Карточка указателя. Ссылок на работу две: изображение и подпись. Подпись
+// несёт текст ссылки, а изображение — единственное, на что посетитель целится.
 //
 // `--ratio` проставлен здесь, а не по загрузке файла: размеры работы известны
 // из каталога, и проём принимает её пропорции ещё до того, как что-то
 // загрузилось. Иначе указатель прыгал бы по мере загрузки картинок.
 function card(item, { eager = false, priority = false } = {}) {
-  const ratio = `${item.width} / ${item.height}`;
+  // Показывается кадр 9:16, отдаётся кадр 9:19.5 — разные файлы, и подпись
+  // говорит о том, который отдают: размер под кнопкой «Download» — обещание,
+  // а не описание картинки в проёме.
+  const shownFile = tile(item);
+  const file = offered(item);
+  const ratio = `${shownFile.width} / ${shownFile.height}`;
   const loading = ` loading="${eager ? 'eager' : 'lazy'}"${priority ? ' fetchpriority="high"' : ''}`;
   // Сетка — `repeat(auto-fill, minmax(200px, 1fr))`: на телефоне это одна
   // колонка почти во всю ширину, дальше карточка держится около 200–220 px.
-  const shown = shownWith(item.copies, '(max-width: 520px) 90vw, 220px');
+  const shown = shownWith(shownFile.copies, '(max-width: 520px) 90vw, 220px');
+  const creator = cardCreator(item);
+  // Номер встал на место слова «JPEG». Слово это не несло ничего: файлы
+  // в коллекции все до одного JPEG, и строка, одинаковая на всех карточках,
+  // — это место, занятое ничем. Номер на его месте хотя бы называет работу
+  // в собрании, а размер, стоящий первым, остаётся подсвеченным (`.lead`).
   return `<figure class="item">
           <div class="record">
             <a class="record__image" href="/w/${escape(item.slug)}" style="--ratio: ${ratio}" tabindex="-1">
-              <img src="${escape(item.url)}"${shown} alt="${escape(item.alt)}" width="${item.width}" height="${item.height}"${loading} />
+              <img src="${escape(shownFile.url)}"${shown} alt="${escape(item.alt)}" width="${shownFile.width}" height="${shownFile.height}"${loading} />
             </a>
           </div>
           <figcaption class="caption">
-            <h3 class="caption__title"><a href="/w/${escape(item.slug)}">${escape(item.ref)}</a></h3>
-            <p class="caption__spec">${specLine([formatDims(item.width, item.height), formatType(item.url)])}</p>
-            <a class="link" href="${escape(item.url)}" download>Download</a>
+            <h3 class="caption__title"><a href="/w/${escape(item.slug)}">${escape(cardName(item))}</a></h3>
+            <p class="caption__by">${escape(creator)}</p>
+            <p class="caption__spec">${specLine([formatDims(file.width, file.height), item.ref])}</p>
+            <a class="link" href="${escape(file.url)}" download>Download</a>
           </figcaption>
         </figure>`;
 }
@@ -215,10 +310,13 @@ export function collectionPage({ items, origin }) {
     canonical: `${origin}/`,
     // Превью для мессенджеров и соцсетей: без него ссылка на коллекцию идёт
     // голой строкой. Берём первую работу — она же и первое, что видит
-    // открывший.
-    image: items.length ? `${origin}${items[0].url}` : undefined,
+    // открывший, — и берём её телефонным кадром: коллекция телефонная,
+    // и превью, показывающее широкую плиту, обещает не то.
+    image: items.length ? `${origin}${offered(items[0]).url}` : undefined,
+    imageWidth: items.length ? offered(items[0]).width : undefined,
+    imageHeight: items.length ? offered(items[0]).height : undefined,
     body: `
-      <p class="heading">The collection</p>
+      <h1 class="heading">The collection</h1>
       ${grid(items, EAGER_CARDS)}
       <p class="outro">${restoreLink}</p>
     `
@@ -271,19 +369,43 @@ const creatorFields = item => {
   };
 };
 
+// Имя автора в заголовке вкладки, но не на странице: «Gauguin» — то, что
+// набирают, и страница, где этого слова нет ни в одной строке, по такому
+// запросу не совпадает ни с чем. Из 151 работы открытых собраний имя есть
+// у 78, а в заголовке стоит у 10 — остальные 68 отдают запрос даром.
+//
+// `unknown` пропускается: «In the Waves by Unknown» — не имя, а шум, и таких
+// работ 73. Своим работам байлайн тоже не нужен: автор у них один на всю
+// коллекцию, и он же стоит в `og:site_name`.
+//
+// Совпадение проверяется по фамилии, потому что у Одюбона имя уже стоит
+// в заголовке работы, и без проверки вышло бы «Wood Pewee by John James
+// Audubon — Audubon bird illustration phone wallpaper».
+const bylineFor = ({ provenance, title }) => {
+  const { creator, creatorKind } = provenance || {};
+  if (!creator || creatorKind === 'unknown') return '';
+  const surname = creator.split(' ').at(-1);
+  return title.toLowerCase().includes(surname.toLowerCase()) ? '' : ` by ${creator}`;
+};
+
 // Одно изображение на страницу, поэтому и разметка одна. Раньше их было две:
 // телефонный и экранный кадры делили страницу. Разобрано это из-за музейных
 // работ, у которых кадр ровно один по устройству самой картины, — а раз
 // у одних одна картинка на страницу, то у всех.
-const imageObject = (item, origin) => ({
+//
+// Файл приходит отдельным доводом, а не берётся у записи: страница показывает
+// кадр, а не плиту, и размеры в разметке обязаны быть размерами того файла,
+// который по кнопке и получат. Заявленные по плите, они разошлись бы с самим
+// файлом ровно на величину кадрирования — а сверяет их Google по файлу.
+const imageObject = (item, file, origin) => ({
   '@context': 'https://schema.org',
   '@type': 'ImageObject',
   name: item.title,
   description: item.alt,
-  contentUrl: `${origin}${item.url}`,
-  width: String(item.width),
-  height: String(item.height),
-  encodingFormat: `image/${formatType(item.url).toLowerCase()}`,
+  contentUrl: `${origin}${file.url}`,
+  width: String(file.width),
+  height: String(file.height),
+  encodingFormat: `image/${formatType(file.url).toLowerCase()}`,
   // Теги пока нигде не образуют страниц: на двенадцати работах вышло бы пять
   // списков по две работы, а тонкие страницы-списки не просто не ранжируются,
   // они вредят. Здесь они всё же читаются — иначе поле было бы мёртвым.
@@ -301,11 +423,18 @@ const imageObject = (item, origin) => ({
 //
 // У своих работ блока нет: автор у них один на всю коллекцию, и повторять его
 // на каждой странице — шум.
-function provenance(item) {
+//
+// `work` — как работа называется в собрании — пропускается, когда это то же
+// самое, что уже стоит в `<h1>`: «Standing Ksitigarbha» дважды подряд, крупно
+// и тут же мелко, читается как сбой вёрстки. Совпадают они у 112 работ
+// из 150. У остальных 38 в поле лежит не название, а том и лист — «The Birds
+// of America, plate 115», «Kunstformen der Natur, plate 92: Filicinae, Java», —
+// и вот это сказать нужно: заголовок называет птицу, а собрание хранит книгу.
+function provenance(item, name) {
   if (!item.provenance) return '';
   const { creator, date, work, credit, page } = item.provenance;
   const made = [creator, date].filter(Boolean).join(', ');
-  const held = [work, credit].filter(Boolean).join(' · ');
+  const held = [work === name ? '' : work, credit].filter(Boolean).join(' · ');
   const terms = item.license ? `${escape(item.license.name)} · ` : '';
   return `
             <p class="terms__line">${escape(made)}</p>
@@ -342,8 +471,126 @@ const beforeFrame = item => `
               <span class="loupe__pane loupe__pane--before"></span>
             </div>`;
 
+// Файлы, которые страница предлагает кроме того, что стоит в проёме.
+//
+// Первой — целая работа: её просили назвать прямо, и она здесь не запасной
+// вариант, а ответ тому, кого кадр не устроил. Обработку она несёт ту же,
+// что и кадр, — приглушение и обесцвечивание идут по плите, а кроят уже
+// обработанную, — и сказано это вслух: иначе «оригинал» читается как
+// «необработанный», и скачавший получит не то, что видел.
+//
+// Кадры 9:16 и 16:9 стоят рядом настоящими картинками, а не ссылками словами:
+// в поиск по картинкам попадает файл из `src`, и названный только в карте
+// сайта, без страницы вокруг, он почти не ранжируется.
+//
+// Показываются они мелкими копиями, а отдаются целыми: проём здесь 96 px,
+// и класть в него файл на несколько мегабайт значило бы платить весом
+// страницы за то, чего не видно.
+//
+// Описания у трёх картинок разные, хотя картина на них одна. Одинаковый `alt`
+// трижды на странице — это трижды сказанное одно и то же: экранный диктор
+// прочтёт подряд три одинаковых абзаца, а поиск по картинкам не поймёт, чем
+// файлы отличаются, кроме адреса. Отличаются же они ровно кадром, и про кадр
+// в описании и сказано.
+const alternates = (item, plateSize) => {
+  const name = item.title.split(' — ')[0];
+  const rows = [
+    { file: item, label: 'Uncropped', note: plateSize, alt: `${name}, the whole painting` },
+    {
+      file: item.crops?.tall,
+      label: '9:16',
+      note: item.crops?.tall && formatDims(item.crops.tall.width, item.crops.tall.height),
+      alt: `${name}, cropped to 9:16`
+    },
+    {
+      file: item.crops?.wide,
+      label: '16:9',
+      note: item.crops?.wide && formatDims(item.crops.wide.width, item.crops.wide.height),
+      alt: `${name}, cropped to 16:9`
+    }
+  ].filter(row => row.file);
+  // Одна работа без единого кадра — это работа, у которой в проёме и так
+  // стоит плита. Предлагать её же второй раз незачем.
+  if (rows.length === 1 && !item.crops?.phone) return '';
+  const shownOf = file => shownWith(file.copies, '96px');
+  return `
+          <div class="alternates">
+            <ul class="alternates__row">
+              ${rows
+                .map(
+                  row => `<li class="alternates__file">
+                <a href="${escape(row.file.url)}" download="${escape(row.file.filename)}">
+                  <span class="alternates__shot"><img src="${escape(row.file.url)}"${shownOf(row.file)} alt="${escape(row.alt)}" width="${row.file.width}" height="${row.file.height}" loading="lazy" /></span>
+                  <span class="alternates__label">${escape(row.label)}</span>
+                  <span class="alternates__size">${escape(row.note)}</span>
+                </a>
+              </li>`
+                )
+                .join('\n              ')}
+            </ul>
+            <p class="alternates__note">
+              The uncropped painting carries the same treatment as the crop above.
+              Download it and choose your own crop.
+            </p>
+          </div>`;
+};
+
 export function workPage({ item, others, origin }) {
-  const size = formatDims(item.width, item.height);
+  // Проём показывает кадр 9:19.5, и всё, что страница о работе утверждает —
+  // размер, вес, тип, разметка, превью, — относится к нему же: посетитель
+  // получает по кнопке именно этот файл. Плита названа отдельно и ниже.
+  const file = offered(item);
+  const size = formatDims(file.width, file.height);
+  const plateSize = formatDims(item.width, item.height);
+  // «4K» стоит в заголовке вкладки и в описании, но не на самой странице.
+  // Для поиска `3840` и `4k` — разные строки: работа, у которой сказан только
+  // размер, по запросу «4k wallpaper» не совпадает ни с чем, а `4k` — самый
+  // частотный модификатор в английском (research/2026-08-16-keyword-research-naming.md,
+  // раздел 2). Место выбрано за то, что его не видно: `<title>` живёт во
+  // вкладке и в выдаче, на странице его нет, и подпись под работой остаётся
+  // такой же чистой, какой была.
+  //
+  // Условие — обе стороны, а не длинная. 3840×2160 это площадь кадра, и файл,
+  // у которого одна сторона доросла, а вторая нет, экран не заполнит: назвать
+  // его 4K значило бы пообещать то, чего в нём нет. Подходят 57 работ из 210.
+  // Меряется по длинной и короткой стороне, а не по ширине и высоте: кадр
+  // 2160×3840 — это тот же 4K, поставленный стоймя, и телефонная работа
+  // теряла бы слово из-за поворота.
+  const gauge =
+    Math.max(file.width, file.height) >= 3840 && Math.min(file.width, file.height) >= 2160 ? `4K · ${size}` : size;
+  // Заголовок работы состоит из имени и хвоста через тире: «In the Waves —
+  // seascape phone wallpaper». Имя — то, чем работа называется, хвост — то,
+  // чем она является, и написан он для поиска. На странице стоит одно имя:
+  // хвост там читался бы как объяснение очевидного — что картинка на сайте
+  // обоев годится в обои, — а в `<title>` он остаётся, потому что там его
+  // читает не человек, а выдача.
+  //
+  // Разделитель — em-dash с пробелами, и второго такого в заголовках нет
+  // (проверено по всем 210 записям), так что разрез однозначен. У работ без
+  // хвоста — это тридцать фотографий — имя и есть весь заголовок.
+  const [name, kind] = item.title.split(' — ');
+  const headline = `${name}${bylineFor(item)}${kind ? ` — ${kind}` : ''}`;
+  // Заголовком встаёт имя работы — но только если оно у неё есть. Тире
+  // отделяет имя от хвоста, написанного для поиска, и у тридцати фотографий
+  // тире нет вовсе. Это не пропуск: имени у них и не бывает, есть описание —
+  // «Barbed-wire fence in an overgrown field, flat fog light». Описание,
+  // поставленное заголовком, читается как подпись, которую забыли сократить,
+  // и вдобавок выносит на страницу ровно те слова, которые писались, чтобы
+  // их не видели. Номер на его месте честнее и короче.
+  //
+  // В `<title>` описание при этом остаётся целиком: там его читает выдача.
+  const named = Boolean(kind);
+  // Имя стоит в `<h1>`, номер уехал в конец строки характеристик — и это
+  // обмен местами, а не потеря. В `<h1>` был номер: «VL·0205» — заголовок,
+  // не говорящий ни поиску, ни человеку, пришедшему из поиска, ровно
+  // ничего, а тег этот читается как «о чём страница». Музейная этикетка
+  // устроена так же: сверху название, номер поступления — мелким шрифтом
+  // внизу.
+  //
+  // В строке характеристик номер стоит последним, а не первым: `.lead` —
+  // это первый элемент строки, и он отдан разрешению намеренно (styles.css,
+  // «единственный факт, которого не даёт превью в поиске»). Номер, вставший
+  // первым, отобрал бы у разрешения подсветку.
   // «Restored from 750 × 741» — утверждение, и проверить его можно только под
   // стеклом. Поэтому подсказка стоит не у кнопки (кнопки и нет: жест живёт на
   // самой работе) и не отдельной строкой, а вплотную к утверждению, которое
@@ -371,14 +618,20 @@ export function workPage({ item, others, origin }) {
   // щелчок, всё остальное — «держат». Различает их work.js; сюда приходят
   // роль и доступное имя, потому что до загрузки скрипта проём уже должен
   // объявлять себя тем, чем окажется.
-  const frame = item.before
+  //
+  // Сравнение требует, чтобы в проёме стояла плита. Стекло показывает один
+  // и тот же участок сцены из двух файлов, наложенных друг на друга, — а кадр
+  // и файл «до» показывают разные куски картины, и совместить их нечем.
+  // Поэтому условие не «есть файл до», а «есть файл до и в проёме плита».
+  const comparable = Boolean(item.before) && file === item;
+  const frame = comparable
     ? 'class="record__image has-work is-comparable" role="button" tabindex="0" ' +
       'aria-label="Click to view full size, hold to compare with the original"'
     : 'class="record__image has-work record__image--zoom"';
   // Проём работы задан высотой (`min(72vh, 620px)`), а ширина берётся из
   // пропорции: у телефонного кадра это около 290 px на большом экране
   // и примерно 70vw на телефоне.
-  const shownPlate = shownWith(item.copies, plateSizes(item));
+  const shownPlate = shownWith(file.copies, plateSizes(file));
   // Под чертой — только то, что утверждается об этой работе: из чего она
   // сделана, кем и на каких условиях отдаётся. Предложение «реставрируйте
   // своё» стояло здесь же и читалось как ещё одно такое утверждение: черта
@@ -397,9 +650,9 @@ export function workPage({ item, others, origin }) {
   // содержания — обещание, что содержание есть.
   const terms = `${
     restored
-      ? `<p class="terms__line">${restored}${item.before ? '<span class="terms__hint">Click for full size, hold to compare</span>' : ''}</p>`
+      ? `<p class="terms__line">${restored}${comparable ? '<span class="terms__hint">Click for full size, hold to compare</span>' : ''}</p>`
       : ''
-  }${provenance(item)}`;
+  }${provenance(item, name)}`;
   // Предложение стоит у Download постоянно и тихо, а как только файл взяли —
   // отвечает вслух: до скачивания такая реплика мешала бы тому, за чем
   // пришли, а после уже ничему не мешает и попадает в единственную секунду,
@@ -431,41 +684,58 @@ export function workPage({ item, others, origin }) {
             </div>`;
   return layout({
     current: 'collection',
-    title: `${item.title}, ${size}`,
-    description: `${item.alt}. ${size}, ${formatType(item.url)}, ${formatBytes(item.bytes)}.${restored ? ` ${restored}.` : ''} Free download, no sign-up.`,
+    // Снятая с витрины работа отвечает как прежде, но выпадает из выдачи.
+    // `follow` при этом остаётся: ссылки с неё ведут на работы, которые
+    // из коллекции не уходили, и обрывать обход на них незачем.
+    noindex: item.hidden,
+    title: `${headline}, ${gauge}`,
+    description: `${item.alt}. ${gauge}, ${formatType(file.url)}, ${formatBytes(file.bytes)}.${restored ? ` ${restored}.` : ''} Free download, no sign-up.`,
     canonical: `${origin}/w/${item.slug}`,
-    image: `${origin}${item.url}`,
-    // Оба кадра объявлены разметкой: в поиск по картинкам попадает файл, а их
-    // на странице два, и об экранном иначе не сказано ничего.
-    ld: imageObject(item, origin),
+    image: `${origin}${file.url}`,
+    imageWidth: file.width,
+    imageHeight: file.height,
+    // Разметка описывает тот файл, который страница показывает и отдаёт.
+    // Остальные названы на самой странице картинками и в карте сайта —
+    // `ImageObject` на страницу один, и делить его между четырьмя файлами
+    // значило бы не сказать точно ни об одном.
+    ld: imageObject(item, file, origin),
     script: '/work.js',
     body: `
       <div class="plate">
         <figure class="record record--plate">
           <div ${frame} id="work-frame">
-            <img id="work-picture" src="${escape(item.url)}"${shownPlate} alt="${escape(item.alt)}" width="${item.width}" height="${item.height}" fetchpriority="high" />
-            ${item.before ? beforeFrame(item) : ''}
+            <img id="work-picture" src="${escape(file.url)}"${shownPlate} alt="${escape(item.alt)}" width="${file.width}" height="${file.height}" fetchpriority="high" />
+            ${comparable ? beforeFrame(item) : ''}
           </div>
         </figure>
         <div class="label">
           <div class="caption">
-            <h1 class="caption__title">${escape(item.ref)}</h1>
-            <p class="caption__spec">${specLine([size, formatType(item.url), formatBytes(item.bytes)])}</p>
+            <h1 class="caption__title">${escape(named ? name : item.ref)}</h1>
+            <p class="caption__spec">${specLine([size, formatType(file.url), formatBytes(file.bytes), named ? item.ref : ''])}</p>
             <div class="actions">
-              <a class="btn" href="${escape(item.url)}" download="${escape(item.filename)}">Download</a>
+              <a class="btn" href="${escape(file.url)}" download="${escape(file.filename)}">Download</a>
             </div>
             ${offer}
           </div>
           ${terms ? `<div class="terms">${terms}</div>` : ''}
+          ${alternates(item, plateSize)}
         </div>
       </div>
-      ${others.length ? `<section class="adjacent"><p class="heading">More in the collection</p>${grid(others)}</section>` : ''}
+      ${others.length ? `<section class="adjacent"><h2 class="heading">More in the collection</h2>${grid(others)}</section>` : ''}
     `
   });
 }
 
 // Приёмка остаётся инструментом на клиенте: индексировать в ней нечего, а её
 // содержимое зависит от выбранного файла, которого у сервера нет.
+//
+// Заголовок ей всё-таки нужен, и по той же причине, по какой номер уехал
+// из `<h1>` на странице работы. Раньше `<h1>` здесь был слотом под номер —
+// то есть приходил с сервера пустым и заполнялся скриптом после загрузки
+// файла. Пустой `<h1>` — это страница, которая не говорит, о чём она, ни
+// поиску, ни тому, кто идёт по заголовкам с экранным диктором. Номер
+// остался на своём месте, но абзацем, а заголовком стала строка, верная
+// до всякой загрузки.
 export function intakePage({ origin }) {
   return layout({
     current: 'restore',
@@ -474,6 +744,7 @@ export function intakePage({ origin }) {
     canonical: `${origin}/restore`,
     script: '/intake.js',
     body: `
+      <h1 class="heading">Restore an image</h1>
       <div class="plate">
         <figure class="record record--plate">
           <div class="record__image" id="intake-frame" role="button" tabindex="0" aria-label="Choose an image">
@@ -482,7 +753,7 @@ export function intakePage({ origin }) {
         </figure>
         <div class="label">
           <div class="caption">
-            <h1 class="caption__title is-blank" id="intake-ref"></h1>
+            <p class="caption__title is-blank" id="intake-ref"></p>
             <p class="caption__spec" id="intake-spec"></p>
             <div class="actions" id="intake-actions"></div>
             <input class="visually-hidden" type="file" id="intake-file" accept="image/jpeg,image/png,image/webp" />
@@ -490,6 +761,32 @@ export function intakePage({ origin }) {
           <div class="terms">
             <p class="terms__line" id="intake-terms"></p>
             <p class="terms__note" id="intake-note"></p>
+          </div>
+          <!-- Две настройки того, что выйдет: та же обработка, что несёт
+               коллекция, и телефонный кадр. Обе выключены — приёмка
+               увеличивает чужую картинку, и вернуть её изменённой, не спросив,
+               значит подменить результат вкусом сайта. Кто хочет наш вид,
+               ставит галочку; остальные получают то, что принесли, только
+               крупнее.
+
+               Разметкой, а не скриптом: тексты сайта живут в pages.js. -->
+          <div class="options" id="intake-options">
+            <label class="options__row">
+              <input type="checkbox" id="intake-treat" />
+              <span class="options__box" aria-hidden="true"></span>
+              <span class="options__text"
+                >Darken and desaturate
+                <span class="options__fine">The treatment the collection carries</span>
+              </span>
+            </label>
+            <label class="options__row">
+              <input type="checkbox" id="intake-crop" />
+              <span class="options__box" aria-hidden="true"></span>
+              <span class="options__text"
+                >Crop to phone
+                <span class="options__fine">9 : 19.5, centred</span>
+              </span>
+            </label>
           </div>
           <!-- Галочка выключена в разметке, а не состоянием: пока публикация
                закрыта, включать её нечем (LEGAL.md, раздел «Сейчас»). -->
@@ -523,7 +820,7 @@ export function licensePage({ origin }) {
     description: 'Tessarum works are free to use, personal and commercial, no attribution required.',
     canonical: `${origin}/license`,
     body: `
-      <p class="heading">The Tessarum License</p>
+      <h1 class="heading">The Tessarum License</h1>
       <div class="prose">
         <p class="prose__lead">
           Our own work comes to you under the terms below. Take one, use it,
@@ -579,6 +876,21 @@ export function licensePage({ origin }) {
           collection takes only files whose holder has said otherwise in as many words.
         </p>
 
+        <h2 id="cc-by">Works under CC BY</h2>
+        <p>
+          A few photographs are free to use on one condition: credit. They are marked
+          <em>CC BY</em> and stay under that licence when you take them — we cannot put our terms on
+          top, and we do not try to. Keep the author's name with the file, link
+          <a href="https://creativecommons.org/licenses/by/4.0/" rel="license noopener" target="_blank"
+            >the licence</a
+          >, and say that it was changed.
+        </p>
+        <p>
+          It was changed: every plate here is darkened and drained of some of its colour, and the
+          file you download is a crop of it. That is the change to state, and stating it is the whole
+          of what the licence asks beyond naming the author, which the work's own page does already.
+        </p>
+
         <h2>The ordinary small print</h2>
         <p>
           The files are provided as they are, with no warranty of any kind. We may set different
@@ -591,14 +903,15 @@ export function licensePage({ origin }) {
   });
 }
 
-export function missingPage({ origin }) {
+// Единственная страница без канонического адреса: см. комментарий у `layout`.
+// `origin` ей поэтому больше не нужен — своего адреса она не называет.
+export function missingPage() {
   return layout({
     current: 'collection',
     title: `Not found — ${SITE_NAME}`,
     description: DESCRIPTION,
-    canonical: `${origin}/`,
     body: `
-      <p class="heading">Not found</p>
+      <h1 class="heading">Not found</h1>
       <p class="notice">There is no such work in the collection.</p>
       <p class="outro"><a class="link" href="/">Back to the collection</a></p>
     `
@@ -647,10 +960,18 @@ export function sitemap({ items, origin }) {
   const entries = [
     // Указатель один, и его `lastmod` — день последнего пополнения коллекции.
     url(`${origin}/`, { lastmod: latestOf(items) }),
+    // Файлов у работы теперь четыре — три кадра и целая плита, — и назван
+    // каждый: карта перечисляет файлы, а не выводит их из страницы, и
+    // не названный здесь остаётся ненайденным, пока обход не дойдёт до самой
+    // страницы. Все четыре к тому же стоят на ней настоящими картинками:
+    // изображение, объявленное только картой, без страницы вокруг почти
+    // не ранжируется.
     ...items.map(item =>
       url(`${origin}/w/${item.slug}`, {
         lastmod: item.added,
-        images: [`${origin}${item.url}`]
+        images: [
+          ...new Set([offered(item), tile(item), item.crops?.wide, item].filter(Boolean).map(file => file.url))
+        ].map(address => `${origin}${address}`)
       })
     ),
     url(`${origin}/restore`),

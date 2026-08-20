@@ -23,7 +23,9 @@ const els = {
   terms: document.querySelector('#intake-terms'),
   note: document.querySelector('#intake-note'),
   share: document.querySelector('#intake-share'),
-  shareNote: document.querySelector('#intake-share-note')
+  shareNote: document.querySelector('#intake-share-note'),
+  treat: document.querySelector('#intake-treat'),
+  crop: document.querySelector('#intake-crop')
 };
 let received = null; // выбранный файл и его измеренные размеры
 let restored = null; // готовая работа: имя файла и адрес
@@ -31,6 +33,17 @@ let outputSize = OUTPUT_SIZES[0][0];
 let objectUrl = null;
 
 const chooseFile = () => els.file.click();
+
+// Галочки запираются, пока задача выполняется и пока готовый файл на экране:
+// снятая после отправки, галочка описывала бы не тот файл, который показан,
+// а нажатая на готовом — обещала бы переделку, которой не будет. Открывает
+// их обратно выбор другого файла, то есть возврат в состояние «измерено».
+// Приглушать строку отдельным классом не нужно: `.options__row:has(input:disabled)`
+// в styles.css уже гасит её и убирает курсор-указатель.
+const setOptions = enabled => {
+  els.treat.disabled = !enabled;
+  els.crop.disabled = !enabled;
+};
 
 // Изображение показывается по настоящему адресу — локальному для выбранного
 // файла и серверному для готовой работы, — поэтому размеры берутся замером,
@@ -68,15 +81,26 @@ async function receive(file) {
   renderMeasured();
 }
 
+// Телефонный кадр. Те же 9:19.5, что режет `treatment.js` на сервере; здесь
+// число повторено, потому что строка «Result — …» обязана называть то, что
+// придёт, а спросить об этом сервер до отправки нельзя.
+const PHONE_RATIO = 9 / 19.5;
+
 // Тот же расчёт, что в `targetLongestSideFor` из server.js: во что упирается
 // длинная сторона результата. Короткая может разойтись с сервером на пиксель —
 // там её округляет sharp.
+//
+// Кадр учитывается здесь же: галочка меняет не отделку, а размер файла,
+// и строка условий, называющая размер до кадрирования, обещала бы не тот файл.
 function resultSize(width, height) {
   const longest = Math.max(width, height);
   const target =
     outputSize === 'x2' ? longest * 2 : outputSize === 'x4' ? longest * 4 : outputSize === '2k' ? 2048 : 4096;
   const ratio = target / longest;
-  return [Math.round(width * ratio), Math.round(height * ratio)];
+  const grown = [Math.round(width * ratio), Math.round(height * ratio)];
+  if (!els.crop.checked) return grown;
+  const [w, h] = grown;
+  return w / h > PHONE_RATIO ? [Math.round(h * PHONE_RATIO), h] : [w, Math.round(w / PHONE_RATIO)];
 }
 
 // Выбор размера стоит в строке условий, а не в настройках: это свойство
@@ -109,9 +133,16 @@ function renderEmpty() {
   // не говорила, что делает; узнать это можно было, только загрузив файл.
   // Подсказка ушла к остальным практическим сведениям, в примечание.
   els.terms.textContent = 'Up to 4× the size, or straight to 2K and 4K';
-  els.note.textContent = `Drop a file anywhere on the page. ${FILE_REQUIREMENTS} Nothing is published without your consent.`;
+  // «Nothing is published without your consent» отсюда убрано и ничем
+  // не заменено. Фраза описывала публикацию, которой нет: маршрут закрыт
+  // (LEGAL.md), галочка выключена, чужие файлы не выходят на витрину никогда.
+  // Обещание о том, чего не происходит, — лишний повод задуматься, происходит
+  // ли; а любая замена вроде «мы не храним ваши картинки» была бы обещанием
+  // о приватности, которое пришлось бы потом держать.
+  els.note.textContent = `Drop a file anywhere on the page. ${FILE_REQUIREMENTS}`;
   els.note.classList.remove('is-error');
   els.share.hidden = true;
+  setOptions(true);
 }
 
 function renderMeasured() {
@@ -127,6 +158,7 @@ function renderMeasured() {
   els.note.textContent = 'Free for now: payment and accounts come later.';
   els.note.classList.remove('is-error');
   els.share.hidden = true;
+  setOptions(true);
 }
 
 function renderWorking() {
@@ -140,6 +172,7 @@ function renderWorking() {
   els.terms.textContent = `Result — ${formatDims(...resultSize(received.width, received.height))}`;
   els.note.textContent = 'Processing runs on the server and can take a few minutes.';
   els.note.classList.remove('is-error');
+  setOptions(false);
 }
 
 function renderFinished() {
@@ -161,6 +194,7 @@ function renderFinished() {
   els.note.classList.remove('is-error');
   els.shareNote.textContent = 'Not available at the moment: the work stays with you and is deleted after 30 days.';
   els.share.hidden = false;
+  setOptions(false);
 }
 
 // Авария возвращает страницу в предыдущее состояние и говорит, что случилось:
@@ -178,6 +212,8 @@ async function restore() {
   const body = new FormData();
   body.append('photo', received.file);
   body.append('output_size', outputSize);
+  body.append('treat', String(els.treat.checked));
+  body.append('crop', String(els.crop.checked));
   try {
     const response = await fetch('/api/upscale', { method: 'POST', body });
     const data = await response.json();
@@ -191,6 +227,9 @@ async function restore() {
 }
 
 els.file.addEventListener('change', () => receive(els.file.files[0]));
+// Кадр меняет размер результата, а размер стоит в строке условий. Перерисовка
+// только когда файл уже выбран: до этого называть нечего.
+els.crop.addEventListener('change', () => received && renderMeasured());
 els.frame.addEventListener('click', () => !received && chooseFile());
 els.frame.addEventListener('keydown', event => {
   if (!received && (event.key === 'Enter' || event.key === ' ')) {

@@ -7,7 +7,7 @@
     "start": "node server.js",
     "dev": "node --watch server.js",
     "format": "prettier --write server.js gallery.js pages.js works.js scripts public",
-    "verify": "node --check server.js && node --check gallery.js && node --check pages.js && node --check works.js && node scripts/verify-catalogue.mjs && prettier --check server.js gallery.js pages.js works.js scripts public",
+    "verify": "node --check server.js && node --check gallery.js && node --check pages.js && node --check works.js && node --check treatment.js && node scripts/verify-catalogue.mjs && prettier --check server.js gallery.js pages.js works.js treatment.js scripts public",
     "test": "yarn run verify"
   },
   "dependencies": {
