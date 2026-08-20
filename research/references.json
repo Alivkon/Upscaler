@@ -1,0 +1,40 @@
+{
+  "_": "Charlie's reference works — the calibration set for every numeric gate in the selection pipeline. Prose and provenance: research/2026-08-19-reference-sets.md",
+  "chosen": "2026-08-17T14:00",
+  "instruction": "find a combination that fits as narrowly as possible",
+  "measured_on": "200 px copy of the whole work; cap read off the work already dimmed by 0.8",
+  "fields": {
+    "luma": "median luma",
+    "warm": "(R−B)/luma",
+    "p95": "chroma, 95th percentile",
+    "off": "chroma outside the sepia band 15–75°, 95th percentile",
+    "cap": "contrast of a white caption against the brightest of the 24 home-screen cells"
+  },
+  "works": [
+    { "ref": "vl-0088", "title": "Interior of a Church", "maker": "Emanuel de Witte", "date": "c. 1680", "luma": 73, "warm": 0.284, "p95": 38, "off": 45, "cap": 4.69 },
+    { "ref": "vl-0178", "title": "Vase of Flowers", "maker": "Jan van Huysum", "date": "1700–1749", "luma": 52, "warm": 0.011, "p95": 37, "off": 96, "cap": 3.06 },
+    { "ref": "vl-0036", "title": "Interior of the Pantheon, Rome", "maker": "Giovanni Paolo Panini", "date": "1747", "luma": 78, "warm": 0.419, "p95": 59, "off": 89, "cap": 4.72 },
+    { "ref": "vl-0053", "title": "In the Woods", "maker": "George Inness", "date": "1866", "luma": 43, "warm": 0.717, "p95": 48, "off": 63, "cap": 10.68 },
+    { "ref": "vl-0038", "title": "Landscape with a Church by a Torrent", "maker": "Jacob van Ruisdael", "date": "c. 1670", "luma": 63, "warm": 0.221, "p95": 50, "off": 51, "cap": 2.54 },
+    { "ref": "vl-0065", "title": "Rest on the Flight into Egypt", "maker": "Claude Lorrain", "date": "early 1640s", "luma": 60, "warm": 0.166, "p95": 45, "off": 46, "cap": 2.46 },
+    { "ref": null, "title": "Offering to the God Pan", "maker": "Paul Delaroche", "date": "1855", "luma": 60, "warm": 0.186, "p95": 54, "off": 54, "cap": 5.98 },
+    { "ref": "vl-0226", "title": "Ruin by the Sea", "maker": "Arnold Böcklin", "date": "1881", "luma": 49, "warm": 0.465, "p95": 57, "off": 45, "cap": 4.56 }
+  ],
+  "also_named": [
+    { "ref": "vl-0060", "title": "Ruins of an Ancient City", "note": "called one of the best in the collection, 17.08, while being rescued from the frame gate" },
+    { "ref": "vl-0064", "title": "The Waterfalls at Tivoli", "note": "checked alongside the others on 18.08; not measured on the same 200 px surface" }
+  ],
+  "envelope": {
+    "_": "min and max across the eight. A gate that stays outside these loses none of them. NOT a specification — the full envelope passes only 7 of the 107-work oils pool.",
+    "warm": [0.011, 0.717],
+    "luma": [43, 78],
+    "off": [45, 96],
+    "p95": [37, 59],
+    "cap": [2.46, 10.68]
+  },
+  "superseded": {
+    "_": "~/upscaler-review/refs.json, 17.08 14:11 — the eight plus four photographs and Aizen Myōō, minus Delaroche and Böcklin. Do not calibrate against it: its three works at cap 1.08–1.12 make any caption floor look impossible.",
+    "extra": ["vl-0031 Tree Ferns", "vl-0169 Earth's Aquarium", "vl-0167 Vatnajokull Glacier Ice Cap", "vl-0139 Aizen Myōō", "vl-0204 Stone path (own photo)", "vl-0203 Snow falling over rooftops (own photo)"]
+  },
+  "no_negative_labels": "The 737 rows marked \"C\" alongside these are candidates, not rejections. Nothing in this pipeline has a measured precision; recall against these eight is the only computable quality."
+}
