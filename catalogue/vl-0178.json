@@ -13,6 +13,7 @@
     "museum"
   ],
   "origin": "Netherlands",
+  "hidden": true,
   "license": "public-domain",
   "provenance": {
     "creator": "Jan van Huysum",

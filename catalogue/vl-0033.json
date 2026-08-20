@@ -13,6 +13,7 @@
     "vintage"
   ],
   "origin": "Netherlands",
+  "hidden": true,
   "license": "cc0",
   "provenance": {
     "creator": "Maria Sibylla Merian",

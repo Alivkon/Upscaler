@@ -12,6 +12,7 @@
     "museum"
   ],
   "origin": "England",
+  "hidden": true,
   "license": "cc0",
   "provenance": {
     "creator": "Louis Haghe",

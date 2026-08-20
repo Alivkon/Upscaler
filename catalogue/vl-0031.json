@@ -13,6 +13,7 @@
     "nature"
   ],
   "origin": "Germany",
+  "hidden": true,
   "license": "public-domain",
   "provenance": {
     "creator": "Ernst Haeckel",

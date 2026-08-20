@@ -13,6 +13,7 @@
     "museum"
   ],
   "origin": "America",
+  "hidden": true,
   "license": "cc0",
   "provenance": {
     "creator": "Thomas Doughty",

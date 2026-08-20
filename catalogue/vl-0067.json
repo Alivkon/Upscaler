@@ -12,6 +12,7 @@
     "museum"
   ],
   "origin": "France",
+  "hidden": true,
   "license": "cc0",
   "provenance": {
     "creator": "Jean-Victor Bertin",

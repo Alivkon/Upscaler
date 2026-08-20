@@ -1,22 +1,23 @@
 {
   "ref": "vl-0238",
-  "slug": "villas-at-trouville-caillebotte-iphone-wallpaper",
-  "title": "Villas at Trouville — landscape phone wallpaper",
-  "alt": "iPhone wallpaper from a painting: Villas at Trouville, Gustave Caillebotte, 1884",
+  "slug": "point-judith-rhode-island-heade-iphone-wallpaper",
+  "title": "Point Judith, Rhode Island — landscape phone wallpaper",
+  "alt": "iPhone wallpaper from a painting: Point Judith, Rhode Island, Martin Johnson Heade, 1867–68",
   "added": "2026-08-18",
   "tags": [
     "landscape",
     "painting",
-    "museum"
+    "museum",
+    "iphone"
   ],
-  "origin": "France",
+  "origin": "America",
   "license": "cc0",
   "provenance": {
-    "creator": "Gustave Caillebotte",
-    "date": "1884",
-    "work": "Villas at Trouville",
-    "credit": "Cleveland Museum of Art, 2020.105",
-    "page": "https://www.clevelandart.org/art/2020.105"
+    "creator": "Martin Johnson Heade",
+    "date": "1867–68",
+    "work": "Point Judith, Rhode Island",
+    "credit": "Cleveland Museum of Art, 1970.161",
+    "page": "https://www.clevelandart.org/art/1970.161"
   },
-  "file": "plates/villas-at-trouville-caillebotte-iphone-wallpaper-4743x3840.jpg"
+  "file": "plates/point-judith-rhode-island-heade-iphone-wallpaper-5721x3183.jpg"
 }

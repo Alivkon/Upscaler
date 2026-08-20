@@ -1,22 +1,23 @@
 {
   "ref": "vl-0234",
-  "slug": "a-home-in-the-wilderness-gifford-iphone-wallpaper",
-  "title": "A Home in the Wilderness — landscape phone wallpaper",
-  "alt": "iPhone wallpaper from a painting: A Home in the Wilderness, Sanford Robinson Gifford, 1866",
+  "slug": "a-cottage-in-the-woods-hobbema-iphone-wallpaper",
+  "title": "A Cottage in the Woods — landscape phone wallpaper",
+  "alt": "iPhone wallpaper from a painting: A Cottage in the Woods, Meindert Hobbema, c. 1662",
   "added": "2026-08-18",
   "tags": [
     "landscape",
     "painting",
-    "museum"
+    "museum",
+    "iphone"
   ],
-  "origin": "America",
+  "origin": "Netherlands",
   "license": "cc0",
   "provenance": {
-    "creator": "Sanford Robinson Gifford",
-    "date": "1866",
-    "work": "A Home in the Wilderness",
-    "credit": "Cleveland Museum of Art, 1970.162",
-    "page": "https://www.clevelandart.org/art/1970.162"
+    "creator": "Meindert Hobbema",
+    "date": "c. 1662",
+    "work": "A Cottage in the Woods",
+    "credit": "Cleveland Museum of Art, 1942.641",
+    "page": "https://www.clevelandart.org/art/1942.641"
   },
-  "file": "plates/a-home-in-the-wilderness-gifford-iphone-wallpaper-6836x3840.jpg"
+  "file": "plates/a-cottage-in-the-woods-hobbema-iphone-wallpaper-5068x3840.jpg"
 }

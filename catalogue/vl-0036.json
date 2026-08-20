@@ -12,6 +12,7 @@
     "museum"
   ],
   "origin": "Italy",
+  "hidden": true,
   "license": "cc0",
   "provenance": {
     "creator": "Giovanni Paolo Panini",

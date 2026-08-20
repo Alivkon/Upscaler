@@ -12,6 +12,7 @@
     "museum"
   ],
   "origin": "Netherlands",
+  "hidden": true,
   "license": "cc0",
   "provenance": {
     "creator": "Emanuel de Witte",

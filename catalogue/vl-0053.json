@@ -14,6 +14,7 @@
     "museum"
   ],
   "origin": "America",
+  "hidden": true,
   "license": "cc0",
   "provenance": {
     "creator": "George Inness",

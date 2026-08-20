@@ -1,15 +1,17 @@
 {
   "ref": "vl-0231",
-  "slug": "gardeners-house-at-antibes-monet-iphone-wallpaper",
-  "title": "Gardener's House at Antibes — landscape phone wallpaper",
-  "alt": "iPhone wallpaper from a painting: Gardener's House at Antibes, Claude Monet, 1888",
+  "slug": "gardeners-house-at-antibes-monet-desktop-wallpaper",
+  "title": "Gardener's House at Antibes — landscape desktop wallpaper",
+  "alt": "Desktop wallpaper from a painting: Gardener's House at Antibes, Claude Monet, 1888",
   "added": "2026-08-18",
   "tags": [
     "landscape",
     "painting",
-    "museum"
+    "museum",
+    "desktop"
   ],
   "origin": "France",
+  "hidden": true,
   "license": "cc0",
   "provenance": {
     "creator": "Claude Monet",
@@ -18,5 +20,5 @@
     "credit": "Cleveland Museum of Art, 1916.1044",
     "page": "https://www.clevelandart.org/art/1916.1044"
   },
-  "file": "plates/gardeners-house-at-antibes-monet-iphone-wallpaper-5399x3840.jpg"
+  "file": "plates/gardeners-house-at-antibes-monet-desktop-wallpaper-5399x3840.jpg"
 }
