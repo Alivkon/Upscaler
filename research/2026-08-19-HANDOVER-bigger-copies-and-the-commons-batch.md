@@ -132,6 +132,42 @@ desaturated and cropped. One work uses it today (vl-0264). **CC BY-SA is still
 excluded and not for the same reason**: share-alike would force our download out
 under CC BY-SA as well, so those works cannot wear the terms the rest wear.
 
+## 4a. The bar: keep at 2868, hunt to 3200
+
+Charlie set this on 20 August, and it is two numbers doing two different jobs.
+
+| | | |
+| --- | --- | --- |
+| **floor — keep the work** | **1320×2868** | iPhone 17/16 Pro Max |
+| **target — go looking for a bigger copy** | **1440×3200** | Galaxy S26 Ultra, QHD+ 20:9 |
+
+3200 is the top of what is sold: nothing mainstream goes above QHD+ in 2026, and
+the phones that did (Sony's 4K Xperias, 1644×3840) are discontinued. Aiming at
+3840 would drop 32 of the 115 shown works to chase hardware nobody makes.
+
+**A work between the two numbers is kept, not dropped** — it is a reason to go
+looking, not to hide it. Three of the five below 3200 miss by 4, 17 and 45 px.
+
+**Only height ever binds.** A 9:19.5 crop is shallower than a 20:9 screen, so
+filling a taller screen means matching height and the width comes out surplus —
+1477 against 1440 needed on an S26 Ultra, 1772 against 1644 on a 21:9 Xperia.
+One number to check, not two.
+
+What the hunt turned up for the five below 3200:
+
+| ref | crop | outcome |
+| --- | --- | --- |
+| vl-0252 van Huysum | 3155 → **5042** | **taken** — Google Art Project scan, 7129×9359, richer and sharper |
+| vl-0346 Friedrich | 3196 | the bigger candidate is a gallery snapshot, gold frame in shot, glare — **rejected** |
+| vl-0332 Wilson | 3143 | Commons holds exactly one copy, and it is a Met file — blocked behind Incapsula |
+| vl-0236 Daubigny | 2841 | below the floor too, by 27 px; Cleveland has nothing bigger |
+| vl-0238 Heade | 3183 | Cleveland `full.tif` already, nothing bigger exists |
+
+**vl-0252's licence changed with the file** — the old Getty scan was CC0, the
+replacement is public domain. The label was corrected. This is the second time
+in two days that swapping a source moved the licence, and nothing checks it
+automatically.
+
 ## 5. Where the collection came from
 
 | block | refs | entries | shown | source |
