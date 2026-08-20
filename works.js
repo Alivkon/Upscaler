@@ -103,7 +103,10 @@ export async function loadWorks() {
 // бывает новым произведением с живым правообладателем.
 export const DEFAULT_LICENSE = 'tessarum';
 export const LICENSES = {
-  tessarum: { path: '/license', name: 'Tessarum License' },
+  // Якорь, а не голый `/license`: наши условия уехали вниз страницы, потому
+  // что работ под ними на витрине нет ни одной, а открытых коллекций — 114
+  // из 115. Без якоря ссылка вела бы на чужой раздел.
+  tessarum: { path: '/license#tessarum', name: 'Tessarum License' },
   'public-domain': { path: '/license#public-domain', name: 'Public domain' },
   cc0: { path: '/license#public-domain', name: 'CC0 1.0' },
   // Единственная лицензия здесь, у которой есть условие: назвать автора,
