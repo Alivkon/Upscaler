@@ -48,12 +48,20 @@ const upload = multer({
 //
 // По умолчанию express.static ставит `max-age=0`, то есть указатель на десять
 // работ спрашивает сервер о каждой картинке при каждом заходе.
+//
+// СРОК — ЧАС, А НЕ ГОД, ПОКА ВИТРИНУ ПРАВЯТ. Год с `immutable` держится на том,
+// что файл под этим именем никогда не сменится. С 21.08.2026 обработка стала
+// свойством работы и выбирается глазом, то есть плита под тем же именем
+// пересобирается ровно тогда, когда выбор поменяли, — и год означал бы, что
+// правку не видит первым сам правящий. Посетителей у витрины пока нет, платить
+// за их кэш нечем. Когда правки кончатся, здесь снова год: тогда цена
+// перевешивает.
 const IMMUTABLE_FOLDERS = new Set(['plates', 'crops', 'before', 'generated']);
-const A_YEAR = 60 * 60 * 24 * 365;
+const AN_HOUR = 60 * 60;
 
 function setImageHeaders(res, file) {
   if (IMMUTABLE_FOLDERS.has(path.basename(path.dirname(file)))) {
-    res.setHeader('Cache-Control', `public, max-age=${A_YEAR}, immutable`);
+    res.setHeader('Cache-Control', `public, max-age=${AN_HOUR}`);
   }
 }
 
@@ -316,5 +324,5 @@ app.use((error, _req, res, _next) => {
 });
 
 const port = Number(process.env.PORT || 3000);
-const host = process.env.HOST || '127.0.0.1';
+const host = process.env.HOST || '0.0.0.0';
 app.listen(port, host, () => console.log(`Replicate Image Upscaler: http://${host}:${port}`));
