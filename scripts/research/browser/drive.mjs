@@ -11,18 +11,18 @@
 import puppeteer from 'puppeteer-core';
 import fs from 'node:fs/promises';
 
-const [model = 'clearreality-x4-fix', ep = 'webgpu', tile = '192'] = process.argv.slice(2);
+const [model = 'clearreality-x4-fix', ep = 'webgpu', tile = '192', set = ''] = process.argv.slice(2);
 const CH = '/home/charlie/.cache/ms-playwright/chromium-1228/chrome-linux64/chrome';
 const HERE = new URL('.', import.meta.url).pathname;
 
-const man = JSON.parse(await fs.readFile(`${HERE}manifest.json`, 'utf8'));
-const outDir = `${HERE}out/${model}_${ep}`;
+const man = JSON.parse(await fs.readFile(`${HERE}${set ? `manifest-${set}` : 'manifest'}.json`, 'utf8'));
+const outDir = `${HERE}out/${model}_${ep}${set ? '_' + set : ''}`;
 const done = await fs.readdir(outDir).catch(() => []);
 const todo = man.filter((p) => p.need > 1.02 && !done.includes(`${p.id}.jpg`)).map((p) => p.id);
 console.log(`${model} · ${ep} · tile ${tile} · осталось ${todo.length}: ${todo.join(' ')}`);
 
 for (const id of todo) {
-  const url = `http://localhost:8779/local.html?model=${model}&ep=${ep}&tile=${tile}&only=${id}`;
+  const url = `http://localhost:8779/local.html?model=${model}&ep=${ep}&tile=${tile}&only=${id}${set ? `&set=${set}` : ''}`;
   const browser = await puppeteer.launch({
     executablePath: CH, headless: false,
     env: { ...process.env, DISPLAY: ':1', XDG_RUNTIME_DIR: '/run/user/1000' },

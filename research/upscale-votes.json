@@ -199,5 +199,91 @@
       "KK RealPLKSR free": "4 of 16 (25%)"
     },
     "finding": "the 1.9 MB model beat the 28 MB and 68 MB ones by 2.5x and came within 3 pictures of paid Topaz; it lost only on dense texture (n05 n09 n14 n19, mean busy 39%) and won alone on the noisy neon street (n16) where Topaz Standard V2 failed; n01 and n03 failed under all four, third round running"
+  },
+  "round12_holdout": {
+    "sheet": "new.html",
+    "question": "is this sharp enough",
+    "what": "the busy% router from round 11, tested on pictures it had never seen",
+    "pictures": 13,
+    "set": "17 files Charlie saved on 22 Aug; one was an empty 300x150 png, 3 of the remaining 16 needed no model after a bigger copy was found by filename (6 of 16 had one)",
+    "key": {
+      "PP": "ClearRealityV1 x4 in the browser on WebGPU — free",
+      "QQ": "Topaz Standard V2 on Replicate — $0.05 a picture"
+    },
+    "prediction": {
+      "when": "written before any picture was produced",
+      "rule": "busy >= 30% -> pay",
+      "file": "scripts/research/browser (router-prediction.json)",
+      "paid": [
+        "m01",
+        "m03",
+        "m09",
+        "m10",
+        "m11"
+      ],
+      "free": [
+        "m02",
+        "m04",
+        "m05",
+        "m06",
+        "m07",
+        "m13",
+        "m16",
+        "m17"
+      ]
+    },
+    "busy": {
+      "m01": 52.8,
+      "m02": 13.4,
+      "m03": 66.7,
+      "m04": 9.2,
+      "m05": 21.4,
+      "m06": 8.7,
+      "m07": 3.7,
+      "m09": 47.4,
+      "m10": 31.6,
+      "m11": 42.8,
+      "m13": 24.4,
+      "m16": 14.6,
+      "m17": 18.3
+    },
+    "ticked": [
+      "m03#PP",
+      "m03#QQ",
+      "m04#QQ",
+      "m04#PP",
+      "m05#PP",
+      "m05#QQ",
+      "m06#QQ",
+      "m09#QQ",
+      "m10#PP",
+      "m10#QQ",
+      "m11#QQ",
+      "m16#QQ",
+      "m16#PP",
+      "m17#QQ"
+    ],
+    "score": {
+      "Topaz Standard V2": "9/13",
+      "ClearRealityV1 browser": "5/13",
+      "neither": 4,
+      "free alone": "none this round"
+    },
+    "router": {
+      "decidable": 9,
+      "right": 5,
+      "overpaid": 2,
+      "undersold": 2,
+      "best threshold fitted on these same nine": "6 of 9, against 5 for never paying",
+      "busyWhereFreeSufficed": 28.7,
+      "busyWhereItDidNot": 29.3
+    },
+    "alternatives": {
+      "always pay": "9 of 9 good, $0.45",
+      "never pay": "5 of 9 good, $0",
+      "rule at 30%": "7 of 9 good, $0.20"
+    },
+    "finding": "the router does not transfer: busy% is the same on both sides (28.7 vs 29.3) and no threshold separates them. Second measure built on luminance transitions to die out of sample. Both errors happen equally often, and one of them ships a soft wallpaper, not a wasted nickel.",
+    "note": "research/2026-08-22-busyness-does-not-say-who-needs-paying.md"
   }
 }

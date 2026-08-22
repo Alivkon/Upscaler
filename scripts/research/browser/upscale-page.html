@@ -23,6 +23,10 @@ const MODEL = P.get('model') || 'clearreality-x4';
 const EP = P.get('ep') || 'webgpu';
 const TILE = +(P.get('tile') || 192);
 const OV = +(P.get('ov') || 16);
+// Второй набор картинок живёт в своём манифесте и своей папке результатов,
+// чтобы старый счёт не смешался с проверочным.
+const SET = P.get('set') || '';
+const SUF = SET ? '_' + SET : '';
 const logEl = document.getElementById('log');
 
 const say = (s, cls = '') => { logEl.insertAdjacentHTML('beforeend', `<div class="${cls}">${s}</div>`); console.log(s); };
@@ -88,7 +92,7 @@ async function upscale(sess, inName, outName, img) {
 (async () => {
   document.getElementById('hd').textContent = `${MODEL} · ${EP} · tile ${TILE}+${OV}`;
   say(`webgpu: ${!!navigator.gpu}`, navigator.gpu ? 'ok' : 'bad');
-  const man = await (await fetch('manifest.json')).json();
+  const man = await (await fetch(SET ? `manifest-${SET}.json` : 'manifest.json')).json();
 
   let sess;
   const t0 = performance.now();
@@ -114,7 +118,7 @@ async function upscale(sess, inName, outName, img) {
       const { oc, scale, tiles } = await upscale(sess, inName, outName, img);
       const secs = (performance.now() - t) / 1000;
       const blob = await oc.convertToBlob({ type: 'image/png' });
-      await fetch(`/save/${MODEL}_${EP}/${p.id}.png`, { method: 'POST', body: blob });
+      await fetch(`/save/${MODEL}_${EP}${SUF}/${p.id}.png`, { method: 'POST', body: blob });
       const mp = (p.w * p.h) / 1e6;
       say(`${p.id} ${p.w}×${p.h} ×${scale} · ${tiles} tiles · ${secs.toFixed(1)}s (${(secs / mp).toFixed(1)}s/Mp) · ${(blob.size / 1e6).toFixed(1)}MB`, 'ok');
       post({ id: p.id, w: p.w, h: p.h, scale, tiles, secs: +secs.toFixed(1), sPerMp: +(secs / mp).toFixed(1), bytes: blob.size });
