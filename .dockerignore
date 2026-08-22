@@ -1,0 +1,27 @@
+.git
+.gitignore
+.env
+.env.*
+!.env.example
+node_modules
+logs
+*.log
+coverage
+dist
+build
+.cache
+.DS_Store
+Thumbs.db
+
+# Черновики опытов: несколько десятков `.mjs` в корне, к сайту отношения
+# не имеют.
+.*.mjs
+
+# Записи опытов — читаем их мы, а не сервер.
+research
+
+# Коллекция едет отдельно, по rsync в том `images/`, а не внутри образа:
+# три гигабайта картинок пересобирались бы при каждой правке строки.
+images/*/*
+!images/*/.gitkeep
+tessarum-plates-*.zip

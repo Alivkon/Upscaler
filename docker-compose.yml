@@ -1,0 +1,43 @@
+services:
+  upscaler:
+    build: .
+    container_name: upscaler
+    restart: unless-stopped
+    # Секреты — только в `.env` на машине; в этот файл они не попадают,
+    # он лежит в git.
+    env_file:
+      - .env
+    environment:
+      HOST: 0.0.0.0
+      PORT: 3000
+      SITE_ORIGIN: https://tessarum.com
+      # Перед контейнером стоит Traefik, и без этой строки `req.ip` — адрес
+      # прокси: все посетители попадают в одно ведро счётчика, и десятый
+      # за сутки получает отказ из-за девяти чужих вызовов. Ровно один прокси,
+      # поэтому `1`, а не `true` наугад.
+      TRUST_PROXY: 1
+    # Коллекция живёт на машине, а не в образе: картинки приезжают по rsync
+    # и переживают пересборку.
+    volumes:
+      - ./images:/app/images
+    # Сеть Traefik. Порт 3000 наружу не публикуется — снаружи в контейнер
+    # ходит только он, по имени `upscaler`.
+    networks:
+      - n8n_default
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - node -e "fetch('http://127.0.0.1:3000/').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 20s
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+        max-file: "3"
+
+networks:
+  n8n_default:
+    external: true
