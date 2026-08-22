@@ -104,6 +104,27 @@ await ensureImageDirectories();
 // `compression` смотрит на тип и JPEG не трогает.
 app.use(compression());
 app.use(express.static(path.join(__dirname, 'public')));
+// Рантайм счёта в браузере: приёмка увеличивает картинку у самого посетителя,
+// и ей нужен onnxruntime-web. Он лежит в node_modules и оттуда же отдаётся —
+// копия в `public/` разошлась бы с package.json при первом же обновлении.
+// Сжатый рантайм весит около шести мегабайт и качается один раз: год с
+// `immutable` тут честен, имя файла содержит версию сборки.
+app.use(
+  '/vendor/ort',
+  express.static(path.join(__dirname, 'node_modules/onnxruntime-web/dist'), {
+    setHeaders: res => res.setHeader('Cache-Control', 'public, max-age=31536000, immutable')
+  })
+);
+// Правила обработки — те же файлы, что читает сервер. Приёмка считает галочки
+// «как у вас» и «кадр под телефон» на стороне посетителя, и читать их она
+// обязана отсюда: копия правил в `public/` означала бы, что витрина и приёмка
+// со временем разъедутся молча. Открыты поимённо, а не каталогом: в
+// `scripts/research/` лежит и то, чему наружу делать нечего.
+const BROWSER_RULES = new Set(['ceilings.mjs', 'desaturate.mjs', 'dimming.mjs', 'grey-balance.mjs']);
+app.get('/rules/:file', (req, res, next) => {
+  if (!BROWSER_RULES.has(req.params.file)) return next(new HttpError(404, FILE_NOT_FOUND));
+  res.sendFile(path.join(__dirname, 'scripts/research', req.params.file));
+});
 // Наружу отдаются только сами изображения: рядом с ними лежит индекс витрины,
 // а пул вообще может оказаться каталогом вне проекта с чем угодно внутри.
 app.use('/images', (req, _res, next) => next(isImage(req.path) ? undefined : new HttpError(404, FILE_NOT_FOUND)));

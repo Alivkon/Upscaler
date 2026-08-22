@@ -131,7 +131,7 @@ export const keepAt = (h, hue) => {
 
 // Общая часть: тянем пиксель к его собственной яркости с множителем k.
 const toward = (data, kOf) => {
-  const out = Buffer.allocUnsafe(data.length);
+  const out = new Uint8Array(data.length);   // не Buffer: файл читает и браузер приёмки
   for (let i = 0; i < data.length; i += 3) {
     const r = data[i], g = data[i + 1], b = data[i + 2];
     const mx = Math.max(r, g, b);
@@ -158,8 +158,8 @@ export function desaturate(data, mode, stats, t = STRENGTH) {
   const s = stats ?? hueStats(data);
   if (mode === 'whole') {
     const k = wholeStrength(s.share, t);
-    return { pixels: k === 1 ? Buffer.from(data) : toward(data, () => k), k, stats: s };
+    return { pixels: k === 1 ? data.slice() : toward(data, () => k), k, stats: s };
   }
-  if (s.hue === null) return { pixels: Buffer.from(data), k: 1, stats: s };
+  if (s.hue === null) return { pixels: data.slice(), k: 1, stats: s };
   return { pixels: toward(data, h => keepAt(h, s.hue)), k: null, stats: s };
 }

@@ -37,6 +37,12 @@ export const TILT_PER_STOP = 2.5;
 // который её перекрашивает, а не приглушает.
 export const TILT_LIMIT = 0.3;
 
+// Приглушение, которое несёт коллекция, и оно же — ответ галочке «сделайте
+// как у вас» в приёмке. Число стояло в treatment.js, а теперь читается и
+// сервером, и браузером посетителя: две копии молча разъехались бы, а
+// разъехавшись, дали бы на витрине и в приёмке разные картинки.
+export const COLLECTION_DIM = 0.8;
+
 // Сетка иконок домашнего экрана: четыре в ряд, шесть рядов. Мерить надо не
 // всю работу, а те двадцать четыре места, где стоят подписи, — работа бывает
 // светлой сверху и тёмной внизу, и среднее по кадру об этом молчит.
@@ -120,9 +126,12 @@ export function cells(data, width, height) {
   return out;
 }
 
+// Массив, а не Buffer: этот файл читает и браузер приёмки — там Buffer'а нет,
+// а Buffer и так является Uint8Array, поэтому всё, что берёт результат, не
+// замечает разницы. Тот же приём в desaturate.mjs.
 export const applied = (data, factors) => {
   const [kr, kg, kb] = factors;
-  const out = Buffer.alloc(data.length);
+  const out = new Uint8Array(data.length);
   for (let i = 0; i < data.length; i += 3) {
     out[i] = clamp(data[i] * kr);
     out[i + 1] = clamp(data[i + 1] * kg);

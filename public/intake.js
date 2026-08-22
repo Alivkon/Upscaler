@@ -1,6 +1,9 @@
 // Приёмка: один файл проходит через измерение, обработку и выдачу.
 
 import { BLANK_ACCESSION, accession, button, formatBytes, formatDims, formatType, specLine } from './record.js';
+// Только правила размера: сам счёт и его рантайм на шесть мегабайт грузятся
+// по требованию, уже из `restoreLocally`.
+import { MAX_SIDE, targetLongestSideFor } from './upscale-local.js';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const ACCEPTED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
@@ -86,16 +89,17 @@ async function receive(file) {
 // придёт, а спросить об этом сервер до отправки нельзя.
 const PHONE_RATIO = 9 / 19.5;
 
-// Тот же расчёт, что в `targetLongestSideFor` из server.js: во что упирается
-// длинная сторона результата. Короткая может разойтись с сервером на пиксель —
-// там её округляет sharp.
+// Во что упирается длинная сторона результата. Правило читается из
+// `upscale-local.js` — того самого файла, который потом и считает, — вместе
+// с его потолком: холст больше 8192 не растёт, и «×4» от крупного исходника
+// упирается туда. Раньше здесь стоял свой расчёт без потолка, и кнопка
+// обещала 6424 × 8700 там, где выходило 6049 × 8192.
 //
 // Кадр учитывается здесь же: галочка меняет не отделку, а размер файла,
 // и строка условий, называющая размер до кадрирования, обещала бы не тот файл.
 function resultSize(width, height) {
   const longest = Math.max(width, height);
-  const target =
-    outputSize === 'x2' ? longest * 2 : outputSize === 'x4' ? longest * 4 : outputSize === '2k' ? 2048 : 4096;
+  const target = Math.min(targetLongestSideFor(outputSize, longest), MAX_SIDE, longest * 4);
   const ratio = target / longest;
   const grown = [Math.round(width * ratio), Math.round(height * ratio)];
   if (!els.crop.checked) return grown;
@@ -187,7 +191,9 @@ function renderWorking() {
   // размер уже выбран, а нажатие на него перерисовало бы страницу в состояние
   // «измерено» — и с неё можно было бы отправить вторую задачу поверх первой.
   els.terms.textContent = `Result, ${formatDims(...resultSize(received.width, received.height))}`;
-  els.note.textContent = 'Processing runs on the server and can take a few minutes.';
+  // Первый счёт в этой вкладке качает модель и рантайм, дальше они в кэше.
+  // Строка сразу же сменится на счётчик плиток из `restoreLocally`.
+  els.note.textContent = 'Working in your browser. The first picture also downloads the model.';
   els.note.classList.remove('is-error');
   setOptions(false);
 }
@@ -197,7 +203,9 @@ function renderFinished() {
   // Номер тот же, который работа получит на витрине: их связывает имя файла.
   els.ref.textContent = accession(`generated/${restored.filename}`);
   els.ref.classList.remove('is-blank');
-  specLine(els.spec, [formatDims(els.picture.naturalWidth, els.picture.naturalHeight), formatType(restored.url)]);
+  // Тип берётся из имени файла, а не из адреса: у посчитанного здесь адрес —
+  // `blob:`, и расширения в нём нет вовсе. Имя есть у обоих путей.
+  specLine(els.spec, [formatDims(els.picture.naturalWidth, els.picture.naturalHeight), formatType(restored.filename)]);
   const download = document.createElement('a');
   download.className = 'btn';
   download.href = restored.url;
@@ -224,18 +232,69 @@ function renderFailed(message) {
   els.note.classList.add('is-error');
 }
 
+// Имя готового файла собирается так же, как на сервере (`saveResult`): из имени
+// принесённого, названия модели и выбранного размера. От него же берётся номер
+// работы, поэтому формат обязан совпадать.
+function localName(extension) {
+  const base = received.file.name.replace(/\.[^.]+$/, '').replace(/[^a-zA-Z0-9_-]/g, '_') || 'photo';
+  return `${base}-4x-clearrealityv1-${outputSize}-${Date.now()}${extension}`;
+}
+
+// Считает картинку прямо здесь. Возвращает готовый файл или null, если браузер
+// так не умеет, — тогда работа уходит на сервер, как раньше.
+//
+// Модули грузятся по требованию: рантайм счёта весит около шести мегабайт
+// сжатым, и странице, на которую только зашли, он не нужен.
+async function restoreLocally() {
+  const [{ localUpscaleAvailable, upscaleInBrowser }, { finishLocally }] = await Promise.all([
+    import('./upscale-local.js'),
+    import('./treat-local.js')
+  ]);
+  if (!(await localUpscaleAvailable())) return null;
+
+  const { canvas, provider } = await upscaleInBrowser(received.file, {
+    outputSize,
+    onProgress: ({ done, total, secondsLeft }) => {
+      const left = secondsLeft > 90 ? `${Math.round(secondsLeft / 60)} min` : `${secondsLeft}s`;
+      els.note.textContent = `Working in your browser — ${done} of ${total} tiles, about ${left} left.`;
+    }
+  });
+  const finished = finishLocally(canvas, { treat: els.treat.checked, crop: els.crop.checked });
+  // Формат сохраняется, как и на сервере: принесли PNG — вернётся PNG.
+  // Всё остальное отдаётся JPEG: четырёхкратный PNG с телефонной картинки
+  // весит десятки мегабайт, и это уже не «тот же файл, только крупнее».
+  const png = received.file.type === 'image/png';
+  const blob = await finished.convertToBlob(png ? { type: 'image/png' } : { type: 'image/jpeg', quality: 0.94 });
+  return { blob, filename: localName(png ? '.png' : '.jpg'), provider };
+}
+
 async function restore() {
   renderWorking();
-  const body = new FormData();
-  body.append('photo', received.file);
-  body.append('output_size', outputSize);
-  body.append('treat', String(els.treat.checked));
-  body.append('crop', String(els.crop.checked));
   try {
+    const made = await restoreLocally().catch(error => {
+      // Не тихо: браузер посчитать не смог, и дальше работу делает сервер за
+      // деньги. Причина остаётся в консоли — это единственный способ узнать,
+      // на чём именно спотыкаются чужие машины.
+      console.warn('local upscale failed, falling back to the server:', error);
+      return null;
+    });
+    if (made) {
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+      objectUrl = URL.createObjectURL(made.blob);
+      restored = { filename: made.filename, url: objectUrl, provider: made.provider };
+      await showPicture(objectUrl);
+      renderFinished();
+      return;
+    }
+    const body = new FormData();
+    body.append('photo', received.file);
+    body.append('output_size', outputSize);
+    body.append('treat', String(els.treat.checked));
+    body.append('crop', String(els.crop.checked));
     const response = await fetch('/api/upscale', { method: 'POST', body });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error);
-    restored = { filename: data.filename, url: data.url };
+    restored = { filename: data.filename, url: data.url, provider: 'server' };
     await showPicture(data.url);
     renderFinished();
   } catch (error) {

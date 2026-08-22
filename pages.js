@@ -905,12 +905,23 @@ export function intakePage({ origin }) {
             <p class="terms__line" id="intake-terms"></p>
             <p class="terms__note" id="intake-note"></p>
           </div>
-          <!-- Две настройки того, что выйдет: та же обработка, что несёт
-               коллекция, и телефонный кадр. Обе выключены — приёмка
-               увеличивает чужую картинку, и вернуть её изменённой, не спросив,
-               значит подменить результат вкусом сайта. Кто хочет наш вид,
-               ставит галочку; остальные получают то, что принесли, только
-               крупнее.
+          <!-- Две настройки того, что выйдет: обработка ceil и телефонный
+               кадр. Обе выключены — приёмка увеличивает чужую картинку,
+               и вернуть её изменённой, не спросив, значит подменить результат
+               вкусом сайта. Кто хочет наш вид, ставит галочку; остальные
+               получают то, что принесли, только крупнее.
+
+               Подпись больше не обещает «как в коллекции», и это не смягчение
+               формулировки: единой обработки у коллекции нет. На 76 работах
+               витрины стоят шесть разных ответов, и самый частый — не трогать
+               вовсе (25 работ), ceil второй (19). Обещать одной галочкой вид коллекции значит
+               обещать то, чего нет; поэтому подпись говорит, что галочка делает.
+               Счёт и разбор: research/2026-08-22-intake-treats-like-the-ticks.md.
+
+               Слово «Dim» — то же, каким страница работы называет ceil
+               в «Other versions» (TREATMENT_NAMES): одна обработка должна
+               называться одним словом, иначе посетитель, увидевший «Dimmed»
+               под картиной, не узнает её в галочке.
 
                Разметкой, а не скриптом: тексты сайта живут в pages.js. -->
           <div class="options" id="intake-options">
@@ -918,8 +929,8 @@ export function intakePage({ origin }) {
               <input type="checkbox" id="intake-treat" />
               <span class="options__box" aria-hidden="true"></span>
               <span class="options__text"
-                >Darken and desaturate
-                <span class="options__fine">The treatment most of the collection carries</span>
+                >Dim it
+                <span class="options__fine">White balance, then colour and brightness capped</span>
               </span>
             </label>
             <label class="options__row">
@@ -943,6 +954,17 @@ export function intakePage({ origin }) {
               </span>
             </label>
           </div>
+          <!-- Подпись к модели. Она здесь не из вежливости: увеличивает
+               картинку чужая работа под CC BY-NC-SA 4.0, и BY означает
+               «назвать автора там, где ею пользуются» (LEGAL.md). Стоит
+               рядом с картинкой, а не в подвале, потому что относится
+               к тому, что происходит на этой странице. -->
+          <p class="terms__note">
+            Enlarged in your own browser by
+            <a href="https://openmodeldb.info/models/4x-ClearRealityV1">4x-ClearRealityV1</a> by Kim2091,
+            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a>. Your picture stays on
+            your device.
+          </p>
         </div>
       </div>
     `
