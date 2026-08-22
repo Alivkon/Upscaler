@@ -235,6 +235,36 @@ async function cropsOf(entry) {
   return found;
 }
 
+// Та же картина, обработанная иначе. Появились 22.08.2026: на листе `/edits`
+// у 35 работ из 76 отмечено несколько версий сразу, и ответ Charlie был «if
+// several are picked then i want all the versions» — то есть выбирать между
+// ними не надо, надо выпустить все.
+//
+// СТРАНИЦА ОСТАЁТСЯ ОДНА. Версия — это не отдельная работа: у неё та же
+// картина, тот же художник, тот же музейный номер и тот же запрос в поиске.
+// Разведи их по двум адресам, и витрина начнёт соревноваться сама с собой за
+// одну выдачу — ровно то, чем уже плохи два Хаммерсхёя (vl-0258 и vl-0260).
+// Поэтому версии живут на странице главной как файлы рядом.
+//
+// Кадры у версии те же три, и берутся они так же: файла может не быть, если
+// генератор до него не дошёл, и тогда версия молчит, а не роняет страницу.
+async function versionsOf(entry) {
+  const found = [];
+  for (const variant of entry?.variants || []) {
+    if (!(await madeFile(variant))) continue;
+    found.push({
+      treatment: variant.treatment,
+      url: imageUrl(variant.file),
+      filename: path.basename(variant.file),
+      width: variant.width,
+      height: variant.height,
+      bytes: variant.bytes,
+      crops: await cropsOf(variant)
+    });
+  }
+  return found;
+}
+
 // Кураторские работы. Порядок — каталога, а не манифеста: манифест про файлы,
 // а порядок на указателе — про развеску.
 //
@@ -259,7 +289,7 @@ async function catalogueItems() {
   const made = new Map((await readManifest()).map(entry => [entry.ref, entry]));
   const items = [];
   for (const work of await loadWorks()) {
-    let file, width, height, bytes, copies, before, crops;
+    let file, width, height, bytes, copies, before, crops, versions;
     const plate = made.get(work.ref);
     if (await madeFile(plate)) {
       const beforeEntry = (await madeFile(plate.before)) && plate.before;
@@ -272,6 +302,7 @@ async function catalogueItems() {
       copies = plateCopies.map(copy => ({ url: imageUrl(copy.file), width: copy.width, height: copy.height }));
       before = beforeEntry ? imageUrl(beforeEntry.file) : null;
       crops = await cropsOf(plate);
+      versions = await versionsOf(plate);
     } else if (typeof work.file === 'string') {
       const filePath = resolveEntryPath(work.file);
       const stat = filePath && (await fs.stat(filePath).catch(() => null));
@@ -287,6 +318,7 @@ async function catalogueItems() {
       copies = [];
       before = null;
       crops = {};
+      versions = [];
     } else {
       continue;
     }
@@ -322,6 +354,13 @@ async function catalogueItems() {
       // `undefined`: страница спрашивает у него кадр по имени, и работа,
       // до которой генератор ещё не дошёл, роняла бы `/w/<slug>` в 500.
       crops,
+      // Та же картина в других обработках. Пустой список у почти всех: версий
+      // несколько только там, где на листе отметили несколько.
+      versions,
+      // Чем обработана та версия, что стоит в проёме. Нужна странице только
+      // затем, чтобы назвать её вслух рядом с остальными: список «ещё версии»
+      // без имени показанной — это выбор из трёх, где четвёртый не назван.
+      treatment: plate?.treatment || null,
       // День, когда работа вошла в коллекцию, — для `lastmod` в карте сайта.
       // Берётся из каталога, а не из `mtime` файла: рендер детерминирован,
       // но переписывает файл при каждом запуске.
@@ -371,8 +410,10 @@ async function uploadedItems() {
       // записи — страница спрашивает его у всех, не разбирая происхождения.
       hidden: false,
       // Кадров нет: их режет генератор из плиты, а присланный файл лежит таким,
-      // каким пришёл.
+      // каким пришёл. Версий по той же причине: обработку выбирают работе, а
+      // присланный файл не наш, чтобы его обрабатывать.
       crops: {},
+      versions: [],
       width,
       height,
       bytes: stat.size,

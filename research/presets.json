@@ -1,0 +1,138 @@
+{
+  "_": "Каждая настройка обработки, которую Charlie просил сохранить, одним файлом. До 21.08.2026 они лежали в снимке экрана, четырёх неотслеживаемых точечных файлах, двух заметках и скрипте в /tmp — пять копий одной коробки, которые уже успели разойтись. Здесь они впервые в одном месте и в репозитории. Проза: research/2026-08-21-six-versions-of-each.md",
+  "reads": "Правило простое: число, которое человек выбрал глазом, живёт здесь; число, которое можно посчитать, живёт в коде. Поэтому здесь нет ни медиан пула, ни порогов, снятых с эталонов, — они меняются вместе с пулом и переписывать их руками нельзя.",
+  "companion": "handpicked-overrules.json — работы, которые Charlie оставил вопреки воротам; references.json — по чему ворота калиброваны. Этот файл — как обработать то, что прошло.",
+  "units": "Обесцвечивание: доля цвета, которую правило снимает у самой пёстрой работы (0.55 = до 55%). Приглушение: множитель яркости. Потолки: в тех же единицах, в каких их показывает лист, — цветность как средняя (max−min) по пикселям кропа, яркость как luma среднего цвета.",
+
+  "presets": [
+    {
+      "id": "balance",
+      "name": "grey-anchor white balance",
+      "asked": "2026-08-20T10:54",
+      "said": "yeah most got better, lets save it",
+      "values": { "strength": 0.5, "cast_read_at_px": 200 },
+      "code": "scripts/research/grey-balance.mjs — greyCast() и gainsAt(); NEUTRAL_SHARE 0.2, LO 30, HI 225 там же, они измеренные, не выбранные",
+      "applies": "Усиления нормируются так, что наибольшее равно 1: правило только затемняет каналы, никогда не поднимает. Работает до всего остального.",
+      "used_by": ["/dark", "/phone", "/edits"],
+      "not_used_by": ["поставка — treatment.js о балансе не знает"]
+    },
+    {
+      "id": "snapshot",
+      "name": "снимок ползунков 17.08",
+      "asked": "2026-08-17T16:16",
+      "said": "check screenshot in Pictures - these settings seem to work",
+      "evidence": "research/2026-08-17-slider-snapshot.png — сам снимок, единственный первоисточник; числа ниже с него переписаны",
+      "values": {
+        "desaturate": { "mode": "whole", "strength": 0.55 },
+        "dim": { "mode": "plain", "amount": 0.8 }
+      },
+      "box": {
+        "_": "Отбор, а не обработка: какие работы вообще попадают в пул. Двусторонние границы со снимка.",
+        "warm": [-1.1, 0.47],
+        "luma": [20, 200],
+        "non_sepia_chroma": [15, 180],
+        "chroma_p95": [10, 170],
+        "caption_contrast": [1, 11],
+        "busy": [0, 70],
+        "aspect": [1, 2.8],
+        "year": [1200, 1960]
+      },
+      "gates_on": [
+        "hide figures",
+        "hide named real people",
+        "hide monochrome",
+        "hide objects",
+        "hide textiles",
+        "hide figures (pixels)",
+        "hide framed"
+      ],
+      "used_by": ["/dark кнопка snapshot и значения по умолчанию", "/edits", "funnel"]
+    },
+    {
+      "id": "app",
+      "name": "dim80-desat-whole — то, что стоит на витрине",
+      "asked": "2026-08-19T09:34",
+      "said": "comment somewhere that the current version of desat-darket pipe is the one that produced the version of the Rocky, Wooded Landscape with a Dell and Weir that i liked a lot, so if i edit it in the future i know which version to come back to",
+      "note": "Это закрепление, а не отдельная настройка. Числа с 19.08 не менялись, но работы, на которых стояло закрепление, дважды получали другую обработку: vl-0240 ушла в `ceil` 21.08, vl-0025 в `bal` 22.08. Свидетель теперь берётся из тех 191, что ни разу не были на листе, — vl-0029.",
+      "values": {
+        "desaturate": { "mode": "whole", "strength": 0.65 },
+        "dim": { "mode": "plain", "amount": 0.8 },
+        "order": "цвет, потом яркость; кадр после обработки"
+      },
+      "pin": {
+        "work": "vl-0029 — Audubon, Black-throated Blue Warbler",
+        "plate_sha256": "dd8015e8d104d66384df8f50857e4ddda879fa4d5f42fd3c3399cf398d87763b",
+        "source_sha256": "c2397b04b2cea287c1950df4d3985ca3f0f2881dc5e508078b5ae77ad7b1a203",
+        "how_to_check": "node museum.mjs --only vl-0029 и сравнить хеш: равный — правка до картинки не дошла, разный — дошла, и на неё надо посмотреть",
+        "chosen_because": "работа ни разу не была на листе отбора — значит её нельзя отобрать из-под хеша, как отобрали две предыдущие",
+        "was": [
+          "до 21.08 — vl-0240, плита 98f1a93f4d1755c7fc840e4676218da0ffad39c7fc464d83b392dcfed0a65059 с мастера 5e3d4273cf06316847e9fc4db4b86a2748c7db4aa42d8987aee0f7d6b1fac196; ушла в `ceil`",
+          "21.08–22.08 — vl-0025, плита ba9c0b7269e48d81a1fbf017eacebe6f48aa26f6c044dc7975e0de1422a019ec с мастера 967283e486f4ead0d6f3393e1dda9a0616a0ad792a9f2d1f5108e75f4a5f8419; ушла в `bal`"
+        ]
+      },
+      "code": "wallpaper-gen/treatment.mjs (FLOOR 12, WINDOW 60, HI 0.9, LO 0.55, FLATTEST 0.35 -> STRENGTH 0.65, DIM 0.8); те же числа в scripts/research/{desaturate,dimming}.mjs, приёмка берёт их через treatment.js",
+      "used_by": ["246 работ из 267 в images/manifest/museum.json несут метку dim80-desat-whole; 21 переведена на выбранную Charlie правку 21.08"]
+    },
+    {
+      "id": "ceilings",
+      "name": "два потолка 19.08",
+      "asked": "2026-08-19T10:17",
+      "said": "i like no work more colorful than 18, and no work brighter than 65, and drop anything brighter than 65. dont change processing pipeline yet just write it down",
+      "values": {
+        "colour_max": 18,
+        "brightness_max": 65,
+        "drop_above_brightness": 65,
+        "on_top_of": { "desaturate_strength": 0.55, "dim": 0.8 }
+      },
+      "applies": "Потолок — минимум, а не цель: работа, уже стоящая ниже, не трогается вовсе. Множитель решается по работе в три прохода, потому что цвет читается после приглушения, а приглушение после цвета.",
+      "status": "В конвейер НЕ встроены. Живут кнопкой на /dark, версией на /edits и этой записью. Измерено 21.08 на 79 работах: потолок яркости срабатывает на 53 из них и уводит приглушение с ×0.80 до ×0.66; потолок цвета — на 16.",
+      "prose": "research/2026-08-19-the-two-ceilings-charlie-chose.md"
+    },
+    {
+      "id": "niobe",
+      "name": "like Niobe — потолки плюс плечо",
+      "asked": "2026-08-19T10:35",
+      "said": "maybe a slider to make all works more like niobe's children? what would that be - i mean edited niobe's children with values i just gave u",
+      "values": {
+        "colour_max": 18,
+        "brightness_max": 65,
+        "desaturate_strength": 0.55,
+        "dim": 0.8,
+        "knee": 60,
+        "squash_flat": 1.0,
+        "spread_max": 19
+      },
+      "spread_max_from": "собственный тональный разброс Ниобы (q75−q25 = 24) после плоского приглушения ×0.8; пересчитывается, а не вбивается",
+      "reference_work": "wm-richard-wilson-the-destruction-of-niobe-s-children-g",
+      "limit": "24 работы из 79 до разброса Ниобы не доводятся вовсе: плечо упирается в 0, и всё ярче luma 60 садится на один уровень. Это предел настройки, а не сбой отрисовки.",
+      "prose": "research/2026-08-19-the-shoulder-replaces-warmth.md"
+    }
+  ],
+
+  "known_drift": [
+    {
+      "what": "busy",
+      "snapshot_says": [0, 70],
+      "code_says": [0, 75],
+      "where": [".collections.mjs", ".funnel.mjs"],
+      "note": "не сверено, какое из двух ходило в отбор"
+    },
+    {
+      "what": "ворота по году 1200…1960",
+      "snapshot_says": "включены",
+      "code_says": "отсутствуют во всех коробках",
+      "where": ["research/2026-08-19-harvest-filter.md"]
+    },
+    {
+      "what": "сила обесцвечивания",
+      "snapshot_says": 0.55,
+      "code_says": 0.65,
+      "note": "расходятся на 38 работах из 79 и совпадают на 41 — разница есть только у пёстрых работ. Выбор за Charlie; лист /edits показывает обе рядом."
+    }
+  ],
+
+  "still_copied_by_hand": [
+    ".collections.mjs", ".funnel.mjs", ".treatset.mjs",
+    "/tmp/oils-preview/box.mjs", "/tmp/oils-preview/sheet.mjs"
+  ]
+}

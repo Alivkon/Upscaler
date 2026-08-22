@@ -1,0 +1,1107 @@
+{
+ "_": "Что Charlie отметил на листе /edits, собранном по витрине (ключ pick-edit-v2), 22.08.2026. Прошлый круг шёл по пулу и записан в chosen-edits.json — это другой список и другие рефы. Сами правки и их числа — в presets.json.",
+ "asked": "2026-08-22",
+ "said": "i liked these from previous /edits.html … write them down-they will go in the gallery / if several are picked then i want all the versions!",
+ "shape": {
+  "ticks": 117,
+  "works": 76,
+  "on_the_gallery": 37,
+  "waiting_for_a_page": 39,
+  "versions": 117
+ },
+ "names": "На листе версии зовутся orig · bal · snap · app · ceil · niobe. В museum-works.json те же правила зовутся none · bal · snap · dim80-desat-whole · ceil. niobe в конвейере нет.",
+ "tally": {
+  "orig": 35,
+  "ceil": 29,
+  "snap": 22,
+  "bal": 18,
+  "app": 11,
+  "niobe": 2
+ },
+ "notes": [
+  "vl-0259 стоит на витрине с ceil (выбор 21.08), а в этот раз отмечена только orig — прямая отмена прежнего выбора, и она применена.",
+  "vl-0139 отмечена одной niobe. Правила в конвейере не было; 22.08 оно реализовано в treatment.mjs (потолки плюс плечо по светам, колено 60, разброс ≤19).",
+  "vl-0060 и vl-0064 отмечены, но обе собраны с урезанной копии 3400 и ждут полного скана.",
+  "vl-0164 отмечена (orig, ceil) и полный скан уже докачан 22.08."
+ ],
+ "works": [
+  {
+   "ref": "vl-0025",
+   "work": "The Birds of America, plate 115",
+   "artist": "John James Audubon",
+   "on_the_gallery": false,
+   "treatment_now": "dim80-desat-whole",
+   "ticked": [
+    "bal"
+   ],
+   "versions": [
+    "bal"
+   ]
+  },
+  {
+   "ref": "vl-0026",
+   "work": "The Birds of America, plate 118",
+   "artist": "John James Audubon",
+   "on_the_gallery": false,
+   "treatment_now": "dim80-desat-whole",
+   "ticked": [
+    "orig"
+   ],
+   "versions": [
+    "none"
+   ]
+  },
+  {
+   "ref": "vl-0027",
+   "work": "The Birds of America, plate 137",
+   "artist": "John James Audubon",
+   "on_the_gallery": false,
+   "treatment_now": "dim80-desat-whole",
+   "ticked": [
+    "orig"
+   ],
+   "versions": [
+    "none"
+   ]
+  },
+  {
+   "ref": "vl-0028",
+   "work": "The Birds of America, plate 138",
+   "artist": "John James Audubon",
+   "on_the_gallery": false,
+   "treatment_now": "dim80-desat-whole",
+   "ticked": [
+    "orig"
+   ],
+   "versions": [
+    "none"
+   ]
+  },
+  {
+   "ref": "vl-0030",
+   "work": "Kunstformen der Natur, plate 55: Bivalvia",
+   "artist": "Ernst Haeckel",
+   "on_the_gallery": false,
+   "treatment_now": "dim80-desat-whole",
+   "ticked": [
+    "ceil"
+   ],
+   "versions": [
+    "ceil"
+   ]
+  },
+  {
+   "ref": "vl-0032",
+   "work": "Metamorphosis insectorum Surinamensium",
+   "artist": "Maria Sibylla Merian",
+   "on_the_gallery": false,
+   "treatment_now": "dim80-desat-whole",
+   "ticked": [
+    "orig"
+   ],
+   "versions": [
+    "none"
+   ]
+  },
+  {
+   "ref": "vl-0037",
+   "work": "Silver Wine Jug, Ham, and Fruit",
+   "artist": "Abraham van Beyeren",
+   "on_the_gallery": false,
+   "treatment_now": "dim80-desat-whole",
+   "ticked": [
+    "bal",
+    "ceil"
+   ],
+   "versions": [
+    "bal",
+    "ceil"
+   ]
+  },
+  {
+   "ref": "vl-0038",
+   "work": "Landscape with a Church by a Torrent",
+   "artist": "Jacob van Ruisdael",
+   "on_the_gallery": false,
+   "treatment_now": "dim80-desat-whole",
+   "ticked": [
+    "orig",
+    "snap"
+   ],
+   "versions": [
+    "none",
+    "snap"
+   ]
+  },
+  {
+   "ref": "vl-0042",
+   "work": "Vale of Kashmir",
+   "artist": "Robert S. Duncanson",
+   "on_the_gallery": false,
+   "treatment_now": "dim80-desat-whole",
+   "ticked": [
+    "orig"
+   ],
+   "versions": [
+    "none"
+   ]
+  },
+  {
+   "ref": "vl-0043",
+   "work": "Storm in the Mountains",
+   "artist": "Frederic Edwin Church",
+   "on_the_gallery": false,
+   "treatment_now": "dim80-desat-whole",
+   "ticked": [
+    "ceil"
+   ],
+   "versions": [
+    "ceil"
+   ]
+  },
+  {
+   "ref": "vl-0045",
+   "work": "Mount Washington, New Hampshire",
+   "artist": "Jasper F. Cropsey",
+   "on_the_gallery": false,
+   "treatment_now": "dim80-desat-whole",
+   "ticked": [
+    "app"
+   ],
+   "versions": [
+    "dim80-desat-whole"
+   ]
+  },
+  {
+   "ref": "vl-0046",
+   "work": "Natural Bridge, Sorrento",
+   "artist": "William Stanley Haseltine",
+   "on_the_gallery": false,
+   "treatment_now": "dim80-desat-whole",
+   "ticked": [
+    "bal",
+    "snap",
+    "ceil"
+   ],
+   "versions": [
+    "bal",
+    "snap",
+    "ceil"
+   ]
+  },
+  {
+   "ref": "vl-0047",
+   "work": "Durham, Connecticut",
+   "artist": "George Inness",
+   "on_the_gallery": false,
+   "treatment_now": "dim80-desat-whole",
+   "ticked": [
+    "bal",
+    "snap"
+   ],
+   "versions": [
+    "bal",
+    "snap"
+   ]
+  },
+  {
+   "ref": "vl-0051",
+   "work": "Peregrine Falcons (Duck Hawks)",
+   "artist": "John James Audubon",
+   "on_the_gallery": false,
+   "treatment_now": "dim80-desat-whole",
+   "ticked": [
+    "bal",
+    "ceil"
+   ],
+   "versions": [
+    "bal",
+    "ceil"
+   ]
+  },
+  {
+   "ref": "vl-0054",
+   "work": "Capri",
+   "artist": "William Stanley Haseltine",
+   "on_the_gallery": false,
+   "treatment_now": "dim80-desat-whole",
+   "ticked": [
+    "orig"
+   ],
+   "versions": [
+    "none"
+   ]
+  },
+  {
+   "ref": "vl-0057",
+   "work": "View near Newport",
+   "artist": "John Frederick Kensett",
+   "on_the_gallery": false,
+   "treatment_now": "dim80-desat-whole",
+   "ticked": [
+    "snap"
+   ],
+   "versions": [
+    "snap"
+   ]
+  },
+  {
+   "ref": "vl-0060",
+   "work": "Ruins of an Ancient City",
+   "artist": "John Martin",
+   "on_the_gallery": false,
+   "treatment_now": "dim80-desat-whole",
+   "ticked": [
+    "snap",
+    "orig"
+   ],
+   "versions": [
+    "snap",
+    "none"
+   ]
+  },
+  {
+   "ref": "vl-0063",
+   "work": "Landscape Near Paris",
+   "artist": "Georges Michel",
+   "on_the_gallery": false,
+   "treatment_now": "dim80-desat-whole",
+   "ticked": [
+    "bal",
+    "ceil"
+   ],
+   "versions": [
+    "bal",
+    "ceil"
+   ]
+  },
+  {
+   "ref": "vl-0064",
+   "work": "The Waterfalls at Tivoli",
+   "artist": "Claude-Joseph Vernet",
+   "on_the_gallery": false,
+   "treatment_now": "dim80-desat-whole",
+   "ticked": [
+    "ceil",
+    "orig",
+    "snap"
+   ],
+   "versions": [
+    "ceil",
+    "none",
+    "snap"
+   ]
+  },
+  {
+   "ref": "vl-0065",
+   "work": "Rest on the Flight into Egypt",
+   "artist": "Claude Lorrain",
+   "on_the_gallery": false,
+   "treatment_now": "dim80-desat-whole",
+   "ticked": [
+    "orig",
+    "app"
+   ],
+   "versions": [
+    "none",
+    "dim80-desat-whole"
+   ]
+  },
+  {
+   "ref": "vl-0066",
+   "work": "Lion on the Watch",
+   "artist": "Jean-Léon Gérôme",
+   "on_the_gallery": false,
+   "treatment_now": "dim80-desat-whole",
+   "ticked": [
+    "app",
+    "ceil"
+   ],
+   "versions": [
+    "dim80-desat-whole",
+    "ceil"
+   ]
+  },
+  {
+   "ref": "vl-0067",
+   "work": "An Aqueduct Near a Fortress",
+   "artist": "Jean-Victor Bertin",
+   "on_the_gallery": false,
+   "treatment_now": "ceil",
+   "ticked": [
+    "ceil",
+    "orig"
+   ],
+   "versions": [
+    "ceil",
+    "none"
+   ]
+  },
+  {
+   "ref": "vl-0068",
+   "work": "Tiger in Wind",
+   "artist": "Maruyama Ōkyo",
+   "on_the_gallery": false,
+   "treatment_now": "dim80-desat-whole",
+   "ticked": [
+    "orig"
+   ],
+   "versions": [
+    "none"
+   ]
+  },
+  {
+   "ref": "vl-0069",
+   "work": "Gazing at a Waterfall",
+   "artist": "Tani Bunchō",
+   "on_the_gallery": false,
+   "treatment_now": "dim80-desat-whole",
+   "ticked": [
+    "orig",
+    "bal",
+    "snap",
+    "ceil"
+   ],
+   "versions": [
+    "none",
+    "bal",
+    "snap",
+    "ceil"
+   ]
+  },
+  {
+   "ref": "vl-0083",
+   "work": "Egypt and Nubia, Volume I: Luxor",
+   "artist": "Louis Haghe",
+   "on_the_gallery": false,
+   "treatment_now": "dim80-desat-whole",
+   "ticked": [
+    "snap"
+   ],
+   "versions": [
+    "snap"
+   ]
+  },
+  {
+   "ref": "vl-0084",
+   "work": "La Tour St. Jacques",
+   "artist": "Victor Coindre",
+   "on_the_gallery": false,
+   "treatment_now": "dim80-desat-whole",
+   "ticked": [
+    "orig",
+    "ceil"
+   ],
+   "versions": [
+    "none",
+    "ceil"
+   ]
+  },
+  {
+   "ref": "vl-0086",
+   "work": "Landscape with Hunters",
+   "artist": "Jan Wijnants",
+   "on_the_gallery": false,
+   "treatment_now": "dim80-desat-whole",
+   "ticked": [
+    "ceil"
+   ],
+   "versions": [
+    "ceil"
+   ]
+  },
+  {
+   "ref": "vl-0087",
+   "work": "Gooseberries on a Table",
+   "artist": "Adriaen Coorte",
+   "on_the_gallery": false,
+   "treatment_now": "dim80-desat-whole",
+   "ticked": [
+    "orig",
+    "snap"
+   ],
+   "versions": [
+    "none",
+    "snap"
+   ]
+  },
+  {
+   "ref": "vl-0139",
+   "work": "Aizen Myōō",
+   "artist": "Unknown (Japan, Kamakura period (1185–1333) to Nanbokuchō period (1336–92))",
+   "on_the_gallery": false,
+   "treatment_now": "dim80-desat-whole",
+   "ticked": [
+    "niobe"
+   ],
+   "versions": [
+    "niobe"
+   ]
+  },
+  {
+   "ref": "vl-0142",
+   "work": "Welcoming Descent of Amida with Twenty-Five Bodhisattvas",
+   "artist": "Unknown (Japan, Nanbokuchō period (1336–92))",
+   "on_the_gallery": false,
+   "treatment_now": "dim80-desat-whole",
+   "ticked": [
+    "bal",
+    "app"
+   ],
+   "versions": [
+    "bal",
+    "dim80-desat-whole"
+   ]
+  },
+  {
+   "ref": "vl-0151",
+   "work": "Bamboo",
+   "artist": "Unknown (Korea)",
+   "on_the_gallery": false,
+   "treatment_now": "dim80-desat-whole",
+   "ticked": [
+    "bal"
+   ],
+   "versions": [
+    "bal"
+   ]
+  },
+  {
+   "ref": "vl-0157",
+   "work": "Demon Intoning the Name of the Buddha",
+   "artist": "Suzuki Shōnen",
+   "on_the_gallery": false,
+   "treatment_now": "dim80-desat-whole",
+   "ticked": [
+    "orig"
+   ],
+   "versions": [
+    "none"
+   ]
+  },
+  {
+   "ref": "vl-0164",
+   "work": "Kasuga Shrine Mandala",
+   "artist": "Unknown (Japan, Kamakura period (1185–1333))",
+   "on_the_gallery": false,
+   "treatment_now": "dim80-desat-whole",
+   "ticked": [
+    "orig",
+    "ceil"
+   ],
+   "versions": [
+    "none",
+    "ceil"
+   ]
+  },
+  {
+   "ref": "vl-0174",
+   "work": "Træstammer. Arresødal, Frederiksværk",
+   "artist": "Vilhelm Hammershøi",
+   "on_the_gallery": false,
+   "treatment_now": "snap",
+   "ticked": [
+    "snap"
+   ],
+   "versions": [
+    "snap"
+   ]
+  },
+  {
+   "ref": "vl-0175",
+   "work": "Interiør. Kunstigt lys",
+   "artist": "Vilhelm Hammershøi",
+   "on_the_gallery": false,
+   "treatment_now": "dim80-desat-whole",
+   "ticked": [
+    "orig"
+   ],
+   "versions": [
+    "none"
+   ]
+  },
+  {
+   "ref": "vl-0176",
+   "work": "Skovbund med tidsel, en slange, et firben og sommerfugle",
+   "artist": "Otto Marseus van Schrieck",
+   "on_the_gallery": false,
+   "treatment_now": "dim80-desat-whole",
+   "ticked": [
+    "orig"
+   ],
+   "versions": [
+    "none"
+   ]
+  },
+  {
+   "ref": "vl-0177",
+   "work": "Pragt-stilleben",
+   "artist": "Pieter de Ring",
+   "on_the_gallery": false,
+   "treatment_now": "dim80-desat-whole",
+   "ticked": [
+    "app"
+   ],
+   "versions": [
+    "dim80-desat-whole"
+   ]
+  },
+  {
+   "ref": "vl-0178",
+   "work": "Vase med blomster",
+   "artist": "Jan van Huysum",
+   "on_the_gallery": false,
+   "treatment_now": "dim80-desat-whole",
+   "ticked": [
+    "app"
+   ],
+   "versions": [
+    "dim80-desat-whole"
+   ]
+  },
+  {
+   "ref": "vl-0179",
+   "work": "Bondegården Åse i Telemarken, Norge",
+   "artist": "Halfdan Egedius",
+   "on_the_gallery": false,
+   "treatment_now": "dim80-desat-whole",
+   "ticked": [
+    "ceil"
+   ],
+   "versions": [
+    "ceil"
+   ]
+  },
+  {
+   "ref": "vl-0215",
+   "work": "Autumn Scene in the Adirondacks",
+   "artist": "William Hart",
+   "on_the_gallery": true,
+   "treatment_now": "dim80-desat-whole",
+   "ticked": [
+    "snap"
+   ],
+   "versions": [
+    "snap"
+   ]
+  },
+  {
+   "ref": "vl-0216",
+   "work": "Apple Blossoms",
+   "artist": "Martin Johnson Heade",
+   "on_the_gallery": true,
+   "treatment_now": "dim80-desat-whole",
+   "ticked": [
+    "app"
+   ],
+   "versions": [
+    "dim80-desat-whole"
+   ]
+  },
+  {
+   "ref": "vl-0219",
+   "work": "Bamboo in Four Seasons: Autumn",
+   "artist": "Unknown (China, 1279–1368)",
+   "on_the_gallery": true,
+   "treatment_now": "dim80-desat-whole",
+   "ticked": [
+    "orig",
+    "niobe"
+   ],
+   "versions": [
+    "none",
+    "niobe"
+   ]
+  },
+  {
+   "ref": "vl-0220",
+   "work": "Still Life with Rayfish",
+   "artist": "Chaïm Soutine",
+   "on_the_gallery": true,
+   "treatment_now": "dim80-desat-whole",
+   "ticked": [
+    "bal"
+   ],
+   "versions": [
+    "bal"
+   ]
+  },
+  {
+   "ref": "vl-0221",
+   "work": "Spring Flowers",
+   "artist": "Claude Monet",
+   "on_the_gallery": true,
+   "treatment_now": "dim80-desat-whole",
+   "ticked": [
+    "app"
+   ],
+   "versions": [
+    "dim80-desat-whole"
+   ]
+  },
+  {
+   "ref": "vl-0222",
+   "work": "A Hare and a Leg of Lamb",
+   "artist": "Jean-Baptiste Oudry",
+   "on_the_gallery": true,
+   "treatment_now": "dim80-desat-whole",
+   "ticked": [
+    "orig"
+   ],
+   "versions": [
+    "none"
+   ]
+  },
+  {
+   "ref": "vl-0226",
+   "work": "Ruin by the Sea",
+   "artist": "Arnold Böcklin",
+   "on_the_gallery": true,
+   "treatment_now": "ceil",
+   "ticked": [
+    "ceil",
+    "snap"
+   ],
+   "versions": [
+    "ceil",
+    "snap"
+   ]
+  },
+  {
+   "ref": "vl-0230",
+   "work": "Panoramic View of the Alps, Les Dents du Midi",
+   "artist": "Gustave Courbet",
+   "on_the_gallery": true,
+   "treatment_now": "ceil",
+   "ticked": [
+    "ceil",
+    "bal"
+   ],
+   "versions": [
+    "ceil",
+    "bal"
+   ]
+  },
+  {
+   "ref": "vl-0236",
+   "work": "Villerville Seen from Le Ratier",
+   "artist": "Charles François Daubigny",
+   "on_the_gallery": true,
+   "treatment_now": "dim80-desat-whole",
+   "ticked": [
+    "orig",
+    "app"
+   ],
+   "versions": [
+    "none",
+    "dim80-desat-whole"
+   ]
+  },
+  {
+   "ref": "vl-0240",
+   "work": "Rocky, Wooded Landscape with a Dell and Weir",
+   "artist": "Thomas Gainsborough",
+   "on_the_gallery": true,
+   "treatment_now": "ceil",
+   "ticked": [
+    "ceil",
+    "bal",
+    "snap"
+   ],
+   "versions": [
+    "ceil",
+    "bal",
+    "snap"
+   ]
+  },
+  {
+   "ref": "vl-0251",
+   "work": "Vase with Flowers",
+   "artist": "Jan van Huysum",
+   "on_the_gallery": true,
+   "treatment_now": "bal",
+   "ticked": [
+    "bal"
+   ],
+   "versions": [
+    "bal"
+   ]
+  },
+  {
+   "ref": "vl-0252",
+   "work": "Vase of Flowers",
+   "artist": "Jan van Huysum",
+   "on_the_gallery": true,
+   "treatment_now": "dim80-desat-whole",
+   "ticked": [
+    "ceil"
+   ],
+   "versions": [
+    "ceil"
+   ]
+  },
+  {
+   "ref": "vl-0253",
+   "work": "Flowers in an Urn",
+   "artist": "Jan van Huysum",
+   "on_the_gallery": true,
+   "treatment_now": "snap",
+   "ticked": [
+    "snap"
+   ],
+   "versions": [
+    "snap"
+   ]
+  },
+  {
+   "ref": "vl-0254",
+   "work": "Still Life with Flowers and Fruit",
+   "artist": "Jan van Huysum",
+   "on_the_gallery": true,
+   "treatment_now": "ceil",
+   "ticked": [
+    "ceil",
+    "snap"
+   ],
+   "versions": [
+    "ceil",
+    "snap"
+   ]
+  },
+  {
+   "ref": "vl-0256",
+   "work": "Interior with the Old Stove, Albertines Lyst",
+   "artist": "Vilhelm Hammershøi",
+   "on_the_gallery": true,
+   "treatment_now": "ceil",
+   "ticked": [
+    "ceil",
+    "app"
+   ],
+   "versions": [
+    "ceil",
+    "dim80-desat-whole"
+   ]
+  },
+  {
+   "ref": "vl-0259",
+   "work": "Forstudie til \"Solregn. Gentofte Sø\"",
+   "artist": "Vilhelm Hammershøi",
+   "on_the_gallery": true,
+   "treatment_now": "ceil",
+   "ticked": [
+    "orig"
+   ],
+   "versions": [
+    "none"
+   ]
+  },
+  {
+   "ref": "vl-0261",
+   "work": "Roman Landscape",
+   "artist": "Arnold Böcklin",
+   "on_the_gallery": true,
+   "treatment_now": "dim80-desat-whole",
+   "ticked": [
+    "orig"
+   ],
+   "versions": [
+    "none"
+   ]
+  },
+  {
+   "ref": "vl-0265",
+   "work": "The Summer (Landscape with couple)",
+   "artist": "Caspar David Friedrich",
+   "on_the_gallery": true,
+   "treatment_now": "ceil",
+   "ticked": [
+    "ceil",
+    "orig"
+   ],
+   "versions": [
+    "ceil",
+    "none"
+   ]
+  },
+  {
+   "ref": "vl-0275",
+   "work": "Still life with flowers and fruit",
+   "artist": "Jan van Huysum",
+   "on_the_gallery": true,
+   "treatment_now": "ceil",
+   "ticked": [
+    "ceil",
+    "orig"
+   ],
+   "versions": [
+    "ceil",
+    "none"
+   ]
+  },
+  {
+   "ref": "vl-0279",
+   "work": "Landscape",
+   "artist": "Jean-Victor Bertin",
+   "on_the_gallery": true,
+   "treatment_now": "ceil",
+   "ticked": [
+    "ceil",
+    "orig"
+   ],
+   "versions": [
+    "ceil",
+    "none"
+   ]
+  },
+  {
+   "ref": "vl-0280",
+   "work": "Italian Landscape: The Abbey and the Monks",
+   "artist": "Jean-Victor Bertin",
+   "on_the_gallery": true,
+   "treatment_now": "ceil",
+   "ticked": [
+    "ceil",
+    "orig"
+   ],
+   "versions": [
+    "ceil",
+    "none"
+   ]
+  },
+  {
+   "ref": "vl-0281",
+   "work": "River Landscape",
+   "artist": "Jean-Victor Bertin",
+   "on_the_gallery": true,
+   "treatment_now": "ceil",
+   "ticked": [
+    "ceil",
+    "orig",
+    "snap"
+   ],
+   "versions": [
+    "ceil",
+    "none",
+    "snap"
+   ]
+  },
+  {
+   "ref": "vl-0291",
+   "work": "Rocky Mountain Sheep",
+   "artist": "Albert Bierstadt",
+   "on_the_gallery": true,
+   "treatment_now": "snap",
+   "ticked": [
+    "snap"
+   ],
+   "versions": [
+    "snap"
+   ]
+  },
+  {
+   "ref": "vl-0297",
+   "work": "Sunlight and Shadow: The Newbury Marshes",
+   "artist": "Martin Johnson Heade",
+   "on_the_gallery": true,
+   "treatment_now": "snap",
+   "ticked": [
+    "snap",
+    "orig"
+   ],
+   "versions": [
+    "snap",
+    "none"
+   ]
+  },
+  {
+   "ref": "vl-0298",
+   "work": "Rocky Landscape with Two Men on a Horse",
+   "artist": "George Morland",
+   "on_the_gallery": true,
+   "treatment_now": "ceil",
+   "ticked": [
+    "ceil"
+   ],
+   "versions": [
+    "ceil"
+   ]
+  },
+  {
+   "ref": "vl-0299",
+   "work": "The Old Water Mill",
+   "artist": "George Morland",
+   "on_the_gallery": true,
+   "treatment_now": "dim80-desat-whole",
+   "ticked": [
+    "orig"
+   ],
+   "versions": [
+    "none"
+   ]
+  },
+  {
+   "ref": "vl-0301",
+   "work": "Landscape with a Column and Figure",
+   "artist": "Claude Lorrain",
+   "on_the_gallery": true,
+   "treatment_now": "dim80-desat-whole",
+   "ticked": [
+    "orig",
+    "ceil"
+   ],
+   "versions": [
+    "none",
+    "ceil"
+   ]
+  },
+  {
+   "ref": "vl-0308",
+   "work": "Landscape with the Voyage of Jacob",
+   "artist": "Claude Lorrain",
+   "on_the_gallery": true,
+   "treatment_now": "snap",
+   "ticked": [
+    "snap",
+    "bal"
+   ],
+   "versions": [
+    "snap",
+    "bal"
+   ]
+  },
+  {
+   "ref": "vl-0318",
+   "work": "Landscape with the Adoration of the Golden Calf",
+   "artist": "Claude Lorrain",
+   "on_the_gallery": true,
+   "treatment_now": "dim80-desat-whole",
+   "ticked": [
+    "orig",
+    "snap"
+   ],
+   "versions": [
+    "none",
+    "snap"
+   ]
+  },
+  {
+   "ref": "vl-0319",
+   "work": "Dover",
+   "artist": "Richard Wilson",
+   "on_the_gallery": true,
+   "treatment_now": "dim80-desat-whole",
+   "ticked": [
+    "bal"
+   ],
+   "versions": [
+    "bal"
+   ]
+  },
+  {
+   "ref": "vl-0324",
+   "work": "The Destruction of the Children of Niobe",
+   "artist": "William Woollett",
+   "on_the_gallery": true,
+   "treatment_now": "dim80-desat-whole",
+   "ticked": [
+    "orig",
+    "ceil"
+   ],
+   "versions": [
+    "none",
+    "ceil"
+   ]
+  },
+  {
+   "ref": "vl-0336",
+   "work": "View of Tivoli: the Cascatelle and the Villa of Maecenas",
+   "artist": "Richard Wilson",
+   "on_the_gallery": true,
+   "treatment_now": "dim80-desat-whole",
+   "ticked": [
+    "app"
+   ],
+   "versions": [
+    "dim80-desat-whole"
+   ]
+  },
+  {
+   "ref": "vl-0343",
+   "work": "Fruit Piece",
+   "artist": "Jan van Huysum",
+   "on_the_gallery": true,
+   "treatment_now": "dim80-desat-whole",
+   "ticked": [
+    "ceil"
+   ],
+   "versions": [
+    "ceil"
+   ]
+  },
+  {
+   "ref": "vl-0349",
+   "work": "Interior of a Protestant, Gothic Church during a Service",
+   "artist": "Emanuel de Witte",
+   "on_the_gallery": true,
+   "treatment_now": "dim80-desat-whole",
+   "ticked": [
+    "bal",
+    "snap"
+   ],
+   "versions": [
+    "bal",
+    "snap"
+   ]
+  },
+  {
+   "ref": "vl-0350",
+   "work": "Among the Sierra Nevada, California",
+   "artist": "Albert Bierstadt",
+   "on_the_gallery": true,
+   "treatment_now": "dim80-desat-whole",
+   "ticked": [
+    "bal"
+   ],
+   "versions": [
+    "bal"
+   ]
+  },
+  {
+   "ref": "vl-0353",
+   "work": "A Forest with Apollo and Daphne",
+   "artist": "Jean-Victor Bertin",
+   "on_the_gallery": true,
+   "treatment_now": "snap",
+   "ticked": [
+    "snap",
+    "orig"
+   ],
+   "versions": [
+    "snap",
+    "none"
+   ]
+  },
+  {
+   "ref": "vl-0354",
+   "work": "Mount Starr King, Yosemite",
+   "artist": "Albert Bierstadt",
+   "on_the_gallery": true,
+   "treatment_now": "bal",
+   "ticked": [
+    "bal"
+   ],
+   "versions": [
+    "bal"
+   ]
+  }
+ ],
+ "decided": {
+  "asked": "2026-08-22",
+  "said": "if several are picked then i want all the versions!",
+  "means": "Несколько отмеченных версий — не спор, который надо разрешить, а ответ. Работа выпускается ВСЕМИ отмеченными версиями сразу; посетитель берёт свою.",
+  "one_page_per_painting": "Версии живут на странице работы файлами рядом, а не отдельными адресами. Две страницы на одну картину — это витрина, соревнующаяся сама с собой за один запрос (см. задачу про vl-0258 и vl-0260).",
+  "main_version": "Первая отмеченная. Она стоит в проёме, её файл называется именем работы без суффикса — ни один прежний адрес не поехал, — и её видит поиск по картинкам. Остальные получают суффикс `-<обработка>`.",
+  "plates": "117 версий на 76 работах; всего по коллекции 308 плит на 267 работ."
+ }
+}
