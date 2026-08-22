@@ -1,0 +1,203 @@
+{
+  "date": "2026-08-22",
+  "round5": {
+    "sheet": "batch.html",
+    "key": {
+      "F": "clarity",
+      "G": "lanczos",
+      "H": "gemini-3-pro-image",
+      "J": "real-esrgan",
+      "P": "topaz-standard-v2"
+    },
+    "ticked": [
+      "b1#F",
+      "b1#H",
+      "b1#J",
+      "b2#F",
+      "b2#P",
+      "b2#J",
+      "b3#F",
+      "b3#H",
+      "b3#J",
+      "b3#P",
+      "b4#P",
+      "b5#H",
+      "b5#P",
+      "b6#F",
+      "b6#H",
+      "b8#P",
+      "b8#J",
+      "b8#H",
+      "b8#G"
+    ]
+  },
+  "round6": {
+    "sheet": "forest.html",
+    "picture": "b7 green valley 640x480",
+    "ticked": [],
+    "note": "all six ways of filling the screen rejected"
+  },
+  "round7": {
+    "sheet": "wide.html",
+    "method": "crop to 9:19.5 then Topaz Standard V2",
+    "ticked": [
+      "w5",
+      "w6"
+    ],
+    "rejected": [
+      "w1",
+      "w2",
+      "w3",
+      "w4"
+    ]
+  },
+  "pictures": {
+    "b1": "48c94fae21696452acd469d6fd655d12.jpg",
+    "b2": "994f60e94df91b9cd9180a7af98055a5.jpg",
+    "b3": "bb498ccf97421e44dee843cbe6c3a5bc.jpg",
+    "b4": "download.png",
+    "b5": "tumblr_4d4ea5f2f1138fc56b801b3c6b803433_c065152f_540.jpg",
+    "b6": "tumblr_d63549dc055dbf77c6f0deeea6daab94_1dbd8416_1280.jpg",
+    "b7": "tumblr_02ca27a3ea8b435a9b9435a25907a1f5_06ecfcee_640.png",
+    "b8": "bfc8913b-2ae7-4f1d-a633-20be3376c8a9.jpeg",
+    "w1": "44d2d000b13edb8acbd7fde2cfe76889.jpg",
+    "w2": "d8b8cad42df21c39a72aeb68d7646050.jpg",
+    "w3": "daf1c4d1775c6670a55c434bbadd8442.jpg",
+    "w4": "tumblr_5e0502fbcce4e846adceffd5cf1d1643_136afd36_1280.jpg",
+    "w5": "horizontal.jpg",
+    "w6": "bb498ccf97421e44dee843cbe6c3a5bc.jpg"
+  },
+  "round9_sharp": {
+    "sheet": "sharp.html",
+    "question": "is this sharp enough to use",
+    "model": "topaz Standard V2, face_enhancement off",
+    "sharp": [
+      "n02",
+      "n04",
+      "n05",
+      "n06",
+      "n07",
+      "n08",
+      "n09",
+      "n10",
+      "n11",
+      "n13",
+      "n14",
+      "n15",
+      "n17",
+      "n19"
+    ],
+    "notSharp": [
+      "n01",
+      "n03",
+      "n12",
+      "n16",
+      "n18"
+    ],
+    "gatePredictedAccept": [
+      "n02",
+      "n04",
+      "n07",
+      "n08",
+      "n09",
+      "n10",
+      "n11",
+      "n12",
+      "n15",
+      "n18"
+    ],
+    "score": {
+      "precision": 0.8,
+      "recall": 0.57,
+      "accuracy": 0.58,
+      "acceptAllBaseline": 0.74
+    },
+    "verdict": "gate rejected"
+  },
+  "round10_settings": {
+    "sheet": "settings.html",
+    "key": {
+      "VV": "Standard V2, no face enhancement (the rejected one)",
+      "WW": "see results.json per picture",
+      "XX": "see results.json per picture"
+    },
+    "ticked": [
+      "n12#XX",
+      "n12#WW",
+      "n18#WW",
+      "n16#WW",
+      "n16#XX"
+    ],
+    "finding": "VV never re-ticked; face_enhancement fixes people, Low Resolution V2 fixes the noisy night shot; n01 and n03 stay broken"
+  },
+  "round11_browser": {
+    "sheet": "local.html",
+    "question": "is this sharp enough",
+    "pictures": 16,
+    "key": {
+      "KK": "RealPLKSR x4, ONNX in the browser on WebGPU — free",
+      "LL": "Topaz Standard V2 on Replicate — $0.05 a picture",
+      "MM": "ClearRealityV1 x4 (1.9 MB model), browser, WebGPU — free",
+      "NN": "Real-ESRGAN x4 (68 MB model), browser, WebGPU — free"
+    },
+    "note": "letter order rotates one step per picture so the first slot does not collect free votes; letters stay bound to methods",
+    "measured": {
+      "secondsPerMegapixel": {
+        "ClearRealityV1": 3.1,
+        "RealPLKSR": 52.8,
+        "Real-ESRGAN": 73.3,
+        "ClearRealityV1_cpu_wasm": 10.4
+      },
+      "edgeEnergyVsTopaz": {
+        "RealPLKSR": "-12%",
+        "Real-ESRGAN": "-21%",
+        "ClearRealityV1": "-25%"
+      },
+      "failures": {
+        "Real-ESRGAN": "n07 (1366x2048) killed the tab at tile 192 and at tile 128 — 15 of 16"
+      },
+      "gpuVsCpu": "same model, same picture: mean luminance difference 0.37 of 255 — the GPU buys speed, not quality"
+    },
+    "caveat": "the local arms always upscaled x4 and were then shrunk to 1440; Topaz was called with the factor it needed. Shrinking hides flaws, so the free arms are slightly flattered here.",
+    "ticked": [
+      "n02#LL",
+      "n02#MM",
+      "n04#NN",
+      "n04#KK",
+      "n04#LL",
+      "n04#MM",
+      "n05#LL",
+      "n06#LL",
+      "n06#MM",
+      "n07#KK",
+      "n07#LL",
+      "n07#MM",
+      "n09#KK",
+      "n09#LL",
+      "n10#LL",
+      "n10#MM",
+      "n10#NN",
+      "n12#LL",
+      "n12#MM",
+      "n12#NN",
+      "n14#LL",
+      "n15#LL",
+      "n15#MM",
+      "n16#MM",
+      "n17#LL",
+      "n17#MM",
+      "n18#MM",
+      "n18#NN",
+      "n18#KK",
+      "n18#LL",
+      "n19#LL"
+    ],
+    "score": {
+      "LL Topaz $0.05": "13 of 16 (81%)",
+      "MM ClearRealityV1 free": "10 of 16 (63%)",
+      "NN Real-ESRGAN free": "4 of 15 (27%)",
+      "KK RealPLKSR free": "4 of 16 (25%)"
+    },
+    "finding": "the 1.9 MB model beat the 28 MB and 68 MB ones by 2.5x and came within 3 pictures of paid Topaz; it lost only on dense texture (n05 n09 n14 n19, mean busy 39%) and won alone on the noisy neon street (n16) where Topaz Standard V2 failed; n01 and n03 failed under all four, third round running"
+  }
+}

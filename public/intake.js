@@ -137,7 +137,7 @@ function renderEmpty() {
   // страница, на которую ведут все ссылки «Restore your own image», ни словом
   // не говорила, что делает; узнать это можно было, только загрузив файл.
   // Подсказка ушла к остальным практическим сведениям, в примечание.
-  els.terms.textContent = 'Your picture, enlarged up to 4× — big enough for a 1440 × 3120 phone screen';
+  els.terms.textContent = 'Your picture, enlarged up to 4×, big enough for a 1440 × 3120 phone screen';
   // «Nothing is published without your consent» отсюда убрано и ничем
   // не заменено. Фраза описывала публикацию, которой нет: маршрут закрыт
   // (LEGAL.md), галочка выключена, чужие файлы не выходят на витрину никогда.
@@ -171,7 +171,7 @@ function renderMeasured() {
     button(`${verb} to ${formatDims(...result)}`, 'btn', restore),
     button('Choose another', 'btn btn--ghost', chooseFile)
   );
-  els.terms.replaceChildren(`Result — ${formatDims(...result)} `, scaleSwitch());
+  els.terms.replaceChildren(`Result, ${formatDims(...result)} `, scaleSwitch());
   els.note.textContent = 'Free for now: payment and accounts come later.';
   els.note.classList.remove('is-error');
   els.share.hidden = true;
@@ -186,7 +186,7 @@ function renderWorking() {
   // Переключатель размера убирается вместе с кнопкой: пока задача выполняется,
   // размер уже выбран, а нажатие на него перерисовало бы страницу в состояние
   // «измерено» — и с неё можно было бы отправить вторую задачу поверх первой.
-  els.terms.textContent = `Result — ${formatDims(...resultSize(received.width, received.height))}`;
+  els.terms.textContent = `Result, ${formatDims(...resultSize(received.width, received.height))}`;
   els.note.textContent = 'Processing runs on the server and can take a few minutes.';
   els.note.classList.remove('is-error');
   setOptions(false);
@@ -204,10 +204,10 @@ function renderFinished() {
   download.download = restored.filename;
   download.textContent = 'Download';
   els.actions.replaceChildren(download, button('Do another', 'btn btn--ghost', chooseFile));
-  els.terms.textContent = `Source — ${formatDims(received.width, received.height)}`;
+  els.terms.textContent = `Source, ${formatDims(received.width, received.height)}`;
   // Скачивание ничем не закрыто: показан тот же файл полного разрешения,
   // который отдаёт кнопка. Гейтинг — признак ad-фермы.
-  els.note.textContent = 'This page shows the full-resolution file — the same one you download.';
+  els.note.textContent = 'This page shows the full-resolution file, the same one you download.';
   els.note.classList.remove('is-error');
   els.shareNote.textContent = 'Not available at the moment: the work stays with you and is deleted after 30 days.';
   els.share.hidden = false;
