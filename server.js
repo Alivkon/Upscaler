@@ -7,6 +7,7 @@ import express from 'express';
 import multer from 'multer';
 import sharp from 'sharp';
 import { IMAGES_DIR, GENERATED_DIR, ADJACENT, ensureImageDirectories, galleryItems, isImage } from './gallery.js';
+import { upscaleAllowance } from './limits.js';
 import { collectionPage, intakePage, licensePage, missingPage, robots, sitemap, workPage } from './pages.js';
 import { finish } from './treatment.js';
 
@@ -31,6 +32,38 @@ class HttpError extends Error {
 }
 
 const app = express();
+// Кому верить, когда речь идёт об адресе посетителя. Счётчик в `limits.js`
+// считает по `req.ip`, а за обратным прокси `req.ip` — это сам прокси, то есть
+// один ключ на весь мир: десятый посетитель за сутки получил бы отказ из-за
+// девяти чужих. Лечится доверием к `X-Forwarded-For`, но включать его наугад
+// нельзя — заголовок ставит кто угодно, и доверие к нему без прокси впереди
+// превращает счётчик адреса в счётчик по желанию посетителя. Поэтому решает
+// тот, кто разворачивает: `TRUST_PROXY=1` — один прокси перед сервером,
+// `loopback` — прокси на той же машине. Пусто — прокси нет.
+const TRUST_PROXY = (process.env.TRUST_PROXY || '').trim();
+
+// `true` для express значит «верить каждому хопу», то есть верить и тому
+// `X-Forwarded-For`, который поставил сам посетитель, — чего эта переменная
+// как раз и избегает. Но написавший `TRUST_PROXY=true` имел в виду «прокси
+// есть», а не это, и читать его надо как `1`. Всё остальное разбирает express:
+// `loopback`, `linklocal`, `uniquelocal`, список подсетей.
+function trustProxySetting(value) {
+  if (!value || /^(false|no|off)$/i.test(value)) return false;
+  if (/^\d+$/.test(value)) return Number(value);
+  if (/^(true|yes|on)$/i.test(value)) return 1;
+  return value;
+}
+
+// express разбирает значение здесь же и на непонятное отвечает «invalid IP
+// address: …» — сообщением, в котором не названы ни переменная, ни файл,
+// хотя падает от него весь сервер и на старте. Называем сами.
+try {
+  app.set('trust proxy', trustProxySetting(TRUST_PROXY));
+} catch (error) {
+  throw new Error(
+    `TRUST_PROXY=${TRUST_PROXY} — непонятное значение (${error.message}). Ожидается число, loopback или пусто; см. .env.example.`
+  );
+}
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: MAX_FILE_SIZE, files: 1 },
@@ -158,14 +191,20 @@ const MODEL = {
 // Размеры результата — те же, что предлагает страница.
 const OUTPUT_SIZES = ['x2', 'x4', '2k', '4k'];
 
+const TOKEN_PLACEHOLDER = 'r8_replace_with_your_replicate_api_token';
+
+// Есть ли чем платить — насколько это видно отсюда. Спрашивается до ворот
+// счёта: без токена запрос не доходит до Replicate вовсе, а место в счётчике
+// занимал бы наравне с настоящими.
+function apiToken() {
+  const token = process.env.REPLICATE_API_TOKEN;
+  return !token || token === TOKEN_PLACEHOLDER ? null : token;
+}
+
 function apiHeaders() {
-  if (
-    !process.env.REPLICATE_API_TOKEN ||
-    process.env.REPLICATE_API_TOKEN === 'r8_replace_with_your_replicate_api_token'
-  ) {
-    throw new Error('Добавьте действительный REPLICATE_API_TOKEN в файл .env.');
-  }
-  return { Authorization: `Bearer ${process.env.REPLICATE_API_TOKEN}` };
+  const token = apiToken();
+  if (!token) throw new Error('Добавьте действительный REPLICATE_API_TOKEN в файл .env.');
+  return { Authorization: `Bearer ${token}` };
 }
 
 async function parseResponse(response) {
@@ -258,8 +297,21 @@ async function saveResult(sourceUrl, file, { outputSize, targetLongestSide, trea
 }
 
 app.post('/api/upscale', upload.single('photo'), async (req, res, next) => {
+  let allowance = null;
   try {
     if (!req.file) return res.status(400).json({ error: 'Choose a JPG, PNG or WebP up to 10 MB.' });
+    // Токен — до ворот счёта. Без него ни один запрос до Replicate не доходит,
+    // но место в счётчике занимает каждый: полсотни таких заперли бы сайт
+    // на сутки за вызовы, которых не было, и открыл бы его только перезапуск.
+    if (!apiToken()) throw new HttpError(503, 'Upscaling is switched off right now.');
+    // Счёт спрашивается до всякой работы; место занимается тем же вопросом
+    // и возвращается ниже, в `finally`, если до Replicate так и не дошли —
+    // платим за вызовы, а не за попытки (limits.js).
+    allowance = upscaleAllowance(req, res);
+    if (allowance.refusal) {
+      res.setHeader('Retry-After', String(allowance.retryAfter));
+      throw new HttpError(429, allowance.refusal);
+    }
     const outputSize = OUTPUT_SIZES.includes(req.body.output_size) ? req.body.output_size : 'x2';
     // Галочки читаются строгим сравнением, а не на истинность: форма шлёт
     // строки, и `'false'` — истинная строка. Умолчание — «не трогать», и
@@ -269,6 +321,7 @@ app.post('/api/upscale', upload.single('photo'), async (req, res, next) => {
     const sourceLongestSide = await readLongestSide(req.file);
     const targetLongestSide = targetLongestSideFor(outputSize, sourceLongestSide);
     const scale = realEsrganScale(outputSize, sourceLongestSide, targetLongestSide);
+    allowance.spend();
     const prediction = await createPrediction(asDataUrl(req.file), scale);
     const resultUrl = await waitForResult(prediction);
     const filename = await saveResult(resultUrl, req.file, { outputSize, targetLongestSide, treat, crop });
@@ -280,6 +333,10 @@ app.post('/api/upscale', upload.single('photo'), async (req, res, next) => {
     });
   } catch (error) {
     next(error);
+  } finally {
+    // Занятое место возвращается всегда, когда деньги не ушли: отказ по
+    // формату, нечитаемый файл, авария у Replicate. После `spend` — пусто.
+    allowance?.release?.();
   }
 });
 
@@ -322,6 +379,11 @@ app.use((error, _req, res, _next) => {
   console.error(error);
   res.status(500).json({ error: 'Server error.' });
 });
+
+// Витрина без токена работает целиком — своих вызовов к Replicate у неё нет,
+// — поэтому старт продолжается, но молчать об этом нельзя: приёмка отвечает
+// отказом, и без строчки в логе разбираться пришлось бы по 503.
+if (!apiToken()) console.warn('REPLICATE_API_TOKEN не задан: витрина работает, приёмка отвечает 503.');
 
 const port = Number(process.env.PORT || 3000);
 const host = process.env.HOST || '0.0.0.0';
