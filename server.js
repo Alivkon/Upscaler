@@ -107,16 +107,28 @@ app.use(express.static(path.join(__dirname, 'public')));
 // Рантайм счёта в браузере: приёмка увеличивает картинку у самого посетителя,
 // и ей нужен onnxruntime-web. Он лежит в node_modules и оттуда же отдаётся —
 // копия в `public/` разошлась бы с package.json при первом же обновлении.
-// Сжатый рантайм весит около шести мегабайт и качается один раз: год с
-// `immutable` тут честен, имя файла содержит версию сборки.
+//
+// Версия читается из package.json самого рантайма, а не из нашего: у нас
+// записано «1.27.0», а поставлено то, что решил установщик.
+const ORT_VERSION = JSON.parse(
+  await fs.readFile(path.join(__dirname, 'node_modules/onnxruntime-web/package.json'), 'utf8')
+).version;
+// Сжатый рантайм весит около шести мегабайт и качается один раз, поэтому год
+// с `immutable` здесь уместен — но только потому, что версия стоит в адресе.
+// Раньше её там не было: файлы называются `ort.webgpu.min.mjs` и
+// `ort-wasm-simd-threaded.jsep.wasm` и после обновления пакета сохраняют имена.
+// Год `immutable` на таком имени означал бы, что вернувшийся посетитель ещё
+// год считает старым рантаймом; а хуже того, js и wasm лежат в кэше по
+// отдельности, и вымывание одного без другого ломает у ORT проверку сборки —
+// счёт в браузере переставал бы работать без всякой возможности починить.
 app.use(
-  '/vendor/ort',
+  `/vendor/ort/${ORT_VERSION}`,
   express.static(path.join(__dirname, 'node_modules/onnxruntime-web/dist'), {
     setHeaders: res => res.setHeader('Cache-Control', 'public, max-age=31536000, immutable')
   })
 );
 // Правила обработки — те же файлы, что читает сервер. Приёмка считает галочки
-// «как у вас» и «кадр под телефон» на стороне посетителя, и читать их она
+// «приглушить» и «кадр под телефон» на стороне посетителя, и читать их она
 // обязана отсюда: копия правил в `public/` означала бы, что витрина и приёмка
 // со временем разъедутся молча. Открыты поимённо, а не каталогом: в
 // `scripts/research/` лежит и то, чему наружу делать нечего.
@@ -187,7 +199,7 @@ app.get('/w/:slug', async (req, res, next) => {
   }
 });
 
-app.get('/restore', (_req, res) => html(res, 200, intakePage({ origin: SITE_ORIGIN })));
+app.get('/restore', (_req, res) => html(res, 200, intakePage({ origin: SITE_ORIGIN, runtime: ORT_VERSION })));
 
 app.get('/license', (_req, res) => html(res, 200, licensePage({ origin: SITE_ORIGIN })));
 

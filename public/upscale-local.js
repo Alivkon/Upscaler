@@ -9,8 +9,13 @@
 //
 // Ставится всё это лениво: галерее рантайм не нужен, а он весит 6 МБ в
 // сжатом виде. Первый запуск качает его и модель, дальше — из кэша браузера.
-const RUNTIME = '/vendor/ort/ort.webgpu.min.mjs';
-const WASM_DIR = '/vendor/ort/';
+//
+// Адрес рантайма собирается с версией (`/vendor/ort/1.27.0/…`), потому что
+// кэшируется он на год как неизменяемый: без версии в адресе это обещание
+// неверно (server.js). Саму версию ставит сервер в `<meta>` — читать её здесь
+// из копии значило бы завести вторую запись рядом с package.json.
+const VENDOR = '/vendor/ort';
+const RUNTIME = 'ort.webgpu.min.mjs';
 const MODEL = '/models/4x-ClearRealityV1.onnx';
 
 // Плитка и поля. 192 — не удобство, а память: картинка целиком в модель не
@@ -19,14 +24,51 @@ const MODEL = '/models/4x-ClearRealityV1.onnx';
 const TILE = 192;
 const OV = 16;
 const SCALE = 4;
-// Дальше этого холст не растёт: у Canvas есть предел стороны (у Safari он
-// ниже всех), а память кончается раньше предела. Просьба «×4» от большого
-// исходника упирается сюда, и это честнее, чем упасть на середине.
+// Дальше этого холст не растёт: у Canvas есть предел стороны, а память
+// кончается раньше предела. Просьба «×4» от большого исходника упирается
+// сюда, и это честнее, чем упасть на середине.
+const MAX_SIDE = 8192;
+// Второй потолок — на площадь, и опаснее он. У Safari холст ограничен
+// 16 777 216 пикселями (у Chrome и Firefox — в разы больше), а сторона в 8192
+// разрешает вчетверо больше этого. Беда не в самом пределе, а в том, как
+// Safari его держит: превышение не бросает исключения, рисование просто
+// становится пустой операцией. `convertToBlob` отдаёт пустую картинку, ловить
+// нечего, и посетитель скачивает белый лист, ничего об этом не узнав.
 //
-// Наружу потолок отдаётся, потому что кнопка на странице обязана называть тот
-// размер, который придёт: без него она обещала 6424 × 8700 там, где выходило
-// 6049 × 8192.
-export const MAX_SIDE = 8192;
+// Число одно на все браузеры, а не по самому щедрому: строка на странице
+// обязана назвать размер до того, как холст создан, то есть до того, как
+// предел вообще можно проверить.
+const MAX_AREA = 16_777_216;
+
+// Стороны холста округляются, и обе — вверх; из-за этого площадь перескакивает
+// потолок на сотые доли процента там, где корень давал ровно по нему. Предел
+// у Safari точный, лишний пиксель уже означает пустой холст, поэтому проверка
+// идёт по тем самым числам, которыми холст потом и создаётся.
+const fits = (width, height, ratio) => Math.round(width * ratio) * Math.round(height * ratio) <= MAX_AREA;
+
+// Во что упирается длинная сторона результата: просьба, потолок стороны,
+// потолок площади и предел самой модели. Считает это отсюда и кнопка на
+// странице — раньше у неё был свой расчёт, и он отставал от здешнего.
+export function resultLongestSide(outputSize, width, height) {
+  const longest = Math.max(width, height);
+  const byArea = Math.floor(longest * Math.sqrt(MAX_AREA / (width * height)));
+  let target = Math.min(targetLongestSideFor(outputSize, longest), MAX_SIDE, longest * SCALE, byArea);
+  while (target > 1 && !fits(width, height, target / longest)) target--;
+  return target;
+}
+
+// Проверка вместо веры в число: у какого-нибудь браузера предел окажется ниже
+// нашего, и молчаливый отказ рисовать выглядит как удавшаяся работа. Ставим
+// точку в дальнем углу и читаем её обратно — если холст велик, точки там нет.
+export const TOO_BIG = 'This picture is too large for your browser to enlarge.';
+
+function usable(ctx, w, h) {
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(w - 1, h - 1, 1, 1);
+  const drawn = ctx.getImageData(w - 1, h - 1, 1, 1).data[3] === 255;
+  ctx.clearRect(w - 1, h - 1, 1, 1);
+  return drawn;
+}
 
 let sessionPromise = null;
 
@@ -35,24 +77,38 @@ let sessionPromise = null;
 async function session() {
   if (sessionPromise) return sessionPromise;
   sessionPromise = (async () => {
-    const ort = await import(RUNTIME);
+    const version = document.querySelector('meta[name="ort-version"]')?.content;
+    if (!version) throw new Error('The page did not say which runtime to load.');
+    const base = `${VENDOR}/${version}/`;
+    const ort = await import(base + RUNTIME);
     // Путь абсолютный: относительный считался бы от самого модуля, который
-    // лежит там же, и получилось бы /vendor/ort/vendor/ort/…
-    ort.env.wasm.wasmPaths = WASM_DIR;
+    // лежит там же, и получилось бы /vendor/ort/1.27.0/vendor/ort/1.27.0/…
+    ort.env.wasm.wasmPaths = base;
     // Многопоточный WASM требует SharedArrayBuffer, а он живёт только на
     // странице с заголовками COOP/COEP. Их здесь нет, поэтому запасной путь
     // считает в один поток — медленно, но считает.
     ort.env.wasm.numThreads = globalThis.crossOriginIsolated ? navigator.hardwareConcurrency || 4 : 1;
-    const provider = (await gpu()) ? 'webgpu' : 'wasm';
+    // Списком, а не одним: выданный адаптер ещё не значит, что сессия на нём
+    // соберётся — на Mesa и в Firefox шейдер компилируется не всегда. С одним
+    // элементом такая осечка отменяла бы счёт в браузере целиком там, где
+    // wasm посчитал бы медленно, но посчитал.
+    const providers = (await gpu()) ? ['webgpu', 'wasm'] : ['wasm'];
     // enableMemPattern выключен намеренно: с ним WebGPU пытается
     // переиспользовать буфер входа под выход и падает «Shape mismatch
     // attempting to re-use buffer» — это одна и та же плитка до и после ×4.
     const sess = await ort.InferenceSession.create(MODEL, {
-      executionProviders: [provider],
+      executionProviders: providers,
       enableMemPattern: false
     });
-    return { ort, sess, provider, in: sess.inputNames[0], out: sess.outputNames[0] };
+    return { ort, sess, provider: providers[0], in: sess.inputNames[0], out: sess.outputNames[0] };
   })();
+  // Неудача не запоминается. Обещание присваивается до того, как оно
+  // разрешится, и одна оборванная загрузка рантайма без этого отравляла бы
+  // вкладку до перезагрузки: каждый следующий файл в ней отказывался бы
+  // считаться мгновенно и молча.
+  sessionPromise.catch(() => {
+    sessionPromise = null;
+  });
   return sessionPromise;
 }
 
@@ -82,6 +138,9 @@ function padded(img) {
   const ph = Math.ceil(h / TILE) * TILE;
   const full = new OffscreenCanvas(pw + 2 * OV, ph + 2 * OV);
   const x = full.getContext('2d', { willReadFrequently: true });
+  // Этот холст строится по исходнику, а не по результату, и потолок площади
+  // его не касается: сжатый JPEG в 10 МБ разворачивается и в 48 мегапикселей.
+  if (!usable(x, full.width, full.height)) throw new Error(TOO_BIG);
   x.drawImage(img, OV, OV);
   x.drawImage(full, OV + w - 1, OV, 1, h, OV + w, OV, full.width - (OV + w), h);
   x.drawImage(full, 0, OV + h - 1, full.width, 1, 0, OV + h, full.width, full.height - (OV + h));
@@ -124,14 +183,16 @@ export async function upscaleInBrowser(file, { outputSize = 'x2', onProgress } =
   const img = await createImageBitmap(file);
   const source = { width: img.width, height: img.height };
   const longest = Math.max(img.width, img.height);
-  const wanted = targetLongestSideFor(outputSize, longest);
-  const target = Math.min(wanted, MAX_SIDE, longest * SCALE);
-  const factor = target / longest;
+  const factor = resultLongestSide(outputSize, img.width, img.height) / longest;
 
-  const rt = await session();
+  // Холсты проверяются до рантайма: если браузер их не потянет, качать ради
+  // этого шесть мегабайт незачем.
   const { ctx, pw, ph } = padded(img);
   const out = new OffscreenCanvas(Math.round(img.width * factor), Math.round(img.height * factor));
   const octx = out.getContext('2d');
+  if (!usable(octx, out.width, out.height)) throw new Error(TOO_BIG);
+
+  const rt = await session();
   const total = (pw / TILE) * (ph / TILE);
   let done = 0;
   const started = performance.now();

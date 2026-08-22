@@ -154,12 +154,18 @@ const toward = (data, kOf) => {
 // Сила передаётся, а не берётся из STRENGTH: на снимке настроек стоит 55%,
 // а STRENGTH — это 65%. По умолчанию сила прежняя, поэтому вызовы без неё
 // работают как раньше.
+// Копия, а не срез. `data.slice()` копирует у Uint8Array, но у Buffer — а
+// сервер передаёт именно Buffer (`sharp(...).raw().toBuffer()`) — `slice` это
+// синоним `subarray`, то есть окно в ту же память. Тот, кто напишет в
+// возвращённые `pixels`, испортил бы себе вход и не понял, где.
+const copy = data => new Uint8Array(data);
+
 export function desaturate(data, mode, stats, t = STRENGTH) {
   const s = stats ?? hueStats(data);
   if (mode === 'whole') {
     const k = wholeStrength(s.share, t);
-    return { pixels: k === 1 ? data.slice() : toward(data, () => k), k, stats: s };
+    return { pixels: k === 1 ? copy(data) : toward(data, () => k), k, stats: s };
   }
-  if (s.hue === null) return { pixels: data.slice(), k: 1, stats: s };
+  if (s.hue === null) return { pixels: copy(data), k: 1, stats: s };
   return { pixels: toward(data, h => keepAt(h, s.hue)), k: null, stats: s };
 }

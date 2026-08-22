@@ -94,6 +94,7 @@ function layout({
   body,
   ld,
   script,
+  runtime,
   current,
   noindex = false
 }) {
@@ -127,6 +128,7 @@ function layout({
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Sometype+Mono:wght@400..500&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="/styles.css" />
+    ${runtime ? `<meta name="ort-version" content="${escape(runtime)}" />` : ''}
     ${ld ? `<script type="application/ld+json">${JSON.stringify(ld, null, 2)}</script>` : ''}
   </head>
   <body>
@@ -652,14 +654,20 @@ const alternates = (item, plateSize) => {
   // Одна работа без единого кадра — это работа, у которой в проёме и так
   // стоит плита. Предлагать её же второй раз незачем.
   if (rows.length === 1 && !item.crops?.phone) return '';
+  // Про обработку сказано только там, где обработка есть. У 35 работ музейного
+  // манифеста стоит `none`, у плиты без записи — null, и обещание «та же
+  // обработка, что у кадра» на них означало бы обработку, которой не было:
+  // посетитель пошёл бы искать в плите разницу со сканом, а её нет. Кадр и
+  // плита у таких работ отличаются только рамкой, и второе предложение —
+  // «выбери свой кадр» — говорит об этом само.
+  const treated = item.treatment && item.treatment !== 'none';
   return `
           <div class="alternates">
             <ul class="alternates__row">
               ${rows.map(fileTile).join('\n              ')}
             </ul>
             <p class="alternates__note">
-              The uncropped painting carries the same treatment as the crop above.
-              Download it and choose your own crop.
+              ${treated ? 'The uncropped painting carries the same treatment as the crop above.\n              ' : ''}Download it and choose your own crop.
             </p>
           </div>`;
 };
@@ -872,9 +880,15 @@ export function workPage({ item, others, origin }) {
 // «Make your own wallpaper» называет результат — и держится за соседний
 // пункт шапки «Make your own», где слово «свой» противопоставлено
 // «Collection» и объясняет само себя.
-export function intakePage({ origin }) {
+// Версия рантайма приходит с сервера и уходит в `<meta>`: путь до
+// onnxruntime-web она содержит целиком (`/vendor/ort/1.27.0/…`), а вписать её
+// в `upscale-local.js` значило бы завести вторую запись о версии рядом с
+// package.json — то самое расхождение, ради которого рантайм и отдаётся из
+// node_modules, а не копией в `public/`.
+export function intakePage({ origin, runtime }) {
   return layout({
     current: 'restore',
+    runtime,
     title: `Make your own wallpaper, ${SITE_NAME}`,
     description:
       'Upscale your own image up to 4× its size, or to 2K and 4K, and fit it to your phone screen. ' +
@@ -954,16 +968,24 @@ export function intakePage({ origin }) {
               </span>
             </label>
           </div>
-          <!-- Подпись к модели. Она здесь не из вежливости: увеличивает
-               картинку чужая работа под CC BY-NC-SA 4.0, и BY означает
-               «назвать автора там, где ею пользуются» (LEGAL.md). Стоит
-               рядом с картинкой, а не в подвале, потому что относится
-               к тому, что происходит на этой странице. -->
+          <!-- Здесь стояла полная подпись к модели: имя, автор, лицензия.
+               Осталось от неё одно предложение, и оно не про лицензию.
+               BY требует назвать автора «способом, разумным для носителя»,
+               и ссылка на страницу с условиями этому отвечает — полное имя
+               с автором и лицензией теперь на /license#model.
+               А «picture stays on your device» вообще не требование лицензии:
+               это ответ на единственный вопрос, который есть у человека,
+               держащего свою фотографию над кнопкой. Его в подвал уносить
+               нельзя, поэтому строка разделена, а не перенесена целиком. -->
+          <!-- Само предложение вынесено в span и подписано: когда браузер
+               посчитать не смог и приёмка предлагает сделать это у нас
+               (renderOffered в intake.js), эта строка стоит прямо под
+               предложением и противоречит ему. Меняется она, а не прячется:
+               вопрос «куда уедет мой файл» остаётся у человека и в этом
+               случае — просто ответ на него другой. -->
           <p class="terms__note">
-            Enlarged in your own browser by
-            <a href="https://openmodeldb.info/models/4x-ClearRealityV1">4x-ClearRealityV1</a> by Kim2091,
-            <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/">CC BY-NC-SA 4.0</a>. Your picture stays on
-            your device.
+            <span id="intake-privacy">Enlarged in your own browser; your picture stays on your device.</span>
+            <a href="/license#model">Model and licence</a>
           </p>
         </div>
       </div>
@@ -1002,6 +1024,7 @@ export function licensePage({ origin }) {
           license at all — <a href="#public-domain">those are free of us entirely</a>. A few
           photographs are <a href="#cc-by">CC BY</a> and ask for credit. Works drawn by us carry
           <a href="#tessarum">terms of our own</a>, and there are none of those on the shelf today.
+          The tool that enlarges your own picture <a href="#model">runs on borrowed work too</a>.
         </p>
 
         <h2 id="public-domain">Works from open collections</h2>
@@ -1059,6 +1082,28 @@ export function licensePage({ origin }) {
             Modify it meaningfully and what you made is yours to sell.
           </li>
         </ul>
+
+        <h2 id="model">The model that enlarges your picture</h2>
+        <p>
+          Enlarging happens in your own browser, not on our machines: the page downloads a small
+          neural network alongside itself and runs it on your device, so the picture you drop never
+          leaves it.
+        </p>
+        <p>
+          That network is somebody else's work.
+          <a href="https://openmodeldb.info/models/4x-ClearRealityV1" rel="noopener" target="_blank"
+            >4x-ClearRealityV1</a
+          >
+          by Kim2091, under
+          <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="license noopener" target="_blank"
+            >CC BY-NC-SA 4.0</a
+          >. Our copy is modified — the exported output dimensions are corrected, without which it
+          will not run on a graphics card — and so our copy carries the same licence.
+        </p>
+        <p>
+          None of this touches the file you download. The enlarged picture is yours, on the terms the
+          original work carried; the licence above is ours to keep, not yours.
+        </p>
 
         <h2>The ordinary small print</h2>
         <p>

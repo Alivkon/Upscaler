@@ -3,7 +3,7 @@
 import { BLANK_ACCESSION, accession, button, formatBytes, formatDims, formatType, specLine } from './record.js';
 // Только правила размера: сам счёт и его рантайм на шесть мегабайт грузятся
 // по требованию, уже из `restoreLocally`.
-import { MAX_SIDE, targetLongestSideFor } from './upscale-local.js';
+import { TOO_BIG, resultLongestSide, targetLongestSideFor } from './upscale-local.js';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const ACCEPTED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
@@ -28,8 +28,22 @@ const els = {
   share: document.querySelector('#intake-share'),
   shareNote: document.querySelector('#intake-share-note'),
   treat: document.querySelector('#intake-treat'),
-  crop: document.querySelector('#intake-crop')
+  crop: document.querySelector('#intake-crop'),
+  privacy: document.querySelector('#intake-privacy')
 };
+
+// Строка над кнопкой отвечает на вопрос «куда уедет мой файл», и ответов два,
+// потому что путей два. Разметка приходит с первым (pages.js); второй ставится
+// здесь, когда посетителю предложено посчитать у нас и когда так и посчитали.
+const STAYS_HERE = 'Enlarged in your own browser; your picture stays on your device.';
+const SENT_TO_US = 'Enlarged on our server; your picture is sent to us.';
+
+// Посетителю показывается наша фраза, а не текст исключения: «Failed to fetch
+// dynamically imported module: http://…/treat-local.js» — сообщение для
+// консоли, и в нём наш собственный адрес. Подробность остаётся в `console.warn`,
+// а `TOO_BIG` приёмка пишет сама и потому показывает как есть: он объясняет
+// причину, которой посетитель иначе не поймёт.
+const LOCAL_FAILED = 'Your browser could not enlarge this picture.';
 let received = null; // выбранный файл и его измеренные размеры
 let restored = null; // готовая работа: имя файла и адрес
 let outputSize = OUTPUT_SIZES[0][0];
@@ -89,23 +103,31 @@ async function receive(file) {
 // придёт, а спросить об этом сервер до отправки нельзя.
 const PHONE_RATIO = 9 / 19.5;
 
-// Во что упирается длинная сторона результата. Правило читается из
-// `upscale-local.js` — того самого файла, который потом и считает, — вместе
-// с его потолком: холст больше 8192 не растёт, и «×4» от крупного исходника
-// упирается туда. Раньше здесь стоял свой расчёт без потолка, и кнопка
-// обещала 6424 × 8700 там, где выходило 6049 × 8192.
-//
-// Кадр учитывается здесь же: галочка меняет не отделку, а размер файла,
-// и строка условий, называющая размер до кадрирования, обещала бы не тот файл.
-function resultSize(width, height) {
-  const longest = Math.max(width, height);
-  const target = Math.min(targetLongestSideFor(outputSize, longest), MAX_SIDE, longest * 4);
-  const ratio = target / longest;
+// Во что развернётся картинка при данной длинной стороне. Кадр учитывается
+// здесь же: галочка меняет не отделку, а размер файла, и строка условий,
+// называющая размер до кадрирования, обещала бы не тот файл.
+function resultSize(width, height, target) {
+  const ratio = target / Math.max(width, height);
   const grown = [Math.round(width * ratio), Math.round(height * ratio)];
   if (!els.crop.checked) return grown;
   const [w, h] = grown;
   return w / h > PHONE_RATIO ? [Math.round(h * PHONE_RATIO), h] : [w, Math.round(w / PHONE_RATIO)];
 }
+
+// Размеры у двух путей разные, и называть надо тот, который сейчас побежит.
+// В браузере считает `upscale-local.js`, и правило берётся оттуда целиком,
+// вместе с потолками стороны и площади: свой расчёт здесь уже был и отставал
+// от здешнего — кнопка обещала 6424 × 8700 там, где выходило 6049 × 8192.
+// У сервера потолков нет вовсе (`targetLongestSideFor` в server.js), поэтому
+// предложение посчитать у нас называет своё число, а не то же самое.
+const localSize = () =>
+  resultSize(received.width, received.height, resultLongestSide(outputSize, received.width, received.height));
+const serverSize = () =>
+  resultSize(
+    received.width,
+    received.height,
+    targetLongestSideFor(outputSize, Math.max(received.width, received.height))
+  );
 
 // Выбор размера стоит в строке условий, а не в настройках: это свойство
 // изготавливаемой работы и естественное место, где позже разойдётся цена.
@@ -150,6 +172,7 @@ function renderEmpty() {
   // о приватности, которое пришлось бы потом держать.
   els.note.textContent = `Drop a file anywhere on the page. ${FILE_REQUIREMENTS}`;
   els.note.classList.remove('is-error');
+  els.privacy.textContent = STAYS_HERE;
   els.share.hidden = true;
   setOptions(true);
 }
@@ -169,20 +192,28 @@ function renderMeasured() {
   // и картинка 3000 × 4000, отправленная в 2K, вернётся **меньше**, чем
   // пришла. Кнопка со словом «Enlarge» сказала бы в этом случае неправду —
   // а размер рядом с ней тут же эту неправду и показывает.
-  const result = resultSize(width, height);
+  const result = localSize();
   const verb = Math.max(...result) > Math.max(width, height) ? 'Enlarge' : 'Resize';
   els.actions.replaceChildren(
     button(`${verb} to ${formatDims(...result)}`, 'btn', restore),
     button('Choose another', 'btn btn--ghost', chooseFile)
   );
   els.terms.replaceChildren(`Result, ${formatDims(...result)} `, scaleSwitch());
-  els.note.textContent = 'Free for now: payment and accounts come later.';
+  // Примечание здесь пустое. Раньше стояло «Free for now: payment and accounts
+  // come later» — обещание платного будущего в тот момент, когда посетитель
+  // смотрит на кнопку. Считает браузер посетителя, счёта за это нет, и цена
+  // сейчас ничего не объясняет; а заодно фраза была единственным местом,
+  // где сайт обещал будущее нарушение NC у модели (LEGAL.md).
+  els.note.textContent = '';
   els.note.classList.remove('is-error');
+  // Выбор другого файла возвращает и обещание: предыдущий мог уехать к нам,
+  // этот пойдёт в браузер, как обычно.
+  els.privacy.textContent = STAYS_HERE;
   els.share.hidden = true;
   setOptions(true);
 }
 
-function renderWorking() {
+function renderWorking(size, note) {
   els.frame.classList.add('is-working');
   const waiting = button('Working…', 'btn');
   waiting.disabled = true;
@@ -190,12 +221,31 @@ function renderWorking() {
   // Переключатель размера убирается вместе с кнопкой: пока задача выполняется,
   // размер уже выбран, а нажатие на него перерисовало бы страницу в состояние
   // «измерено» — и с неё можно было бы отправить вторую задачу поверх первой.
-  els.terms.textContent = `Result, ${formatDims(...resultSize(received.width, received.height))}`;
-  // Первый счёт в этой вкладке качает модель и рантайм, дальше они в кэше.
-  // Строка сразу же сменится на счётчик плиток из `restoreLocally`.
-  els.note.textContent = 'Working in your browser. The first picture also downloads the model.';
+  els.terms.textContent = `Result, ${formatDims(...size)}`;
+  els.note.textContent = note;
   els.note.classList.remove('is-error');
   setOptions(false);
+}
+
+// Браузер не справился. Сервер справится, но для этого картинку надо отправить
+// нам, а страница ровно над кнопкой обещает, что картинка остаётся на
+// устройстве («Enlarged in your own browser…», pages.js). Раньше отправка шла
+// сама собой из `catch`, и обещание становилось ложью в тот единственный
+// момент, когда оно имело значение, — причём молча: посетитель видел готовый
+// файл и ничего больше. Теперь решает он, и нажатием.
+function renderOffered(reason) {
+  els.frame.classList.remove('is-working');
+  els.actions.replaceChildren(
+    button(`Enlarge on our server to ${formatDims(...serverSize())}`, 'btn', restoreOnServer),
+    button('Choose another', 'btn btn--ghost', chooseFile)
+  );
+  els.terms.replaceChildren(`Result, ${formatDims(...serverSize())} `, scaleSwitch());
+  els.note.textContent = `${reason} We can do it on our machines instead — that means sending your picture to us, and it is deleted after 30 days.`;
+  els.note.classList.add('is-error');
+  // Обещание над кнопкой перестаёт быть верным ровно здесь и потому меняется.
+  els.privacy.textContent = SENT_TO_US;
+  els.share.hidden = true;
+  setOptions(true);
 }
 
 function renderFinished() {
@@ -215,7 +265,15 @@ function renderFinished() {
   els.terms.textContent = `Source, ${formatDims(received.width, received.height)}`;
   // Скачивание ничем не закрыто: показан тот же файл полного разрешения,
   // который отдаёт кнопка. Гейтинг — признак ad-фермы.
-  els.note.textContent = 'This page shows the full-resolution file, the same one you download.';
+  //
+  // Где считали — сказано здесь же. Согласие на отправку спрашивается заранее
+  // (`renderOffered`), но человек, вернувшийся к готовой работе, не обязан
+  // помнить, что он тогда нажал.
+  els.note.textContent =
+    restored.provider === 'server'
+      ? 'Enlarged on our server. This page shows the full-resolution file, the same one you download.'
+      : 'This page shows the full-resolution file, the same one you download.';
+  els.privacy.textContent = restored.provider === 'server' ? SENT_TO_US : STAYS_HERE;
   els.note.classList.remove('is-error');
   els.shareNote.textContent = 'Not available at the moment: the work stays with you and is deleted after 30 days.';
   els.share.hidden = false;
@@ -269,23 +327,37 @@ async function restoreLocally() {
 }
 
 async function restore() {
-  renderWorking();
+  // Первый счёт в этой вкладке качает модель и рантайм, дальше они в кэше.
+  // Строка сразу же сменится на счётчик плиток из `restoreLocally`.
+  renderWorking(localSize(), 'Working in your browser. The first picture also downloads the model.');
+  let made;
   try {
-    const made = await restoreLocally().catch(error => {
-      // Не тихо: браузер посчитать не смог, и дальше работу делает сервер за
-      // деньги. Причина остаётся в консоли — это единственный способ узнать,
-      // на чём именно спотыкаются чужие машины.
-      console.warn('local upscale failed, falling back to the server:', error);
-      return null;
-    });
-    if (made) {
-      if (objectUrl) URL.revokeObjectURL(objectUrl);
-      objectUrl = URL.createObjectURL(made.blob);
-      restored = { filename: made.filename, url: objectUrl, provider: made.provider };
-      await showPicture(objectUrl);
-      renderFinished();
-      return;
-    }
+    made = await restoreLocally();
+  } catch (error) {
+    // Причина остаётся в консоли — это единственный способ узнать, на чём
+    // именно спотыкаются чужие машины. Посетителю причина тоже нужна: без неё
+    // предложение отправить файл нам выглядит как навязывание.
+    console.warn('local upscale failed:', error);
+    return renderOffered(error.message === TOO_BIG ? TOO_BIG : LOCAL_FAILED);
+  }
+  if (!made) return renderOffered('Your browser cannot enlarge pictures on its own.');
+  try {
+    if (objectUrl) URL.revokeObjectURL(objectUrl);
+    objectUrl = URL.createObjectURL(made.blob);
+    restored = { filename: made.filename, url: objectUrl, provider: made.provider };
+    await showPicture(objectUrl);
+    renderFinished();
+  } catch (error) {
+    renderFailed(error.message);
+  }
+}
+
+// Отправка нам — отдельная кнопка, а не запасной путь внутри `restore`:
+// см. `renderOffered`.
+async function restoreOnServer() {
+  els.privacy.textContent = SENT_TO_US;
+  renderWorking(serverSize(), 'Working on our server.');
+  try {
     const body = new FormData();
     body.append('photo', received.file);
     body.append('output_size', outputSize);
