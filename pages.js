@@ -1078,6 +1078,31 @@ export function missingPage() {
   });
 }
 
+// Авария. До 22.08 её видел только `fetch` из приёмки, а посетитель, у которого
+// не собралась страница, получал в окно браузера `{"error":"Server error."}` —
+// ответ, написанный для скрипта. Страница здесь та же, что у всего сайта:
+// шапка, подвал, дорога назад. Ошибку показываем ту, которую сервер и так
+// отдаёт наружу (`HttpError`), — она написана для человека; всё остальное
+// он превращает в общую фразу ещё до нас.
+//
+// `noindex`: адрес, ответивший 500, поисковик обойдёт снова, и незачем, чтобы
+// в выдаче хоть на день оказался заголовок «Something went wrong». У `404`
+// такой заботы не требуется — статус говорит сам за себя.
+export function errorPage({ status, message }) {
+  const heading = status >= 500 ? 'Something went wrong' : 'That did not work';
+  return layout({
+    current: 'collection',
+    title: `${heading}, ${SITE_NAME}`,
+    description: DESCRIPTION,
+    noindex: true,
+    body: `
+      <h1 class="heading">${heading}</h1>
+      <p class="notice">${escape(message)}</p>
+      <p class="outro"><a class="link" href="/">Back to the collection</a></p>
+    `
+  });
+}
+
 // Карта и robots строятся из того же `SITE_ORIGIN`, поэтому верны в день
 // появления домена и безвредны до него.
 //

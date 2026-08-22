@@ -8,7 +8,7 @@ import multer from 'multer';
 import sharp from 'sharp';
 import { IMAGES_DIR, GENERATED_DIR, ADJACENT, ensureImageDirectories, galleryItems, isImage } from './gallery.js';
 import { upscaleAllowance } from './limits.js';
-import { collectionPage, intakePage, licensePage, missingPage, robots, sitemap, workPage } from './pages.js';
+import { collectionPage, errorPage, intakePage, licensePage, missingPage, robots, sitemap, workPage } from './pages.js';
 import { finish } from './treatment.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -359,25 +359,45 @@ app.use((req, res) => {
   html(res, 404, missingPage());
 });
 
-app.use((error, _req, res, _next) => {
+// То же правило и для аварии, а не только для ненайденного адреса. Раньше
+// отсюда всегда уходил JSON, и посетитель, у которого не собралась страница
+// работы, видел в окне браузера `{"error":"Server error."}`. Ответ был написан
+// для `fetch` из приёмки — ему JSON и нужен, — но выбирать формат по тому,
+// кто спрашивает, а не по тому, что случилось, умеет только `wantsJson`.
+// Ненайденное остаётся ненайденным: 404 на странице — это `missingPage`,
+// та же самая, что отвечает на неизвестный адрес выше. Иначе у сайта
+// оказалось бы две разные страницы «не найдено» — смотря по тому, дошёл
+// запрос до маршрута или споткнулся раньше на `express.static`.
+const fail = (req, res, status, message) =>
+  wantsJson(req)
+    ? res.status(status).json({ error: message })
+    : html(res, status, status === 404 ? missingPage() : errorPage({ status, message }));
+
+app.use((error, req, res, next) => {
+  // Ответ уже пошёл — дописывать в него нечего, и попытка обернётся вторым
+  // падением поверх первого. Дальше разбирается express.
+  if (res.headersSent) return next(error);
   if (error instanceof multer.MulterError) {
-    return res.status(400).json({ error: 'JPG, PNG and WebP up to 10 MB.' });
+    return fail(req, res, 400, 'JPG, PNG and WebP up to 10 MB.');
   }
   if (error instanceof HttpError) {
     // Ответ посетителю сам по себе следа не оставляет: во время аварии
     // у Replicate в логе иначе не будет вообще ничего.
     if (error.status >= 500) console.error(error);
-    return res.status(error.status).json({ error: error.message });
+    return fail(req, res, error.status, error.message);
   }
   // express.static с fallthrough: false сообщает об отсутствующем файле статусом 404,
   // а о попытке выйти за пределы каталога — 403. И то и другое — ошибка запроса,
   // а не сервера; отвечаем одинаково, чтобы наружу не уходило, чем именно путь не понравился.
   const status = error?.status ?? error?.statusCode;
   if (status >= 400 && status < 500) {
-    return res.status(404).json({ error: FILE_NOT_FOUND });
+    return fail(req, res, 404, FILE_NOT_FOUND);
   }
   console.error(error);
-  res.status(500).json({ error: 'Server error.' });
+  // Текст один на оба формата и потому написан для человека: «Server error.»
+  // на странице читается как обломок отладки, а лишнего он не говорит —
+  // подробности аварии остаются в логе.
+  fail(req, res, 500, 'Something went wrong on our side. Try again in a moment.');
 });
 
 // Витрина без токена работает целиком — своих вызовов к Replicate у неё нет,
