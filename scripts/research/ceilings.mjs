@@ -41,7 +41,7 @@
 // по яркости 0.004, а на самой картинке — не больше 2 из 255 у одного пикселя
 // и 0.4 в среднем. Разбор: `research/2026-08-22-intake-treats-like-the-ticks.md`.
 import { hueStats, polychromy } from './desaturate.mjs';
-import { applied, clamp, luma } from './dimming.mjs';
+import { applied, clamp, luma, COLLECTION_DIM } from './dimming.mjs';
 import { greyCast, gainsAt } from './grey-balance.mjs';
 
 export const BALANCE = 0.5; // сила баланса по серому: «yeah most got better», 20.08
@@ -51,7 +51,7 @@ export const PROBE = 180; // ширина, на которой решаются 
 // `t` — сколько цвета правило снимает у самой пёстрой работы, `dim` — плоский
 // множитель яркости, `capC` и `capL` — потолки средней цветности и средней
 // яркости, которые решаются под каждую картинку отдельно.
-export const CEIL = { t: 0.55, dim: 0.8, capC: 18, capL: 65 };
+export const CEIL = { t: 0.55, dim: COLLECTION_DIM, capC: 18, capL: 65 };
 
 /**
  * Проба: та же картинка шириной `outW`, каждый пиксель — среднее по своей

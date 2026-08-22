@@ -13,8 +13,8 @@
       "values": { "strength": 0.5, "cast_read_at_px": 200 },
       "code": "scripts/research/grey-balance.mjs — greyCast() и gainsAt(); NEUTRAL_SHARE 0.2, LO 30, HI 225 там же, они измеренные, не выбранные",
       "applies": "Усиления нормируются так, что наибольшее равно 1: правило только затемняет каналы, никогда не поднимает. Работает до всего остального.",
-      "used_by": ["/dark", "/phone", "/edits"],
-      "not_used_by": ["поставка — treatment.js о балансе не знает"]
+      "used_by": ["/dark", "/phone", "/edits", "поставка — приёмка с 22.08 считает его первым шагом `ceil`"],
+      "not_used_by": []
     },
     {
       "id": "snapshot",
@@ -70,7 +70,7 @@
           "21.08–22.08 — vl-0025, плита ba9c0b7269e48d81a1fbf017eacebe6f48aa26f6c044dc7975e0de1422a019ec с мастера 967283e486f4ead0d6f3393e1dda9a0616a0ad792a9f2d1f5108e75f4a5f8419; ушла в `bal`"
         ]
       },
-      "code": "wallpaper-gen/treatment.mjs (FLOOR 12, WINDOW 60, HI 0.9, LO 0.55, FLATTEST 0.35 -> STRENGTH 0.65, DIM 0.8); те же числа в scripts/research/{desaturate,dimming}.mjs, приёмка берёт их через treatment.js",
+      "code": "wallpaper-gen/treatment.mjs (FLOOR 12, WINDOW 60, HI 0.9, LO 0.55, FLATTEST 0.35 -> STRENGTH 0.65, DIM 0.8); те же числа в scripts/research/{desaturate,dimming}.mjs. Приёмка брала их до 22.08; теперь она считает `ceil`, и этой обработки на сайте не производит никто",
       "used_by": ["246 работ из 267 в images/manifest/museum.json несут метку dim80-desat-whole; 21 переведена на выбранную Charlie правку 21.08"]
     },
     {
@@ -85,8 +85,9 @@
         "on_top_of": { "desaturate_strength": 0.55, "dim": 0.8 }
       },
       "applies": "Потолок — минимум, а не цель: работа, уже стоящая ниже, не трогается вовсе. Множитель решается по работе в три прохода, потому что цвет читается после приглушения, а приглушение после цвета.",
-      "status": "В конвейер НЕ встроены. Живут кнопкой на /dark, версией на /edits и этой записью. Измерено 21.08 на 79 работах: потолок яркости срабатывает на 53 из них и уводит приглушение с ×0.80 до ×0.66; потолок цвета — на 16.",
-      "prose": "research/2026-08-19-the-two-ceilings-charlie-chose.md"
+      "status": "Встроены. С 21.08 генератор выпускает ими работы под именем `ceil`, с 22.08 их же считает галочка приёмки. Измерено 21.08 на 79 работах: потолок яркости срабатывает на 53 из них и уводит приглушение с ×0.80 до ×0.66; потолок цвета — на 16. На витрине 22.08 `ceil` стоит у 19 работ из 76 — чаще любой другой обработки, кроме «не трогать» (25).",
+      "code": "scripts/research/ceilings.mjs — solve() и paint(), порядок шагов в treatCeil(); зовут её treatment.js и public/treat-local.js. Отдельная копия тех же чисел — wallpaper-gen/treatment.mjs, TREATMENTS.ceil.",
+      "prose": "research/2026-08-19-the-two-ceilings-charlie-chose.md · research/2026-08-22-intake-treats-like-the-ticks.md"
     },
     {
       "id": "niobe",
