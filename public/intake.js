@@ -122,17 +122,22 @@ function scaleSwitch() {
 }
 
 function renderEmpty() {
-  els.ref.textContent = BLANK_ACCESSION;
+  // Номера здесь нет намеренно. Стоял `TS·––––` — тот же формат, что несут
+  // работы коллекции (`TS·0205`), и на пустой приёмке он читался как слот,
+  // ожидающий одну из наших работ: Чарли прочёл его именно так и решил, что
+  // страница просит выбрать что-нибудь с витрины. Номер честен ровно с того
+  // момента, когда файл готов и номер у него есть, — там он и появляется.
+  els.ref.textContent = '';
   els.ref.classList.add('is-blank');
-  specLine(els.spec, ['No image yet']);
-  els.actions.replaceChildren(button('Choose an image', 'btn', chooseFile));
+  specLine(els.spec, ['No picture yet']);
+  els.actions.replaceChildren(button('Choose my picture', 'btn', chooseFile));
   // Строка условий во всех состояниях отвечает на один вопрос — что получится.
   // Выбран файл: «Result — 2880 × 3840». Не выбран: то же самое, но пока
   // о любом файле. Раньше здесь стояла подсказка про перетаскивание, и
   // страница, на которую ведут все ссылки «Restore your own image», ни словом
   // не говорила, что делает; узнать это можно было, только загрузив файл.
   // Подсказка ушла к остальным практическим сведениям, в примечание.
-  els.terms.textContent = 'Up to 4× the size, or straight to 2K and 4K';
+  els.terms.textContent = 'Your picture, enlarged up to 4× — big enough for a 1440 × 3120 phone screen';
   // «Nothing is published without your consent» отсюда убрано и ничем
   // не заменено. Фраза описывала публикацию, которой нет: маршрут закрыт
   // (LEGAL.md), галочка выключена, чужие файлы не выходят на витрину никогда.
@@ -150,11 +155,23 @@ function renderMeasured() {
   els.ref.textContent = BLANK_ACCESSION;
   els.ref.classList.add('is-blank');
   specLine(els.spec, [formatDims(width, height), formatType(file.name, file.type), formatBytes(file.size)]);
+  // Кнопка называет то, что выйдет, а не то, что с картинкой сделают:
+  // «Restore» держалось на слове, которого в значении «увеличить» не знают,
+  // и на странице ему негде было объясниться. Размер стоит и в строке
+  // условий — повтор нарочный: в строке это обещание, на кнопке — действие.
+  //
+  // Глагол при этом выведен, а не вписан. «2K» и «4K» — не кратности, а
+  // absolute-размеры без нижнего порога (`targetLongestSideFor` в server.js),
+  // и картинка 3000 × 4000, отправленная в 2K, вернётся **меньше**, чем
+  // пришла. Кнопка со словом «Enlarge» сказала бы в этом случае неправду —
+  // а размер рядом с ней тут же эту неправду и показывает.
+  const result = resultSize(width, height);
+  const verb = Math.max(...result) > Math.max(width, height) ? 'Enlarge' : 'Resize';
   els.actions.replaceChildren(
-    button('Restore', 'btn', restore),
+    button(`${verb} to ${formatDims(...result)}`, 'btn', restore),
     button('Choose another', 'btn btn--ghost', chooseFile)
   );
-  els.terms.replaceChildren(`Result — ${formatDims(...resultSize(width, height))} `, scaleSwitch());
+  els.terms.replaceChildren(`Result — ${formatDims(...result)} `, scaleSwitch());
   els.note.textContent = 'Free for now: payment and accounts come later.';
   els.note.classList.remove('is-error');
   els.share.hidden = true;
@@ -186,7 +203,7 @@ function renderFinished() {
   download.href = restored.url;
   download.download = restored.filename;
   download.textContent = 'Download';
-  els.actions.replaceChildren(download, button('Restore another', 'btn btn--ghost', chooseFile));
+  els.actions.replaceChildren(download, button('Do another', 'btn btn--ghost', chooseFile));
   els.terms.textContent = `Source — ${formatDims(received.width, received.height)}`;
   // Скачивание ничем не закрыто: показан тот же файл полного разрешения,
   // который отдаёт кнопка. Гейтинг — признак ad-фермы.

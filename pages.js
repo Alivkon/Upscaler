@@ -22,8 +22,8 @@ const SITE_NAME = 'Tessarum';
 // Сказано про оба вида работ: описание страницы попадает в выдачу,
 // а «4k desktop wallpaper» спрашивают отдельно от «phone wallpaper».
 const DESCRIPTION =
-  'Phone wallpapers at 1440 × 3120, 4K desktop at 3840 × 2160, and engravings from open collections. ' +
-  'Free to download, no sign-up. Restore your own image up to 4× its size.';
+  'Phone wallpapers at 1440 × 3120 from paintings and engravings in open collections. ' +
+  'Free to download, no sign-up. Make your own wallpaper from a picture of your own, up to 4× bigger.';
 
 // Единственное место, где текст становится разметкой. Имена присланных файлов
 // попадают на страницу, а они приходят снаружи.
@@ -45,20 +45,26 @@ const specLine = parts =>
 // пришедший из поиска картинок хочет готовую картинку, и закрыть её гейтом
 // значит потерять индексацию, то есть весь актив.
 //
-// «up to 4× its size» — не довесок, а определение, и оно едет вместе со
-// ссылкой. Restore — слово музейное, и в этом его ценность: коллекция
-// говорит на языке собрания, а не панели управления. Но в значении
-// «увеличить» его не знает никто, а объяснено оно на сайте ровно в одном
-// месте — в `<meta name="description">`, которую человек не видит. Ссылка
-// же стоит на каждой странице; пусть каждый раз и называет себя сама.
+// «up to 4×» — не довесок, а определение, и оно едет вместе со ссылкой.
 //
-// Хвост обрезан до «up to 4×», хотя в описании страницы стоит полное «up to
-// 4× its size»: со словами «its size» ссылка занимает 312 px, а на экране
-// 320 px под неё остаётся 280 — и она рвётся, оставляя «its size» второй
-// строкой. Ссылка при этом `inline-block` с подчёркиванием снизу, так что
-// подчёркнута оказалась бы только вторая строка. «Up to 4×» — 242 px,
-// и в одну строку встаёт вплоть до 300 px экрана.
-const restoreLink = '<a class="link" href="/restore">Restore your own image up to 4×</a>';
+// Слова «Restore» здесь больше нет, и это отмена прежнего решения, а не
+// недосмотр. Стояло так: «Restore — слово музейное, и в этом его ценность:
+// коллекция говорит на языке собрания, а не панели управления». Ценность
+// настоящая, но тут же рядом было записано и возражение — «в значении
+// „увеличить“ его не знает никто», — и оно подтвердилось на живом человеке:
+// Чарли прочёл приёмку как приглашение загрузить что-нибудь из нашей же
+// коллекции. Комментарий, предсказавший провал, не отменяет провала.
+//
+// Музейный голос остался там, где слово показано в деле, а не предположено:
+// «Restored 5.2× from 750 × 741» на странице работы. Разбор целиком —
+// research/2026-08-21-saying-what-the-site-does.md.
+//
+// Длина по-прежнему на счету: со словами «its size» ссылка занимала 312 px,
+// а на экране 320 px под неё остаётся 280 — и она рвалась, оставляя «its
+// size» второй строкой. Ссылка `inline-block` с подчёркиванием снизу, так
+// что подчёркнута оказалась бы только вторая строка. Нынешние 32 знака
+// — примерно 248 px, и в одну строку встают вплоть до 300 px экрана.
+const restoreLink = '<a class="link" href="/restore">Make your own wallpaper up to 4×</a>';
 
 // `canonical` необязателен, и это про страницу «не найдено». Канонический адрес
 // — заявление «настоящий адрес этой страницы вот такой»; со страницы 404,
@@ -93,7 +99,7 @@ function layout({
 }) {
   const nav = [
     ['/', 'Collection', current !== 'restore'],
-    ['/restore', 'Restore', current === 'restore']
+    ['/restore', 'Make your own', current === 'restore']
   ];
   return `<!doctype html>
 <html lang="en">
@@ -289,11 +295,62 @@ function card(item, { eager = false, priority = false } = {}) {
         </figure>`;
 }
 
+// Пустая рамка среди полных. Приглашение стояло здесь фразой — «Saved a
+// picture that's too small for your screen?» — и на странице, где нет ни одного
+// предложения, читалось рекламой: пятнадцатый кегль в полную светлоту над
+// сеткой из одиннадцати- и двенадцатипиксельных этикеток. Иерархия тут строится
+// светлотой (см. шапку файла стилей), и всё, что ярче остального, объявляет себя
+// главным на странице.
+//
+// Карточка ничего не объявляет. Она пользуется тем, из чего сайт и состоит, —
+// паспарту, проём, этикетка под ним, — и говорит ровно то же самое, не повышая
+// голоса: сто пятнадцать рамок заняты, эта ждёт. Проём при этом тёмный, как
+// на приёмке: `.collection .record__image` заливает пустой проём светлым
+// `--card`, но это заглушка на время загрузки картинки, и здесь она означала бы
+// «карточка не догрузилась», а не «рамка пуста».
+//
+// Пропорции — 9:16, те же, что у соседей: сетку задаёт `tile(item)`, и рамка,
+// вставшая иначе, ломала бы ряд.
+//
+// Ссылок три, как у настоящей карточки: проём, заголовок и строка внизу. Все
+// ведут на приёмку, и подписаны они по-разному не для разнообразия — «Your
+// picture» стоит там, где у соседей название работы, а «Make one» там, где
+// «Download», то есть каждая читается на своём месте.
+//
+// Внутри проёма — глагол, и это не стилистика. Стояло «Yours here», и Чарли
+// прочёл его как обещание выставить присланное: пустая рамка в ряду занятых
+// означает «сюда повесят», и любое существительное внутри неё называет того,
+// кого повесят. А публикация чужих работ закрыта — LEGAL.md обещает, что
+// закрыта совсем, — то есть надпись обещала ровно то, чего сайт не делает.
+// Это та же ошибка, что и `TS·––––` на приёмке, только в другую сторону:
+// там гость решил, что загружать надо наше, здесь — что его уйдёт к нам.
+//
+// «Make your own» называет действие, и слот перестаёт читаться как вакансия.
+// Слова те же, что в шапке: карточка и пункт шапки ведут в одно место, и
+// одинаковые слова здесь связывают их, а не двоятся.
+//
+// Проём для чтения с экрана скрыт (`aria-hidden`): те же слова стоят ниже
+// в этикетке, и диктор, прочитавший их дважды, объявил бы две работы вместо
+// одной.
+const inviteCard = () => `<figure class="item item--invite">
+          <div class="record">
+            <a class="record__image" href="/restore" style="--ratio: 9 / 16" tabindex="-1" aria-hidden="true"
+              ><span>Make your own</span></a
+            >
+          </div>
+          <figcaption class="caption">
+            <h3 class="caption__title"><a href="/restore">Your picture</a></h3>
+            <p class="caption__by"></p>
+            <p class="caption__spec">${specLine(['Up to 4× bigger'])}</p>
+            <a class="link" href="/restore">Start →</a>
+          </figcaption>
+        </figure>`;
+
 // `eager` — сколько первых карточек грузить сразу. По умолчанию ни одной:
 // сетка «ещё из коллекции» на странице работы стоит ниже сгиба, и торопить
 // её значит отнимать канал у самой работы.
-const grid = (items, eager = 0) =>
-  `<div class="collection">\n        ${items
+const grid = (items, eager = 0, lead = '') =>
+  `<div class="collection">\n        ${lead ? `${lead}\n        ` : ''}${items
     .map((item, index) => card(item, { eager: index < eager, priority: eager > 0 && index === 0 }))
     .join('\n        ')}\n      </div>`;
 
@@ -317,8 +374,7 @@ export function collectionPage({ items, origin }) {
     imageHeight: items.length ? offered(items[0]).height : undefined,
     body: `
       <h1 class="heading">The collection</h1>
-      ${grid(items, EAGER_CARDS)}
-      <p class="outro">${restoreLink}</p>
+      ${grid(items, EAGER_CARDS, inviteCard())}
     `
   });
 }
@@ -492,41 +548,114 @@ const beforeFrame = item => `
 // прочтёт подряд три одинаковых абзаца, а поиск по картинкам не поймёт, чем
 // файлы отличаются, кроме адреса. Отличаются же они ровно кадром, и про кадр
 // в описании и сказано.
+// Одна плитка списка файлов: картинка мелкой копией, подпись, размер. Общая у
+// кадров и у версий, потому что предлагаются они одинаково — и различаться они
+// должны подписью, а не вёрсткой.
+//
+// ПЛИТКА ОТКРЫВАЕТ ФАЙЛ, А НЕ КЛАДЁТ ЕГО В ЗАГРУЗКИ. Проём — 96 px, и по такой
+// копии не видно ни кадра, ни обработки: `download` заставлял решать вслепую и
+// платить за ошибку папкой с ненужными файлами. Без атрибута ссылка ведёт туда
+// же, куда вела, но браузер показывает картинку целиком — а сохранить её оттуда
+// можно в один жест, и уже зная, что сохраняешь. Кнопка Download наверху
+// остаётся кнопкой: она отдаёт файл, который посетитель уже видит в проёме.
+const fileTile = row => `<li class="alternates__file">
+                <a href="${escape(row.file.url)}">
+                  <span class="alternates__shot"><img src="${escape(row.file.url)}"${shownWith(row.file.copies, '96px')} alt="${escape(row.alt)}" width="${row.file.width}" height="${row.file.height}" loading="lazy" /></span>
+                  <span class="alternates__label">${escape(row.label)}</span>
+                  <span class="alternates__size">${escape(row.note)}</span>
+                </a>
+              </li>`;
+
+// Как обработка называется вслух. Внутренние имена — `ceil`, `snap`, `niobe` —
+// это имена настроек, по которым их выбирали, и посетителю они не говорят
+// ничего: подпись должна называть РЕЗУЛЬТАТ, а не файл настроек. Ключи те же,
+// что штампует генератор в манифест, — иначе версия появится без подписи.
+const TREATMENT_NAMES = {
+  none: 'As scanned',
+  bal: 'Colour balanced',
+  snap: 'Muted',
+  'dim80-desat-whole': 'Muted, stronger',
+  ceil: 'Dimmed',
+  niobe: 'Dimmed, soft highlights'
+};
+
+// Та же картина в других обработках — 22.08.2026, «if several are picked then i
+// want all the versions».
+//
+// ОТДЕЛЬНЫМ РЯДОМ ОТ КАДРОВ, И ЭТО НЕ ОФОРМЛЕНИЕ. Кадр отвечает на вопрос
+// «какой формы», версия — «какого света»; сложенные в один ряд, они читались бы
+// как один список из шести равноправных файлов, и посетителю пришлось бы
+// догадываться, что «16:9» и «Dimmed» — ответы на разные вопросы.
+//
+// Предлагается телефонный кадр версии, а не её плита: по кнопке Download
+// страница отдаёт именно телефонный кадр, и версия обязана давать то же самое,
+// иначе «та же картинка, только темнее» окажется неправдой по форме.
+const versions = item => {
+  const name = item.title.split(' — ')[0];
+  const rows = (item.versions || [])
+    .map(version => {
+      const file = version.crops?.phone || version;
+      const label = TREATMENT_NAMES[version.treatment];
+      return (
+        label && { file, label, note: formatDims(file.width, file.height), alt: `${name}, ${label.toLowerCase()}` }
+      );
+    })
+    .filter(Boolean);
+  if (!rows.length) return '';
+  const here = TREATMENT_NAMES[item.treatment];
+  return `
+          <div class="alternates">
+            <h2 class="alternates__heading">Other versions</h2>
+            <ul class="alternates__row">
+              ${rows.map(fileTile).join('\n              ')}
+            </ul>
+            <p class="alternates__note">
+              The same painting, treated differently.${here ? ` The one above is ${here.toLowerCase()}.` : ''}
+            </p>
+          </div>`;
+};
+
+// Слово «desktop» стоит здесь и больше нигде. В заголовке работы его нет
+// намеренно: `offered` отдаёт телефонный кадр, и страница, обещавшая рабочий
+// стол, привела бы человека к вертикальной картинке (research/
+// 2026-08-21-saying-what-the-site-does.md, «Desktop in the visible copy»).
+// А вот эти два файла рабочим столом и являются — 16:9 всегда, плита тогда,
+// когда она горизонтальная, — и на них слово сказано правдой.
+//
+// «background», а не «wallpaper»: alt — это то, что забирает Pinterest в
+// описание пина, и в его словаре обои называются так. В `<title>` при этом
+// стоит «wallpaper» — слово выдачи. Одно и то же не сказано дважды, но обоих
+// слов у работы по одному.
 const alternates = (item, plateSize) => {
   const name = item.title.split(' — ')[0];
+  const widePlate = item.width > item.height;
   const rows = [
-    { file: item, label: 'Uncropped', note: plateSize, alt: `${name}, the whole painting` },
+    {
+      file: item,
+      label: 'Uncropped',
+      note: plateSize,
+      alt: `${name}, the whole painting${widePlate ? ' — desktop background' : ''}`
+    },
     {
       file: item.crops?.tall,
       label: '9:16',
       note: item.crops?.tall && formatDims(item.crops.tall.width, item.crops.tall.height),
-      alt: `${name}, cropped to 9:16`
+      alt: `${name}, cropped to 9:16 — vertical phone background`
     },
     {
       file: item.crops?.wide,
       label: '16:9',
       note: item.crops?.wide && formatDims(item.crops.wide.width, item.crops.wide.height),
-      alt: `${name}, cropped to 16:9`
+      alt: `${name}, cropped to 16:9 — desktop background`
     }
   ].filter(row => row.file);
   // Одна работа без единого кадра — это работа, у которой в проёме и так
   // стоит плита. Предлагать её же второй раз незачем.
   if (rows.length === 1 && !item.crops?.phone) return '';
-  const shownOf = file => shownWith(file.copies, '96px');
   return `
           <div class="alternates">
             <ul class="alternates__row">
-              ${rows
-                .map(
-                  row => `<li class="alternates__file">
-                <a href="${escape(row.file.url)}" download="${escape(row.file.filename)}">
-                  <span class="alternates__shot"><img src="${escape(row.file.url)}"${shownOf(row.file)} alt="${escape(row.alt)}" width="${row.file.width}" height="${row.file.height}" loading="lazy" /></span>
-                  <span class="alternates__label">${escape(row.label)}</span>
-                  <span class="alternates__size">${escape(row.note)}</span>
-                </a>
-              </li>`
-                )
-                .join('\n              ')}
+              ${rows.map(fileTile).join('\n              ')}
             </ul>
             <p class="alternates__note">
               The uncropped painting carries the same treatment as the crop above.
@@ -633,8 +762,8 @@ export function workPage({ item, others, origin }) {
   // и примерно 70vw на телефоне.
   const shownPlate = shownWith(file.copies, plateSizes(file));
   // Под чертой — только то, что утверждается об этой работе: из чего она
-  // сделана, кем и на каких условиях отдаётся. Предложение «реставрируйте
-  // своё» стояло здесь же и читалось как ещё одно такое утверждение: черта
+  // сделана, кем и на каких условиях отдаётся. Предложение сделать своё
+  // стояло здесь же и читалось как ещё одно такое утверждение: черта
   // на этой странице и означает «ниже говорят о работе». У работ генератора
   // под чертой не оставалось больше ничего, и черта обрамляла один глагол,
   // которому не за что зацепиться, — отсюда и «непонятно, что значит
@@ -719,6 +848,7 @@ export function workPage({ item, others, origin }) {
           </div>
           ${terms ? `<div class="terms">${terms}</div>` : ''}
           ${alternates(item, plateSize)}
+          ${versions(item)}
         </div>
       </div>
       ${others.length ? `<section class="adjacent"><h2 class="heading">More in the collection</h2>${grid(others)}</section>` : ''}
@@ -736,18 +866,31 @@ export function workPage({ item, others, origin }) {
 // поиску, ни тому, кто идёт по заголовкам с экранным диктором. Номер
 // остался на своём месте, но абзацем, а заголовком стала строка, верная
 // до всякой загрузки.
+//
+// Говорит она теперь не про действие, а про то, что выйдет: «Restore an
+// image» называло операцию словом, которого в этом значении не знают, а
+// «Make your own wallpaper» называет результат — и держится за соседний
+// пункт шапки «Make your own», где слово «свой» противопоставлено
+// «Collection» и объясняет само себя.
 export function intakePage({ origin }) {
   return layout({
     current: 'restore',
-    title: `Restore an image — ${SITE_NAME}`,
-    description: 'Upscale your own image up to 4× its size, or to 2K and 4K. JPG, PNG and WebP up to 10 MB.',
+    title: `Make your own wallpaper — ${SITE_NAME}`,
+    description:
+      'Upscale your own image up to 4× its size, or to 2K and 4K, and fit it to your phone screen. ' +
+      'JPG, PNG and WebP up to 10 MB.',
     canonical: `${origin}/restore`,
     script: '/intake.js',
     body: `
-      <h1 class="heading">Restore an image</h1>
+      <h1 class="heading">Make your own wallpaper</h1>
       <div class="plate">
         <figure class="record record--plate">
-          <div class="record__image" id="intake-frame" role="button" tabindex="0" aria-label="Choose an image">
+          <div class="record__image" id="intake-frame" role="button" tabindex="0" aria-label="Choose a picture">
+            <p class="prompt">
+              <span class="prompt__wide">Drop your picture here</span>
+              <span class="prompt__narrow">Tap to choose</span>
+              <span class="prompt__fine">JPG, PNG or WebP, up to 10 MB</span>
+            </p>
             <img id="intake-picture" alt="" hidden />
           </div>
         </figure>
@@ -776,15 +919,15 @@ export function intakePage({ origin }) {
               <span class="options__box" aria-hidden="true"></span>
               <span class="options__text"
                 >Darken and desaturate
-                <span class="options__fine">The treatment the collection carries</span>
+                <span class="options__fine">The treatment most of the collection carries</span>
               </span>
             </label>
             <label class="options__row">
               <input type="checkbox" id="intake-crop" />
               <span class="options__box" aria-hidden="true"></span>
               <span class="options__text"
-                >Crop to phone
-                <span class="options__fine">9 : 19.5, centred</span>
+                >Fit my phone screen
+                <span class="options__fine">1440 × 3120, centred</span>
               </span>
             </label>
           </div>
@@ -977,17 +1120,31 @@ export function sitemap({ items, origin }) {
   const entries = [
     // Указатель один, и его `lastmod` — день последнего пополнения коллекции.
     url(`${origin}/`, { lastmod: latestOf(items) }),
-    // Файлов у работы теперь четыре — три кадра и целая плита, — и назван
-    // каждый: карта перечисляет файлы, а не выводит их из страницы, и
-    // не названный здесь остаётся ненайденным, пока обход не дойдёт до самой
-    // страницы. Все четыре к тому же стоят на ней настоящими картинками:
-    // изображение, объявленное только картой, без страницы вокруг почти
-    // не ранжируется.
+    // Файлов у работы четыре — три кадра и целая плита, — и назван каждый:
+    // карта перечисляет файлы, а не выводит их из страницы, и не названный
+    // здесь остаётся ненайденным, пока обход не дойдёт до самой страницы. Все
+    // четыре к тому же стоят на ней настоящими картинками: изображение,
+    // объявленное только картой, без страницы вокруг почти не ранжируется.
+    //
+    // Плюс телефонный кадр каждой другой версии — их на странице показывают
+    // так же, картинками. Не плита версии и не все её кадры: карта называет то,
+    // что на странице ВИДНО, иначе она обещает обходу файлы, вокруг которых
+    // страницы нет.
     ...items.map(item =>
       url(`${origin}/w/${item.slug}`, {
         lastmod: item.added,
         images: [
-          ...new Set([offered(item), tile(item), item.crops?.wide, item].filter(Boolean).map(file => file.url))
+          ...new Set(
+            [
+              offered(item),
+              tile(item),
+              item.crops?.wide,
+              item,
+              ...(item.versions || []).map(version => version.crops?.phone || version)
+            ]
+              .filter(Boolean)
+              .map(file => file.url)
+          )
         ].map(address => `${origin}${address}`)
       })
     ),
