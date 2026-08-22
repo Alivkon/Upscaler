@@ -12,6 +12,7 @@
     "iphone"
   ],
   "origin": "England",
+  "hidden": true,
   "license": "public-domain",
   "provenance": {
     "creator": "Richard Wilson",

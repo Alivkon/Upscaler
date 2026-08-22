@@ -12,6 +12,7 @@
     "iphone"
   ],
   "origin": "France",
+  "hidden": true,
   "license": "public-domain",
   "provenance": {
     "creator": "Gustave Courbet",

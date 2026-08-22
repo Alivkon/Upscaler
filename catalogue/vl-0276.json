@@ -12,6 +12,7 @@
     "iphone"
   ],
   "origin": "Netherlands",
+  "hidden": true,
   "license": "public-domain",
   "provenance": {
     "creator": "Emanuel de Witte",

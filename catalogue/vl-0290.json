@@ -13,6 +13,7 @@
     "iphone"
   ],
   "origin": "America",
+  "hidden": true,
   "license": "public-domain",
   "provenance": {
     "creator": "Albert Bierstadt",
