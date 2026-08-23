@@ -34,6 +34,7 @@
 // запись говорит, что менять их — значит менять картинку, которую человек
 // выбрал, а не подкрутить параметр.
 import sharp from 'sharp';
+import { phoneWindow } from './public/frame.js';
 import { treatCeil } from './scripts/research/ceilings.mjs';
 
 // Телефонный кадр. 9:16 — не пропорция конкретного телефона, а самая широкая
@@ -60,18 +61,13 @@ import { treatCeil } from './scripts/research/ceilings.mjs';
 // и наша доля сокращается, экран приходит к одному и тому же. Заранее узкий
 // кадр не выгадывает там ничего и теряет всё на экранах шире. Разбор:
 // research/2026-08-23-phone-crop-ratio.md.
-export const PHONE_RATIO = 9 / 16;
-
-// Проём вписывается в картинку целиком и ставится по центру: середина —
-// единственное место, о котором можно что-то утверждать, не посмотрев.
-// Правила поумнее (`attention`, `entropy`, коробка сюжета) в коллекции есть,
-// и там их выбирают работе по одной, глазом; здесь смотреть некому — картинка
-// чужая и видит её только тот, кто прислал.
-export function phoneWindow(width, height) {
-  const w = width / height > PHONE_RATIO ? Math.round(height * PHONE_RATIO) : width;
-  const h = width / height > PHONE_RATIO ? height : Math.round(width / PHONE_RATIO);
-  return { left: Math.round((width - w) / 2), top: Math.round((height - h) / 2), width: w, height: h };
-}
+//
+// Само число и проём по нему живут в public/frame.js, откуда их берёт и браузер
+// приёмки. Здесь была вторая запись того же правила: сервер резал по своей,
+// браузер по своей, и совпадали они молча. Проём кормит обещание размера
+// (`serverSize` в intake.js) на одном конце и `extract` на другом — то самое
+// расхождение, ради которого в frame.js уже свели порог и множитель.
+export { phoneWindow };
 
 // Формат сохраняется: приёмка вернула PNG — пусть PNG и останется. Смена
 // формата на выходе означала бы, что галочка «потемнее» заодно пережала файл.

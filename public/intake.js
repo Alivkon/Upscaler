@@ -3,8 +3,8 @@
 import { button, formatDims } from './record.js';
 // Только правила размера: сам счёт и его рантайм на шесть мегабайт грузятся
 // по требованию, уже из `restoreLocally`.
-import { TOO_BIG, resultLongestSide, targetLongestSideFor } from './upscale-local.js';
-import { phoneWindow } from './frame.js';
+import { TOO_BIG, resultLongestSide } from './upscale-local.js';
+import { phoneWindow, serverLongestSide } from './frame.js';
 
 const ACCEPTED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 // Формат спрашивается, вес — нет. Порог в 10 МБ стоял здесь с первого дня,
@@ -72,6 +72,9 @@ const FINISH_FAILED = 'Your browser could not apply these changes.';
 const WORKING = 'Making your wallpaper';
 let received = null; // выбранный файл, его измеренные размеры и растр для превью
 let restored = null; // готовая работа: имя файла и адрес
+// Стоит ли сейчас на странице предложение посчитать у нас (`renderOffered`).
+// Нужен он одному месту — неудачному превью, — и там объяснено, зачем.
+let offered = false;
 // Три адреса, а не один: исходник нужен, чтобы вернуть картинку без обработки,
 // когда сняли последнюю галочку, — то есть он живёт дольше любого превью.
 let sourceUrl = null;
@@ -162,22 +165,35 @@ function showPicture(source) {
 async function receive(file) {
   if (!file) return;
   if (!ACCEPTED_TYPES.has(file.type)) return renderFailed(FILE_REQUIREMENTS);
-  forget(sourceUrl);
-  forget(previewUrl);
-  forget(resultUrl);
-  received?.bitmap.close();
-  sourceUrl = URL.createObjectURL(file);
-  previewUrl = resultUrl = null;
+  // Прежний файл держится до тех пор, пока новый не прочитан целиком. Тип
+  // у файла бывает верным, а сам он нечитаемым — оборванная закачка, битый
+  // JPEG, — и страница, успевшая закрыть прежний растр, осталась бы в виде
+  // «файл выбран» вокруг закрытого растра: `renderFailed` возвращает её
+  // в «измерено», раз `received` не пуст, и первая же галочка после этого
+  // падала бы на `drawImage`. Отказ по типу строкой выше ведёт себя так же —
+  // прежний выбор остаётся в силе, — и второй отказ обязан быть таким же.
+  const url = URL.createObjectURL(file);
   let bitmap;
   try {
-    await showPicture(sourceUrl);
+    await showPicture(url);
     // Растр держится всё время, пока файл выбран: каждая галочка пересчитывает
     // превью с нуля, и раскодировать JPEG заново на каждый щелчок значило бы
     // делать самую дорогую часть работы по четыре раза подряд.
     bitmap = await createImageBitmap(file);
   } catch (error) {
-    return renderFailed(error.message);
+    URL.revokeObjectURL(url);
+    renderFailed(error.message);
+    // Проём успел показать нечитаемый файл или спрятаться вовсе, а выбран
+    // по-прежнему прежний — он и возвращается на место.
+    if (received) await showPicture(sourceUrl).catch(() => {});
+    return;
   }
+  forget(sourceUrl);
+  forget(previewUrl);
+  forget(resultUrl);
+  received?.bitmap.close();
+  sourceUrl = url;
+  previewUrl = resultUrl = null;
   received = { file, bitmap, width: els.picture.naturalWidth, height: els.picture.naturalHeight };
   restored = null;
   renderMeasured();
@@ -192,24 +208,48 @@ async function receive(file) {
 // обязан отвечать сразу. Поэтому показывается кадр в его собственном размере —
 // то, что произойдёт с картинкой, но не то, насколько она вырастет. Об этом
 // сказано в самой галочке (pages.js).
+//
+// Отказ ловится здесь, а не у зовущих: зовут её без `await` из двух мест —
+// выбор файла и каждая галочка, — и любой отказ внутри уходил бы в
+// необработанное отклонение. Видно это было бы как неработающая галочка:
+// в проёме осталась бы прежняя картинка, и ни строчки о том, почему.
 async function showChosen() {
   const token = ++previewToken;
-  if (!anyEffect()) return showPicture(sourceUrl).catch(() => {});
-  const { finishLocally } = await import('./treat-local.js');
-  if (token !== previewToken) return;
-  const scale = Math.min(1, PREVIEW_SIDE / Math.max(received.width, received.height));
-  const base = new OffscreenCanvas(
-    Math.max(1, Math.round(received.width * scale)),
-    Math.max(1, Math.round(received.height * scale))
-  );
-  const ctx = base.getContext('2d');
-  ctx.imageSmoothingQuality = 'high';
-  ctx.drawImage(received.bitmap, 0, 0, base.width, base.height);
-  const blob = await finishLocally(base, chosen()).convertToBlob({ type: 'image/jpeg', quality: 0.92 });
-  if (token !== previewToken) return;
-  forget(previewUrl);
-  previewUrl = URL.createObjectURL(blob);
-  await showPicture(previewUrl).catch(() => {});
+  try {
+    if (!anyEffect()) return await showPicture(sourceUrl).catch(() => {});
+    const { finishLocally } = await import('./treat-local.js');
+    if (token !== previewToken) return;
+    const scale = Math.min(1, PREVIEW_SIDE / Math.max(received.width, received.height));
+    const base = new OffscreenCanvas(
+      Math.max(1, Math.round(received.width * scale)),
+      Math.max(1, Math.round(received.height * scale))
+    );
+    const ctx = base.getContext('2d');
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(received.bitmap, 0, 0, base.width, base.height);
+    const blob = await finishLocally(base, chosen()).convertToBlob({ type: 'image/jpeg', quality: 0.92 });
+    if (token !== previewToken) return;
+    forget(previewUrl);
+    previewUrl = URL.createObjectURL(blob);
+    await showPicture(previewUrl).catch(() => {});
+  } catch (error) {
+    // Причина — в консоль: спотыкаются здесь чужие браузеры, и узнать, на чём
+    // именно, больше неоткуда. Устаревшее превью молчит: его картинку уже
+    // заменило следующее, и жаловаться ему не на что.
+    if (token !== previewToken) return;
+    console.warn('preview failed:', error);
+    // Предложение посчитать у нас переживает неудачное превью. `renderFailed`
+    // пересобирает нижний ряд заново, и кнопка «Make it on our server»
+    // исчезала бы ровно там, где она единственный выход: браузеру не далась
+    // большая картинка, встало предложение, посетитель щёлкнул виньетку —
+    // и превью не далось ему по той же нехватке памяти. На месте предложения
+    // оказывалась «Make my wallpaper», то есть путь, который только что упал.
+    //
+    // Тем же `renderOffered`, а не сохранением кнопок: он и соберёт тот же ряд,
+    // и скажет правду о случившемся — браузер не смог, а мы можем.
+    if (offered) renderOffered(FINISH_FAILED);
+    else renderFailed(FINISH_FAILED);
+  }
 }
 
 // Сначала кадр, потом размер — тот же порядок, в котором работает и счёт
@@ -233,11 +273,13 @@ function resultSize(width, height, target) {
 // В браузере считает `upscale-local.js`, и правило берётся оттуда целиком,
 // вместе с потолками стороны и площади: свой расчёт здесь уже был и отставал
 // от здешнего — кнопка обещала 6424 × 8700 там, где выходило 6049 × 8192.
-// У сервера потолков нет вовсе (`targetLongestSideFor` в server.js), поэтому
-// предложение посчитать у нас называет своё число, а не то же самое.
+// У сервера потолок один — на сторону (`serverLongestSide` во frame.js);
+// потолка площади у него нет, холста ведь тоже нет. Поэтому предложение
+// посчитать у нас называет своё число, а не то же самое, и берёт его из того
+// же файла, по которому сервер потом и считает.
 const serverSize = () => {
   const { width, height } = framedSource();
-  return resultSize(width, height, targetLongestSideFor(width, height));
+  return resultSize(width, height, serverLongestSide(width, height));
 };
 
 // Вырастет ли картинка вообще. Порог — нижняя граница, и той, что уже
@@ -287,6 +329,7 @@ function renderGrowth() {
 }
 
 function renderEmpty() {
+  offered = false;
   els.choose.replaceChildren(button('Choose my picture', 'btn', chooseFile));
   // Нижнее место пусто: пока файла нет, делать нечего, и кнопка «Make my
   // wallpaper» под галочками обещала бы работу без предмета.
@@ -309,6 +352,7 @@ function renderEmpty() {
 }
 
 function renderMeasured() {
+  offered = false;
   // Кнопка называет работу целиком, одними и теми же словами при любых
   // галочках. Стояли здесь «Enlarge to 2160 × 3840» и «Resize to …», и глагол
   // приходилось выводить: увеличение перестало быть тем, что страница делает,
@@ -340,6 +384,7 @@ function renderMeasured() {
 }
 
 function renderWorking(note) {
+  offered = false;
   setStage('working');
   const waiting = button('Working…', 'btn');
   waiting.disabled = true;
@@ -361,6 +406,7 @@ function renderWorking(note) {
 // момент, когда оно имело значение, — причём молча: посетитель видел готовый
 // файл и ничего больше. Теперь решает он, и нажатием.
 function renderOffered(reason) {
+  offered = true;
   setStage('measured');
   els.choose.replaceChildren();
   els.actions.replaceChildren(
@@ -438,11 +484,20 @@ function localName(extension) {
 // Формат сохраняется, как и на сервере: принесли PNG — вернётся PNG.
 // Всё остальное отдаётся JPEG: четырёхкратный PNG с телефонной картинки
 // весит десятки мегабайт, и это уже не «тот же файл, только крупнее».
-function toFile(canvas, provider) {
-  const png = received.file.type === 'image/png';
+//
+// Тип приходит доводом, а не берётся у выбранного файла: на пути через сервер
+// холст набран не из него, а из присланного нам ответа, и Real-ESRGAN отдаёт
+// PNG на любой вход. По типу загруженного JPEG пережимался бы в JPEG и уезжал
+// под серверным именем `.png` — байты одни, расширение другое.
+//
+// Расширение возвращается наружу по той же причине: серверное имя оставляет
+// себе номер работы, но расширение обязано назвать то, что вышло.
+function toFile(canvas, provider, sourceType = received.file.type) {
+  const png = sourceType === 'image/png';
+  const extension = png ? '.png' : '.jpg';
   return canvas
     .convertToBlob(png ? { type: 'image/png' } : { type: 'image/jpeg', quality: 0.94 })
-    .then(blob => ({ blob, filename: localName(png ? '.png' : '.jpg'), provider }));
+    .then(blob => ({ blob, filename: localName(extension), extension, provider }));
 }
 
 // Считает картинку прямо здесь. Возвращает готовый файл или null, если браузер
@@ -557,8 +612,15 @@ async function restoreOnServer() {
     // исчезла вторая загрузка — раньше браузер скачивал у нас же то, что
     // сам только что прислал, чтобы наложить размытие и виньетку.
     if (!response.ok) throw new Error((await response.json()).error);
-    const filename = response.headers.get('X-Filename');
     let blob = await response.blob();
+    // Имени может не быть: заголовок наш собственный и нестандартный, и
+    // посредник, режущий незнакомые, оставит здесь пусто. Раньше это стоило бы
+    // слова «null» у скачанного файла; с тех пор как расширение правится на
+    // месте, пустое имя роняет весь путь в `catch` — то есть отказом накрывает
+    // готовую работу, которая существует в одном экземпляре и уже оплачена.
+    // Тогда имя собирается здесь, как в браузерном пути: номер работы в нём
+    // свой, зато файл доезжает.
+    let filename = response.headers.get('X-Filename') || localName(blob.type === 'image/png' ? '.png' : '.jpg');
     const extra = { ...chosen(), crop: false, treat: false };
     if (Object.values(extra).some(Boolean)) {
       const { finishLocally } = await import('./treat-local.js');
@@ -566,7 +628,12 @@ async function restoreOnServer() {
       const canvas = new OffscreenCanvas(enlarged.width, enlarged.height);
       canvas.getContext('2d').drawImage(enlarged, 0, 0);
       enlarged.close();
-      ({ blob } = await toFile(finishLocally(canvas, extra), 'server'));
+      // Формат берётся у присланных байтов, а не у выбранного файла: считал
+      // не этот браузер, и что вернулось — известно только из ответа.
+      const made = await toFile(finishLocally(canvas, extra), 'server', blob.type);
+      blob = made.blob;
+      // Расширение — от того, что вышло из пережатия; остальное имя серверное.
+      filename = filename.replace(/\.[^.]+$/, made.extension);
     }
     forget(resultUrl);
     resultUrl = URL.createObjectURL(blob);

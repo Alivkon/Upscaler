@@ -54,6 +54,11 @@ function blurred(canvas) {
   ctx.filter = `blur(${radius}px)`;
   const pad = radius * 3;
   ctx.drawImage(canvas, -pad, -pad, canvas.width + pad * 2, canvas.height + pad * 2);
+  // Фильтр снимается, а не остаётся на холсте: `getContext` у того же холста
+  // отдаёт тот же контекст, и следующий шаг рисовал бы через чужое размытие.
+  // Виньетка так и делала — её градиент размывался по краю на радиус, то есть
+  // ровно там, где виньетка должна быть самой глубокой, кадр оставался светлым.
+  ctx.filter = 'none';
   return out;
 }
 

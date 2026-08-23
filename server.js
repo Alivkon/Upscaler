@@ -10,7 +10,7 @@ import { IMAGES_DIR, ADJACENT, ensureImageDirectories, galleryItems, isImage } f
 import { upscaleAllowance } from './limits.js';
 import { collectionPage, errorPage, intakePage, licensePage, missingPage, robots, sitemap, workPage } from './pages.js';
 import { finish, phoneWindow } from './treatment.js';
-import { GATE_LONG, GATE_SHORT } from './public/frame.js';
+import { serverLongestSide } from './public/frame.js';
 import { MODEL as MODEL_FILE, WEIGHED } from './public/model-files.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -208,6 +208,21 @@ const html = (res, status, body) => res.status(status).type('html').send(body);
 // события, и одно не должно тянуть за собой другое.
 const shown = items => items.filter(item => !item.hidden);
 
+// Случайные `count` элементов, перемешиванием Фишера — Йетса до нужной длины.
+// `sort(() => Math.random() - 0.5)` короче, но даёт не равномерную выборку:
+// сравнение, отвечающее на один и тот же вопрос по-разному, ломает сортировку,
+// и первые элементы остаются первыми чаще прочих — ровно та беда, от которой
+// выборка и заводится.
+const sample = (items, count) => {
+  const pool = [...items];
+  const take = Math.min(count, pool.length);
+  for (let i = 0; i < take; i += 1) {
+    const j = i + Math.floor(Math.random() * (pool.length - i));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+  return pool.slice(0, take);
+};
+
 async function showCollection(_req, res, next) {
   try {
     html(res, 200, collectionPage({ items: shown(await galleryItems()), origin: SITE_ORIGIN }));
@@ -229,9 +244,15 @@ app.get('/w/:slug', async (req, res, next) => {
     // Соседи берутся только из показанных — в том числе на странице скрытой
     // работы: она сама с витрины снята, но вести с неё в коллекцию можно,
     // и вести стоит именно в ту коллекцию, которая есть.
-    const others = shown(items)
-      .filter(work => work !== item)
-      .slice(0, ADJACENT);
+    // Порядок — случайный, а не каталожный. Первые десять по каталогу на всех
+    // 114 страницах одни и те же: каталог пополняется с конца, и с любой
+    // работы уводили одни и те же соседи, а остальная коллекция снизу не
+    // показывалась никогда. Случайная выборка показывает её всю и заодно
+    // раскладывает внутренние ссылки по всем работам, а не по десяти.
+    const others = sample(
+      shown(items).filter(work => work !== item),
+      ADJACENT
+    );
     html(res, 200, workPage({ item, others, origin: SITE_ORIGIN }));
   } catch (error) {
     next(error);
@@ -305,24 +326,59 @@ async function createPrediction(image, scale) {
   return data;
 }
 
+// Снимок с телефона лежит в файле горизонтально, а рядом с ним стоит пометка
+// EXIF «повернуть». `metadata` отдаёт то, что лежит, а не то, что показывают,
+// и `extract` режет тоже лежащее: телефонный кадр вырезался поперёк картины,
+// а результат приезжал набок. Браузерный путь этой беды не знал —
+// `createImageBitmap` пометку исполняет, — то есть два пути расходились
+// на одном и том же файле, чего им нельзя.
+//
+// Поэтому пометка исполняется здесь и один раз, до всякого измерения: дальше
+// и меряют, и режут уже поднятую картинку, а самой пометки в ней больше нет.
+//
+// Стороны читаются заново, а не переставляются: перестановка была бы второй
+// записью правила EXIF, где первая уже есть у sharp.
+//
+// Цена — одно лишнее пересжатие, и только у файлов с пометкой: у остальных
+// буфер уходит к Replicate тем же, каким пришёл. Дешевле не выходит — пометку
+// нельзя исполнить, не переписав пиксели, а послать неисполненную значит
+// послать картинку набок.
+//
 // Обе стороны, а не одна: порог витрины двусторонний, и короткая сторона
-// решает не реже длинной (`targetLongestSideFor` ниже).
-async function readSize(file) {
-  const metadata = await sharp(file.buffer).metadata();
-  const width = metadata.width || 0;
-  const height = metadata.height || 0;
+// решает не реже длинной (`targetLongestSideFor` в public/frame.js).
+async function upright(file) {
+  const {
+    width = 0,
+    height = 0,
+    orientation = 1,
+    format
+  } = await sharp(file.buffer, {
+    limitInputPixels: false
+  }).metadata();
   if (!width || !height) throw new HttpError(400, 'The size of that image could not be read.');
-  return { width, height };
-}
-
-// Тот же порог и тот же счёт, что у браузерного пути
-// (`targetLongestSideFor` в public/upscale-local.js): размер результата один
-// на оба пути, и разойтись им нельзя — страница называет число до отправки.
-// Потому и числа берутся из одного файла, а не повторяются здесь.
-function targetLongestSideFor(width, height) {
-  const long = Math.max(width, height);
-  const short = Math.min(width, height);
-  return Math.max(long, GATE_LONG, Math.ceil((long * GATE_SHORT) / short));
+  if (orientation <= 1) return { file, width, height };
+  // Формат и качество называются вслух. Без них sharp пересжимает по своим
+  // умолчаниям, а не по тому, как был сжат вход: JPEG q95 4:4:4 возвращался
+  // как q80 4:2:0 и без ICC — 969 КБ шума превращались в 306 КБ. То есть файл
+  // с пометкой EXIF терял половину цветовой чёткости ровно перед моделью,
+  // которая нанята эту чёткость восстанавливать, — и платил за это только
+  // телефонный портрет, ради которого функция и написана.
+  //
+  // 95 и 4:4:4, а не «как было»: настоящее качество входа sharp не сообщает,
+  // и взять его неоткуда. Верх вилки дешевле промаха вниз — лишние килобайты
+  // уезжают к Replicate и там же кончаются, а срезанная цветность не
+  // возвращается ничем.
+  //
+  // PNG не назван: он и так без потерь, и умолчания ему не вредят.
+  const rotated = sharp(file.buffer, { limitInputPixels: false }).rotate().keepIccProfile();
+  const encoded =
+    format === 'jpeg'
+      ? rotated.jpeg({ quality: 95, chromaSubsampling: '4:4:4' })
+      : format === 'webp'
+        ? rotated.webp({ quality: 95 })
+        : rotated;
+  const { data, info } = await encoded.toBuffer({ resolveWithObject: true });
+  return { file: { ...file, buffer: data }, width: info.width, height: info.height };
 }
 
 // Real-ESRGAN принимает целочисленный множитель, поэтому берём ближайший
@@ -406,7 +462,7 @@ app.post('/api/upscale', upload.single('photo'), async (req, res, next) => {
     // ошибка разбора обязана падать в него, а не в «обработать».
     const treat = req.body.treat === 'true';
     const crop = req.body.crop === 'true';
-    const { width, height } = await readSize(req.file);
+    const { file, width, height } = await upright(req.file);
     // Кадр режется ДО отправки, как и в браузере (`upscaleInBrowser`).
     // Здесь у этого есть и своя цена: за пиксели, которые мы выбросим сразу
     // после, Replicate берёт наравне с остальными, а у широкой картинки их
@@ -414,15 +470,15 @@ app.post('/api/upscale', upload.single('photo'), async (req, res, next) => {
     // готовому кадру до него не хватит.
     const window = crop ? phoneWindow(width, height) : null;
     const framed = window
-      ? { ...req.file, buffer: await sharp(req.file.buffer, { limitInputPixels: false }).extract(window).toBuffer() }
-      : req.file;
+      ? { ...file, buffer: await sharp(file.buffer, { limitInputPixels: false }).extract(window).toBuffer() }
+      : file;
     const [framedWidth, framedHeight] = window ? [window.width, window.height] : [width, height];
-    const targetLongestSide = targetLongestSideFor(framedWidth, framedHeight);
+    const targetLongestSide = serverLongestSide(framedWidth, framedHeight);
     const scale = realEsrganScale(Math.max(framedWidth, framedHeight), targetLongestSide);
     allowance.spend();
     const prediction = await createPrediction(asDataUrl(framed), scale);
     const resultUrl = await waitForResult(prediction);
-    const made = await finishedImage(resultUrl, req.file, { targetLongestSide, treat });
+    const made = await finishedImage(resultUrl, file, { targetLongestSide, treat });
     // Ответ — сама картинка, а не адрес картинки. Имя едет заголовком:
     // по нему берётся номер работы и им же называется скачанное, и собрано
     // оно из тех же частей, что и в браузерном пути (`localName`).
