@@ -67,6 +67,28 @@ const specLine = parts =>
 // — примерно 248 px, и в одну строку встают вплоть до 300 px экрана.
 const restoreLink = '<a class="link" href="/restore">Make your own wallpaper up to 4×</a>';
 
+// Google Tag Manager. Контейнер один на весь сайт, поэтому он в макете,
+// а не в каждой странице по отдельности: страниц у нас пять видов, и счётчик,
+// добавляемый вручную, рано или поздно окажется не на всех.
+//
+// Идентификатор не секрет — он уезжает в разметке любому посетителю, — так что
+// в `.env` ему не место: переменная окружения намекала бы на тайну и заводила
+// бы способ выложить сайт без счётчика, о котором никто не узнает.
+const GTM_ID = 'GTM-NNQTHZS2';
+
+// Скрипт стоит как можно выше в `<head>`, до заголовка и шрифтов: тег, опущенный
+// ниже, теряет визиты тех, кто ушёл раньше, чем очередь загрузки дошла до него.
+// `async` — из снипета Google и специально: счётчик не должен задерживать отрисовку.
+const gtmHead = `<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
+j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
+'https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);
+})(window,document,'script','dataLayer','${GTM_ID}');</script>`;
+
+// Запасной путь для браузера без скриптов — сразу за `<body>`, как требует Google.
+const gtmBody = `<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=${GTM_ID}"
+height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>`;
+
 // `canonical` необязателен, и это про страницу «не найдено». Канонический адрес
 // — заявление «настоящий адрес этой страницы вот такой»; со страницы 404,
 // указывающей на указатель, оно читается как «здесь на самом деле указатель»,
@@ -109,6 +131,7 @@ function layout({
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
+    ${gtmHead}
     <title>${escape(title)}</title>
     <meta name="description" content="${escape(description)}" />
     ${noindex ? '<meta name="robots" content="noindex, follow" />' : ''}
@@ -138,6 +161,7 @@ function layout({
     ${ld ? `<script type="application/ld+json">${JSON.stringify(ld, null, 2)}</script>` : ''}
   </head>
   <body>
+    ${gtmBody}
     <header class="masthead">
       <a class="masthead__mark" href="/">${SITE_NAME}</a>
       <nav class="masthead__nav">

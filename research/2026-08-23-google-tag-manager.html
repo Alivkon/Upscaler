@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Google Tag Manager на сайте — 2026-08-23</title>
+  <style>
+    body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial;line-height:1.55;padding:24px;max-width:860px;margin:0 auto;color:#111}
+    h1{margin-bottom:4px} h2{margin-top:32px;border-bottom:1px solid #e2e8f0;padding-bottom:4px}
+    h3{margin-top:24px}
+    table{border-collapse:collapse;margin:12px 0;width:100%}
+    th,td{border:1px solid #d8dee4;padding:6px 10px;text-align:left;vertical-align:top}
+    th{background:#f6f8fa}
+    .note{margin:18px 0;padding:12px;background:#f6f8fa;border-left:4px solid #2b6cb0}
+    .warn{margin:18px 0;padding:12px;background:#fffaf0;border-left:4px solid #dd6b20}
+    code{background:#f6f8fa;padding:1px 5px;border-radius:3px}
+    pre{background:#f6f8fa;padding:12px;border-radius:4px;overflow-x:auto}
+    pre code{background:none;padding:0}
+  </style>
+</head>
+<body>
+  <h1>Google Tag Manager на сайте</h1>
+  <p>Дата: 23 августа 2026</p>
+
+  <div class="note">
+    <strong>Главное:</strong> контейнер <code>GTM-NNQTHZS2</code> подключён один раз
+    в <code>layout()</code> внутри <code>pages.js</code>, поэтому он есть на всех пяти
+    видах страниц сразу. Идентификатор — константа в коде, не переменная окружения.
+  </div>
+
+  <h2>Цель</h2>
+  <p>Поставить контейнер GTM <code>GTM-NNQTHZS2</code> на все страницы сайта.</p>
+
+  <h2>Принятые решения</h2>
+
+  <h3>Тег живёт в макете, а не в страницах</h3>
+  <p>Разметку отдаёт <code>pages.js</code>, и все пять видов документов — указатель,
+  страница работы, приёмка, лицензия, «не найдено» — проходят через одну функцию
+  <code>layout()</code>. Вставка туда закрывает их разом; вставка в каждую страницу
+  отдельно однажды закончилась бы страницей без счётчика, и заметили бы это
+  по дырке в отчёте, а не в коде.</p>
+
+  <h3>Идентификатор — константа <code>GTM_ID</code>, не переменная окружения</h3>
+  <p>Он всё равно уезжает в разметке любому посетителю, то есть секретом не является.
+  В <code>.env</code> он бы намекал на тайну и заводил бы способ выложить сайт
+  без счётчика, о котором никто не узнает.</p>
+
+  <h3>Скрипт стоит как можно выше в <code>&lt;head&gt;</code></h3>
+  <p>Сразу за <code>charset</code> и <code>viewport</code>, до <code>&lt;title&gt;</code>,
+  шрифтов и стилей. Тег, опущенный ниже, теряет визиты тех, кто ушёл раньше, чем
+  очередь загрузки до него дошла. Загрузка асинхронная (<code>j.async=true</code>
+  в снипете Google), так что отрисовку он не задерживает.
+  <code>&lt;noscript&gt;</code> с iframe — первым элементом <code>&lt;body&gt;</code>,
+  как требует Google.</p>
+
+  <p>Снипет вставлен ровно тем текстом, который выдал GTM: переносы строк внутри
+  <code>&lt;script&gt;</code> сохранены, чтобы его можно было сверить с оригиналом глазами.</p>
+
+  <h2>Изменённые файлы</h2>
+  <table>
+    <tr><th>Файл</th><th>Что</th></tr>
+    <tr>
+      <td><code>pages.js</code></td>
+      <td>константы <code>GTM_ID</code>, <code>gtmHead</code>, <code>gtmBody</code>
+      рядом с <code>restoreLink</code>; <code>${gtmHead}</code> после
+      <code>&lt;meta name="viewport"&gt;</code>, <code>${gtmBody}</code> после
+      <code>&lt;body&gt;</code></td>
+    </tr>
+  </table>
+
+  <h2>Проверка</h2>
+  <p>Форматирование:</p>
+<pre><code>$ npx prettier --check server.js gallery.js limits.js pages.js works.js treatment.js
+Checking formatting...
+All matched files use Prettier code style!</code></pre>
+
+  <div class="warn">
+    <code>yarn verify</code> целиком падает не на коде, а на данных каталога,
+    и падал до этой задачи: <code>vl-0371.json</code> нет в <code>order.json</code>,
+    у <code>vl-0361.json</code> пуст <code>provenance.creator</code>.
+    К GTM это отношения не имеет.
+  </div>
+
+  <p>Живой сервер, число вхождений <code>GTM-NNQTHZS2</code> в ответе
+  (ожидается 2 — скрипт и noscript):</p>
+<pre><code>== /restore                                          200  2
+== /license                                          200  2
+== /nope                                             404  2
+== /w/the-old-christiansborg-hammershoi-iphone-wallpaper  2</code></pre>
+
+  <p>Положение в документе на <code>/</code>:</p>
+<pre><code>5:    &lt;meta name="viewport" content="width=device-width,initial-scale=1" /&gt;
+6:    &lt;script&gt;(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
+...
+39:  &lt;body&gt;
+40:    &lt;noscript&gt;&lt;iframe src="https://www.googletagmanager.com/ns.html?id=GTM-NNQTHZS2"</code></pre>
+
+  <h2>Известные ограничения</h2>
+  <ul>
+    <li>Что именно контейнер собирает, задаётся в интерфейсе GTM, а не здесь.
+    Сайт только подключает контейнер; ни одного события в <code>dataLayer</code>
+    он пока не кладёт.</li>
+    <li>Согласия на куки на сайте нет. Пока контейнер пуст, ставить нечего,
+    но как только внутрь него попадёт что-то, пишущее куки посетителям из ЕС,
+    вопрос встанет — см. <a href="../LEGAL.md">LEGAL.md</a>.</li>
+    <li>CSP на сайте нет, поэтому загрузке с <code>googletagmanager.com</code>
+    ничто не мешает. Если CSP появится, домен придётся внести в
+    <code>script-src</code> и <code>frame-src</code>.</li>
+  </ul>
+</body>
+</html>
