@@ -6,11 +6,12 @@ import compression from 'compression';
 import express from 'express';
 import multer from 'multer';
 import sharp from 'sharp';
-import { IMAGES_DIR, GENERATED_DIR, ADJACENT, ensureImageDirectories, galleryItems, isImage } from './gallery.js';
+import { IMAGES_DIR, ADJACENT, ensureImageDirectories, galleryItems, isImage } from './gallery.js';
 import { upscaleAllowance } from './limits.js';
 import { collectionPage, errorPage, intakePage, licensePage, missingPage, robots, sitemap, workPage } from './pages.js';
 import { finish, phoneWindow } from './treatment.js';
 import { GATE_LONG, GATE_SHORT } from './public/frame.js';
+import { MODEL as MODEL_FILE, WEIGHED } from './public/model-files.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // Канонический адрес. Умолчание — настоящий домен, а не локальный сервер:
@@ -19,7 +20,16 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // обесценила бы разом всё, ради чего страницы собираются на сервере.
 // Для местной работы переменная задаётся в `.env`.
 const SITE_ORIGIN = (process.env.SITE_ORIGIN || 'https://tessarum.com').replace(/\/$/, '');
-const MAX_FILE_SIZE = 10 * 1024 * 1024;
+// Предел ТЕЛА ЗАПРОСА, а не правило о картинках. Файл целиком лежит в памяти
+// (`memoryStorage`), уезжает в Replicate строкой base64 — ещё треть сверху, —
+// и сколько таких придёт разом, сервер не решает. Поэтому число здесь есть,
+// но названо оно нашей памятью, а не чужой картинкой: в браузере, где считает
+// машина посетителя, веса не спрашивают вовсе (public/intake.js).
+//
+// 64 МБ — втрое больше самой тяжёлой нашей плиты (20 МБ), то есть о свою же
+// работу этот предел не спотыкается. Отказ по нему говорит про отправку нам,
+// а не про формат: формат отсеивает `fileFilter`, и до сюда он не доходит.
+const MAX_FILE_SIZE = 64 * 1024 * 1024;
 const ACCEPTED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 const FILE_NOT_FOUND = 'File not found.';
 
@@ -128,6 +138,34 @@ app.use(
     setHeaders: res => res.setHeader('Cache-Control', 'public, max-age=31536000, immutable')
   })
 );
+// Сколько весит то, что качается перед первой плиткой. Числа уезжают
+// в разметку, потому что взять их в браузере неоткуда: `compression` жмёт
+// эти файлы на лету, `Content-Length` в ответе нет вовсе, и качающий
+// двадцать шесть мегабайт не может сказать, сколько осталось. Молчаливое
+// ожидание читалось как поломка (public/intake.js).
+//
+// Не одно число, а список: wasm-файлов два, и какой из них спросят, решится
+// уже в браузере — по тому, дал ли он адаптер видеокарты (model-files.js).
+// Сервер поэтому взвешивает оба, а складывает нужные тот, кто их и качает.
+//
+// Считается один раз на старте и с собственного диска. Файла нет — нет
+// и записи: приёмка тогда покажет работу без доли, но покажет.
+const ORT_DIST = 'node_modules/onnxruntime-web/dist';
+const LOAD_BYTES = Object.fromEntries(
+  (
+    await Promise.all(
+      [...WEIGHED.map(name => [name, `${ORT_DIST}/${name}`]), [MODEL_FILE, `public${MODEL_FILE}`]].map(
+        async ([name, file]) => [
+          name,
+          await fs.stat(path.join(__dirname, file)).then(
+            i => i.size,
+            () => 0
+          )
+        ]
+      )
+    )
+  ).filter(([, size]) => size > 0)
+);
 // Правила обработки — те же файлы, что читает сервер. Приёмка считает галочки
 // «приглушить» и «кадр под телефон» на стороне посетителя, и читать их она
 // обязана отсюда: копия правил в `public/` означала бы, что витрина и приёмка
@@ -200,7 +238,9 @@ app.get('/w/:slug', async (req, res, next) => {
   }
 });
 
-app.get('/restore', (_req, res) => html(res, 200, intakePage({ origin: SITE_ORIGIN, runtime: ORT_VERSION })));
+app.get('/restore', (_req, res) =>
+  html(res, 200, intakePage({ origin: SITE_ORIGIN, runtime: ORT_VERSION, runtimeBytes: JSON.stringify(LOAD_BYTES) }))
+);
 
 app.get('/license', (_req, res) => html(res, 200, licensePage({ origin: SITE_ORIGIN })));
 
@@ -311,7 +351,20 @@ async function waitForResult(prediction) {
   throw new HttpError(504, 'Timed out waiting for the result. Try again.');
 }
 
-async function saveResult(sourceUrl, file, { targetLongestSide, treat }) {
+// Готовое возвращается байтами в ответе и на диск не ложится.
+//
+// Клали его в `images/generated`, и адрес этого файла был единственным
+// способом отдать результат. Цена была не в месте на диске: файл оставался
+// там навсегда — уборки нет ни в коде, ни в cron, — а это чужая фотография,
+// и хранить её нам незачем ни дня. Заодно исчезла та вилка, из-за которой
+// скачанное и сохранённое расходились: размытие и виньетку сервер считать
+// не умеет, браузер накладывал их поверх ответа, и у нас оставалась версия
+// без них (research/2026-08-23-…).
+//
+// Обратная сторона названа: результат существует ровно один раз. Оборвётся
+// ответ на середине — предсказание Replicate оплачено и потеряно, второй
+// попытки по адресу больше нет.
+async function finishedImage(sourceUrl, file, { targetLongestSide, treat }) {
   const response = await fetch(sourceUrl, { headers: apiHeaders() });
   if (!response.ok) throw new HttpError(502, 'The finished image could not be downloaded from Replicate.');
   const contentType = response.headers.get('content-type') || file.mimetype;
@@ -329,14 +382,13 @@ async function saveResult(sourceUrl, file, { targetLongestSide, treat }) {
   // тот же буфер и ничего не пережимает.
   // Кадр уже вырезан — до Replicate; здесь остаётся только отделка.
   output = await finish(output, { treat });
-  await fs.writeFile(path.join(GENERATED_DIR, filename), output);
-  return filename;
+  return { buffer: output, filename, contentType };
 }
 
 app.post('/api/upscale', upload.single('photo'), async (req, res, next) => {
   let allowance = null;
   try {
-    if (!req.file) return res.status(400).json({ error: 'Choose a JPG, PNG or WebP up to 10 MB.' });
+    if (!req.file) return res.status(400).json({ error: 'Choose a JPG, PNG or WebP.' });
     // Токен — до ворот счёта. Без него ни один запрос до Replicate не доходит,
     // но место в счётчике занимает каждый: полсотни таких заперли бы сайт
     // на сутки за вызовы, которых не было, и открыл бы его только перезапуск.
@@ -370,13 +422,23 @@ app.post('/api/upscale', upload.single('photo'), async (req, res, next) => {
     allowance.spend();
     const prediction = await createPrediction(asDataUrl(framed), scale);
     const resultUrl = await waitForResult(prediction);
-    const filename = await saveResult(resultUrl, req.file, { targetLongestSide, treat });
-    res.json({
-      filename,
-      url: `/images/generated/${encodeURIComponent(filename)}`,
-      taskId: prediction.id,
-      model: MODEL.title
-    });
+    const made = await finishedImage(resultUrl, req.file, { targetLongestSide, treat });
+    // Ответ — сама картинка, а не адрес картинки. Имя едет заголовком:
+    // по нему берётся номер работы и им же называется скачанное, и собрано
+    // оно из тех же частей, что и в браузерном пути (`localName`).
+    // Внутри — только `[a-zA-Z0-9_-]`, точка и цифры времени, поэтому
+    // кавычки в `filename=` экранировать нечего.
+    res.setHeader('Content-Type', made.contentType);
+    res.setHeader('Content-Disposition', `attachment; filename="${made.filename}"`);
+    // Заголовок свой, потому что читает его скрипт, а не браузер: разбирать
+    // `Content-Disposition` в JS значит писать разбор чужой грамматики ради
+    // одного поля.
+    res.setHeader('X-Filename', made.filename);
+    res.setHeader('X-Model', MODEL.title);
+    res.setHeader('X-Task-Id', prediction.id);
+    // Хранить нечего, кэшировать нечего: адрес один на все работы.
+    res.setHeader('Cache-Control', 'no-store');
+    res.end(made.buffer);
   } catch (error) {
     next(error);
   } finally {
@@ -424,7 +486,7 @@ app.use((error, req, res, next) => {
   // падением поверх первого. Дальше разбирается express.
   if (res.headersSent) return next(error);
   if (error instanceof multer.MulterError) {
-    return fail(req, res, 400, 'JPG, PNG and WebP up to 10 MB.');
+    return fail(req, res, 400, 'That file is too big to send us.');
   }
   if (error instanceof HttpError) {
     // Ответ посетителю сам по себе следа не оставляет: во время аварии

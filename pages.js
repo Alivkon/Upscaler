@@ -96,6 +96,7 @@ function layout({
   ld,
   script,
   runtime,
+  runtimeBytes,
   current,
   noindex = false
 }) {
@@ -130,6 +131,10 @@ function layout({
     <link href="https://fonts.googleapis.com/css2?family=Sometype+Mono:wght@400..500&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="/styles.css" />
     ${runtime ? `<meta name="ort-version" content="${escape(runtime)}" />` : ''}
+    <!-- Вес того, что качает первая картинка. Сервер видит эти файлы у себя
+         на диске, браузер — нет: отдаются они сжатыми на лету, и длины в
+         ответе нет. Без этого числа полоска загрузки невозможна. -->
+    ${runtimeBytes ? `<meta name="ort-bytes" content="${escape(String(runtimeBytes))}" />` : ''}
     ${ld ? `<script type="application/ld+json">${JSON.stringify(ld, null, 2)}</script>` : ''}
   </head>
   <body>
@@ -357,7 +362,6 @@ const inviteCard = () => `<figure class="item item--invite">
           <figcaption class="caption">
             <h3 class="caption__title"><a href="/restore">Your picture</a></h3>
             <p class="caption__by"></p>
-            <p class="caption__spec">${specLine(['Up to 4× bigger'])}</p>
             <a class="link" href="/restore">Start →</a>
           </figcaption>
         </figure>`;
@@ -546,10 +550,10 @@ const beforeFrame = item => `
 // Файлы, которые страница предлагает кроме того, что стоит в проёме.
 //
 // Первой — целая работа: её просили назвать прямо, и она здесь не запасной
-// вариант, а ответ тому, кого кадр не устроил. Обработку она несёт ту же,
-// что и кадр, — приглушение и обесцвечивание идут по плите, а кроят уже
-// обработанную, — и сказано это вслух: иначе «оригинал» читается как
-// «необработанный», и скачавший получит не то, что видел.
+// вариант, а ответ тому, кого кадр не устроил. Обработку она несёт ту же, что
+// и кадр, — приглушение и обесцвечивание идут по плите, а кроят уже
+// обработанную, — и видно это по самой плитке: она стоит рядом с кадром, тем
+// же светом.
 //
 // Кадры 9:16 и 16:9 стоят рядом настоящими картинками, а не ссылками словами:
 // в поиск по картинкам попадает файл из `src`, и названный только в карте
@@ -564,9 +568,21 @@ const beforeFrame = item => `
 // прочтёт подряд три одинаковых абзаца, а поиск по картинкам не поймёт, чем
 // файлы отличаются, кроме адреса. Отличаются же они ровно кадром, и про кадр
 // в описании и сказано.
-// Одна плитка списка файлов: картинка мелкой копией, подпись, размер. Общая у
-// кадров и у версий, потому что предлагаются они одинаково — и различаться они
-// должны подписью, а не вёрсткой.
+// Одна плитка списка файлов: мелкая копия и подпись, если ей есть что сказать.
+// Общая у кадров и у версий, потому что предлагаются они одинаково.
+//
+// ПОДПИСАН РЯД КАДРОВ, А РЯД ВЕРСИЙ — НЕТ, и размеры в пикселях убраны отовсюду
+// (23.08.2026). Кадры отвечают на вопрос «какой формы», а форма на полке в 96 px
+// как раз и не читается: 9:16 и 9:19.5 стоят почти одинаковыми полосками, и
+// выбирают между ними не глазом, а числом — тем самым, которое человек знает
+// про свой экран. «Uncropped» стоит там же и по той же причине: это ответ
+// на тот же вопрос, только словом, потому что у целой работы своей пропорции
+// нет — она у каждой своя.
+//
+// Версии отвечают на вопрос «какого света», и на него плитка отвечает сама:
+// приглушённая рядом с обычной видна без подписи. Имя обработки при этом
+// не пропало, а осталось в `alt` — его читают экранный диктор и поиск
+// по картинкам, то есть те, кому смотреть нечем.
 //
 // ПЛИТКА ОТКРЫВАЕТ ФАЙЛ, А НЕ КЛАДЁТ ЕГО В ЗАГРУЗКИ. Проём — 96 px, и по такой
 // копии не видно ни кадра, ни обработки: `download` заставлял решать вслепую и
@@ -576,17 +592,18 @@ const beforeFrame = item => `
 // остаётся кнопкой: она отдаёт файл, который посетитель уже видит в проёме.
 const fileTile = row => `<li class="alternates__file">
                 <a href="${escape(row.file.url)}">
-                  <span class="alternates__shot"><img src="${escape(row.file.url)}"${shownWith(row.file.copies, '96px')} alt="${escape(row.alt)}" width="${row.file.width}" height="${row.file.height}" loading="lazy" /></span>
-                  <span class="alternates__label">${escape(row.label)}</span>
-                  <span class="alternates__size">${escape(row.note)}</span>
+                  <span class="alternates__shot"><img src="${escape(row.file.url)}"${shownWith(row.file.copies, '96px')} alt="${escape(row.alt)}" width="${row.file.width}" height="${row.file.height}" loading="lazy" /></span>${
+                    row.label ? `\n                  <span class="alternates__label">${escape(row.label)}</span>` : ''
+                  }
                 </a>
               </li>`;
 
 // Как обработка называется вслух. Внутренние имена — `ceil`, `snap`, `niobe` —
 // это имена настроек, по которым их выбирали, и посетителю они не говорят
-// ничего: подпись должна называть РЕЗУЛЬТАТ, а не файл настроек. Ключи те же,
-// что штампует генератор в манифест, — иначе версия появится без подписи.
-const TREATMENT_NAMES = {
+// ничего: имя должно называть РЕЗУЛЬТАТ, а не файл настроек. Ключи те же, что
+// штампует генератор в манифест, — иначе версия выпадет из ряда: имени нет,
+// значит, и сказать в `alt`, чем этот файл отличается, нечем.
+const BASE_TREATMENT_NAMES = {
   none: 'As scanned',
   bal: 'Colour balanced',
   snap: 'Muted',
@@ -594,6 +611,18 @@ const TREATMENT_NAMES = {
   ceil: 'Dimmed',
   niobe: 'Dimmed, soft highlights'
 };
+
+// У каждой обработки есть двойник с виньеткой — `snap-vig` и так далее, —
+// и имя ему даётся тем же способом, каким генератор даёт правило: приставкой
+// к исходному. Писать шесть вторых имён руками значило бы обещать, что
+// «Muted» и «Muted, darkened corners» разойдутся по смыслу; они не разойдутся,
+// углы гаснут поверх той же обработки.
+const TREATMENT_NAMES = Object.fromEntries(
+  Object.entries(BASE_TREATMENT_NAMES).flatMap(([id, name]) => [
+    [id, name],
+    [`${id}-vig`, `${name}, darkened corners`]
+  ])
+);
 
 // Та же картина в других обработках — 22.08.2026, «if several are picked then i
 // want all the versions».
@@ -612,22 +641,16 @@ const versions = item => {
     .map(version => {
       const file = version.crops?.tall || version;
       const label = TREATMENT_NAMES[version.treatment];
-      return (
-        label && { file, label, note: formatDims(file.width, file.height), alt: `${name}, ${label.toLowerCase()}` }
-      );
+      return label && { file, alt: `${name}, ${label.toLowerCase()}` };
     })
     .filter(Boolean);
   if (!rows.length) return '';
-  const here = TREATMENT_NAMES[item.treatment];
   return `
           <div class="alternates">
             <h2 class="alternates__heading">Other versions</h2>
             <ul class="alternates__row">
               ${rows.map(fileTile).join('\n              ')}
             </ul>
-            <p class="alternates__note">
-              The same painting, treated differently.${here ? ` The one above is ${here.toLowerCase()}.` : ''}
-            </p>
           </div>`;
 };
 
@@ -642,14 +665,13 @@ const versions = item => {
 // описание пина, и в его словаре обои называются так. В `<title>` при этом
 // стоит «wallpaper» — слово выдачи. Одно и то же не сказано дважды, но обоих
 // слов у работы по одному.
-const alternates = (item, plateSize) => {
+const alternates = item => {
   const name = item.title.split(' — ')[0];
   const widePlate = item.width > item.height;
   const rows = [
     {
       file: item,
       label: 'Uncropped',
-      note: plateSize,
       alt: `${name}, the whole painting${widePlate ? ', desktop background' : ''}`
     },
     {
@@ -659,34 +681,22 @@ const alternates = (item, plateSize) => {
       // PHONE_RATIO), и «чуть плотнее на своём» — ровно то, чем он остался.
       file: item.crops?.phone,
       label: '9:19.5',
-      note: item.crops?.phone && formatDims(item.crops.phone.width, item.crops.phone.height),
       alt: `${name}, cropped to 9:19.5, tall phone background`
     },
     {
       file: item.crops?.wide,
       label: '16:9',
-      note: item.crops?.wide && formatDims(item.crops.wide.width, item.crops.wide.height),
       alt: `${name}, cropped to 16:9, desktop background`
     }
   ].filter(row => row.file);
   // Одна работа без единого кадра — это работа, у которой в проёме и так
   // стоит плита. Предлагать её же второй раз незачем.
   if (rows.length === 1 && !item.crops?.tall) return '';
-  // Про обработку сказано только там, где обработка есть. У 35 работ музейного
-  // манифеста стоит `none`, у плиты без записи — null, и обещание «та же
-  // обработка, что у кадра» на них означало бы обработку, которой не было:
-  // посетитель пошёл бы искать в плите разницу со сканом, а её нет. Кадр и
-  // плита у таких работ отличаются только рамкой, и второе предложение —
-  // «выбери свой кадр» — говорит об этом само.
-  const treated = item.treatment && item.treatment !== 'none';
   return `
           <div class="alternates">
             <ul class="alternates__row">
               ${rows.map(fileTile).join('\n              ')}
             </ul>
-            <p class="alternates__note">
-              ${treated ? 'The uncropped painting carries the same treatment as the crop above.\n              ' : ''}Download it and choose your own crop.
-            </p>
           </div>`;
 };
 
@@ -696,7 +706,6 @@ export function workPage({ item, others, origin }) {
   // получает по кнопке именно этот файл. Плита названа отдельно и ниже.
   const file = offered(item);
   const size = formatDims(file.width, file.height);
-  const plateSize = formatDims(item.width, item.height);
   // «4K» стоит в заголовке вкладки и в описании, но не на самой странице.
   // Для поиска `3840` и `4k` — разные строки: работа, у которой сказан только
   // размер, по запросу «4k wallpaper» не совпадает ни с чем, а `4k` — самый
@@ -739,31 +748,25 @@ export function workPage({ item, others, origin }) {
   //
   // В `<title>` описание при этом остаётся целиком: там его читает выдача.
   const named = Boolean(kind);
-  // Имя стоит в `<h1>`, номер уехал в конец строки характеристик — и это
-  // обмен местами, а не потеря. В `<h1>` был номер: «VL·0205» — заголовок,
-  // не говорящий ни поиску, ни человеку, пришедшему из поиска, ровно
-  // ничего, а тег этот читается как «о чём страница». Музейная этикетка
-  // устроена так же: сверху название, номер поступления — мелким шрифтом
-  // внизу.
+  // Строки характеристик под заголовком нет — 23.08.2026. Стояли размер, тип,
+  // вес и номер: четыре факта о файле на странице, где файл виден и берётся
+  // одной кнопкой. Размер при этом не потерян — он остался в `<title>` и в
+  // описании, то есть в выдаче, где выбирают, идти сюда или нет; номер работы
+  // остаётся заголовком у тех, у кого нет имени.
   //
-  // В строке характеристик номер стоит последним, а не первым: `.lead` —
-  // это первый элемент строки, и он отдан разрешению намеренно (styles.css,
-  // «единственный факт, которого не даёт превью в поиске»). Номер, вставший
-  // первым, отобрал бы у разрешения подсветку.
   // «Restored from 750 × 741» — утверждение, и проверить его можно только под
   // стеклом. Поэтому подсказка стоит не у кнопки (кнопки и нет: жест живёт на
   // самой работе) и не отдельной строкой, а вплотную к утверждению, которое
   // ею и проверяют. Условие на `before`, а не на `from`: показывает стекло,
   // а размеры — только повод его открыть.
   //
-  // Множитель добавлен к утверждению не ради числа, а ради глагола. Это
-  // единственное место на сайте, где «restore» показано в действии, — а ниже,
-  // в `outro`, тем же словом сделано предложение. Кто прочёл «Restored 5.2×
-  // from 750 × 741», тот знает, что предлагают. Считается он по длинной
-  // стороне: пропорцию увеличение сохраняет точно (у всех 51 работы с `from`
-  // множители по сторонам совпадают), и одного числа хватает. Знак после
-  // запятой один — строкой выше стоит «3.5 MB», доля здесь в том же роде,
-  // а «5×» вместо 5.18 читалось бы как круглое обещание, которого никто
+  // Множитель добавлен к утверждению не ради числа, а ради глагола: это
+  // единственное место на сайте, где «restore» показано в действии, — и после
+  // того, как предложение сделать своё ушло со страницы, единственное, где
+  // это слово вообще встречается. Считается он по длинной стороне: пропорцию
+  // увеличение сохраняет точно (у всех 51 работы с `from` множители по
+  // сторонам совпадают), и одного числа хватает. Знак после запятой один:
+  // «5×» вместо 5.18 читалось бы как круглое обещание, которого никто
   // не давал.
   const restored = item.from
     ? `Restored ${Math.round((item.width / item.from[0]) * 10) / 10}× from ${formatDims(...item.from)}`
@@ -793,17 +796,11 @@ export function workPage({ item, others, origin }) {
   const shownPlate = shownWith(file.copies, plateSizes(file));
   // Под чертой — только то, что утверждается об этой работе: из чего она
   // сделана, кем и на каких условиях отдаётся. Предложение сделать своё
-  // стояло здесь же и читалось как ещё одно такое утверждение: черта
-  // на этой странице и означает «ниже говорят о работе». У работ генератора
-  // под чертой не оставалось больше ничего, и черта обрамляла один глагол,
-  // которому не за что зацепиться, — отсюда и «непонятно, что значит
-  // restore» там, где ничего не реставрировали.
-  //
-  // Предложение переехало к Download, где живут действия: рядом с кнопкой
-  // оно и читается как второе действие, а не как третья характеристика.
-  // Ниже черты — не годилось; в `outro`, как на указателе, — годилось бы,
-  // но там оно оказалось бы под сеткой «ещё из коллекции», то есть ниже
-  // экрана на каждой из 211 страниц. Просили ясности, а не убрать призыв.
+  // стояло сперва здесь и читалось как ещё одно такое утверждение, потом
+  // переехало к Download — а 23.08.2026 ушло со страницы работы вовсе:
+  // человек пришёл за картинкой, взял её и не обязан по дороге узнавать,
+  // что тут ещё умеют. Приглашение осталось в шапке («Make your own») и
+  // на странице прав — там, где его читают нарочно.
   //
   // А блок, которому нечего сказать, не рисуется вовсе: черта без
   // содержания — обещание, что содержание есть.
@@ -812,35 +809,6 @@ export function workPage({ item, others, origin }) {
       ? `<p class="terms__line">${restored}${comparable ? '<span class="terms__hint">Click for full size, hold to compare</span>' : ''}</p>`
       : ''
   }${provenance(item, name)}`;
-  // Предложение стоит у Download постоянно и тихо, а как только файл взяли —
-  // отвечает вслух: до скачивания такая реплика мешала бы тому, за чем
-  // пришли, а после уже ничему не мешает и попадает в единственную секунду,
-  // когда посетитель доволен и никуда не торопится.
-  //
-  // Довод не сочинён, а взят с этой же страницы: размер лежит строкой выше,
-  // в характеристиках, но повторён здесь нарочно — рядом с «too small»
-  // он перестаёт быть справкой и становится сравнением, и объяснять выгоду
-  // отдельной строкой уже не нужно.
-  //
-  // Сказано «Downloaded at 3887 × 3840», а не «Yours at 3887 × 3840», как
-  // было сперва. «Yours at …» — оборот ценника («yours at $19.99»), и
-  // читался он не «оно ваше, вот такого размера», а «отдаём вот за столько»:
-  // размер вставал на место цены. Первое слово реплики должно называть
-  // случившееся, иначе всё остальное в ней не к чему прицепить. Заодно
-  // «one» во второй фразе получил то, к чему относится.
-  //
-  // Регистр при этом ровно тот же, что у строк состояния в приёмке —
-  // «No image yet», «Result — 2880 × 3840», «Working…»: сайт и раньше
-  // говорил о состоянии дел просто и без украшений.
-  //
-  // Реплика приходит с сервера скрытой, а не собирается скриптом: тексты
-  // на сайте живут здесь, рядом друг с другом, и это единственное место,
-  // где их держат. Раскрывает её work.js, по нажатию на Download.
-  const offer = `
-            <div class="offer" id="work-offer">
-              <p class="offer__note" role="status"><span>Downloaded at ${size}.<br />Have one that's too small to use?</span></p>
-              <p class="offer__line">${restoreLink}</p>
-            </div>`;
   return layout({
     current: 'collection',
     // Снятая с витрины работа отвечает как прежде, но выпадает из выдачи.
@@ -870,14 +838,12 @@ export function workPage({ item, others, origin }) {
         <div class="label">
           <div class="caption">
             <h1 class="caption__title">${escape(named ? name : item.ref)}</h1>
-            <p class="caption__spec">${specLine([size, formatType(file.url), formatBytes(file.bytes), named ? item.ref : ''])}</p>
             <div class="actions">
               <a class="btn" href="${escape(file.url)}" download="${escape(file.filename)}">Download</a>
             </div>
-            ${offer}
           </div>
           ${terms ? `<div class="terms">${terms}</div>` : ''}
-          ${alternates(item, plateSize)}
+          ${alternates(item)}
           ${versions(item)}
         </div>
       </div>
@@ -907,26 +873,33 @@ export function workPage({ item, others, origin }) {
 // в `upscale-local.js` значило бы завести вторую запись о версии рядом с
 // package.json — то самое расхождение, ради которого рантайм и отдаётся из
 // node_modules, а не копией в `public/`.
-export function intakePage({ origin, runtime }) {
+export function intakePage({ origin, runtime, runtimeBytes }) {
   return layout({
     current: 'restore',
     runtime,
-    title: `Make your own wallpaper, ${SITE_NAME}`,
+    runtimeBytes,
+    // Заголовок и описание названы теми словами, которыми это ищут, а не
+    // теми, которыми это устроено. «Upscale» отсюда ушёл намеренно: выдача
+    // по нему — Adobe, Cloudinary, upscale.media и ещё четверо таких же,
+    // все с бесплатным тарифом и весом домена, которого у нас нет. А по
+    // «сделать фотографию обоями для телефона» в выдаче одни статьи «как
+    // обрезать это вручную в Фото» — инструмента, который просто делает,
+    // там нет (research/2026-08-23-…). Увеличение в описании осталось
+    // словом «too small», потому что ищут и так.
+    title: `Make any picture a phone wallpaper, ${SITE_NAME}`,
     description:
-      'Upscale your own image to 4K wallpaper size and fit it to your phone screen. ' +
-      'JPG, PNG and WebP up to 10 MB.',
+      'Crop a photo to phone wallpaper size, 2160 × 3840, and enlarge it if it is too small for the screen. ' +
+      'Runs in your browser. JPG, PNG and WebP.',
     canonical: `${origin}/restore`,
     script: '/intake.js',
     body: `
-      <h1 class="heading">Make your own wallpaper</h1>
-      <p class="page-sub">Any picture, enlarged to 4K without blurring. Fit it to your phone's shape. Nothing leaves your device.</p>
       <div class="plate">
         <figure class="record record--plate">
           <div class="record__image" id="intake-frame" role="button" tabindex="0" aria-label="Choose a picture">
             <p class="prompt">
               <span class="prompt__wide">Drop your picture here</span>
               <span class="prompt__narrow">Tap to choose</span>
-              <span class="prompt__fine">JPG, PNG or WebP, up to 10 MB</span>
+              <span class="prompt__fine">JPG, PNG or WebP</span>
               <!-- Совет, а не требование, и оба его числа выведены, а не
                    вписаны: 540 × 960 — это порог обоев, делённый на множитель
                    модели (MIN_SOURCE в upscale-local.js), то есть самая мелкая
@@ -946,22 +919,58 @@ export function intakePage({ origin, runtime }) {
             <img id="intake-picture" alt="" hidden />
           </div>
         </figure>
+        <!-- Порядок колонки — порядок работы, и мест для кнопок поэтому два.
+             Наверху зовут выбрать файл: пока его нет, остальное не о чем,
+             и просьба стоит до галочек, о которых ещё нечего думать. Внизу
+             всё остальное: дело и, справа от него, смена файла — до них
+             доходят, когда с галочками закончили.
+
+             Верхнее место потому и пустеет, как только файл выбран: обе
+             кнопки, которые с этой минуты нужны, стоят рядом внизу. Строкой
+             они читаются как одно решение с двумя исходами, а разнесённые
+             по концам колонки читались как два разных раздела. -->
+        <!-- Инвентарного номера и характеристик файла здесь больше нет:
+             номер до готовой работы был пустым местом («TS·––––»), а вес
+             и тип принесённого файла посетитель и так знает — он его выбрал.
+             Обе строки стояли между проёмом и делом. -->
         <div class="label">
-          <div class="caption">
-            <p class="caption__title is-blank" id="intake-ref"></p>
-            <p class="caption__spec" id="intake-spec"></p>
-            <div class="actions" id="intake-actions"></div>
-            <input class="visually-hidden" type="file" id="intake-file" accept="image/jpeg,image/png,image/webp" />
-          </div>
-          <div class="terms">
-            <p class="terms__line" id="intake-terms"></p>
-            <p class="terms__note" id="intake-note"></p>
-          </div>
-          <!-- Две настройки того, что выйдет: обработка ceil и телефонный
-               кадр. Обе выключены — приёмка увеличивает чужую картинку,
-               и вернуть её изменённой, не спросив, значит подменить результат
-               вкусом сайта. Кто хочет наш вид, ставит галочку; остальные
-               получают то, что принесли, только крупнее.
+          <!-- Заголовок снова виден. Прятали его вместе с подзаголовком — оба
+               объясняли страницу, на которой и так всё видно, — и это была
+               ошибка не вкуса, а расчёта: страница осталась без единого слова,
+               по которому её можно найти. Слов на ней ровно пять коротких
+               подписей к галочкам, а спрятанный текст поиск в лучшем случае
+               не считает. Цена возвращения мала: класс .heading — это 11 px
+               в верхнем регистре приглушённым цветом, ровно как «THE
+               COLLECTION» на витрине, то есть подпись, а не вывеска.
+
+               Стоит он в колонке, а не над плитой. Над плитой он стоял
+               в левом верхнем углу широкой пустой полосы и не относился
+               ни к чему: витрине такое место идёт, потому что под ним сразу
+               начинается сетка, а здесь работа стоит по центру. В колонке
+               он оказался там, где содержимое страницы и начинается, —
+               подписью к тому, что под ним.
+
+               Названа страница тем, что делает: «make any picture a phone
+               wallpaper» — так это ищут. -->
+          <h1 class="heading">Make any picture a phone wallpaper</h1>
+          <div class="actions" id="intake-choose"></div>
+          <!-- Всё, что приёмка умеет сделать с картинкой, стоит одним списком.
+               Увеличение здесь же, а не отдельной кнопкой: для посетителя это
+               одна из операций над его файлом, и вынесенное из списка оно
+               читалось как единственное, ради чего страница существует. Само
+               слово «upscale» при этом не сказано ни разу — его в этом значении
+               не знают; строка называет, что произойдёт.
+
+               Все выключены — приёмка возвращает чужую картинку, и отдать её
+               изменённой, не спросив, значит подменить результат вкусом сайта.
+               Кто хочет наш вид, ставит галочки; остальные получают то,
+               что принесли.
+
+               Подписей под строками нет: пять пояснений под пятью галочками
+               складываются в стену мелкого текста там, где вся страница —
+               одна колонка рядом с картинкой. Объясняет теперь не подпись,
+               а сама картинка: любая из шести пересчитывает проём сразу же.
+               Оговорка осталась одна и ровно там, где показать нечего.
 
                Слово «Dim» — то же, каким страница работы называет ceil
                в «Other versions» (TREATMENT_NAMES): одна обработка должна
@@ -971,35 +980,107 @@ export function intakePage({ origin, runtime }) {
                «A phone», а не «my phone»: экран посетителя нигде не
                спрашивается — ни screen, ни devicePixelRatio, ни медиа-запроса,
                — режется постоянная пропорция 9:16 (PHONE_RATIO в
-               public/treat-local.js и public/intake.js, treatment.js
-               на сервере). «My» обещало бы замер, которого нет.
+               public/frame.js). «My» обещало бы замер, которого нет.
 
                Разметкой, а не скриптом: тексты сайта живут в pages.js. -->
           <div class="options" id="intake-options">
             <label class="options__row">
-              <input type="checkbox" id="intake-treat" />
+              <input type="checkbox" id="intake-enlarge" />
               <span class="options__box" aria-hidden="true"></span>
+              <!-- Единственная строка с подписью, и подпись эта пишется
+                   скриптом: до выбора файла в ней нечего называть, после —
+                   стоят оба размера, свой и тот, что выйдет. Здесь же
+                   осталась и оговорка про превью: это единственная галочка,
+                   которая проём не меняет. -->
               <span class="options__text"
-                >Dim it<span class="options__fine">the gallery's own treatment, applied to your picture</span></span>
+                >Increase size<span class="options__fine" id="intake-growth">no preview</span>
+              </span>
             </label>
             <label class="options__row">
               <input type="checkbox" id="intake-crop" />
               <span class="options__box" aria-hidden="true"></span>
-              <span class="options__text"
-                >Fit a phone screen</span>
+              <span class="options__text">Fit a phone screen</span>
+            </label>
+            <label class="options__row">
+              <input type="checkbox" id="intake-treat" />
+              <span class="options__box" aria-hidden="true"></span>
+              <span class="options__text">Dim</span>
+            </label>
+            <label class="options__row">
+              <input type="checkbox" id="intake-blur" />
+              <span class="options__box" aria-hidden="true"></span>
+              <span class="options__text">Blur</span>
+            </label>
+            <label class="options__row">
+              <input type="checkbox" id="intake-vignette" />
+              <span class="options__box" aria-hidden="true"></span>
+              <span class="options__text">Vignette</span>
             </label>
           </div>
-          <!-- Галочка выключена в разметке, а не состоянием: пока публикация
-               закрыта, включать её нечем (LEGAL.md, раздел «Сейчас»). -->
-          <div class="share" id="intake-share" hidden>
-            <label class="share__row">
-              <input type="checkbox" id="intake-publish" disabled />
-              <span class="share__box" aria-hidden="true"></span>
-              <span class="share__text"
-                >Add to the collection
-                <span class="share__fine" id="intake-share-note"></span>
-              </span>
-            </label>
+          <div class="actions" id="intake-actions"></div>
+          <input class="visually-hidden" type="file" id="intake-file" accept="image/jpeg,image/png,image/webp" />
+          <!-- Строка условий осталась одна и почти всегда пустая: размер
+               результата переехал под галочку увеличения, где он и есть
+               свойство выбора, а не отдельное объявление. Здесь теперь
+               говорит только ход работы и авария. -->
+          <p class="terms__note" id="intake-note"></p>
+          <!-- Галочки «Add to the collection» здесь больше нет. Выключенная,
+               с оговоркой «Not available at the moment», она показывалась
+               ровно в одном состоянии — над готовой работой, — то есть
+               занимала строку там, где место дороже всего, ради обещания
+               на будущее. Обещание живёт в LEGAL.md и в TODO; запрет держит
+               маршрут в server.js, а не разметка. -->
+          <!-- Две фразы под чертой — единственная связная речь на странице.
+               Стоят они последними и набраны так же тихо, как условия над
+               ними: тот, кто пришёл нажать кнопку, до них не дочитает, и не
+               должен. Нужны они тому, кто эту страницу ещё не нашёл.
+
+               Прятать их нельзя — скрытый текст поиск считает обманом, и
+               спрятанный заголовок здесь уже стоял. Поэтому видимо, но тихо:
+               кегль условий, приглушённый цвет, волосяная черта сверху.
+
+               Начинается всё с беды, а не с описания: картинка, сохранённая
+               из интернета, мала для экрана — это и есть повод, по которому
+               сюда приходят с Pinterest. Сказано «can be», а не «is»: каждая
+               из пяти галочек выключена, и обещать работу, которой без спроса
+               не будет, эта строка не должна.
+
+               Виньетка названа отдельно. Стояла она рядом с приглушением
+               и размытием, «там же и по той же причине», — а причины разные:
+               те два делают читаемыми значки и часы, эта не делает ничего.
+               Сказано поэтому только то, что она делает; «because it looks
+               good» стояло следом и убрано — красоту за картинку решает тот,
+               кто её принёс, а не подпись под галочкой.
+
+               Числа не выдуманы: 9:16 и 2160 × 3840 — это frame.js,
+               те же, по которым режется кадр. Расходиться им нельзя,
+               но и выводить их сюда незачем: строка объясняет, а не
+               объявляет размер, и от смены порога она не соврёт.
+
+               «More than any screen needs», а не «the screen wants»: экрану
+               2160 × 3840 не нужно и близко. Самые крупные сегодня — 1440 ×
+               3120 у Galaxy S24 Ultra и 1320 × 2868 у iPhone 16 Pro Max,
+               то есть наш размер выше любого из них с запасом. Стояло здесь
+               «the screen wants 2160 × 3840», и это было просто неправдой;
+               «at least» её бы не спасло — экран не просит и минимума.
+
+               Блок подписан, потому что его убирают: на время счёта и над
+               готовой работой (setStage в intake.js). Объясняет он страницу
+               тому, кто ещё не нажимал; под сделанным делом это две трети
+               колонки текста, который уже прочитан или уже не нужен. Поиску
+               от этого ничего не делается — обход страницы кончается на её
+               первом виде, где абзацы стоят как стояли. -->
+
+          <div class="intake-about" id="intake-about">
+            <p>
+              A picture saved from the web is usually too small to be a phone wallpaper. Here it can
+              be enlarged to 2160 × 3840 and cropped to 9:16, which is more than any current iPhone
+              or Android screen needs.
+            </p>
+            <p>
+              Dimming quiets a busy picture so icons and the clock stay readable over it; a gentle
+              blur does the same. The vignette just darkens the corners a little.
+            </p>
           </div>
           <!-- Здесь стояла полная подпись к модели: имя, автор, лицензия.
                Осталось от неё одно предложение, и оно не про лицензию.
@@ -1008,16 +1089,29 @@ export function intakePage({ origin, runtime }) {
                с автором и лицензией теперь на /license#model.
                А «picture stays on your device» вообще не требование лицензии:
                это ответ на единственный вопрос, который есть у человека,
-               держащего свою фотографию над кнопкой. Его в подвал уносить
-               нельзя, поэтому строка разделена, а не перенесена целиком. -->
+               держащего свою фотографию над кнопкой.
+
+               Стояла она сразу под кнопкой и переехала под абзацы: доводом
+               против был «не уносить в подвал», но подвала у колонки нет —
+               ниже неё ничего, и строка по-прежнему последняя, что читают.
+               Взамен она встала там, где абзац над ней как раз и объясняет,
+               что тут делают с картинкой, а она отвечает, где именно. -->
           <!-- Само предложение вынесено в span и подписано: когда браузер
                посчитать не смог и приёмка предлагает сделать это у нас
-               (renderOffered в intake.js), эта строка стоит прямо под
-               предложением и противоречит ему. Меняется она, а не прячется:
-               вопрос «куда уедет мой файл» остаётся у человека и в этом
-               случае — просто ответ на него другой. -->
-          <p class="terms__note">
-            <span id="intake-privacy">Enlarged in your own browser; your picture stays on your device.</span>
+               (renderOffered в intake.js), эта строка противоречит
+               предложению. Меняется она, а не прячется: вопрос «куда уедет
+               мой файл» остаётся у человека и в этом случае — просто ответ
+               на него другой. -->
+          <!-- Строка подписана, потому что её тоже убирают у готовой работы
+               (setStage в intake.js). Вопрос «куда уедет мой файл» задают
+               до нажатия; после нажатия ответ на него уже дан, а для отправки
+               к нам он вдобавок повторён в самой подписи готового («Enlarged
+               on our server»). Подпись автору модели при этом не пропадает:
+               она в подвале на каждой странице сайта и здесь же во всех
+               остальных состояниях — этого BY и требует, «способом, разумным
+               для носителя», а не в конкретной точке экрана. -->
+          <p class="terms__note" id="intake-terms">
+            <span id="intake-privacy">Made in your own browser; your picture stays on your device.</span>
             <a href="/license#model">Model and licence</a>
           </p>
         </div>

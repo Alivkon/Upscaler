@@ -215,11 +215,30 @@ const madeFile = async entry => (entry && (await fs.stat(path.join(IMAGES_DIR, e
 // с витрины. Поэтому каждый проверяется на диске отдельно.
 const CROP_KINDS = ['phone', 'tall', 'wide'];
 
+// Экран рабочего стола, на который кадр 16:9 обязан хватить.
+//
+// СЕЙЧАС ХВАТАЕТ НЕ ВСЕГДА, И ПОЭТОМУ КАДР ПРЯЧЕТСЯ. Кадр режется из мастера,
+// а мастер у музея бывает мелкий, и вверх его никто не тянет (`museum.mjs`,
+// «NOTHING IS EVER SCALED UP»): из 282 кадров 41 не набирает и 1920 × 1080,
+// самый мелкий — 1146 × 645. Страница при этом называет файл «desktop
+// background» (`alternates` в pages.js) и размера рядом не пишет, то есть
+// обещает экран картинке, которой на экран не хватает. Все 41 — от мастеров,
+// которые и телефонную планку не берут; на них слово стоит зря.
+//
+// Прячется здесь, а не в `alternates`, потому что мест два: тот же кадр
+// называет карта сайта, и правило у неё — «то, что на странице видно»
+// (`sitemap` в pages.js). Отбор в одном месте оставляет её правдой сам собой.
+//
+// Лечение — не порог, а мастер покрупнее и новая нарезка (TODO.md); до неё
+// кадра просто нет, как нет его у работы, до которой генератор не дошёл.
+const DESKTOP_GATE = { width: 1920, height: 1080 };
+
 async function cropsOf(entry) {
   const found = {};
   for (const kind of CROP_KINDS) {
     const crop = entry?.crops?.[kind];
     if (!(await madeFile(crop))) continue;
+    if (kind === 'wide' && (crop.width < DESKTOP_GATE.width || crop.height < DESKTOP_GATE.height)) continue;
     const copies = [];
     for (const copy of crop.copies || []) {
       if (await madeFile(copy)) copies.push({ url: imageUrl(copy.file), width: copy.width, height: copy.height });

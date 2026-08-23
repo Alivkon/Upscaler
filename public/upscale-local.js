@@ -15,10 +15,9 @@
 // неверно (server.js). Саму версию ставит сервер в `<meta>` — читать её здесь
 // из копии значило бы завести вторую запись рядом с package.json.
 import { GATE_LONG, GATE_SHORT, phoneWindow } from './frame.js';
+import { MODEL, RUNTIME, RUNTIME_WASM } from './model-files.js';
 
 const VENDOR = '/vendor/ort';
-const RUNTIME = 'ort.webgpu.min.mjs';
-const MODEL = '/models/4x-ClearRealityV1.onnx';
 
 // Плитка и поля. 192 — не удобство, а память: картинка целиком в модель не
 // лезет, а поля в 16 пикселей закрывают шов между плитками. Модель умеет
@@ -79,14 +78,101 @@ function usable(ctx, w, h) {
 
 let sessionPromise = null;
 
+// Вес каждого из файлов, которые качает первая картинка. Приходит из
+// разметки, потому что взять его из ответа нельзя: файлы отдаются сжатыми
+// на лету, `Content-Length` в ответе нет вовсе, и браузер, качая двадцать
+// шесть мегабайт, не может сказать, сколько осталось. Отсюда и брались
+// минуты молчания, которые читались как поломка.
+function weights() {
+  try {
+    return JSON.parse(document.querySelector('meta[name="ort-bytes"]')?.content || '{}');
+  } catch {
+    return {};
+  }
+}
+
+// Качает всё нужное разом и считает байты. Тела рантайма и wasm выбрасываются:
+// нужен не их текст, а тёплый кэш — оба отдаются на год как неизменяемые, и
+// `import` с `InferenceSession` возьмут их уже оттуда. Модель, наоборот,
+// возвращается байтами: сессия принимает и адрес, и буфер, а второй раз
+// ходить за тем, что уже в руках, незачем.
+//
+// Доля считается от суммы весов ровно тех файлов, за которыми идём: wasm-ов
+// два, качается один, и сложить оба значило бы застрять на половине.
+// Не назван хоть один — доли нет вовсе, и это честнее приблизительной.
+//
+// Осечка не ломает счёт: не вышло посчитать — считаем без счётчика.
+// Ради полоски загрузки отказывать в работе было бы смешно.
+async function loadWithProgress(urls, onProgress) {
+  const sizes = weights();
+  const known = urls.map(({ weigh }) => sizes[weigh] || 0);
+  const total = known.every(Boolean) ? known.reduce((sum, size) => sum + size, 0) : 0;
+  let received = 0;
+  const bodies = await Promise.all(
+    urls.map(async ({ url, keep }) => {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`${url} — ${response.status}`);
+      const reader = response.body.getReader();
+      const chunks = [];
+      for (;;) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        received += value.length;
+        if (keep) chunks.push(value);
+        // Доля срезается по единице: вес считан на диске сервера, а пришедшее
+        // меряется здесь, и разойтись они могут на любой мелочи. «103 %»
+        // подорвало бы доверие к счётчику вернее, чем его отсутствие.
+        if (total) onProgress(Math.min(1, received / total));
+      }
+      if (!keep) return null;
+      const bytes = new Uint8Array(chunks.reduce((sum, chunk) => sum + chunk.length, 0));
+      let at = 0;
+      for (const chunk of chunks) {
+        bytes.set(chunk, at);
+        at += chunk.length;
+      }
+      return bytes;
+    })
+  );
+  return bodies.find(Boolean);
+}
+
 // Рантайм грузится один раз на страницу и остаётся в памяти вместе с моделью:
 // второй файл в той же вкладке считается уже без задержки на загрузку.
-async function session() {
+//
+// Отчитывается это двумя разными сообщениями, потому что и отрезка тут два.
+// Первый — загрузка, у неё есть доля. Второй — всё остальное: разбор трёх
+// мегабайт рантайма, сборка сессии, компиляция шейдеров под WebGPU. Доли
+// у него нет и быть не может, зато есть длительность, и немалая; молчал он
+// ровно тем же молчанием, из-за которого завели счётчик.
+async function session(report = () => {}) {
   if (sessionPromise) return sessionPromise;
   sessionPromise = (async () => {
     const version = document.querySelector('meta[name="ort-version"]')?.content;
     if (!version) throw new Error('The page did not say which runtime to load.');
     const base = `${VENDOR}/${version}/`;
+    // Об адаптере спрашиваем до загрузки, а не после: от ответа зависит и
+    // исполнитель, и то, какой из двух wasm-файлов пойдёт качаться. Спросив
+    // после, пришлось бы гадать — и гадание стоило бы несколько мегабайт
+    // чужого канала, скачанных впустую (замер 23.08: `jsep` качался, а
+    // работал `asyncify`).
+    const webgpu = await gpu();
+    const wasm = webgpu ? RUNTIME_WASM.webgpu : RUNTIME_WASM.wasm;
+    // Модель отсюда — байтами, если загрузка со счётчиком удалась; иначе
+    // ниже сессия получит адрес и сходит за ней сама.
+    const model = await loadWithProgress(
+      [
+        { url: base + RUNTIME, weigh: RUNTIME },
+        { url: base + wasm, weigh: wasm },
+        { url: MODEL, weigh: MODEL, keep: true }
+      ],
+      loaded => report({ loaded })
+    ).catch(() => null);
+    report({ starting: true });
+    // Сборка сессии — самый длинный неразрывный кусок счёта, и разорвать его
+    // изнутри нечем: компилирует wasm сам onnxruntime. Что можно — дать
+    // строке «warming up…» нарисоваться до него, а не после.
+    await breathe();
     const ort = await import(base + RUNTIME);
     // Путь абсолютный: относительный считался бы от самого модуля, который
     // лежит там же, и получилось бы /vendor/ort/1.27.0/vendor/ort/1.27.0/…
@@ -99,11 +185,11 @@ async function session() {
     // соберётся — на Mesa и в Firefox шейдер компилируется не всегда. С одним
     // элементом такая осечка отменяла бы счёт в браузере целиком там, где
     // wasm посчитал бы медленно, но посчитал.
-    const providers = (await gpu()) ? ['webgpu', 'wasm'] : ['wasm'];
+    const providers = webgpu ? ['webgpu', 'wasm'] : ['wasm'];
     // enableMemPattern выключен намеренно: с ним WebGPU пытается
     // переиспользовать буфер входа под выход и падает «Shape mismatch
     // attempting to re-use buffer» — это одна и та же плитка до и после ×4.
-    const sess = await ort.InferenceSession.create(MODEL, {
+    const sess = await ort.InferenceSession.create(model || MODEL, {
       executionProviders: providers,
       enableMemPattern: false
     });
@@ -157,6 +243,30 @@ function padded(img) {
 }
 
 const byte = v => (v <= 0 ? 0 : v >= 1 ? 255 : (v * 255 + 0.5) | 0);
+
+// Отдать браузеру ход.
+//
+// Плитки считаются через `await`, и выглядит это так, будто страница между
+// ними дышит. Она не дышит: `await` на уже готовом обещании — микрозадача,
+// а между микрозадачами браузер не рисует и не слушает мышь. Замер 23.08 на
+// картинке 600 × 900 (20 плиток): **одна задача на 22.2 с и ноль кадров**
+// за всё время счёта. Отсюда и «Page unresponsive» с кнопкой Wait, и
+// пропадавший счётчик плиток — текст ставился, но никогда не рисовался.
+//
+// Разрывает задачу переход в макрозадачу. Взят `MessageChannel`, а не
+// `setTimeout`: в фоновой вкладке таймеры прижимают до одного в секунду,
+// и счёт в свёрнутом окне пополз бы вдвое. Стоит это доли миллисекунды
+// на плитку против секунды самого счёта.
+//
+// Настоящее лекарство — считать в Worker: тогда главный поток свободен весь,
+// а не по разу в секунду. Это переезд `upscaleInBrowser` целиком, и он
+// записан в TODO.
+const breathe = () =>
+  new Promise(resolve => {
+    const channel = new MessageChannel();
+    channel.port1.onmessage = () => resolve();
+    channel.port2.postMessage(0);
+  });
 
 async function runTile(rt, pixels) {
   const n = pixels.width * pixels.height;
@@ -221,7 +331,11 @@ export async function upscaleInBrowser(file, { crop = false, onProgress } = {}) 
   const octx = out.getContext('2d');
   if (!usable(octx, out.width, out.height)) throw new Error(TOO_BIG);
 
-  const rt = await session();
+  // Пока идёт загрузка, плиток ещё нет, и сказать о ходе работы можно только
+  // долей скачанного. Все сообщения идут одним `onProgress` и различаются
+  // тем, что в них есть: `loaded` на загрузке, `starting` на сборке сессии,
+  // `done`/`total` на плитках.
+  const rt = await session(onProgress);
   const total = (pw / TILE) * (ph / TILE);
   let done = 0;
   const started = performance.now();
@@ -260,6 +374,9 @@ export async function upscaleInBrowser(file, { crop = false, onProgress } = {}) 
         const each = (performance.now() - started) / done;
         onProgress({ done, total, secondsLeft: Math.round((each * (total - done)) / 1000) });
       }
+      // Ход браузеру отдаётся после отчёта, а не до: иначе счётчик рисовался
+      // бы на один тик позже того, что уже посчитано.
+      await breathe();
     }
   }
   img.close();
