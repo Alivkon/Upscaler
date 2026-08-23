@@ -24,7 +24,30 @@
      не рисует ни одного глифа, и её загрузка была бы мёртвым весом. */
   --ff-mono: 'Sometype Mono', ui-monospace, monospace;
 
-  --gutter: clamp(20px, 5vw, 64px);
+  /* Крупность страницы одним числом.
+
+     Размеры записаны здесь не в пикселях, а в `rem`, и `rem` на этой странице
+     равен не кеглю, а одному масштабированному пикселю: `13rem` — это те же
+     13 px, умноженные на `--scale`. Множитель поэтому меняет разом кегли,
+     поля, ширину колонки и высоту рамки, а числа в правилах остаются теми,
+     какими их выбирали, — и комментарии, ссылающиеся на «колонку 200 px»,
+     остаются верными: колонка по-прежнему 200 в базовом масштабе.
+
+     1.75 — не вкусовое число: это тот самый зум 175%, на котором коллекция
+     смотрится правильно на широком экране (четыре работы в ряду вместо
+     семи-восьми). Зум делал ровно это — умножал все длины, не трогая `vw`
+     и `vh`, — поэтому `vw`/`vh` в файле остались как были.
+
+     Волосяные линии остались в пикселях. Зум утолщал и их, но линия в 1 px —
+     это выбранная толщина, а не размер: срез паспарту и шов стекла обязаны
+     оставаться волосом при любой крупности. */
+  --scale: 1.75;
+
+  --gutter: clamp(20rem, 5vw, 64rem);
+}
+/* `rem` = масштабированный пиксель (см. `--scale` выше) */
+html {
+  font-size: calc(var(--scale) * 1px);
 }
 * {
   box-sizing: border-box;
@@ -44,7 +67,7 @@ body {
   color: var(--fg);
   /* моноширинная при том же кегле оптически крупнее гротеска */
   font-family: var(--ff-mono);
-  font-size: 13px;
+  font-size: 13rem;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
 }
@@ -60,29 +83,29 @@ button {
   display: flex;
   align-items: baseline;
   justify-content: space-between;
-  gap: 24px;
-  padding: 22px var(--gutter);
+  gap: 24rem;
+  padding: 22rem var(--gutter);
   border-bottom: 1px solid var(--rule);
 }
 /* моноширинная и без того широкая, поэтому трекинг, который раскрывал
    логотип в гротеске, приходится убавлять — иначе марка читается разреженной */
 .masthead__mark {
   font-weight: 500;
-  font-size: 12px;
+  font-size: 12rem;
   letter-spacing: 0.16em;
   text-transform: uppercase;
   text-decoration: none;
 }
 .masthead__nav {
   display: flex;
-  gap: 22px;
+  gap: 22rem;
 }
 /* Пункты шапки — настоящие ссылки: страницы теперь отдаёт сервер, и переход
    между ними должен работать средним кликом, «открыть в новой вкладке»
    и без скрипта. */
 .masthead__nav a {
   color: var(--fg-dim);
-  font-size: 11px;
+  font-size: 11rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   text-decoration: none;
@@ -99,24 +122,24 @@ button {
 /* ── коллекция ────────────────────────────────────────────── */
 .heading {
   margin: 0;
-  padding: clamp(24px, 4vw, 40px) var(--gutter) 18px;
-  font-size: 11px;
+  padding: clamp(24rem, 4vw, 40rem) var(--gutter) 18rem;
+  font-size: 11rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--fg-dim);
 }
 .page-sub {
   margin: 0;
-  padding: 0 var(--gutter) clamp(14px, 2.5vw, 24px);
+  padding: 0 var(--gutter) clamp(14rem, 2.5vw, 24rem);
   color: var(--fg-dim);
-  font-size: 12px;
+  font-size: 12rem;
 }
 .collection {
   display: grid;
-  gap: 26px 18px;
+  gap: 26rem 18rem;
   /* колонка шире строки характеристик: `896 × 1152 · PNG · LLM` не должен
      переноситься, иначе точки-разделители повисают в конце строки */
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(200rem, 1fr));
   padding: 0 var(--gutter);
   /* По верхнему краю, а не по середине. Средняя линия годилась, пока записи
      были разной формы: тогда общий центр был единственным, что у них было
@@ -137,7 +160,7 @@ button {
    строка характеристик переносится, и точки-разделители повисают. */
 .adjacent {
   display: block;
-  margin-top: clamp(32px, 6vw, 64px);
+  margin-top: clamp(32rem, 6vw, 64rem);
   border-top: 1px solid var(--rule);
 }
 .item {
@@ -145,20 +168,20 @@ button {
 }
 .outro {
   padding: 0 var(--gutter);
-  margin: clamp(32px, 5vw, 52px) 0 0;
+  margin: clamp(32rem, 5vw, 52rem) 0 0;
 }
 /* призыв выглядит ссылкой, а не кнопкой: страница ничего не продаёт.
    Правило рассчитано и на `a`, и на `button`, поэтому сбрасывает и то и другое. */
 .link {
   display: inline-block;
   font: inherit;
-  font-size: 13px;
+  font-size: 13rem;
   letter-spacing: 0.02em;
   color: inherit;
   background: none;
   border: 0;
   border-bottom: 1px solid var(--rule);
-  padding: 0 0 2px;
+  padding: 0 0 2rem;
   text-decoration: none;
   cursor: pointer;
 }
@@ -175,7 +198,7 @@ button {
   margin: 0;
   background: var(--card);
   /* поле неравномерное: по бокам поровну, снизу тяжелее */
-  padding: 7px 7px 14px;
+  padding: 7rem 7rem 14rem;
   box-shadow:
     0 24px 60px -28px rgba(0, 0, 0, 0.85),
     0 2px 0 0 var(--card-edge);
@@ -234,7 +257,7 @@ button {
    стоит в проёме, где у соседей живопись, и набранная в полную светлоту
    тянула бы на себя первый взгляд с целого ряда. */
 .item--invite .record__image span {
-  font-size: 12px;
+  font-size: 12rem;
   letter-spacing: 0.02em;
   color: var(--fg-dim);
 }
@@ -263,14 +286,14 @@ button {
 /* Названий нет: опознавательный признак работы — инвентарный номер.
    В каталоге запись сначала нумеруют и только потом описывают. */
 .caption {
-  margin: 10px 0 0;
+  margin: 10rem 0 0;
 }
 .caption__title {
   font-weight: 500;
-  font-size: 15px;
+  font-size: 15rem;
   line-height: 1.1;
   letter-spacing: 0.02em;
-  margin: 0 0 6px;
+  margin: 0 0 6rem;
   /* Место под две строки держится всегда. Названия работ разной длины: в
      колонке 200 px 91 из 156 умещаются в строку, остальные 65 занимают две,
      и в трёх ни одно не нуждается. Без запаса всё, что ниже названия, ехало
@@ -308,22 +331,22 @@ button {
    пропадающая строка разводила бы соседей по ряду по высоте на каждой второй
    карточке. Пустая, она не видна — видна только общая для всех сетка. */
 .caption__by {
-  font-size: 12px;
+  font-size: 12rem;
   font-style: italic;
   letter-spacing: 0.02em;
   color: var(--fg-dim);
-  margin: 0 0 5px;
+  margin: 0 0 5rem;
   min-height: 1lh;
 }
 .caption__spec {
-  font-size: 12px;
+  font-size: 12rem;
   letter-spacing: 0.02em;
   color: var(--fg-dim);
   margin: 0;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0 10px;
+  gap: 0 10rem;
 }
 /* разрешение остаётся самым светлым в строке: это единственный факт,
    которого не даёт превью в поиске, и причина клика */
@@ -333,32 +356,32 @@ button {
 }
 .caption__spec span::after {
   content: '·';
-  margin-left: 10px;
+  margin-left: 10rem;
   opacity: 0.45;
 }
 .caption__spec span:last-child::after {
   content: '';
 }
 .caption .link {
-  margin-top: 8px;
-  font-size: 12px;
+  margin-top: 8rem;
+  font-size: 12rem;
 }
 
 /* ── приёмка: изображение слева, его запись рядом ────────────
    Этикетка стоит сбоку, а не под работой: так изображение,
    характеристики и кнопка помещаются в один экран. */
 .plate {
-  padding: clamp(24px, 4vw, 56px) var(--gutter);
+  padding: clamp(24rem, 4vw, 56rem) var(--gutter);
   display: grid;
-  grid-template-columns: auto minmax(280px, 380px);
-  gap: clamp(28px, 5vw, 72px);
+  grid-template-columns: auto minmax(280rem, 380rem);
+  gap: clamp(28rem, 5vw, 72rem);
   align-items: center;
   justify-content: center;
 }
 .record--plate {
-  padding: clamp(12px, 1.6vw, 20px);
-  padding-bottom: clamp(22px, 3vw, 38px);
-  height: min(72vh, 620px);
+  padding: clamp(12rem, 1.6vw, 20rem);
+  padding-bottom: clamp(22rem, 3vw, 38rem);
+  height: min(72vh, 620rem);
   display: flex;
   flex-direction: column;
   /* Паспарту облегает работу и по ширине тоже. Без этого проём растягивался
@@ -385,14 +408,14 @@ button {
 .record--plate .record__image .prompt {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 8rem;
   align-items: center;
   justify-content: center;
   height: 100%;
   margin: 0;
-  padding: 0 24px;
+  padding: 0 24rem;
   text-align: center;
-  font-size: 14px;
+  font-size: 14rem;
   line-height: 1.4;
   /* Пустой проём не залит ничем: сквозь него виден фон страницы (см. правило
      выше — «пустая запись показывает фон страницы сквозь себя»). Поэтому
@@ -401,7 +424,7 @@ button {
   color: var(--fg);
 }
 .record--plate .record__image .prompt__fine {
-  font-size: 12px;
+  font-size: 12rem;
   opacity: 0.6;
 }
 /* На широком экране проём приглашает перетащить, на узком — нажать. Слово
@@ -437,7 +460,7 @@ button {
   height: auto;
   width: auto;
   max-width: 100%;
-  max-height: calc(min(72vh, 620px) - clamp(34px, 4.6vw, 58px));
+  max-height: calc(min(72vh, 620rem) - clamp(34rem, 4.6vw, 58rem));
 }
 /* «Было» на странице не показывается целиком (почему — в `beforeFrame`,
    pages.js): в проёме оно неотличимо от «стало». Файл здесь только затем,
@@ -460,8 +483,8 @@ button {
 .loupe {
   position: absolute;
   display: none;
-  width: var(--glass, 220px);
-  height: var(--glass, 220px);
+  width: var(--glass, 220rem);
+  height: var(--glass, 220rem);
   overflow: hidden;
   outline: 1px solid var(--card-edge);
   box-shadow:
@@ -503,9 +526,9 @@ button {
    не тень, а подложка — она же и есть музейная бирка при работе. */
 .loupe__pane::after {
   position: absolute;
-  bottom: 7px;
-  padding: 2px 6px;
-  font-size: 10px;
+  bottom: 7rem;
+  padding: 2rem 6rem;
+  font-size: 10rem;
   letter-spacing: 0.1em;
   text-transform: uppercase;
   color: rgba(255, 255, 255, 0.92);
@@ -513,11 +536,11 @@ button {
 }
 .loupe__pane--before::after {
   content: 'before';
-  left: 7px;
+  left: 7rem;
 }
 .loupe__pane--after::after {
   content: 'after';
-  right: 7px;
+  right: 7rem;
 }
 /* Держать можно само изображение, поэтому на нём не должно начинаться
    прокручивание страницы пальцем.
@@ -581,8 +604,8 @@ body.is-dragging .record--plate {
   margin: 0;
 }
 .plate .caption__title {
-  font-size: clamp(23px, 3vw, 28px);
-  margin-bottom: 12px;
+  font-size: clamp(23rem, 3vw, 28rem);
+  margin-bottom: 12rem;
   /* Заголовок здесь один на странице, и ровнять его не с чем: запас под
      вторую строку оставил бы дыру над характеристиками. */
   min-height: 0;
@@ -599,16 +622,16 @@ body.is-dragging .record--plate {
 /* ── действия ─────────────────────────────────────────────── */
 .actions {
   display: flex;
-  gap: 10px;
+  gap: 10rem;
   align-items: stretch;
-  margin: 22px 0 0;
+  margin: 22rem 0 0;
 }
 .btn {
-  font-size: 12px;
+  font-size: 12rem;
   font-weight: 500;
   letter-spacing: 0.04em;
   text-transform: uppercase;
-  padding: 13px 18px;
+  padding: 13rem 18rem;
   border: 1px solid var(--fg);
   background: var(--fg);
   color: var(--ground);
@@ -653,17 +676,17 @@ body.is-dragging .record--plate {
 /* ── условия ──────────────────────────────────────────────── */
 .terms {
   border-top: 1px solid var(--rule);
-  margin-top: 26px;
-  padding-top: 16px;
+  margin-top: 26rem;
+  padding-top: 16rem;
 }
 /* Строка размывалась, пока держали «Было»: утверждение теряло разрешение
    вместе с работой. Приём ушёл вместе с переключением целых кадров — под
    стеклом оба файла видны разом, и состояния «страница показывает „до“»,
    к которому можно было привязать текст, больше нет. */
 .terms__line {
-  font-size: 12px;
+  font-size: 12rem;
   color: var(--fg-dim);
-  margin: 0 0 4px;
+  margin: 0 0 4rem;
 }
 /* Подсказка идёт следом за утверждением и тише его: утверждение — факт
    о работе, подсказка — про то, как его проверить. Своей строкой, а не
@@ -681,9 +704,9 @@ body.is-dragging .record--plate {
   opacity: 0.65;
 }
 .terms__note {
-  font-size: 12px;
+  font-size: 12rem;
   color: var(--fg-dim);
-  margin: 6px 0 0;
+  margin: 6rem 0 0;
 }
 /* `.terms__cta` больше нет: предложение реставрировать своё стоит теперь
    рядом с Download, среди действий. Под чертой остались только утверждения
@@ -710,15 +733,15 @@ body.is-dragging .record--plate {
    отличить широкий кадр от узкого, то есть чтобы выбрать. */
 .alternates {
   border-top: 1px solid var(--rule);
-  margin-top: 20px;
-  padding-top: 16px;
+  margin-top: 20rem;
+  padding-top: 16rem;
 }
 /* Заголовок есть только у второго ряда — «ещё версии». Первый ряд подписи не
    просит: кадры узнаются формой, а обработки на полке в 96 px друг от друга
    почти не отличаются, и без слова над ними ряд читается как повтор. */
 .alternates__heading {
-  margin: 0 0 12px;
-  font-size: 11px;
+  margin: 0 0 12rem;
+  font-size: 11rem;
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: var(--fg-dim);
@@ -729,7 +752,7 @@ body.is-dragging .record--plate {
 .alternates__row {
   display: flex;
   flex-wrap: wrap;
-  gap: 14px;
+  gap: 14rem;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -745,7 +768,7 @@ body.is-dragging .record--plate {
 .alternates__shot {
   display: flex;
   align-items: flex-end;
-  height: 96px;
+  height: 96rem;
 }
 /* Обе стороны `auto` — картинка сама себе рамка. Была прибита высота
    (`height: 96px`) при `object-fit: contain`, и широкий кадр ложился полосой
@@ -755,8 +778,8 @@ body.is-dragging .record--plate {
   display: block;
   height: auto;
   width: auto;
-  max-height: 96px;
-  max-width: 120px;
+  max-height: 96rem;
+  max-width: 120rem;
   outline: 1px solid var(--card-edge);
 }
 /* Подписан ряд кадров, а ряд версий — нет, поэтому подсветка ссылки живёт на
@@ -764,8 +787,8 @@ body.is-dragging .record--plate {
    никак не отвечающая на наведение, читается как неподвижная иллюстрация. */
 .alternates__label {
   display: block;
-  margin-top: 6px;
-  font-size: 11px;
+  margin-top: 6rem;
+  font-size: 11rem;
   letter-spacing: 0.02em;
   font-variant-numeric: lining-nums tabular-nums;
 }
@@ -784,14 +807,14 @@ body.is-dragging .record--plate {
    селекторов ушла вместе с ним. */
 .options {
   border-top: 1px solid var(--rule);
-  margin-top: 20px;
-  padding-top: 16px;
+  margin-top: 20rem;
+  padding-top: 16rem;
 }
 /* Заголовок приёмки стоит внутри колонки, и полями страницы ему тут делать
    нечего: `.heading` рассчитан на место над сеткой витрины, где отступ задаёт
    поле экрана. Здесь поле задаёт колонка. */
 .label > .heading {
-  padding: 0 0 14px;
+  padding: 0 0 14rem;
 }
 /* Кнопка выбора открывает колонку, и отступ сверху ей не нужен: над ней
    ничего нет, а `.actions` рассчитан на соседа сверху. Заголовок соседом
@@ -822,15 +845,15 @@ body.is-dragging .record--plate {
    это обычная мера строки; важно, что она есть. */
 .intake-about {
   border-top: 1px solid var(--rule);
-  margin-top: 20px;
-  padding-top: 16px;
+  margin-top: 20rem;
+  padding-top: 16rem;
   max-width: 62ch;
-  font-size: 12px;
+  font-size: 12rem;
   line-height: 1.6;
   color: var(--fg-dim);
 }
 .intake-about p {
-  margin: 0 0 10px;
+  margin: 0 0 10rem;
 }
 .intake-about p:last-child {
   margin-bottom: 0;
@@ -840,17 +863,17 @@ body.is-dragging .record--plate {
    где их и так три. Шести пикселей от `.terms__note` тут мало — они
    рассчитаны на строку под кнопкой, а не под текстом. */
 .intake-about + .terms__note {
-  margin-top: 14px;
+  margin-top: 14rem;
 }
 /* Настройки стоят в столбик с воздухом между: это выбор, а не список,
    и слипшиеся строки читаются как один пункт с несколькими половинами. */
 .options {
   display: grid;
-  gap: 12px;
+  gap: 12rem;
 }
 .options__row {
   display: flex;
-  gap: 11px;
+  gap: 11rem;
   align-items: flex-start;
   cursor: pointer;
 }
@@ -873,9 +896,9 @@ body.is-dragging .record--plate {
 }
 .options__box {
   flex: 0 0 auto;
-  width: 15px;
-  height: 15px;
-  margin-top: 3px;
+  width: 15rem;
+  height: 15rem;
+  margin-top: 3rem;
   border: 1px solid var(--fg-dim);
   background: transparent;
   display: grid;
@@ -893,8 +916,8 @@ body.is-dragging .record--plate {
 }
 .options input:checked + .options__box::after {
   content: '';
-  width: 7px;
-  height: 7px;
+  width: 7rem;
+  height: 7rem;
   background: var(--ground);
 }
 .options input:focus-visible + .options__box {
@@ -905,13 +928,13 @@ body.is-dragging .record--plate {
   opacity: 0.55;
 }
 .options__text {
-  font-size: 12px;
+  font-size: 12rem;
   line-height: 1.5;
 }
 .options__fine {
   display: block;
-  margin-top: 3px;
-  font-size: 11px;
+  margin-top: 3rem;
+  font-size: 11rem;
   color: var(--fg-dim);
 }
 
@@ -937,14 +960,14 @@ body.is-locked {
 }
 .lightbox__close {
   position: absolute;
-  top: 16px;
-  right: 20px;
-  width: 40px;
-  height: 40px;
+  top: 16rem;
+  right: 20rem;
+  width: 40rem;
+  height: 40rem;
   border: 1px solid var(--rule);
   background: transparent;
   color: var(--fg);
-  font-size: 22px;
+  font-size: 22rem;
   line-height: 1;
   cursor: pointer;
 }
@@ -966,11 +989,11 @@ body.is-locked {
 }
 .prose__lead {
   color: var(--fg);
-  margin: 0 0 4px;
+  margin: 0 0 4rem;
 }
 .prose h2 {
-  margin: 32px 0 10px;
-  font-size: 11px;
+  margin: 32rem 0 10rem;
+  font-size: 11rem;
   font-weight: 500;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -981,7 +1004,7 @@ body.is-locked {
   color: var(--fg-dim);
 }
 .prose p {
-  margin: 0 0 12px;
+  margin: 0 0 12rem;
 }
 .prose ul {
   margin: 0;
@@ -991,13 +1014,13 @@ body.is-locked {
 /* маркер — та же точка-разделитель, что в строке характеристик */
 .prose li {
   position: relative;
-  padding-left: 18px;
-  margin-bottom: 8px;
+  padding-left: 18rem;
+  margin-bottom: 8rem;
 }
 .prose li::before {
   content: '·';
   position: absolute;
-  left: 4px;
+  left: 4rem;
   opacity: 0.45;
 }
 .prose strong {
@@ -1016,13 +1039,13 @@ body.is-locked {
 }
 .colophon {
   border-top: 1px solid var(--rule);
-  margin-top: clamp(48px, 9vw, 96px);
-  padding: 20px var(--gutter) 40px;
-  font-size: 11px;
+  margin-top: clamp(48rem, 9vw, 96rem);
+  padding: 20rem var(--gutter) 40rem;
+  font-size: 11rem;
   color: var(--fg-dim);
   display: flex;
   flex-wrap: wrap;
-  gap: 8px 22px;
+  gap: 8rem 22rem;
 }
 
 .visually-hidden {
@@ -1034,28 +1057,47 @@ body.is-locked {
   white-space: nowrap;
 }
 
-/* ── ниже порога двух колонок ─────────────────────────────── */
-@media (max-width: 860px) {
+/* ── плита в одну колонку ─────────────────────────────────────
+   Порог здесь свой и он выше, чем у витрины: с крупностью колонка этикетки
+   выросла с 280–380 до 490–665 px, и рядом с ней проёму нужно ещё около
+   340 px (кадр 9:16 ростом 603) плюс поля страницы и просвет между колонками
+   — вместе это 13vw. Двум колонкам, стало быть, нужно от 1160 px, и ниже
+   они не расходятся, а отнимают место у работы: на окне 900 px проём
+   сжимался с 316 до 107 px, то есть до почтовой марки в пустой рамке. */
+@media (max-width: 1160px) {
   .plate {
     grid-template-columns: minmax(0, 1fr);
-    gap: 22px;
+    gap: 22rem;
     justify-items: center;
-    padding-top: 20px;
+    padding-top: 20rem;
   }
   /* высота всё равно ограничена: кнопка должна оставаться
      в первом экране на устройстве, с которого чаще всего приходят */
   .record--plate {
-    height: min(46vh, 380px);
+    height: min(46vh, 380rem);
     width: auto;
   }
   .record--plate .record__image.has-work img {
-    max-height: calc(min(46vh, 380px) - clamp(34px, 4.6vw, 58px));
+    max-height: calc(min(46vh, 380rem) - clamp(34rem, 4.6vw, 58rem));
   }
   .label {
-    width: min(380px, 84vw);
+    width: min(380rem, 84vw);
   }
   .plate .caption__title {
-    font-size: clamp(20px, 5vw, 24px);
+    font-size: clamp(20rem, 5vw, 24rem);
+  }
+}
+
+/* ── ниже порога двух колонок в витрине ───────────────────── */
+@media (max-width: 860px) {
+  /* Телефон крупнее не становится. Зум 175% меряли на широком экране, где
+     он и нужен: там работа стояла размером с почтовую марку. На телефоне
+     колонка и так во всю ширину ладони, а множитель отнял бы вторую —
+     минимум колонки вырос бы со 140 до 245 px, и на экране 390 px осталась
+     бы одна работа в ряду вместо двух. Чтобы включить крупность и здесь,
+     достаточно убрать эту строку. */
+  :root {
+    --scale: 1;
   }
   /* Проём здесь ростом min(46vh, 380px), то есть шириной 131–164 px: замерено
      на 390×667 и 390×844. Полная подсказка в такой колонке рассыпается на
@@ -1063,8 +1105,8 @@ body.is-locked {
      ужимаются, а требования к файлу снимаются: в такой колонке они всё равно
      не читаются, и приёмка называет их сама, когда файл им не подошёл. */
   .record--plate .record__image .prompt {
-    padding: 0 8px;
-    font-size: 13px;
+    padding: 0 8rem;
+    font-size: 13rem;
   }
   .record--plate .record__image .prompt__wide,
   .record--plate .record__image .prompt__fine {
@@ -1074,13 +1116,13 @@ body.is-locked {
     display: block;
   }
   .masthead {
-    padding-inline: 20px;
+    padding-inline: 20rem;
   }
   .masthead__nav {
-    gap: 16px;
+    gap: 16rem;
   }
   .collection {
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(140rem, 1fr));
   }
 }
 
