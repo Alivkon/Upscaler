@@ -17,12 +17,13 @@
 // с двумя языками в шапке выглядит недоделанным, а не заботливым.
 
 import { formatBytes, formatDims, formatType } from './public/record.js';
+import { MIN_SOURCE } from './public/upscale-local.js';
 
 const SITE_NAME = 'Tessarum';
 // Сказано про оба вида работ: описание страницы попадает в выдачу,
 // а «4k desktop wallpaper» спрашивают отдельно от «phone wallpaper».
 const DESCRIPTION =
-  'Phone wallpapers at 1440 × 3120 from paintings and engravings in open collections. ' +
+  'Phone wallpapers at 2160 × 3840 from paintings and engravings in open collections. ' +
   'Free to download, no sign-up. Make your own wallpaper from a picture of your own, up to 4× bigger.';
 
 // Единственное место, где текст становится разметкой. Имена присланных файлов
@@ -212,10 +213,21 @@ const plateSizes = item => {
 
 // Чем работа показана и что она отдаёт.
 //
-// Показывает указатель кадр 9:16, страница работы — 9:19.5, а Download отдаёт
-// тот же 9:19.5: коллекция стала телефонной, и то, что видно, обязано быть тем,
-// что получат. Плита при этом никуда не делась — она предлагается отдельно,
-// ниже, тому, кто хочет кроить сам.
+// Указатель, страница работы и Download — везде один кадр 9:16: коллекция
+// телефонная, и то, что видно, обязано быть тем, что получат. Плита при этом
+// никуда не делась — она предлагается отдельно, ниже, тому, кто хочет кроить
+// сам.
+//
+// Отдавался здесь кадр 9:19.5, самый узкий из ходовых. Причина смены —
+// в treatment.js рядом с PHONE_RATIO: телефон масштабирует обои по заполнению
+// и режет ещё раз сам, поэтому узкий кадр не выгадывает на длинных экранах
+// почти ничего (53.6% против 50.5% работы на 19.5:9) и отдаёт много на всех
+// остальных (44.0% против 61.6% на 16:9).
+//
+// Файлы 9:16 уже нарезаны — генератор режет их с самого начала под карточку
+// указателя, все 267 из 267, — поэтому смена ничего не пересобирает. Кадр
+// 9:19.5 остаётся на диске и предлагается в `alternates`: он больше не то,
+// что дают по умолчанию, но для длинного экрана он по-прежнему чуть плотнее.
 //
 // Кадра может не быть: генератор режет их пакетом и до новой работы доходит
 // не сразу. Тогда показывается и отдаётся плита. Это не заглушка на время,
@@ -225,7 +237,7 @@ const plateSizes = item => {
 // Обе половины совпадают по форме с самой записью — `url`, `filename`,
 // `width`, `height`, `bytes`, `copies`, — поэтому подстановка ничего не знает
 // о том, кадр перед ней или плита.
-const offered = item => item.crops?.phone || item;
+const offered = item => item.crops?.tall || item;
 const tile = item => item.crops?.tall || item;
 
 // Что написано на карточке. Раньше стояли место и номер — «France · vl-0227», —
@@ -267,9 +279,11 @@ const cardCreator = item => {
 // из каталога, и проём принимает её пропорции ещё до того, как что-то
 // загрузилось. Иначе указатель прыгал бы по мере загрузки картинок.
 function card(item, { eager = false, priority = false } = {}) {
-  // Показывается кадр 9:16, отдаётся кадр 9:19.5 — разные файлы, и подпись
-  // говорит о том, который отдают: размер под кнопкой «Download» — обещание,
-  // а не описание картинки в проёме.
+  // Показывается и отдаётся один файл. Раньше это были разные кадры — 9:16
+  // в проёме, 9:19.5 по кнопке, — и подпись приходилось оговаривать: размер
+  // под «Download» описывал не ту картинку, что видна. Теперь оговаривать
+  // нечего, но `tile` и `offered` остаются двумя именами: совпадение
+  // сегодняшнее, а вопросы разные — «чем показана» и «что отдаёт».
   const shownFile = tile(item);
   const file = offered(item);
   const ratio = `${shownFile.width} / ${shownFile.height}`;
@@ -596,7 +610,7 @@ const versions = item => {
   const name = item.title.split(' — ')[0];
   const rows = (item.versions || [])
     .map(version => {
-      const file = version.crops?.phone || version;
+      const file = version.crops?.tall || version;
       const label = TREATMENT_NAMES[version.treatment];
       return (
         label && { file, label, note: formatDims(file.width, file.height), alt: `${name}, ${label.toLowerCase()}` }
@@ -639,10 +653,14 @@ const alternates = (item, plateSize) => {
       alt: `${name}, the whole painting${widePlate ? ', desktop background' : ''}`
     },
     {
-      file: item.crops?.tall,
-      label: '9:16',
-      note: item.crops?.tall && formatDims(item.crops.tall.width, item.crops.tall.height),
-      alt: `${name}, cropped to 9:16, vertical phone background`
+      // Узкий кадр. По кнопке отдаётся 9:16, и здесь предлагается то, чего
+      // там нет: на экране 19.5:9 и длиннее 9:19.5 садится чуть плотнее.
+      // Проиграл он не этим экранам, а всем остальным (treatment.js,
+      // PHONE_RATIO), и «чуть плотнее на своём» — ровно то, чем он остался.
+      file: item.crops?.phone,
+      label: '9:19.5',
+      note: item.crops?.phone && formatDims(item.crops.phone.width, item.crops.phone.height),
+      alt: `${name}, cropped to 9:19.5, tall phone background`
     },
     {
       file: item.crops?.wide,
@@ -653,7 +671,7 @@ const alternates = (item, plateSize) => {
   ].filter(row => row.file);
   // Одна работа без единого кадра — это работа, у которой в проёме и так
   // стоит плита. Предлагать её же второй раз незачем.
-  if (rows.length === 1 && !item.crops?.phone) return '';
+  if (rows.length === 1 && !item.crops?.tall) return '';
   // Про обработку сказано только там, где обработка есть. У 35 работ музейного
   // манифеста стоит `none`, у плиты без записи — null, и обещание «та же
   // обработка, что у кадра» на них означало бы обработку, которой не было:
@@ -673,7 +691,7 @@ const alternates = (item, plateSize) => {
 };
 
 export function workPage({ item, others, origin }) {
-  // Проём показывает кадр 9:19.5, и всё, что страница о работе утверждает —
+  // Проём показывает кадр 9:16, и всё, что страница о работе утверждает —
   // размер, вес, тип, разметка, превью, — относится к нему же: посетитель
   // получает по кнопке именно этот файл. Плита названа отдельно и ниже.
   const file = offered(item);
@@ -689,7 +707,11 @@ export function workPage({ item, others, origin }) {
   //
   // Условие — обе стороны, а не длинная. 3840×2160 это площадь кадра, и файл,
   // у которого одна сторона доросла, а вторая нет, экран не заполнит: назвать
-  // его 4K значило бы пообещать то, чего в нём нет. Подходят 57 работ из 210.
+  // его 4K значило бы пообещать то, чего в нём нет. Подходят 164 работы из 330.
+  //
+  // Было 69 из 330, и выросло не от новых работ, а от смены кадра: узкий
+  // 1772×3840 не дотягивал короткой стороной до 2160, кадр 9:16 — это ровно
+  // 2160×3840. Слово стало правдой там, где раньше было бы неправдой.
   // Меряется по длинной и короткой стороне, а не по ширине и высоте: кадр
   // 2160×3840 — это тот же 4K, поставленный стоймя, и телефонная работа
   // теряла бы слово из-за поворота.
@@ -891,12 +913,13 @@ export function intakePage({ origin, runtime }) {
     runtime,
     title: `Make your own wallpaper, ${SITE_NAME}`,
     description:
-      'Upscale your own image up to 4× its size, or to 2K and 4K, and fit it to your phone screen. ' +
+      'Upscale your own image to 4K wallpaper size and fit it to your phone screen. ' +
       'JPG, PNG and WebP up to 10 MB.',
     canonical: `${origin}/restore`,
     script: '/intake.js',
     body: `
       <h1 class="heading">Make your own wallpaper</h1>
+      <p class="page-sub">Any picture, enlarged to 4K without blurring. Fit it to your phone's shape. Nothing leaves your device.</p>
       <div class="plate">
         <figure class="record record--plate">
           <div class="record__image" id="intake-frame" role="button" tabindex="0" aria-label="Choose a picture">
@@ -904,6 +927,21 @@ export function intakePage({ origin, runtime }) {
               <span class="prompt__wide">Drop your picture here</span>
               <span class="prompt__narrow">Tap to choose</span>
               <span class="prompt__fine">JPG, PNG or WebP, up to 10 MB</span>
+              <!-- Совет, а не требование, и оба его числа выведены, а не
+                   вписаны: 540 × 960 — это порог обоев, делённый на множитель
+                   модели (MIN_SOURCE в upscale-local.js), то есть самая мелкая
+                   картинка, из которой ещё выходит кадр 2160 × 3840.
+
+                   «Вертикальная» — про то, сколько от картинки доживёт до
+                   экрана. Кадр 9:16 режется по центру, и через него проходит
+                   100% работы, снятой 9:16, 75% снятой 3:4 и 32% снятой 16:9:
+                   у лежачей отрезаются две трети ширины. Сказать об этом надо
+                   до выбора файла, а не после — потому строка стоит в проёме,
+                   а не в условиях. -->
+              <span class="prompt__fine"
+                >Works best on a vertical picture, at least
+                ${formatDims(MIN_SOURCE.width, MIN_SOURCE.height)}</span
+              >
             </p>
             <img id="intake-picture" alt="" hidden />
           </div>
@@ -925,17 +963,16 @@ export function intakePage({ origin, runtime }) {
                вкусом сайта. Кто хочет наш вид, ставит галочку; остальные
                получают то, что принесли, только крупнее.
 
-               Подпись больше не обещает «как в коллекции», и это не смягчение
-               формулировки: единой обработки у коллекции нет. На 76 работах
-               витрины стоят шесть разных ответов, и самый частый — не трогать
-               вовсе (25 работ), ceil второй (19). Обещать одной галочкой вид коллекции значит
-               обещать то, чего нет; поэтому подпись говорит, что галочка делает.
-               Счёт и разбор: research/2026-08-22-intake-treats-like-the-ticks.md.
-
                Слово «Dim» — то же, каким страница работы называет ceil
                в «Other versions» (TREATMENT_NAMES): одна обработка должна
                называться одним словом, иначе посетитель, увидевший «Dimmed»
                под картиной, не узнает её в галочке.
+
+               «A phone», а не «my phone»: экран посетителя нигде не
+               спрашивается — ни screen, ни devicePixelRatio, ни медиа-запроса,
+               — режется постоянная пропорция 9:16 (PHONE_RATIO в
+               public/treat-local.js и public/intake.js, treatment.js
+               на сервере). «My» обещало бы замер, которого нет.
 
                Разметкой, а не скриптом: тексты сайта живут в pages.js. -->
           <div class="options" id="intake-options">
@@ -943,17 +980,13 @@ export function intakePage({ origin, runtime }) {
               <input type="checkbox" id="intake-treat" />
               <span class="options__box" aria-hidden="true"></span>
               <span class="options__text"
-                >Dim it
-                <span class="options__fine">White balance, then colour and brightness capped</span>
-              </span>
+                >Dim it<span class="options__fine">the gallery's own treatment, applied to your picture</span></span>
             </label>
             <label class="options__row">
               <input type="checkbox" id="intake-crop" />
               <span class="options__box" aria-hidden="true"></span>
               <span class="options__text"
-                >Fit my phone screen
-                <span class="options__fine">1440 × 3120, centred</span>
-              </span>
+                >Fit a phone screen</span>
             </label>
           </div>
           <!-- Галочка выключена в разметке, а не состоянием: пока публикация

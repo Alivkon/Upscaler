@@ -4,17 +4,11 @@ import { BLANK_ACCESSION, accession, button, formatBytes, formatDims, formatType
 // Только правила размера: сам счёт и его рантайм на шесть мегабайт грузятся
 // по требованию, уже из `restoreLocally`.
 import { TOO_BIG, resultLongestSide, targetLongestSideFor } from './upscale-local.js';
+import { phoneWindow } from './frame.js';
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const ACCEPTED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 const FILE_REQUIREMENTS = 'JPG, PNG and WebP up to 10 MB.';
-// Размеры результата — те же, что принимает server.js.
-const OUTPUT_SIZES = [
-  ['x2', '×2'],
-  ['x4', '×4'],
-  ['2k', '2K'],
-  ['4k', '4K']
-];
 
 const els = {
   frame: document.querySelector('#intake-frame'),
@@ -46,7 +40,6 @@ const SENT_TO_US = 'Enlarged on our server; your picture is sent to us.';
 const LOCAL_FAILED = 'Your browser could not enlarge this picture.';
 let received = null; // выбранный файл и его измеренные размеры
 let restored = null; // готовая работа: имя файла и адрес
-let outputSize = OUTPUT_SIZES[0][0];
 let objectUrl = null;
 
 const chooseFile = () => els.file.click();
@@ -98,20 +91,21 @@ async function receive(file) {
   renderMeasured();
 }
 
-// Телефонный кадр. Те же 9:19.5, что режет `treatment.js` на сервере; здесь
-// число повторено, потому что строка «Result — …» обязана называть то, что
-// придёт, а спросить об этом сервер до отправки нельзя.
-const PHONE_RATIO = 9 / 19.5;
+// Сначала кадр, потом размер — тот же порядок, в котором работает и счёт
+// (`upscaleInBrowser`). Обратный порядок здесь уже стоял: он растил картинку
+// целиком, кадрировал готовое и оттого называл размер, до которого обрезанному
+// кадру не хватало, — 4032 × 3024 с галочкой обещали 4K, а выходило 1701 × 3024.
+const framedSource = () => {
+  const { width, height } = received;
+  if (!els.crop.checked) return { width, height };
+  const window = phoneWindow(width, height);
+  return { width: window.width, height: window.height };
+};
 
-// Во что развернётся картинка при данной длинной стороне. Кадр учитывается
-// здесь же: галочка меняет не отделку, а размер файла, и строка условий,
-// называющая размер до кадрирования, обещала бы не тот файл.
+// Во что развернётся кадр при данной длинной стороне.
 function resultSize(width, height, target) {
   const ratio = target / Math.max(width, height);
-  const grown = [Math.round(width * ratio), Math.round(height * ratio)];
-  if (!els.crop.checked) return grown;
-  const [w, h] = grown;
-  return w / h > PHONE_RATIO ? [Math.round(h * PHONE_RATIO), h] : [w, Math.round(w / PHONE_RATIO)];
+  return [Math.round(width * ratio), Math.round(height * ratio)];
 }
 
 // Размеры у двух путей разные, и называть надо тот, который сейчас побежит.
@@ -120,32 +114,14 @@ function resultSize(width, height, target) {
 // от здешнего — кнопка обещала 6424 × 8700 там, где выходило 6049 × 8192.
 // У сервера потолков нет вовсе (`targetLongestSideFor` в server.js), поэтому
 // предложение посчитать у нас называет своё число, а не то же самое.
-const localSize = () =>
-  resultSize(received.width, received.height, resultLongestSide(outputSize, received.width, received.height));
-const serverSize = () =>
-  resultSize(
-    received.width,
-    received.height,
-    targetLongestSideFor(outputSize, Math.max(received.width, received.height))
-  );
-
-// Выбор размера стоит в строке условий, а не в настройках: это свойство
-// изготавливаемой работы и естественное место, где позже разойдётся цена.
-function scaleSwitch() {
-  const group = document.createElement('span');
-  group.className = 'scale';
-  group.setAttribute('role', 'group');
-  group.setAttribute('aria-label', 'Output size');
-  for (const [value, label] of OUTPUT_SIZES) {
-    const choice = button(label, '', () => {
-      outputSize = value;
-      renderMeasured();
-    });
-    choice.setAttribute('aria-pressed', String(value === outputSize));
-    group.append(choice);
-  }
-  return group;
-}
+const localSize = () => {
+  const { width, height } = framedSource();
+  return resultSize(width, height, resultLongestSide(width, height));
+};
+const serverSize = () => {
+  const { width, height } = framedSource();
+  return resultSize(width, height, targetLongestSideFor(width, height));
+};
 
 function renderEmpty() {
   // Номера здесь нет намеренно. Стоял `TS·––––` — тот же формат, что несут
@@ -162,15 +138,19 @@ function renderEmpty() {
   // о любом файле. Раньше здесь стояла подсказка про перетаскивание, и
   // страница, на которую ведут все ссылки «Restore your own image», ни словом
   // не говорила, что делает; узнать это можно было, только загрузив файл.
-  // Подсказка ушла к остальным практическим сведениям, в примечание.
-  els.terms.textContent = 'Your picture, enlarged up to 4×, big enough for a 1440 × 3120 phone screen';
+  // Подсказка осталась в проёме, на самом месте броска («Drop your picture
+  // here» и требования к файлу под ней, pages.js).
+  els.terms.textContent = 'Your picture, enlarged up to 4×, big enough for a 2160 × 3840 phone screen';
   // «Nothing is published without your consent» отсюда убрано и ничем
   // не заменено. Фраза описывала публикацию, которой нет: маршрут закрыт
   // (LEGAL.md), галочка выключена, чужие файлы не выходят на витрину никогда.
   // Обещание о том, чего не происходит, — лишний повод задуматься, происходит
   // ли; а любая замена вроде «мы не храним ваши картинки» была бы обещанием
   // о приватности, которое пришлось бы потом держать.
-  els.note.textContent = `Drop a file anywhere on the page. ${FILE_REQUIREMENTS}`;
+  // Примечание молчит: перетаскивание и требования к файлу уже написаны
+  // в самом проёме, и повторять их второй строкой не для чего. Требования
+  // возвращаются сюда, когда файл им не подошёл (`renderFailed`).
+  els.note.textContent = '';
   els.note.classList.remove('is-error');
   els.privacy.textContent = STAYS_HERE;
   els.share.hidden = true;
@@ -187,18 +167,17 @@ function renderMeasured() {
   // и на странице ему негде было объясниться. Размер стоит и в строке
   // условий — повтор нарочный: в строке это обещание, на кнопке — действие.
   //
-  // Глагол при этом выведен, а не вписан. «2K» и «4K» — не кратности, а
-  // absolute-размеры без нижнего порога (`targetLongestSideFor` в server.js),
-  // и картинка 3000 × 4000, отправленная в 2K, вернётся **меньше**, чем
-  // пришла. Кнопка со словом «Enlarge» сказала бы в этом случае неправду —
-  // а размер рядом с ней тут же эту неправду и показывает.
+  // Глагол выведен, а не вписан. Порог — нижняя граница, и картинка, уже
+  // переросшая его, не увеличивается вовсе; с телефонным кадром она к тому же
+  // выйдет меньше, чем пришла, — обрезка снимает больше, чем добавил размер.
+  // Кнопка со словом «Enlarge» сказала бы в этом случае неправду.
   const result = localSize();
   const verb = Math.max(...result) > Math.max(width, height) ? 'Enlarge' : 'Resize';
   els.actions.replaceChildren(
     button(`${verb} to ${formatDims(...result)}`, 'btn', restore),
     button('Choose another', 'btn btn--ghost', chooseFile)
   );
-  els.terms.replaceChildren(`Result, ${formatDims(...result)} `, scaleSwitch());
+  els.terms.textContent = `Result, ${formatDims(...result)}`;
   // Примечание здесь пустое. Раньше стояло «Free for now: payment and accounts
   // come later» — обещание платного будущего в тот момент, когда посетитель
   // смотрит на кнопку. Считает браузер посетителя, счёта за это нет, и цена
@@ -239,8 +218,8 @@ function renderOffered(reason) {
     button(`Enlarge on our server to ${formatDims(...serverSize())}`, 'btn', restoreOnServer),
     button('Choose another', 'btn btn--ghost', chooseFile)
   );
-  els.terms.replaceChildren(`Result, ${formatDims(...serverSize())} `, scaleSwitch());
-  els.note.textContent = `${reason} We can do it on our machines instead — that means sending your picture to us, and it is deleted after 30 days.`;
+  els.terms.textContent = `Result, ${formatDims(...serverSize())}`;
+  els.note.textContent = `${reason} We can do it on our machines instead — that means sending your picture to us.`;
   els.note.classList.add('is-error');
   // Обещание над кнопкой перестаёт быть верным ровно здесь и потому меняется.
   els.privacy.textContent = SENT_TO_US;
@@ -275,7 +254,7 @@ function renderFinished() {
       : 'This page shows the full-resolution file, the same one you download.';
   els.privacy.textContent = restored.provider === 'server' ? SENT_TO_US : STAYS_HERE;
   els.note.classList.remove('is-error');
-  els.shareNote.textContent = 'Not available at the moment: the work stays with you and is deleted after 30 days.';
+  els.shareNote.textContent = 'Not available at the moment.';
   els.share.hidden = false;
   setOptions(false);
 }
@@ -291,11 +270,12 @@ function renderFailed(message) {
 }
 
 // Имя готового файла собирается так же, как на сервере (`saveResult`): из имени
-// принесённого, названия модели и выбранного размера. От него же берётся номер
-// работы, поэтому формат обязан совпадать.
+// принесённого и названия модели. От него же берётся номер работы, поэтому
+// формат обязан совпадать. Размер из имени ушёл вместе с выбором размера:
+// он теперь один на все работы и ничего про эту не сказал бы.
 function localName(extension) {
   const base = received.file.name.replace(/\.[^.]+$/, '').replace(/[^a-zA-Z0-9_-]/g, '_') || 'photo';
-  return `${base}-4x-clearrealityv1-${outputSize}-${Date.now()}${extension}`;
+  return `${base}-4x-clearrealityv1-${Date.now()}${extension}`;
 }
 
 // Считает картинку прямо здесь. Возвращает готовый файл или null, если браузер
@@ -311,13 +291,14 @@ async function restoreLocally() {
   if (!(await localUpscaleAvailable())) return null;
 
   const { canvas, provider } = await upscaleInBrowser(received.file, {
-    outputSize,
+    crop: els.crop.checked,
     onProgress: ({ done, total, secondsLeft }) => {
       const left = secondsLeft > 90 ? `${Math.round(secondsLeft / 60)} min` : `${secondsLeft}s`;
       els.note.textContent = `Working in your browser — ${done} of ${total} tiles, about ${left} left.`;
     }
   });
-  const finished = finishLocally(canvas, { treat: els.treat.checked, crop: els.crop.checked });
+  // Кадр уже вырезан — до счёта; здесь остаётся только отделка.
+  const finished = finishLocally(canvas, { treat: els.treat.checked });
   // Формат сохраняется, как и на сервере: принесли PNG — вернётся PNG.
   // Всё остальное отдаётся JPEG: четырёхкратный PNG с телефонной картинки
   // весит десятки мегабайт, и это уже не «тот же файл, только крупнее».
@@ -360,7 +341,6 @@ async function restoreOnServer() {
   try {
     const body = new FormData();
     body.append('photo', received.file);
-    body.append('output_size', outputSize);
     body.append('treat', String(els.treat.checked));
     body.append('crop', String(els.crop.checked));
     const response = await fetch('/api/upscale', { method: 'POST', body });

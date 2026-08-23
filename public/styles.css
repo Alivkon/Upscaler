@@ -14,8 +14,10 @@
   --rule: rgba(237, 234, 227, 0.13);
 
   /* Проём один на весь сайт, и он повторяет пропорции телефона: работы
-     заполняют его целиком, а всё остальное встаёт в него с полями. */
-  --opening: 780 / 1690;
+     заполняют его целиком, а всё остальное встаёт в него с полями.
+     9:16 — то же число, каким режется кадр (treatment.js, PHONE_RATIO);
+     стояло 780/1690, то есть 9:19.5, и разъехалось бы с ним. */
+  --opening: 9 / 16;
 
   /* Одна гарнитура. Прототип загружал ещё и Newsreader под инвентарный номер,
      но номер набран моноширинной и там, и здесь, — значит, вторая гарнитура
@@ -102,6 +104,12 @@ button {
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--fg-dim);
+}
+.page-sub {
+  margin: 0;
+  padding: 0 var(--gutter) clamp(14px, 2.5vw, 24px);
+  color: var(--fg-dim);
+  font-size: 12px;
 }
 .collection {
   display: grid;
@@ -571,30 +579,6 @@ body.is-dragging .record--plate {
    подпрыгивала на 1lh в тот момент, когда номер появлялся. */
 .plate .caption__title.is-blank:empty {
   min-height: 1lh;
-}
-
-/* ── выбор размера: часть характеристик, а не настройка ───── */
-.scale {
-  display: inline-flex;
-  margin-left: 2px;
-  border: 1px solid var(--rule);
-}
-.scale button {
-  font-size: 11px;
-  letter-spacing: 0.06em;
-  background: transparent;
-  color: var(--fg-dim);
-  border: 0;
-  padding: 3px 9px;
-  cursor: pointer;
-}
-.scale button[aria-pressed='true'] {
-  background: var(--fg);
-  color: var(--ground);
-}
-.scale button:focus-visible {
-  outline: 2px solid var(--fg);
-  outline-offset: 2px;
 }
 
 /* ── действия ─────────────────────────────────────────────── */
@@ -1085,9 +1069,8 @@ body.is-locked {
   /* Проём здесь ростом min(46vh, 380px), то есть шириной 131–164 px: замерено
      на 390×667 и 390×844. Полная подсказка в такой колонке рассыпается на
      пять-шесть огрызков строк — хуже, чем молчание. Остаётся два слова, поля
-     ужимаются, а требования к файлу снимаются: они и так стоят ниже, в
-     примечании под кнопкой («Drop a file anywhere on the page. JPG, PNG and
-     WebP up to 10 MB»), где им хватает ширины. */
+     ужимаются, а требования к файлу снимаются: в такой колонке они всё равно
+     не читаются, и приёмка называет их сама, когда файл им не подошёл. */
   .record--plate .record__image .prompt {
     padding: 0 8px;
     font-size: 13px;

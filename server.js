@@ -9,7 +9,8 @@ import sharp from 'sharp';
 import { IMAGES_DIR, GENERATED_DIR, ADJACENT, ensureImageDirectories, galleryItems, isImage } from './gallery.js';
 import { upscaleAllowance } from './limits.js';
 import { collectionPage, errorPage, intakePage, licensePage, missingPage, robots, sitemap, workPage } from './pages.js';
-import { finish } from './treatment.js';
+import { finish, phoneWindow } from './treatment.js';
+import { GATE_LONG, GATE_SHORT } from './public/frame.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // Канонический адрес. Умолчание — настоящий домен, а не локальный сервер:
@@ -221,8 +222,6 @@ const MODEL = {
   slug: 'real-esrgan',
   endpoint: 'models/nightmareai/real-esrgan/predictions'
 };
-// Размеры результата — те же, что предлагает страница.
-const OUTPUT_SIZES = ['x2', 'x4', '2k', '4k'];
 
 const TOKEN_PLACEHOLDER = 'r8_replace_with_your_replicate_api_token';
 
@@ -266,25 +265,29 @@ async function createPrediction(image, scale) {
   return data;
 }
 
-async function readLongestSide(file) {
+// Обе стороны, а не одна: порог витрины двусторонний, и короткая сторона
+// решает не реже длинной (`targetLongestSideFor` ниже).
+async function readSize(file) {
   const metadata = await sharp(file.buffer).metadata();
-  const longestSide = Math.max(metadata.width || 0, metadata.height || 0);
-  if (!longestSide) throw new HttpError(400, 'The size of that image could not be read.');
-  return longestSide;
+  const width = metadata.width || 0;
+  const height = metadata.height || 0;
+  if (!width || !height) throw new HttpError(400, 'The size of that image could not be read.');
+  return { width, height };
 }
 
-// Во что упирается длинная сторона результата: кратность исходнику или фиксированный размер.
-function targetLongestSideFor(outputSize, sourceLongestSide) {
-  if (outputSize === 'x2') return sourceLongestSide * 2;
-  if (outputSize === 'x4') return sourceLongestSide * 4;
-  return outputSize === '2k' ? 2048 : 4096;
+// Тот же порог и тот же счёт, что у браузерного пути
+// (`targetLongestSideFor` в public/upscale-local.js): размер результата один
+// на оба пути, и разойтись им нельзя — страница называет число до отправки.
+// Потому и числа берутся из одного файла, а не повторяются здесь.
+function targetLongestSideFor(width, height) {
+  const long = Math.max(width, height);
+  const short = Math.min(width, height);
+  return Math.max(long, GATE_LONG, Math.ceil((long * GATE_SHORT) / short));
 }
 
-// Real-ESRGAN принимает целочисленный множитель, поэтому для фиксированных
-// размеров берём ближайший больший и обрезаем результат до нужной стороны.
-function realEsrganScale(outputSize, sourceLongestSide, targetLongestSide) {
-  if (outputSize === 'x2') return 2;
-  if (outputSize === 'x4') return 4;
+// Real-ESRGAN принимает целочисленный множитель, поэтому берём ближайший
+// больший и обрезаем результат до нужной стороны.
+function realEsrganScale(sourceLongestSide, targetLongestSide) {
   return Math.min(10, Math.max(2, Math.ceil(targetLongestSide / sourceLongestSide)));
 }
 
@@ -308,7 +311,7 @@ async function waitForResult(prediction) {
   throw new HttpError(504, 'Timed out waiting for the result. Try again.');
 }
 
-async function saveResult(sourceUrl, file, { outputSize, targetLongestSide, treat, crop }) {
+async function saveResult(sourceUrl, file, { targetLongestSide, treat }) {
   const response = await fetch(sourceUrl, { headers: apiHeaders() });
   if (!response.ok) throw new HttpError(502, 'The finished image could not be downloaded from Replicate.');
   const contentType = response.headers.get('content-type') || file.mimetype;
@@ -316,7 +319,7 @@ async function saveResult(sourceUrl, file, { outputSize, targetLongestSide, trea
   const extension = contentType.includes('png') ? '.png' : contentType.includes('webp') ? '.webp' : '.jpg';
   const baseName =
     path.basename(file.originalname, path.extname(file.originalname)).replace(/[^a-zA-Z0-9_-]/g, '_') || 'photo';
-  const filename = `${baseName}-${MODEL.slug}-${outputSize}-${Date.now()}${extension}`;
+  const filename = `${baseName}-${MODEL.slug}-${Date.now()}${extension}`;
   let output = Buffer.from(await response.arrayBuffer());
   if (targetLongestSide)
     output = await sharp(output).resize(targetLongestSide, targetLongestSide, { fit: 'inside' }).toBuffer();
@@ -324,7 +327,8 @@ async function saveResult(sourceUrl, file, { outputSize, targetLongestSide, trea
   // решает силу по пикселям, которые поедут на экран, а уменьшение после него
   // мерило бы не тот файл. Обе галочки выключены — без них `finish` возвращает
   // тот же буфер и ничего не пережимает.
-  output = await finish(output, { treat, crop });
+  // Кадр уже вырезан — до Replicate; здесь остаётся только отделка.
+  output = await finish(output, { treat });
   await fs.writeFile(path.join(GENERATED_DIR, filename), output);
   return filename;
 }
@@ -345,19 +349,28 @@ app.post('/api/upscale', upload.single('photo'), async (req, res, next) => {
       res.setHeader('Retry-After', String(allowance.retryAfter));
       throw new HttpError(429, allowance.refusal);
     }
-    const outputSize = OUTPUT_SIZES.includes(req.body.output_size) ? req.body.output_size : 'x2';
     // Галочки читаются строгим сравнением, а не на истинность: форма шлёт
     // строки, и `'false'` — истинная строка. Умолчание — «не трогать», и
     // ошибка разбора обязана падать в него, а не в «обработать».
     const treat = req.body.treat === 'true';
     const crop = req.body.crop === 'true';
-    const sourceLongestSide = await readLongestSide(req.file);
-    const targetLongestSide = targetLongestSideFor(outputSize, sourceLongestSide);
-    const scale = realEsrganScale(outputSize, sourceLongestSide, targetLongestSide);
+    const { width, height } = await readSize(req.file);
+    // Кадр режется ДО отправки, как и в браузере (`upscaleInBrowser`).
+    // Здесь у этого есть и своя цена: за пиксели, которые мы выбросим сразу
+    // после, Replicate берёт наравне с остальными, а у широкой картинки их
+    // две трети. Порог тоже назначается по тому, что останется, — иначе
+    // готовому кадру до него не хватит.
+    const window = crop ? phoneWindow(width, height) : null;
+    const framed = window
+      ? { ...req.file, buffer: await sharp(req.file.buffer, { limitInputPixels: false }).extract(window).toBuffer() }
+      : req.file;
+    const [framedWidth, framedHeight] = window ? [window.width, window.height] : [width, height];
+    const targetLongestSide = targetLongestSideFor(framedWidth, framedHeight);
+    const scale = realEsrganScale(Math.max(framedWidth, framedHeight), targetLongestSide);
     allowance.spend();
-    const prediction = await createPrediction(asDataUrl(req.file), scale);
+    const prediction = await createPrediction(asDataUrl(framed), scale);
     const resultUrl = await waitForResult(prediction);
-    const filename = await saveResult(resultUrl, req.file, { outputSize, targetLongestSide, treat, crop });
+    const filename = await saveResult(resultUrl, req.file, { targetLongestSide, treat });
     res.json({
       filename,
       url: `/images/generated/${encodeURIComponent(filename)}`,

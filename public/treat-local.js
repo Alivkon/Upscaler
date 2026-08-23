@@ -13,15 +13,7 @@
 // небо ушло за край, синей больше не является.
 import { treatCeil } from '/rules/ceilings.mjs';
 
-// Пропорция та же, что у коллекции: 9:19.5 — самая узкая из ходовых.
-const PHONE_RATIO = 9 / 19.5;
-
-export function phoneWindow(width, height) {
-  const wide = width / height > PHONE_RATIO;
-  const w = wide ? Math.round(height * PHONE_RATIO) : width;
-  const h = wide ? height : Math.round(width / PHONE_RATIO);
-  return { left: Math.round((width - w) / 2), top: Math.round((height - h) / 2), width: w, height: h };
-}
+import { phoneWindow } from './frame.js';
 
 // Проём вырезается копированием на новый холст: `getImageData` по окну вернул бы
 // те же пиксели, но дальше нужен именно холст — из него берётся файл.
@@ -33,6 +25,9 @@ function cropped(canvas, window) {
   return out;
 }
 
+// Кадр остаётся и здесь, хотя приёмка его больше не просит: она режет до
+// счёта (`upscaleInBrowser`). Нужен он тому, у кого готовый холст уже на
+// руках и кадра в нём нет.
 export function finishLocally(canvas, { treat = false, crop = false } = {}) {
   if (!treat && !crop) return canvas;
   const framed = crop ? cropped(canvas, phoneWindow(canvas.width, canvas.height)) : canvas;

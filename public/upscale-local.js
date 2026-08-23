@@ -14,6 +14,8 @@
 // кэшируется он на год как неизменяемый: без версии в адресе это обещание
 // неверно (server.js). Саму версию ставит сервер в `<meta>` — читать её здесь
 // из копии значило бы завести вторую запись рядом с package.json.
+import { GATE_LONG, GATE_SHORT, phoneWindow } from './frame.js';
+
 const VENDOR = '/vendor/ort';
 const RUNTIME = 'ort.webgpu.min.mjs';
 const MODEL = '/models/4x-ClearRealityV1.onnx';
@@ -24,6 +26,11 @@ const MODEL = '/models/4x-ClearRealityV1.onnx';
 const TILE = 192;
 const OV = 16;
 const SCALE = 4;
+// Самая маленькая картинка, из которой ещё выходят обои: порог, делённый на
+// множитель модели. Меньше — и до 2160 × 3840 не дотянуться ничем, сколько
+// ни проси. Строка на странице печатает эти два числа (`pages.js`), поэтому
+// они выводятся, а не вписываются: сменится модель — сменится и совет.
+export const MIN_SOURCE = { width: GATE_SHORT / SCALE, height: GATE_LONG / SCALE };
 // Дальше этого холст не растёт: у Canvas есть предел стороны, а память
 // кончается раньше предела. Просьба «×4» от большого исходника упирается
 // сюда, и это честнее, чем упасть на середине.
@@ -49,10 +56,10 @@ const fits = (width, height, ratio) => Math.round(width * ratio) * Math.round(he
 // Во что упирается длинная сторона результата: просьба, потолок стороны,
 // потолок площади и предел самой модели. Считает это отсюда и кнопка на
 // странице — раньше у неё был свой расчёт, и он отставал от здешнего.
-export function resultLongestSide(outputSize, width, height) {
+export function resultLongestSide(width, height) {
   const longest = Math.max(width, height);
   const byArea = Math.floor(longest * Math.sqrt(MAX_AREA / (width * height)));
-  let target = Math.min(targetLongestSideFor(outputSize, longest), MAX_SIDE, longest * SCALE, byArea);
+  let target = Math.min(targetLongestSideFor(width, height), MAX_SIDE, longest * SCALE, byArea);
   while (target > 1 && !fits(width, height, target / longest)) target--;
   return target;
 }
@@ -165,12 +172,25 @@ async function runTile(rt, pixels) {
   return result[rt.out];
 }
 
-// Сколько раз просят увеличить. Правила те же, что у сервера
-// (`targetLongestSideFor`), чтобы «×2» означало одно и то же на обоих путях.
-export function targetLongestSideFor(outputSize, sourceLongestSide) {
-  if (outputSize === 'x2') return sourceLongestSide * 2;
-  if (outputSize === 'x4') return sourceLongestSide * 4;
-  return outputSize === '2k' ? 2048 : 4096;
+// Один размер на всё, и он не выдуман здесь: это тот самый порог, по которому
+// витрина решает, что работа — телефонные обои (`gauge` в pages.js). Выбор из
+// четырёх — ×2, ×4, 2K, 4K — стоял на странице, где спросить не у кого: «2K»
+// и «4K» ничего не говорят про ЭТУ картинку, а «×4» называет кратность там,
+// где человеку нужен размер.
+//
+// Условие на витрине двустороннее — длинная сторона от 3840 И короткая
+// от 2160, — поэтому и здесь считается по обеим. Одной длинной не хватило бы:
+// панораму 2:1, растянутую до 3840 по длинной, витрина в обои не берёт —
+// короткая выходит 1920. Тогда ведёт короткая, и длинная перерастает 3840.
+//
+// Нижняя граница, а не точный размер: картинку, которая уже крупнее порога,
+// уменьшать незачем — от неё просят обои, а не пережатие.
+export function targetLongestSideFor(width, height) {
+  const long = Math.max(width, height);
+  const short = Math.min(width, height);
+  // Вверх, а не к ближайшему: короткая сторона, округлённая вниз, выходит
+  // 2159 и порог не проходит — то есть промах ровно в том, ради чего считаем.
+  return Math.max(long, GATE_LONG, Math.ceil((long * GATE_SHORT) / short));
 }
 
 /**
@@ -179,11 +199,20 @@ export function targetLongestSideFor(outputSize, sourceLongestSide) {
  * промежуточный холст на 64 мегапикселя — это четверть гигабайта памяти,
  * и телефон на нём кончается.
  */
-export async function upscaleInBrowser(file, { outputSize = 'x2', onProgress } = {}) {
-  const img = await createImageBitmap(file);
+export async function upscaleInBrowser(file, { crop = false, onProgress } = {}) {
+  const whole = await createImageBitmap(file);
+  // Кадр режется ДО счёта, а не после. Три причины, и все три считаются:
+  // модель иначе считает пиксели, которые тут же выбрасываются (у широкой
+  // картинки это две трети плиток); холст под них упирается в потолок площади
+  // раньше, чем кадр наберёт свои 3840 по высоте; и порог назначается по тем
+  // сторонам, которые останутся, — считать его по необрезанным значило бы
+  // обещать размер, до которого готовому кадру не хватит.
+  const window = crop ? phoneWindow(whole.width, whole.height) : null;
+  const img = window ? await createImageBitmap(file, window.left, window.top, window.width, window.height) : whole;
+  if (window) whole.close();
   const source = { width: img.width, height: img.height };
   const longest = Math.max(img.width, img.height);
-  const factor = resultLongestSide(outputSize, img.width, img.height) / longest;
+  const factor = resultLongestSide(img.width, img.height) / longest;
 
   // Холсты проверяются до рантайма: если браузер их не потянет, качать ради
   // этого шесть мегабайт незачем.
