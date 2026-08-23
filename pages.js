@@ -453,8 +453,19 @@ export function collectionPage({ items, origin }) {
     image: items.length ? `${origin}${offered(items[0]).url}` : undefined,
     imageWidth: items.length ? offered(items[0]).width : undefined,
     imageHeight: items.length ? offered(items[0]).height : undefined,
+    // Заголовка над сеткой нет. «The collection» стояло 11-м кеглем в верхнем
+    // регистре и приглушённым цветом — надстрочник, а не headline: человеку
+    // оно ничего не продавало, а поиску не давало ни одного слова, которое
+    // кто-нибудь набирает. Слова эти стоят в `<title>` и в описании, и приход
+    // идёт не сюда, а из Google Images на страницу работы. Убрав его, мы
+    // заодно лишаем Google единственного кандидата на подмену заголовка в
+    // выдаче: показывать он будет `<title>`.
+    //
+    // Плата — разметка страницы начинается с `<h3>` карточек: `<h1>` нет,
+    // и Lighthouse на это ругается (`heading-order`). Оставлено сознательно:
+    // сетка — сама себе содержание, а прятать заголовок классом ради
+    // строчки в аудите значит держать текст, который никто не прочтёт.
     body: `
-      <h1 class="heading">The collection</h1>
       ${grid(items, EAGER_CARDS, inviteCard())}
     `
   });
