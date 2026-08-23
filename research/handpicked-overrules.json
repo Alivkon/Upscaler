@@ -5,6 +5,7 @@
   "batch_2026-08-19": "Eleven works picked off the funnel sheet, no reason given for any of them beyond wanting them. The `fails` line on each is measured, not guessed — it is the gate that actually dropped that work on the run he was looking at. Three patterns run through them and are worth reading together: four die on the name filter because a myth or a Welsh lake reads as a person, four die on the warm ceiling by between 0.008 and 0.15, three die at the dark end of the box (off too low, cap too high, busy far over).",
   "batch_2026-08-19_gallery": "Ten works ALREADY IN THE GALLERY, added at Charlie's request 'so they don't disappear'. A different kind of entry from the ones above: those are works a gate rejected and he wants anyway, these already shipped and he wants them protected from any later re-selection. Six he named outright; four are the ruins/pantheon set he confirmed when asked which 'the 4 favorites' meant. Four of the ten fail something today and six pass everything; all ten are listed, because an entry saying 'nothing drops this' is what stops someone re-checking it next month.",
   "batch_2026-08-19_sheet": "Six works picked off the /dark preview sheet, marked `from: the /dark sheet`. Charlie asked for 'these five' and then named six titles; all six are here, because dropping one to make the count match would mean guessing which. NONE of them is rejected by anything today — they are all survivors of the whole chain — so every one of these entries is protection against a future tightening rather than a rescue from a present gate. Three carry no model verdict. Two of them, the John Martin and the van Schrieck, sit within 0.07 of the warm ceiling, which is inside the band the profile problem described below can move a work across; a third, the Blumenstück, is already over it on its source file and under it on the plate.",
+  "batch_2026-08-23": "Two works from the Art Institute set, neither of them in the catalogue. The Yamamba is the correction of a mistake this file made itself: Charlie asked for it by name on 17.08 — 'keep yamamba when model kicks it out as a human, i like it' — two days before this file existed, so it was never written down; on 19.08 he pointed back at it as 'that japanese painting with a kabuki person' and it was guessed to be vl-0139. The guess stood for four days and cost an afternoon to undo. THE LESSON IS THE FILE'S OWN PURPOSE: a work he names is only kept if the naming lands in a file, and 'add it like the other one' is not a reference until the other one is right. Both entries carry a CLIP score because both are rejected by the people gate and by nothing else.",
   "which_surface": "MEASUREMENT SURFACE MATTERS HERE AND IT DID NOT USED TO. Every number in this file was previously read off the harvest's 400 px plate, and that is the surface the box actually judges on. While measuring this batch it turned out that the intake DROPPED THE ICC PROFILE instead of converting to sRGB, so for the ~60% of Cleveland files that carry one, the plate reads about 17% cooler and 8% less colourful than the museum's own file. So each entry below carries `measured` — the plate, the surface the gates use — and, where they differ, `museum` — the file the plate came from. Neither is decoration: Ruin by the Sea passes the warm ceiling on one and fails it on the other. Full measurement: research/2026-08-19-the-plate-is-not-the-painting.md. NOT on the plate in images/plates/, which is already desaturated and dimmed and would give the box's reading of the treatment rather than of the painting.",
   "keep": [
     {
@@ -25,7 +26,7 @@
       "added": "2026-08-19",
       "why": "Named by Charlie as the precedent for this file — a Japanese painting with a figure, kept anyway. A fierce red deity is a person to the people gate and a colour spike to the box.",
       "fails": "people gate, and warm/off in the box",
-      "identification": "ASSUMED. Charlie called it 'that japanese painting with a kabuki person'; this is the only Japanese work among his picks with a dramatic figure — a red multi-armed deity on a lotus throne. It is in the superseded twelve of references.json. If he meant another work, replace this entry."
+      "identification": "WRONG, and left standing on purpose. Charlie's 'that japanese painting with a kabuki person' meant `aic-154667` Yamamba, not this — confirmed by him 23.08. The entry stays because he wants this work too and because vl-0139 is in the superseded twelve of references.json; only the identification was mistaken, not the keep."
     },
     {
       "ref": "wm-claude-jacob-with-laban-and-his-daughters-google-art",
@@ -343,6 +344,32 @@
       "fails": "nothing today. It is the only one of these six that also dies on the RAW Commons file name — 'Jan van Huysum 001' is a painter and a number and nothing else — so it depends on the funnel's title cleaning, not on the pipeline as it stands.",
       "harvest": "in this harvest and it survives the chain",
       "flag": "no model verdict — nobody has looked at it"
+    },
+    {
+      "ref": "aic-154667",
+      "title": "Yamamba, from the series \"One Hundred Noh Dramas (Nōgaku hyakuban)\"",
+      "maker": "Tsukioka Kōgyo",
+      "source": "Art Institute of Chicago, 154667",
+      "page": "https://www.artic.edu/artworks/154667",
+      "added": "2026-08-23",
+      "asked": "2026-08-17",
+      "why": "Charlie, 17.08 16:16: «keep yamamba when model kicks it out as a human, i like it». The oldest unwritten request on this list — asked for two days before the file existed and only entered on 23.08, after he went looking for it and found it gone.",
+      "measured": { "clip": -0.003 },
+      "fails": "the people gate and nothing else. CLIP ViT-B/32 scores it -0.003 against a threshold of -0.032, which makes it the LEAST person-like work the gate still rejects — everything he wanted about it sits inside that margin. The older `fig` heuristic does not flag it at all, so the two disagree on this one work.",
+      "identification": "CONFIRMED by Charlie, 23.08. White-haired crone of the Noh play, frontal, centred, patterned kimono against a plain grey-beige ground — the reading that made him call it kabuki.",
+      "harvest": "NOT in the catalogue and never harvested at full size. The record gives 2059×3000, which cuts a 1384×3000 phone frame — over the 1320×2868 floor, under the 1440×3200 target, so it ships as it is and is worth a look for a bigger scan."
+    },
+    {
+      "ref": "aic-152437",
+      "title": "Fisherman's Cottage",
+      "maker": "Harald Oscar Sohlberg",
+      "source": "Art Institute of Chicago, 152437",
+      "page": "https://www.artic.edu/artworks/152437",
+      "added": "2026-08-23",
+      "why": "Charlie, 23.08: «i like Fisherman's Cottage ... add it to favorites». Seen on the AIC candidate sheet, not in the catalogue.",
+      "measured": { "med": 14.6, "chroma": 8.7, "p95": 37, "warm": -0.273, "contrast": 11.9, "clip": -0.0291 },
+      "fails": "the people gate, by a hair — CLIP scores it -0.0291 against a threshold of -0.032, and the older `fig` heuristic flags it too. There is no person in it: the lit white cottage standing among silhouetted trees is what both gates are reading. It survived anyway into the seventeen of aic-candidates.json, so the gate's verdict and the candidate list already disagree here.",
+      "harvest": "NOT in the catalogue. 7611×8758 at the source, so size is not a question for this one."
     }
   ]
 }

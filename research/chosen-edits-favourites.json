@@ -1,0 +1,236 @@
+{
+  "_": "Что Charlie отметил на листе, собранном по списку рескью — research/handpicked-overrules.json, ключ галочек pick-edit-new, 23.08.2026. Это ТРЕТИЙ такой список: chosen-edits.json — круг по пулу, chosen-edits-v2.json — круг по витрине, здесь — круг по любимым работам, которых в витрине по большей части нет. Рефы тут не каталожные: у работы, не заведённой в каталог, каталожного рефа ещё нет, и `overrules_ref` связывает строку с записью в файле рескью.",
+  "asked": "2026-08-23",
+  "said": "i ignored ones already in the gallery so don't mark those as \"looked at and rejected\" / i meant only for those that are already in the gallery, for the new ones not marked is rejection",
+  "sheet": "FOLDER=…/favs OUT=/tmp/oils-preview-favs node scripts/research/gedits.mjs — папочный режим: проём стоит ПО ЦЕНТРУ, правила кадра у папки нет. Обработки точны, кадр у работ из витрины — не тот, с которым они выходят.",
+  "versions": "orig · bal · snap · app · ceil · niobe, и к четырём приглушённым — двойник с виньеткой: snap-vig · app-vig · ceil-vig · niobe-vig. Виньетка перенесена из public/treat-local.js, глубина 0.12 — одно число на лист и на приложение.",
+  "the_floor": "Пол — 1320×2868 (коммит ea82cca, «держать от 2868, искать до 3200»). `phone_frame` — кадр 9:19.5, который выходит из этого файла; `fits_the_floor` — проходит ли он. Числа стоят рядом с галочкой намеренно: у четырёх отмеченных работ обработка выбрана, а публиковать нечего, и это должно быть видно здесь, а не всплыть при заведении в каталог.",
+  "source_note": "Файлы для этого прогона — оригиналы с Commons, скачанные 23.08. ПЕРВЫЙ ПРОГОН ШЁЛ ПО ПРЕВЬЮ В 400 px из /tmp/oils-preview и был мылом на всех шестнадцати wm-работах; Charlie заметил это на «Иакове у Лавана». Пул превью — не мастера, и брать из него на лист нельзя.",
+  "tally": {
+    "on_the_sheet": 21,
+    "ticked_works": 10,
+    "ticks": 13,
+    "ticked_and_ships": 6,
+    "ticked_but_under_the_floor": 4,
+    "rejected": 11
+  },
+  "works": [
+    {
+      "ref": "aic-152437",
+      "overrules_ref": "aic-152437",
+      "ticked": [
+        "orig",
+        "bal"
+      ],
+      "source": "2607×3000",
+      "phone_frame": "1384×3000",
+      "fits_the_floor": true,
+      "in_the_gallery": true,
+      "catalogue_ref": "vl-0373"
+    },
+    {
+      "ref": "aic-154667",
+      "overrules_ref": "aic-154667",
+      "ticked": [],
+      "source": "2059×3000",
+      "phone_frame": "1384×3000",
+      "fits_the_floor": true,
+      "in_the_gallery": false
+    },
+    {
+      "ref": "vl-0036",
+      "overrules_ref": "vl-0036",
+      "ticked": [
+        "snap"
+      ],
+      "source": "2648×3400",
+      "phone_frame": "1569×3400",
+      "fits_the_floor": true,
+      "in_the_gallery": true
+    },
+    {
+      "ref": "vl-0052",
+      "overrules_ref": "vl-0052",
+      "ticked": [
+        "niobe"
+      ],
+      "source": "4741×3525",
+      "phone_frame": "1626×3525",
+      "fits_the_floor": true,
+      "in_the_gallery": true
+    },
+    {
+      "ref": "vl-0053",
+      "overrules_ref": "vl-0053",
+      "ticked": [
+        "bal"
+      ],
+      "source": "2546×3400",
+      "phone_frame": "1569×3400",
+      "fits_the_floor": true,
+      "in_the_gallery": true
+    },
+    {
+      "ref": "wm-claude-jacob-with-laban-and-his-daughters-google-art",
+      "overrules_ref": "wm-claude-jacob-with-laban-and-his-daughters-google-art",
+      "ticked": [
+        "snap-vig"
+      ],
+      "source": "5004×3793",
+      "phone_frame": "1750×3793",
+      "fits_the_floor": true,
+      "in_the_gallery": true,
+      "catalogue_ref": "vl-0375"
+    },
+    {
+      "ref": "wm-claude-lorrain-jugement-de-paris",
+      "overrules_ref": "wm-claude-lorrain-jugement-de-paris",
+      "ticked": [],
+      "source": "1280×997",
+      "phone_frame": "460×997",
+      "fits_the_floor": false,
+      "in_the_gallery": false
+    },
+    {
+      "ref": "wm-claude-lorrain-paysage-avec-jacob-luttant-avec-l-ang",
+      "overrules_ref": "wm-claude-lorrain-paysage-avec-jacob-luttant-avec-l-ang",
+      "ticked": [],
+      "source": "1920×1388",
+      "phone_frame": "640×1388",
+      "fits_the_floor": false,
+      "in_the_gallery": false
+    },
+    {
+      "ref": "wm-claude-lorrain-tivoli",
+      "overrules_ref": "wm-claude-lorrain-tivoli",
+      "ticked": [],
+      "source": "1280×883",
+      "phone_frame": "407×883",
+      "fits_the_floor": false,
+      "in_the_gallery": false
+    },
+    {
+      "ref": "wm-evening-in-nara-by-yoshida-hiroshi-1933-woodbloc",
+      "overrules_ref": "wm-evening-in-nara-by-yoshida-hiroshi--1933--woodbloc",
+      "ticked": [],
+      "source": "540×800",
+      "phone_frame": "369×800",
+      "fits_the_floor": false,
+      "in_the_gallery": false
+    },
+    {
+      "ref": "wm-jan-van-huysum-zugeschrieben-blumenst-ck-560",
+      "overrules_ref": "wm-jan-van-huysum--zugeschrieben----blumenst-ck---560",
+      "ticked": [],
+      "source": "669×823",
+      "phone_frame": "379×823",
+      "fits_the_floor": false,
+      "in_the_gallery": false
+    },
+    {
+      "ref": "wm-jan-van-huysum-001",
+      "overrules_ref": "wm-jan-van-huysum-001",
+      "ticked": [],
+      "source": "1684×2221",
+      "phone_frame": "1025×2221",
+      "fits_the_floor": false,
+      "in_the_gallery": false
+    },
+    {
+      "ref": "wm-john-martin-001",
+      "overrules_ref": "wm-john-martin-001",
+      "ticked": [
+        "bal"
+      ],
+      "source": "1515×989",
+      "phone_frame": "456×989",
+      "fits_the_floor": false,
+      "in_the_gallery": false
+    },
+    {
+      "ref": "wm-le-pandemonium-john-martin-mus-e-du-louvre-pei",
+      "overrules_ref": "wm-le-pandemonium---john-martin---mus-e-du-louvre-pei",
+      "ticked": [
+        "app-vig"
+      ],
+      "source": "3946×2793",
+      "phone_frame": "1289×2793",
+      "fits_the_floor": false,
+      "in_the_gallery": false
+    },
+    {
+      "ref": "wm-lorraintivoli",
+      "overrules_ref": "wm-lorraintivoli",
+      "ticked": [],
+      "source": "956×640",
+      "phone_frame": "295×640",
+      "fits_the_floor": false,
+      "in_the_gallery": false
+    },
+    {
+      "ref": "wm-martin-johnson-heade-two-hummingbirds-and-an-orc",
+      "overrules_ref": "wm-martin-johnson-heade---two-hummingbirds-and-an-orc",
+      "ticked": [],
+      "source": "1280×847",
+      "phone_frame": "390×847",
+      "fits_the_floor": false,
+      "in_the_gallery": false
+    },
+    {
+      "ref": "wm-otto-marseus-van-schrieck-forest-floor-still-lif",
+      "overrules_ref": "wm-otto-marseus-van-schrieck---forest-floor-still-lif",
+      "ticked": [
+        "orig"
+      ],
+      "source": "1705×2000",
+      "phone_frame": "923×2000",
+      "fits_the_floor": false,
+      "in_the_gallery": false
+    },
+    {
+      "ref": "wm-richard-wilson-1713-1714-1782-italian-river-landscap",
+      "overrules_ref": "wm-richard-wilson-1713-1714-1782-italian-river-landscap",
+      "ticked": [],
+      "source": "800×623",
+      "phone_frame": "287×623",
+      "fits_the_floor": false,
+      "in_the_gallery": false
+    },
+    {
+      "ref": "wm-richard-wilson-meleager-and-atalanta-google-art-proj",
+      "overrules_ref": "wm-richard-wilson-meleager-and-atalanta-google-art-proj",
+      "ticked": [
+        "snap-vig",
+        "ceil"
+      ],
+      "source": "3028×2398",
+      "phone_frame": "1106×2398",
+      "fits_the_floor": false,
+      "in_the_gallery": false
+    },
+    {
+      "ref": "wm-richard-wilson-snowdon-from-llyn-nantlle-google-art",
+      "overrules_ref": "wm-richard-wilson-snowdon-from-llyn-nantlle-google-art-",
+      "ticked": [
+        "orig",
+        "snap-vig"
+      ],
+      "source": "4501×3571",
+      "phone_frame": "1648×3571",
+      "fits_the_floor": true,
+      "in_the_gallery": true,
+      "catalogue_ref": "vl-0374"
+    },
+    {
+      "ref": "wm-william-michael-harnett-001",
+      "overrules_ref": "wm-william-michael-harnett-001",
+      "ticked": [],
+      "source": "2024×2435",
+      "phone_frame": "1123×2435",
+      "fits_the_floor": false,
+      "in_the_gallery": false
+    }
+  ],
+  "no_tick": "ПУСТАЯ ГАЛОЧКА ЧИТАЕТСЯ ПО-РАЗНОМУ У ДВУХ РОДОВ РАБОТ, и это правило Charlie, а не наше упрощение. У работы, КОТОРОЙ ЕЩЁ НЕТ В ВИТРИНЕ, отсутствие галочки — отказ: её показали, обработку выбрать было из чего, и не выбрали. Пишется `ticked: []`, ровно как в chosen-edits-v2.json. У работы, КОТОРАЯ УЖЕ В ВИТРИНЕ, отсутствие галочки не значит ничего: Charlie такие на листе пролистывал, потому что вопрос о них решён раньше. Пишется `ticked: null` — «не отмечал», и переспросить можно. На этом листе `null` не стоит ни разу: все три каталожные работы (vl-0036, vl-0052, vl-0053) отмечены, а остальные восемнадцать в каталог не заведены. Поле оставлено описанным, потому что следующий такой лист смешает оба рода.",
+  "published": "23.08: выпущены шесть отмеченных работ, что проходят пол. vl-0036 snap, vl-0052 niobe, vl-0053 bal — сняты с `hidden`; vl-0373 Fisherman's Cottage (bal + none), vl-0374 Snowdon (snap-vig + none), vl-0375 «Иаков у Лавана» (snap-vig). Двум последним пришлось ждать: виньетки в генераторе не было, и в тот же день она туда перенесена — `vignette()` в wallpaper-gen/treatment.mjs, двойник `-vig` у каждого из шести правил. Накладывается ОТДЕЛЬНО на плиту и на каждый кадр, своими размерами каждого: наложенная на плиту и разрезанная после, она дала бы кадру косой градиент вместо виньетки."
+}

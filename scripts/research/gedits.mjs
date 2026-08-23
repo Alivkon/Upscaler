@@ -105,6 +105,27 @@ const EDITS = [
     name: 'like Niobe · ceilings + shoulder' },
 ];
 
+// Виньетка идёт ВТОРЫМ ВАРИАНТОМ К ПРИГЛУШЁННЫМ, а не седьмой обработкой.
+// Она ничего не решает о цвете и свете — она гасит углы того, что уже решено,
+// — и вопрос про неё звучит «эта версия с углами или без», а не «эта или та».
+// Поэтому пара стоит подряд: приглушение и оно же с виньеткой.
+//
+// ПАРА ЕСТЬ У КАЖДОЙ ВЕРСИИ, ВКЛЮЧАЯ ОРИГИНАЛ. Сначала пары давались только
+// приглушённым — довод был, что виньетка на нетронутой картинке читается как
+// дефект печати: углы темнее середины, а больше не изменилось ничего. Довод
+// остался, но 23.08 Charlie сказал «can even vignet the originals not only
+// edited versions», и довод, который не показали глазу, — это догадка, а не
+// вывод. Дороже он стоит ровно два слайда на работу.
+//
+// Глубина взята из `public/treat-local.js` — ОДНО ЧИСЛО НА ОБА КОНЦА. Лист,
+// показывающий не ту виньетку, которую наложит приложение, ничего не решает;
+// если число там поменяется, оно должно поменяться и здесь.
+const VIGNETTE_DEPTH = 0.12;
+const VERSIONS = EDITS.flatMap(e => [
+  e,
+  { ...e, id: `${e.id}-vig`, short: `${e.short}+vig`, name: `${e.name} · vignette`, vig: true }
+]);
+
 // ------------------------------------------------------- who goes on the sheet
 const IMAGE = /\.(jpe?g|png|webp|tiff?)$/i;
 
@@ -172,10 +193,13 @@ async function fromGallery() {
   // rather than asking Charlie to tick twenty-one paintings again.
   const chosen = JSON.parse(await fs.readFile(`${R}/research/chosen-edits-v2.json`, 'utf8'));
   const ticked = new Map(chosen.works.filter(w => gallery.has(w.ref)).map(w => [w.ref, w.ticked]));
-  // Засев — ВСЕ сто семнадцать галочек, а не только те, чьи работы попали на эту
-  // страницу. Иначе узкий лист, открытый на чистом телефоне, записал бы в
-  // localStorage свои восемь и стёр остальное.
-  const seed = chosen.works.flatMap(w => w.ticked.map(e => `${w.ref}#${e}`));
+  // Засев — все галочки по умолчанию, иначе узкий лист на чистом телефоне
+  // записал бы свои восемь в localStorage и стёр остальное.
+  // Исключение: режим ONLY на отдельном порту — у него свой origin, стирать
+  // некого, поэтому засев фильтруется до тех работ, что реально на листе.
+  const seed = ONLY.size
+    ? chosen.works.filter(w => ONLY.has(w.ref)).flatMap(w => w.ticked.map(e => `${w.ref}#${e}`))
+    : chosen.works.flatMap(w => w.ticked.map(e => `${w.ref}#${e}`));
 
   // ЧТО СТОИТ НА САЙТЕ, А ЧТО ПРОСТО СОБРАНО. Из 330 записей каталога 215 несут
   // `hidden: true` — плита у них есть, страницы нет. `museum-works.json` про это
@@ -237,7 +261,7 @@ const queue = shown.slice(0, LIMIT === Infinity ? undefined : LIMIT);
 const live = queue.filter(w => w.live).length;
 if (FOLDER) console.log(`в ${FOLDER} — ${shown.length} картинок`);
 console.log(`на листе ${queue.length}${FOLDER ? '' : ` (${live} живых, ${queue.length - live} ждут публикации)`}` +
-  ` × ${EDITS.length} = ${queue.length * EDITS.length} слайдов` +
+  ` × ${VERSIONS.length} = ${queue.length * VERSIONS.length} слайдов` +
   `${FOLDER ? '' : ` · с урезанной копии ${queue.filter(w => w.src.capped).length}`}`);
 
 await fs.mkdir(SHOTS, { recursive: true });
@@ -303,6 +327,37 @@ function paint(px, set) {
     out[i] = clamp(shoulder(L + (px[i] - L) * k, knee, s) * b);
     out[i + 1] = clamp(shoulder(L + (px[i + 1] - L) * k, knee, s) * b);
     out[i + 2] = clamp(shoulder(L + (px[i + 2] - L) * k, knee, s) * b);
+  }
+  return out;
+}
+
+// Виньетка: умножение на радиальный градиент. Перенос `vignetted()` из
+// public/treat-local.js на сырые пиксели — там холст сжимается по вертикали
+// и по нему рисуется круг, здесь то же самое считается прямо: вписанный
+// в кадр ЭЛЛИПС, а не круг. На телефонной пропорции круг гасил бы верх и низ
+// и не трогал бока, и читалось бы это как затухание, а не как виньетка.
+//
+// Затемнение растёт вчетверо круче к краю (`ease` в квадрате): у линейного
+// видно, где градиент начался, — по кадру идёт кольцо.
+function vignette(px, w, h) {
+  const out = Buffer.from(px);
+  const cx = w / 2, cy = h / 2;
+  // Радиус в сжатом пространстве — половина диагонали квадрата со стороной w,
+  // то есть градиент доходит ровно до углов кадра.
+  const radius = w * Math.SQRT1_2;
+  const squash = w / h;
+  for (let y = 0; y < h; y++) {
+    const dy = (y + 0.5 - cy) * squash;
+    for (let x = 0; x < w; x++) {
+      const dx = x + 0.5 - cx;
+      const t = Math.min(1, Math.hypot(dx, dy) / radius);
+      const ease = t * t * (3 - 2 * t);
+      const f = 1 - VIGNETTE_DEPTH * ease * ease;
+      const i = (y * w + x) * 3;
+      out[i] = clamp(px[i] * f);
+      out[i + 1] = clamp(px[i + 1] * f);
+      out[i + 2] = clamp(px[i + 2] * f);
+    }
   }
   return out;
 }
@@ -378,7 +433,7 @@ for (const w of queue) {
   // кливлендских работ урезанную копию 3400; там, где с тех пор лёг полный
   // мастер, старый кадр показывает не ту картинку и не те числа.
   if (already && already.capped && !w.src.capped) done.delete(w.ref);
-  if (done.has(w.ref) && existsSync(`${SHOTS}/${w.ref}-${EDITS.at(-1).id}.jpg`)) {
+  if (done.has(w.ref) && existsSync(`${SHOTS}/${w.ref}-${VERSIONS.at(-1).id}.jpg`)) {
     rows.push({ ...already, now: w.treatment, live: w.live, capped: w.src.capped, was: ticked.get(w.ref) ?? null });
     reused++;
     continue;
@@ -388,10 +443,13 @@ for (const w of queue) {
     const share = hueStats(c.probe).share;
     const q = quartiles(c.probe);
     const versions = [];
-    for (const e of EDITS) {
+    for (const e of VERSIONS) {
       const base = e.wb ? c.balanced.data : c.plain.data;
       const set = solveFor(e, c.probe, share, q);
-      const px = set ? paint(base, set) : base;
+      const painted = set ? paint(base, set) : base;
+      // Виньетка ПОСЛЕДНЕЙ и по копии: `paint` без набора возвращает сам
+      // базовый буфер, и правка на месте испортила бы соседние версии.
+      const px = e.vig ? vignette(painted, c.outW, c.outH) : painted;
       await sharp(px, { raw: { width: c.outW, height: c.outH, channels: 3 } })
         .jpeg({ quality: 86, chromaSubsampling: '4:4:4', mozjpeg: true })
         .toFile(`${SHOTS}/${w.ref}-${e.id}.jpg`);
@@ -417,11 +475,11 @@ for (const w of queue) {
   process.stderr.write(`\r  ${rows.length}/${queue.length}`);
 }
 process.stderr.write(`\r  ${rows.length} работ${reused ? ` · ${reused} взято с прошлого прогона` : ''}\n`);
-console.log(`${rows.length * EDITS.length} картинок · ${failed} не вышло`);
+console.log(`${rows.length * VERSIONS.length} картинок · ${failed} не вышло`);
 if (!rows.length) throw new Error('нечего показывать');
 
 const moves = v => v.colour < 0.995 || v.bright < 0.995 || (v.gain && Math.min(...v.gain) < 0.995);
-for (const e of EDITS.slice(1)) {
+for (const e of VERSIONS.slice(1)) {
   const v = rows.map(r => r.versions.find(x => x.id === e.id));
   console.log(`  ${e.short.padEnd(6)} трогает ${String(v.filter(moves).length).padStart(3)} из ${rows.length}` +
     ` · цвет ×${(v.reduce((a, x) => a + x.colour, 0) / v.length).toFixed(2)}` +
@@ -432,7 +490,7 @@ for (const e of EDITS.slice(1)) {
 // но нарисованные двести пятьдесят никуда не делись, и стереть их запись
 // значило бы заплатить час за следующий полный лист.
 const kept = ONLY.size ? previous.filter(r => !rows.some(x => x.ref === r.ref)) : [];
-await fs.writeFile(CACHE, JSON.stringify({ target: TARGET, edits: EDITS, works: [...kept, ...rows] }, null, 1));
+await fs.writeFile(CACHE, JSON.stringify({ target: TARGET, edits: VERSIONS, works: [...kept, ...rows] }, null, 1));
 
 // --------------------------------------------------------------------- page
 const esc = s => String(s ?? '').replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[ch]));

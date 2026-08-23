@@ -1,0 +1,328 @@
+{
+  "_": "Что Charlie отметил на листе увеличенных работ, 23.08.2026. Ключ галочек pick-edit-new, лист подан на :7726. ЧЕТВЁРТЫЙ такой список: chosen-edits.json — круг по пулу (21.08), -v2 — круг по витрине (22.08), -favourites — круг по любимым (23.08), здесь — круг по тем же работам ПОСЛЕ увеличения.",
+  "asked": "2026-08-23",
+  "said": "since you're upscaling these ones, upscale the other from the list too",
+  "sheet": "FOLDER=<scratchpad>/upsheet OUT=/tmp/oils-preview-ups node scripts/research/gedits.mjs — папочный режим: проём по центру, правила кадра у папки нет.",
+  "versions": "12 на работу: шесть правок (orig · bal · snap · app · ceil · niobe) и у КАЖДОЙ двойник с виньеткой. Прежде пары давались только приглушённым; 23.08 Charlie: «can even vignet the originals not only edited versions».",
+  "why_again": "Галочки 21.08 стояли на маленьких файлах — у Morland судили кадр 414×897, здесь 1656×3588. Это не переспрашивание решённого, а первый показ того, что можно выпустить.",
+  "no_tick": "Ни одна из этих работ в витрине не стояла, поэтому пустая галочка — отказ (правило Charlie от 23.08: «for the new ones not marked is rejection»). Четыре отказа: Jan van Huysum · Vase of Flowers in a Niche, George Morland · Thirlmere, Jean-Victor Bertin · Paysage, Jean-Victor Bertin · Paysage italien.",
+  "names": "В галочках рефы приходят в приглаженном виде (подряд идущие дефисы схлопнуты); здесь стоит `sheet_ref` — имя файла на листе.",
+  "tally": {
+    "on_the_sheet": 16,
+    "ticked_works": 12,
+    "ticks": 22,
+    "rejected": 4,
+    "published": 12
+  },
+  "published": "vl-0376…vl-0387, все двенадцать. Мастера — увеличенные, лежат в wallpaper-gen/upscaled/ и в манифесте помечены полем `upscaled`. Страница об увеличении пока молчит: сказать это вслух — решение Charlie, вопрос задан 23.08 и не закрыт.",
+  "works": [
+    {
+      "sheet_ref": "wm-arnold-b-cklin---gebirgssee--1846-",
+      "title": "Arnold Böcklin - Gebirgssee (1846)",
+      "ticked": [
+        "snap-vig"
+      ],
+      "treatment": [
+        "snap-vig"
+      ],
+      "catalogue_ref": "vl-0376",
+      "upscaled": {
+        "model": "Topaz Standard V2",
+        "factor": "2x",
+        "from": "2421×1490",
+        "to": "4842×2980"
+      },
+      "phone_frame": "1375×2980",
+      "published": true
+    },
+    {
+      "sheet_ref": "wm-george-morland---before-a-thunderstorm---wga16242",
+      "title": "George Morland - Before a Thunderstorm - WGA16242",
+      "ticked": [
+        "bal",
+        "app",
+        "ceil-vig"
+      ],
+      "treatment": [
+        "ceil-vig",
+        "dim80-desat-whole",
+        "bal"
+      ],
+      "catalogue_ref": "vl-0377",
+      "upscaled": {
+        "model": "Topaz Standard V2",
+        "factor": "4x",
+        "from": "1250×897",
+        "to": "5000×3588"
+      },
+      "phone_frame": "1656×3588",
+      "published": true
+    },
+    {
+      "sheet_ref": "wm-gustave-courbet---pejza-",
+      "title": "Gustave Courbet - Pejzaż",
+      "ticked": [
+        "bal-vig"
+      ],
+      "treatment": [
+        "bal-vig"
+      ],
+      "catalogue_ref": "vl-0378",
+      "upscaled": {
+        "model": "Topaz Standard V2",
+        "factor": "4x",
+        "from": "1200×1020",
+        "to": "4800×4080"
+      },
+      "phone_frame": "1883×4080",
+      "published": true
+    },
+    {
+      "sheet_ref": "wm-hammershoi---sunshine-in-the-drawingroom-iii",
+      "title": "Hammershoi - Sunshine in the Drawingroom III",
+      "ticked": [
+        "orig-vig",
+        "ceil-vig"
+      ],
+      "treatment": [
+        "ceil-vig",
+        "none-vig"
+      ],
+      "catalogue_ref": "vl-0379",
+      "upscaled": {
+        "model": "Topaz Standard V2",
+        "factor": "2x",
+        "from": "2073×1703",
+        "to": "4146×3406"
+      },
+      "phone_frame": "1572×3406",
+      "published": true
+    },
+    {
+      "sheet_ref": "wm-jan-van-huysum---glass-vase-with-flowers--a-poppy-",
+      "title": "Jan van Huysum - Glass Vase with Flowers, a Poppy and a Finch Nest, 1720-21",
+      "ticked": [
+        "orig",
+        "snap"
+      ],
+      "treatment": [
+        "snap",
+        "none"
+      ],
+      "catalogue_ref": "vl-0380",
+      "upscaled": {
+        "model": "Topaz Standard V2",
+        "factor": "2x",
+        "from": "1437×1772",
+        "to": "2874×3544"
+      },
+      "phone_frame": "1636×3544",
+      "published": true
+    },
+    {
+      "sheet_ref": "wm-jean-victor-bertin---italian-landscape--le-paysage",
+      "title": "Jean-Victor Bertin - Italian Landscape (Le Paysage d'Italie) - Google Art Project",
+      "ticked": [
+        "orig",
+        "bal",
+        "snap-vig"
+      ],
+      "treatment": [
+        "snap-vig",
+        "bal",
+        "none"
+      ],
+      "catalogue_ref": "vl-0381",
+      "upscaled": {
+        "model": "Topaz Standard V2",
+        "factor": "2x",
+        "from": "4148×2661",
+        "to": "8296×5322"
+      },
+      "phone_frame": "2456×5322",
+      "published": true
+    },
+    {
+      "sheet_ref": "wm-jean-victor-bertin---landscape--site-of-greece--pa",
+      "title": "Jean-Victor Bertin - Landscape, Site of Greece (Paysage, Site de la Grèce) - Google Art Project",
+      "ticked": [
+        "orig"
+      ],
+      "treatment": [
+        "none"
+      ],
+      "catalogue_ref": "vl-0382",
+      "upscaled": {
+        "model": "Topaz Standard V2",
+        "factor": "2x",
+        "from": "4144×2665",
+        "to": "8288×5330"
+      },
+      "phone_frame": "2460×5330",
+      "published": true
+    },
+    {
+      "sheet_ref": "wm-john-martin---the-great-day-of-his-wrath---google-",
+      "title": "John Martin - The Great Day of His Wrath - Google Art Project",
+      "ticked": [
+        "orig",
+        "snap"
+      ],
+      "treatment": [
+        "snap",
+        "none"
+      ],
+      "catalogue_ref": "vl-0383",
+      "upscaled": {
+        "model": "Topaz Standard V2",
+        "factor": "2x",
+        "from": "3136×2023",
+        "to": "6272×4046"
+      },
+      "phone_frame": "1867×4046",
+      "published": true
+    },
+    {
+      "sheet_ref": "wm-landscape--from-lejre--vilhelm-hammersh-i----natio",
+      "title": "Landscape, From Lejre (Vilhelm Hammershøi) - Nationalmuseum - 19308",
+      "ticked": [
+        "orig",
+        "snap"
+      ],
+      "treatment": [
+        "snap",
+        "none"
+      ],
+      "catalogue_ref": "vl-0384",
+      "upscaled": {
+        "model": "Topaz Standard V2",
+        "factor": "2x",
+        "from": "3534×2167",
+        "to": "7068×4334"
+      },
+      "phone_frame": "2000×4334",
+      "published": true
+    },
+    {
+      "sheet_ref": "wm-otto-marseus-van-schrieck-forest-floor-still-lif",
+      "title": "Otto Marseus van Schrieck - Forest floor still life",
+      "ticked": [
+        "orig-vig"
+      ],
+      "treatment": [
+        "none-vig"
+      ],
+      "catalogue_ref": "vl-0385",
+      "upscaled": {
+        "model": "Topaz Standard V2",
+        "factor": "2x",
+        "from": "1705×2000",
+        "to": "3410×4000"
+      },
+      "phone_frame": "1846×4000",
+      "published": true
+    },
+    {
+      "sheet_ref": "wm-richard-wilson-meleager-and-atalanta-google-art-proj",
+      "title": "Meleager and Atalanta",
+      "ticked": [
+        "orig-vig",
+        "snap-vig"
+      ],
+      "treatment": [
+        "snap-vig",
+        "none-vig"
+      ],
+      "catalogue_ref": "vl-0386",
+      "upscaled": {
+        "model": "Topaz Standard V2",
+        "factor": "2x",
+        "from": "3028×2398",
+        "to": "6056×4796"
+      },
+      "phone_frame": "2214×4796",
+      "published": true
+    },
+    {
+      "sheet_ref": "wm-vilhelm-hammersh-i---le-vieux-christiansborg",
+      "title": "Vilhelm Hammershøi - Le Vieux Christiansborg",
+      "ticked": [
+        "orig",
+        "ceil"
+      ],
+      "treatment": [
+        "ceil",
+        "none"
+      ],
+      "catalogue_ref": "vl-0387",
+      "upscaled": {
+        "model": "Topaz Standard V2",
+        "factor": "2x",
+        "from": "2582×1988",
+        "to": "5164×3976"
+      },
+      "phone_frame": "1835×3976",
+      "published": true
+    },
+    {
+      "sheet_ref": "wm-george-morland--thirlmere",
+      "title": "George Morland, Thirlmere",
+      "ticked": [],
+      "treatment": null,
+      "catalogue_ref": null,
+      "upscaled": {
+        "model": "Topaz Standard V2",
+        "factor": "2x",
+        "from": "2235×1670",
+        "to": "4470×3340"
+      },
+      "phone_frame": "1542×3340",
+      "published": false
+    },
+    {
+      "sheet_ref": "wm-jan-van-huysum---vase-of-flowers-in-a-niche-sc2267",
+      "title": "Jan van Huysum - Vase of Flowers in a Niche SC226791",
+      "ticked": [],
+      "treatment": null,
+      "catalogue_ref": null,
+      "upscaled": {
+        "model": "Topaz Standard V2",
+        "factor": "2x",
+        "from": "1251×1600",
+        "to": "2502×3200"
+      },
+      "phone_frame": "1477×3200",
+      "published": false
+    },
+    {
+      "sheet_ref": "wm-jean-victor-bertin---paysage-italien",
+      "title": "Jean-Victor Bertin - Paysage italien",
+      "ticked": [],
+      "treatment": null,
+      "catalogue_ref": null,
+      "upscaled": {
+        "model": "Topaz Standard V2",
+        "factor": "2x",
+        "from": "3742×2765",
+        "to": "7484×5530"
+      },
+      "phone_frame": "2552×5530",
+      "published": false
+    },
+    {
+      "sheet_ref": "wm-jean-victor-bertin-paysage",
+      "title": "Jean-Victor Bertin-Paysage",
+      "ticked": [],
+      "treatment": null,
+      "catalogue_ref": null,
+      "upscaled": {
+        "model": "Topaz Standard V2",
+        "factor": "2x",
+        "from": "2390×1918",
+        "to": "4780×3836"
+      },
+      "phone_frame": "1770×3836",
+      "published": false
+    }
+  ]
+}
