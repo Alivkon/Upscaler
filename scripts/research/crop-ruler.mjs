@@ -1,7 +1,18 @@
 #!/usr/bin/env node
-// Generates research/crop-ruler.html from the current catalogue.
-// Run after adding new works: node scripts/research/crop-ruler.mjs
-
+// Лист для обмера физического багета: research/crop-ruler.html
+//
+// Показывается ПЛИТА ЦЕЛИКОМ, а не кадр. Раньше сюда шли миниатюры из
+// `images/crops/` — то есть уже вырезанный проём, у которого рамки по бокам
+// нет: на горизонтальной работе телефонный кадр съедает больше половины
+// ширины, и мерить там было нечего. Заодно расходился и масштаб: ширина
+// бралась от плиты, а картинка была от кадра, и всякое снятое число врало.
+//
+// Плита в манифесте лежит УЖЕ ОБРЕЗАННОЙ: `trim` снимается до записи. Значит
+// число, снятое здесь у работы, которую уже резали, — это добавка к тому, что
+// снято раньше, а в `museum-works.json` идёт сумма. Она и кладётся в список.
+//
+//   node scripts/research/crop-ruler.mjs               вся витрина
+//   node scripts/research/crop-ruler.mjs --only=vl-0352,vl-0356
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -9,58 +20,87 @@ import { fileURLToPath } from 'node:url';
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const CATALOGUE = path.join(ROOT, 'catalogue');
 const PLATES = path.join(ROOT, 'images/plates');
-const CROPS = path.join(ROOT, 'images/crops');
-const OUT = path.join(ROOT, 'research/crop-ruler.html');
+const MANIFEST_DIR = path.join(ROOT, 'images/manifest');
+const GEN = process.env.WALLPAPER_GEN || '/home/charlie/repos/wallpaper-gen';
+
+// Ширина картинки на листе. На 480 px багет в 30 плитных пикселей рисуется
+// четырьмя точками — его не видно и в него не попасть курсором. На 960 их
+// восемь, и край читается.
+const THUMB = 960;
+
+const onlyArg = process.argv.find(a => a.startsWith('--only='));
+const onlyRefs = onlyArg ? new Set(onlyArg.slice(7).split(',')) : null;
+const OUT = path.join(ROOT, onlyRefs ? 'research/crop-ruler-only.html' : 'research/crop-ruler.html');
 
 function parseDims(filename) {
   const m = filename.match(/(\d+)x(\d+)\.jpg$/);
   return m ? { w: parseInt(m[1]), h: parseInt(m[2]) } : null;
 }
 
-function largestPlate(slug, plateFiles) {
-  const matches = plateFiles.filter(f => f.startsWith(slug + '-') || f.startsWith(slug + '.'));
-  let best = null, bestArea = 0;
-  for (const f of matches) {
-    const d = parseDims(f);
-    if (d && d.w * d.h > bestArea) { bestArea = d.w * d.h; best = d; }
-  }
-  return best;
+// Запасной путь для работ, которых в манифесте нет: угадать по именам файлов.
+// Кадры отсеиваются по суффиксу — иначе сюда снова приедет вырезанный проём.
+function plateCopies(slug, plateFiles) {
+  return plateFiles
+    .filter(f =>
+      (f.startsWith(slug + '-') || f.startsWith(slug + '.')) &&
+      !f.includes('-phone-') && !f.includes('-tall-') && !f.includes('-wide-'))
+    .map(f => ({ file: 'plates/' + f, ...parseDims(f) }))
+    .filter(c => c.w);
 }
+
+const manifest = fs
+  .readdirSync(MANIFEST_DIR)
+  .filter(name => name.endsWith('.json'))
+  .flatMap(name => {
+    const parsed = JSON.parse(fs.readFileSync(path.join(MANIFEST_DIR, name), 'utf8'));
+    return Array.isArray(parsed) ? parsed : [];
+  });
+const made = Object.fromEntries(manifest.map(entry => [entry.ref, entry]));
+
+// Уже снятое поле живёт только в списке работ генератора: в манифест `trim` не
+// пишется. Без него лист у резаной работы показал бы «top 0», хотя сверху уже
+// снято 79, и в файл уехало бы число вместо суммы.
+const WORKS = path.join(GEN, 'museum-works.json');
+const trims = fs.existsSync(WORKS)
+  ? Object.fromEntries(
+      JSON.parse(fs.readFileSync(WORKS, 'utf8'))
+        .filter(w => w.trim)
+        .map(w => [w.ref, w.trim]))
+  : {};
 
 const catalogueFiles = fs.readdirSync(CATALOGUE).filter(f => /^vl-\d+\.json$/.test(f));
 const entries = catalogueFiles.map(f => JSON.parse(fs.readFileSync(path.join(CATALOGUE, f), 'utf8')));
-const visible = entries.filter(e => !e.hidden);
+const visible = entries.filter(e => !e.hidden && (!onlyRefs || onlyRefs.has(e.ref)));
 
-const cropFiles = fs.readdirSync(CROPS);
 const plateFiles = fs.readdirSync(PLATES);
 
 const images = visible.map(e => {
-  // Thumbnail: prefer 480px crop
-  const thumbCandidates = cropFiles.filter(f => f.startsWith(e.slug)).sort();
-  const thumb = thumbCandidates.find(f => f.includes('-480x'))
-    || thumbCandidates.find(f => f.includes('-240x'))
-    || thumbCandidates[0];
-  if (!thumb) return null;
+  const entry = made[e.ref];
+  const steps = entry
+    ? [entry, ...(entry.copies || [])].map(c => ({ file: c.file, w: c.width, h: c.height }))
+    : plateCopies(e.slug, plateFiles);
+  if (!steps.length) return null;
 
-  const thumbDims = parseDims(thumb);
+  // Ближайшая к THUMB копия, но не мельче: увеличенная миниатюра мылит край,
+  // а по мылу край багета не поставишь.
+  const bigEnough = steps.filter(c => c.w >= THUMB);
+  const thumb = (bigEnough.length ? bigEnough : steps)
+    .reduce((best, c) => (Math.abs(c.w - THUMB) < Math.abs(best.w - THUMB) ? c : best));
 
-  // Full-res dims: from file field if present, else largest plate
-  let fullDims = null;
-  if (e.file) {
-    fullDims = parseDims(path.basename(e.file));
-  }
-  if (!fullDims) {
-    fullDims = largestPlate(e.slug, plateFiles);
-  }
+  const fullDims = entry
+    ? { w: entry.width, h: entry.height }
+    : steps.reduce((best, c) => (c.w * c.h > best.w * best.h ? c : best));
 
+  const t = trims[e.ref] || null;
   return {
     ref: e.ref,
     title: e.title,
-    thumb,
-    fullW: fullDims ? fullDims.w : null,
-    fullH: fullDims ? fullDims.h : null,
-    thumbW: thumbDims ? thumbDims.w : null,
-    thumbH: thumbDims ? thumbDims.h : null,
+    thumb: thumb.file,
+    thumbW: Math.min(thumb.w, THUMB),
+    thumbH: Math.round(thumb.h * (Math.min(thumb.w, THUMB) / thumb.w)),
+    fullW: fullDims.w,
+    fullH: fullDims.h,
+    trim: t ? { top: t.top || 0, bottom: t.bottom || 0, left: t.left || 0, right: t.right || 0 } : null
   };
 }).filter(Boolean);
 
@@ -124,6 +164,11 @@ const html = `<!DOCTYPE html>
     color: #555;
     font-size: 10px;
     margin-left: auto;
+    flex-shrink: 0;
+  }
+  .card-trim {
+    color: #7a6;
+    font-size: 10px;
     flex-shrink: 0;
   }
   .ruler-area {
@@ -215,6 +260,7 @@ const html = `<!DOCTYPE html>
   }
   .crop-entry .entry-ref { color: #666; flex-shrink: 0; }
   .crop-entry .entry-val { color: #ddd; }
+  .crop-entry .entry-sum { color: #7a6; }
   .crop-entry .entry-del {
     color: #444;
     cursor: pointer;
@@ -228,7 +274,7 @@ const html = `<!DOCTYPE html>
 <body>
 
 <h1>Crop Ruler</h1>
-<p class="note">Hover over an image — label shows distance from the nearest edge in full-res plate pixels. Server must be running at localhost:3000.</p>
+<p class="note">The whole plate, not the crop. Hover near an edge — the label shows the distance from it in full-res plate pixels. Plates already trimmed show <span style="color:#7a6">cut&nbsp;top&nbsp;79</span> next to the title, and what you click is added to it: the list records the total that goes into <code>museum-works.json</code>. Server must be running at localhost:3000.</p>
 
 <div class="grid" id="grid"></div>
 
@@ -379,7 +425,8 @@ function renderList() {
   entries.forEach((e, i) => {
     const row = document.createElement('div');
     row.className = 'crop-entry';
-    row.innerHTML = \`<span class="entry-ref">\${e.ref}</span><span class="entry-val">\${e.side} \${e.px}px</span><span class="entry-del" data-i="\${i}">×</span>\`;
+    const sum = e.total !== e.px ? \` <span class="entry-sum">+\${e.total - e.px} = \${e.total}</span>\` : '';
+    row.innerHTML = \`<span class="entry-ref">\${e.ref}</span><span class="entry-val">\${e.side} \${e.px}px\${sum}</span><span class="entry-del" data-i="\${i}">×</span>\`;
     listEl.appendChild(row);
   });
 }
@@ -391,12 +438,14 @@ listEl.addEventListener('click', e => {
 
 document.getElementById('btn-clear').addEventListener('click', () => { entries.length = 0; renderList(); });
 document.getElementById('btn-copy').addEventListener('click', () => {
-  const text = entries.map(e => \`\${e.ref}  \${e.side}  \${e.px}\`).join('\\n');
+  const text = entries.map(e => \`\${e.ref}  \${e.side}  \${e.total}\`).join('\\n');
   navigator.clipboard.writeText(text).catch(() => prompt('Copy this:', text));
 });
 
-function recordCrop(ref, side, px) {
-  entries.push({ ref, side, px });
+// В список идёт СУММА: плита уже обрезана, а снятое сейчас — добавка к ней,
+// тогда как trim в museum-works.json отсчитывается от целого листа.
+function recordCrop(ref, side, px, cut) {
+  entries.push({ ref, side, px, total: px + (cut || 0) });
   renderList();
   listEl.parentElement.scrollTop = 99999;
 }
@@ -425,6 +474,16 @@ function makeCard(img) {
   scale.textContent = scaleStr;
   label.append(ref, title, scale);
 
+  // Что уже снято. Без этой строчки резаная работа выглядит как нетронутая,
+  // и снятое здесь число ушло бы в файл вместо суммы.
+  if (img.trim) {
+    const cut = document.createElement('span');
+    cut.className = 'card-trim';
+    cut.textContent = 'cut ' + ['top', 'bottom', 'left', 'right']
+      .filter(side => img.trim[side]).map(side => \`\${side} \${img.trim[side]}\`).join(' · ');
+    label.append(cut);
+  }
+
   const area = document.createElement('div');
   area.className = 'ruler-area';
   area.style.gridTemplateColumns = \`\${RULER_SIZE}px \${W}px \${RULER_SIZE}px\`;
@@ -442,7 +501,7 @@ function makeCard(img) {
   imgWrap.style.height = H + 'px';
 
   const image = document.createElement('img');
-  image.src = \`http://localhost:3000/images/crops/\${img.thumb}\`;
+  image.src = \`http://localhost:3000/images/\${img.thumb}\`;
   image.width = W;
   image.height = H;
   image.alt = img.title;
@@ -524,7 +583,7 @@ function makeCard(img) {
     ].filter(Boolean);
     if (!candidates.length) return;
     const best = candidates.reduce((a, b) => a.px < b.px ? a : b);
-    recordCrop(img.ref, best.side, best.px);
+    recordCrop(img.ref, best.side, best.px, img.trim ? img.trim[best.side] : 0);
   });
 
   return card;

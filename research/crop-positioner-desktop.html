@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Desktop Positioner — Pan to Frame</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #1a1a1a;
+    color: #ccc;
+    font: 13px/1.4 'Courier New', monospace;
+    padding: 24px 24px 200px;
+  }
+  .top-bar {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    margin-bottom: 28px;
+    flex-wrap: wrap;
+  }
+  h1 {
+    color: #888;
+    font-size: 13px;
+    font-weight: normal;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+  .note { color: #555; font-size: 11px; }
+  .crop-tabs {
+    display: flex;
+    gap: 4px;
+  }
+  .crop-tab {
+    background: #222;
+    border: 1px solid #333;
+    color: #666;
+    font: 11px 'Courier New', monospace;
+    padding: 3px 10px;
+    border-radius: 2px;
+    cursor: pointer;
+    letter-spacing: 0.03em;
+  }
+  .crop-tab.active { background: #2a2a2a; border-color: #555; color: #ccc; }
+  .crop-tab:hover:not(.active) { color: #aaa; border-color: #444; }
+  .grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 36px 40px;
+    align-items: flex-start;
+  }
+  .card {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+  }
+  .card-label {
+    display: flex;
+    gap: 10px;
+    align-items: baseline;
+    max-width: 360px;
+  }
+  .card-ref { color: #666; font-size: 11px; flex-shrink: 0; }
+  .card-title {
+    color: #888;
+    font-size: 10px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    flex: 1;
+    min-width: 0;
+  }
+  .viewport {
+    overflow: hidden;
+    position: relative;
+    cursor: grab;
+    border: 1px solid #333;
+    user-select: none;
+    flex-shrink: 0;
+  }
+  .viewport.dragging { cursor: grabbing; }
+  .viewport img {
+    position: absolute;
+    top: 0; left: 0;
+    display: block;
+    pointer-events: none;
+    user-select: none;
+    -webkit-user-drag: none;
+    image-rendering: auto;
+  }
+  .viewport-frame {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    box-shadow: inset 0 0 0 1px rgba(255,80,80,0.3);
+    z-index: 2;
+  }
+  .card-desk { color: #4a5a4a; font-size: 10px; flex-shrink: 0; }
+  .card-placed { color: #6a5a3a; font-size: 10px; flex-shrink: 0; }
+  .pos-label {
+    color: #666;
+    font-size: 10px;
+    height: 14px;
+    transition: color 0.1s;
+  }
+  .pos-label.has-pan { color: #aaa; }
+  .btn-row {
+    display: flex;
+    gap: 4px;
+  }
+  .record-btn, .center-btn {
+    background: #1e1e1e;
+    border: 1px solid #2a2a2a;
+    color: #555;
+    font: 10px 'Courier New', monospace;
+    padding: 3px 10px;
+    border-radius: 2px;
+    cursor: pointer;
+    text-align: center;
+    letter-spacing: 0.03em;
+  }
+  .record-btn { flex: 1; }
+  .record-btn:hover, .center-btn:hover { border-color: #444; color: #aaa; }
+  #crop-list {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #111;
+    border: 1px solid #333;
+    border-radius: 4px;
+    padding: 10px 12px;
+    min-width: 260px;
+    max-width: 400px;
+    max-height: 300px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    z-index: 9998;
+    font-size: 11px;
+  }
+  #crop-list-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #555;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    border-bottom: 1px solid #2a2a2a;
+    padding-bottom: 6px;
+    margin-bottom: 2px;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+  #crop-list-header button {
+    background: #222;
+    border: 1px solid #333;
+    color: #888;
+    font: 10px 'Courier New', monospace;
+    padding: 2px 8px;
+    border-radius: 2px;
+    cursor: pointer;
+  }
+  #crop-list-header button:hover { color: #ccc; border-color: #555; }
+  #crop-list-entries {
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    flex: 1;
+  }
+  .crop-entry {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+  }
+  .entry-ref { color: #666; flex-shrink: 0; font-size: 10px; }
+  .entry-val { color: #ddd; font-size: 10px; }
+  .entry-del { color: #444; cursor: pointer; flex-shrink: 0; font-size: 13px; line-height: 1; }
+  .entry-del:hover { color: #888; }
+</style>
+</head>
+<body>
+
+<div class="top-bar">
+  <h1>Desktop Positioner</h1>
+  <div class="crop-tabs" id="crop-tabs"></div>
+  <span class="note">101 works · gallery works whose 16:9 frame passes 1920×1080 · drag to pan, click to record · server at localhost:3000</span>
+</div>
+
+<div class="grid" id="grid"></div>
+
+<div id="crop-list">
+  <div id="crop-list-header">
+    <span>recorded</span>
+    <div style="display:flex;gap:6px">
+      <button id="btn-copy">copy</button>
+      <button id="btn-clear">clear</button>
+    </div>
+  </div>
+  <div id="crop-list-entries"><span style="color:#333;font-size:10px">click a card to record position</span></div>
+</div>
+
+<script>
+const IMAGES = [{"ref":"vl-0025","title":"Wood Pewee — Audubon bird illustration phone wallpaper","thumb":"plates/wood-pewee-audubon-bird-illustration-iphone-wallpaper-480x736.jpg","thumbW":480,"thumbH":736,"fullW":3840,"fullH":5887,"now":{"phone":{"left":903,"top":0},"tall":{"left":529,"top":0},"wide":{"left":0,"top":2912}},"moved":{"phone":true,"tall":true,"wide":true},"desk":"3840×2160"},{"ref":"vl-0026","title":"Warbling Flycatcher — Audubon magnolia phone wallpaper","thumb":"plates/warbling-flycatcher-audubon-magnolia-iphone-wallpaper-480x785.jpg","thumbW":480,"thumbH":785,"fullW":3840,"fullH":6280,"now":{"phone":{"left":0,"top":0},"tall":{"left":0,"top":0},"wide":{"left":0,"top":2696}},"moved":{"phone":true,"tall":true,"wide":true},"desk":"3840×2160"},{"ref":"vl-0027","title":"Yellow-breasted Chat — Audubon nest phone wallpaper","thumb":"plates/yellow-breasted-chat-audubon-nest-iphone-wallpaper-480x589.jpg","thumbW":480,"thumbH":589,"fullW":3840,"fullH":4708,"now":{"phone":{"left":624,"top":0},"tall":{"left":624,"top":0},"wide":{"left":0,"top":1447}},"moved":{"phone":true,"tall":true,"wide":true},"desk":"3840×2160"},{"ref":"vl-0028","title":"Connecticut Warbler — Audubon gentian phone wallpaper","thumb":"plates/connecticut-warbler-audubon-gentian-iphone-wallpaper-480x704.jpg","thumbW":480,"thumbH":704,"fullW":3840,"fullH":5630,"now":{"phone":{"left":1018,"top":0},"tall":{"left":673,"top":0},"wide":{"left":0,"top":520}},"moved":{"phone":true,"tall":true,"wide":true},"desk":"3840×2160"},{"ref":"vl-0030","title":"Bivalve Shells — dark academia Haeckel plate phone wallpaper","thumb":"plates/haeckel-bivalve-shells-black-iphone-wallpaper-480x678.jpg","thumbW":480,"thumbH":678,"fullW":2323,"fullH":3280,"now":{"phone":{"left":405,"top":0},"tall":{"left":239,"top":0},"wide":{"left":0,"top":450}},"moved":{"phone":false,"tall":false,"wide":true},"desk":"2323×1307"},{"ref":"vl-0032","title":"Banana Flower — Merian botanical phone wallpaper","thumb":"plates/merian-banana-flower-botanical-iphone-wallpaper-480x660.jpg","thumbW":480,"thumbH":660,"fullW":2547,"fullH":3500,"now":{"phone":{"left":466,"top":0},"tall":{"left":289,"top":0},"wide":{"left":0,"top":1230}},"moved":{"phone":false,"tall":false,"wide":true},"desk":"2547×1433"},{"ref":"vl-0036","title":"Interior of the Pantheon, Rome — architectural phone wallpaper","thumb":"plates/interior-of-the-pantheon-rome-architectural-iphone-wallpaper-480x616.jpg","thumbW":480,"thumbH":616,"fullW":2648,"fullH":3400,"now":{"phone":{"left":671,"top":0},"tall":{"left":671,"top":0},"wide":{"left":0,"top":1612}},"moved":{"phone":true,"tall":true,"wide":true},"desk":"2648×1490"},{"ref":"vl-0037","title":"Silver Wine Jug, Ham, and Fruit — dark academia still life phone wallpaper","thumb":"plates/silver-wine-jug-ham-and-fruit-dark-still-life-iphone-wallpaper-480x577.jpg","thumbW":480,"thumbH":577,"fullW":2829,"fullH":3400,"now":{"phone":{"left":630,"top":0},"tall":{"left":458,"top":0},"wide":{"left":0,"top":678}},"moved":{"phone":false,"tall":false,"wide":true},"desk":"2829×1591"},{"ref":"vl-0038","title":"Landscape with a Church by a Torrent — dark academia river landscape phone wallpaper","thumb":"plates/landscape-with-a-church-by-a-torrent-river-landscape-iphone-wallpaper-480x619.jpg","thumbW":480,"thumbH":619,"fullW":2630,"fullH":3390,"now":{"phone":{"left":533,"top":0},"tall":{"left":362,"top":0},"wide":{"left":0,"top":602}},"moved":{"phone":false,"tall":false,"wide":true},"desk":"2630×1479"},{"ref":"vl-0042","title":"Vale of Kashmir — landscape phone wallpaper","thumb":"plates/vale-of-kashmir-landscape-desktop-wallpaper-480x261.jpg","thumbW":480,"thumbH":261,"fullW":7030,"fullH":3818,"now":{"phone":{"left":1092,"top":0},"tall":{"left":1092,"top":0},"wide":{"left":241,"top":0}},"moved":{"phone":true,"tall":true,"wide":true},"desk":"6788×3818"},{"ref":"vl-0043","title":"Storm in the Mountains — dark moody mountain landscape phone wallpaper","thumb":"plates/storm-in-the-mountains-mountain-landscape-iphone-wallpaper-480x578.jpg","thumbW":480,"thumbH":578,"fullW":2824,"fullH":3400,"now":{"phone":{"left":628,"top":0},"tall":{"left":456,"top":0},"wide":{"left":0,"top":1465}},"moved":{"phone":false,"tall":false,"wide":true},"desk":"2824×1589"},{"ref":"vl-0045","title":"Mount Washington, New Hampshire — mountain landscape phone wallpaper","thumb":"plates/mount-washington-new-hampshire-mountain-landscape-desktop-wallpaper-480x287.jpg","thumbW":480,"thumbH":287,"fullW":5786,"fullH":3464,"now":{"phone":{"left":1315,"top":0},"tall":{"left":1315,"top":0},"wide":{"left":0,"top":109}},"moved":{"phone":true,"tall":true,"wide":true},"desk":"5786×3255"},{"ref":"vl-0046","title":"Natural Bridge, Sorrento — architectural phone wallpaper","thumb":"plates/natural-bridge-sorrento-architectural-desktop-wallpaper-480x328.jpg","thumbW":480,"thumbH":328,"fullW":5299,"fullH":3626,"now":{"phone":{"left":2115,"top":0},"tall":{"left":2115,"top":0},"wide":{"left":0,"top":321}},"moved":{"phone":true,"tall":true,"wide":true},"desk":"5299×2981"},{"ref":"vl-0047","title":"Durham, Connecticut — dark moody American painting phone wallpaper","thumb":"plates/durham-connecticut-american-painting-desktop-wallpaper-480x275.jpg","thumbW":480,"thumbH":275,"fullW":5787,"fullH":3316,"now":{"phone":{"left":710,"top":0},"tall":{"left":710,"top":0},"wide":{"left":0,"top":36}},"moved":{"phone":true,"tall":true,"wide":true},"desk":"5787×3255"},{"ref":"vl-0051","title":"Peregrine Falcons — bird phone wallpaper","thumb":"plates/peregrine-falcons-bird-desktop-wallpaper-480x339.jpg","thumbW":480,"thumbH":339,"fullW":5000,"fullH":3529,"now":{"phone":{"left":1588,"top":0},"tall":{"left":1588,"top":0},"wide":{"left":0,"top":656}},"moved":{"phone":true,"tall":true,"wide":true},"desk":"5000×2813"},{"ref":"vl-0052","title":"Memento Mori, \"To This Favour\" — American painting desktop wallpaper","thumb":"plates/memento-mori-to-this-favour-american-painting-desktop-wallpaper-480x357.jpg","thumbW":480,"thumbH":357,"fullW":4741,"fullH":3525,"now":{"phone":{"left":2363,"top":0},"tall":{"left":2363,"top":0},"wide":{"left":0,"top":286}},"moved":{"phone":true,"tall":true,"wide":true},"desk":"4741×2667"},{"ref":"vl-0053","title":"In the Woods — dark forest landscape phone wallpaper","thumb":"plates/in-the-woods-dark-forest-landscape-iphone-wallpaper-480x641.jpg","thumbW":480,"thumbH":641,"fullW":2546,"fullH":3400,"now":{"phone":{"left":486,"top":0},"tall":{"left":486,"top":0},"wide":{"left":0,"top":1819}},"moved":{"phone":true,"tall":true,"wide":true},"desk":"2546×1432"},{"ref":"vl-0054","title":"Capri — dark moody American painting phone wallpaper","thumb":"plates/capri-american-painting-desktop-wallpaper-480x300.jpg","thumbW":480,"thumbH":300,"fullW":5000,"fullH":3124,"now":{"phone":{"left":1779,"top":0},"tall":{"left":1622,"top":0},"wide":{"left":0,"top":156}},"moved":{"phone":false,"tall":false,"wide":false},"desk":"5000×2813"},{"ref":"vl-0057","title":"View near Newport — American painting phone wallpaper","thumb":"plates/view-near-newport-american-painting-desktop-wallpaper-480x268.jpg","thumbW":480,"thumbH":268,"fullW":5000,"fullH":2790,"now":{"phone":{"left":1214,"top":0},"tall":{"left":1214,"top":0},"wide":{"left":40,"top":0}},"moved":{"phone":true,"tall":true,"wide":true},"desk":"4960×2790"},{"ref":"vl-0060","title":"Ruins of an Ancient City — architectural phone wallpaper","thumb":"plates/ruins-of-an-ancient-city-architectural-desktop-wallpaper-480x386.jpg","thumbW":480,"thumbH":386,"fullW":4778,"fullH":3840,"now":{"phone":{"left":0,"top":0},"tall":{"left":0,"top":0},"wide":{"left":0,"top":1152}},"moved":{"phone":true,"tall":true,"wide":true},"desk":"4778×2688"},{"ref":"vl-0063","title":"Landscape Near Paris — landscape phone wallpaper","thumb":"plates/landscape-near-paris-landscape-desktop-wallpaper-480x326.jpg","thumbW":480,"thumbH":326,"fullW":5657,"fullH":3840,"now":{"phone":{"left":1943,"top":0},"tall":{"left":1749,"top":0},"wide":{"left":0,"top":412}},"moved":{"phone":false,"tall":false,"wide":true},"desk":"5657×3182"},{"ref":"vl-0064","title":"The Waterfalls at Tivoli — dark academia river landscape phone wallpaper","thumb":"plates/the-waterfalls-at-tivoli-river-landscape-desktop-wallpaper-480x340.jpg","thumbW":480,"thumbH":340,"fullW":5393,"fullH":3825,"now":{"phone":{"left":1814,"top":0},"tall":{"left":1621,"top":0},"wide":{"left":0,"top":439}},"moved":{"phone":false,"tall":false,"wide":true},"desk":"5393×3034"},{"ref":"vl-0065","title":"Rest on the Flight into Egypt — dark academia French painting phone wallpaper","thumb":"plates/rest-on-the-flight-into-egypt-french-painting-iphone-wallpaper-480x643.jpg","thumbW":480,"thumbH":643,"fullW":2540,"fullH":3400,"now":{"phone":{"left":486,"top":0},"tall":{"left":314,"top":0},"wide":{"left":0,"top":1877}},"moved":{"phone":false,"tall":false,"wide":true},"desk":"2540×1429"},{"ref":"vl-0066","title":"Lion on the Watch — French painting phone wallpaper","thumb":"plates/lion-on-the-watch-french-painting-desktop-wallpaper-480x344.jpg","thumbW":480,"thumbH":344,"fullW":5352,"fullH":3840,"now":{"phone":{"left":1790,"top":0},"tall":{"left":1596,"top":0},"wide":{"left":0,"top":413}},"moved":{"phone":false,"tall":false,"wide":true},"desk":"5352×3011"},{"ref":"vl-0067","title":"An Aqueduct Near a Fortress — dark academia French painting phone wallpaper","thumb":"plates/an-aqueduct-near-a-fortress-french-painting-desktop-wallpaper-480x421.jpg","thumbW":480,"thumbH":421,"fullW":4383,"fullH":3840,"now":{"phone":{"left":1306,"top":0},"tall":{"left":1112,"top":0},"wide":{"left":0,"top":1195}},"moved":{"phone":false,"tall":false,"wide":true},"desk":"4383×2465"},{"ref":"vl-0068","title":"Tiger in Wind — Japanese ink painting phone wallpaper","thumb":"plates/tiger-in-wind-bright-sky-iphone-wallpaper-480x1140.jpg","thumbW":480,"thumbH":1140,"fullW":3331,"fullH":7912,"now":{"phone":{"left":0,"top":0},"tall":{"left":0,"top":0},"wide":{"left":0,"top":3630}},"moved":{"phone":true,"tall":true,"wide":true},"desk":"3331×1874"},{"ref":"vl-0083","title":"Egypt and Nubia, Volume I — English print phone wallpaper","thumb":"plates/egypt-and-nubia-volume-i-english-print-iphone-wallpaper-480x650.jpg","thumbW":480,"thumbH":650,"fullW":2279,"fullH":3086,"now":{"phone":{"left":428,"top":0},"tall":{"left":272,"top":0},"wide":{"left":0,"top":1548}},"moved":{"phone":false,"tall":false,"wide":true},"desk":"2279×1282"},{"ref":"vl-0084","title":"La Tour St. Jacques — French print phone wallpaper","thumb":"plates/la-tour-st-jacques-french-print-iphone-wallpaper-480x733.jpg","thumbW":480,"thumbH":733,"fullW":2227,"fullH":3400,"now":{"phone":{"left":329,"top":0},"tall":{"left":157,"top":0},"wide":{"left":0,"top":761}},"moved":{"phone":false,"tall":false,"wide":true},"desk":"2227×1253"},{"ref":"vl-0086","title":"Landscape with Hunters — dark academia landscape phone wallpaper","thumb":"plates/landscape-with-hunters-landscape-desktop-wallpaper-480x390.jpg","thumbW":480,"thumbH":390,"fullW":4727,"fullH":3840,"now":{"phone":{"left":1478,"top":0},"tall":{"left":1284,"top":0},"wide":{"left":0,"top":719}},"moved":{"phone":false,"tall":false,"wide":true},"desk":"4727×2659"},{"ref":"vl-0087","title":"Gooseberries on a Table — dark academia still life phone wallpaper","thumb":"plates/gooseberries-on-a-table-dark-bird-iphone-wallpaper-480x626.jpg","thumbW":480,"thumbH":626,"fullW":2607,"fullH":3400,"now":{"phone":{"left":743,"top":0},"tall":{"left":694,"top":0},"wide":{"left":0,"top":0}},"moved":{"phone":true,"tall":true,"wide":true},"desk":"2607×1466"},{"ref":"vl-0139","title":"Aizen Myōō — dark moody Japanese painting phone wallpaper","thumb":"plates/aizen-myoo-japanese-painting-iphone-wallpaper-480x749.jpg","thumbW":480,"thumbH":749,"fullW":2086,"fullH":3256,"now":{"phone":{"left":292,"top":0},"tall":{"left":127,"top":0},"wide":{"left":0,"top":348}},"moved":{"phone":false,"tall":false,"wide":true},"desk":"2086×1173"},{"ref":"vl-0142","title":"Welcoming Descent of Amida — dark moody Japanese painting phone wallpaper","thumb":"plates/welcoming-descent-of-amida-japanese-painting-iphone-wallpaper-480x557.jpg","thumbW":480,"thumbH":557,"fullW":2851,"fullH":3308,"now":{"phone":{"left":662,"top":0},"tall":{"left":495,"top":0},"wide":{"left":0,"top":285}},"moved":{"phone":false,"tall":false,"wide":true},"desk":"2851×1604"},{"ref":"vl-0151","title":"Bamboo — Korean ink painting phone wallpaper","thumb":"plates/bamboo-bright-forest-landscape-iphone-wallpaper-480x768.jpg","thumbW":480,"thumbH":768,"fullW":2076,"fullH":3320,"now":{"phone":{"left":544,"top":0},"tall":{"left":208,"top":0},"wide":{"left":0,"top":1712}},"moved":{"phone":true,"tall":true,"wide":true},"desk":"2076×1168"},{"ref":"vl-0157","title":"Demon Intoning the Name of the Buddha — Japanese painting phone wallpaper","thumb":"plates/demon-intoning-the-name-of-the-buddha-japanese-painting-iphone-wallpaper-480x1275.jpg","thumbW":480,"thumbH":1275,"fullW":2851,"fullH":7573,"now":{"phone":{"left":0,"top":947},"tall":{"left":0,"top":947},"wide":{"left":0,"top":2435}},"moved":{"phone":true,"tall":true,"wide":true},"desk":"2851×1604"},{"ref":"vl-0164","title":"Kasuga Shrine Mandala — dark moody Japanese architectural phone wallpaper","thumb":"plates/kasuga-shrine-mandala-architectural-iphone-wallpaper-480x1328.jpg","thumbW":480,"thumbH":1328,"fullW":2864,"fullH":7926,"now":{"phone":{"left":0,"top":861},"tall":{"left":0,"top":1417},"wide":{"left":0,"top":1773}},"moved":{"phone":false,"tall":false,"wide":true},"desk":"2864×1611"},{"ref":"vl-0174","title":"Tree Trunks, Arresødal — dark moody forest phone wallpaper","thumb":"plates/tree-trunks-arresodal-dark-forest-desktop-wallpaper-480x324.jpg","thumbW":480,"thumbH":324,"fullW":5687,"fullH":3840,"now":{"phone":{"left":1958,"top":0},"tall":{"left":1764,"top":0},"wide":{"left":0,"top":320}},"moved":{"phone":false,"tall":false,"wide":true},"desk":"5687×3199"},{"ref":"vl-0175","title":"Interior. Artificial Light — dark academia interior phone wallpaper","thumb":"plates/interior-artificial-light-dark-desktop-wallpaper-480x344.jpg","thumbW":480,"thumbH":344,"fullW":5355,"fullH":3840,"now":{"phone":{"left":1792,"top":0},"tall":{"left":1598,"top":0},"wide":{"left":0,"top":413}},"moved":{"phone":false,"tall":false,"wide":true},"desk":"5355×3012"},{"ref":"vl-0176","title":"Forest Floor with a Thistle and Butterflies — dark moody nature phone wallpaper","thumb":"plates/forest-floor-with-thistle-and-butterflies-dark-nature-iphone-wallpaper-480x636.jpg","thumbW":480,"thumbH":636,"fullW":3840,"fullH":5089,"now":{"phone":{"left":746,"top":0},"tall":{"left":489,"top":0},"wide":{"left":0,"top":1592}},"moved":{"phone":false,"tall":false,"wide":true},"desk":"3840×2160"},{"ref":"vl-0177","title":"Sumptuous Still Life — dark academia gold phone wallpaper","thumb":"plates/sumptuous-still-life-dark-gold-iphone-wallpaper-480x545.jpg","thumbW":480,"thumbH":545,"fullW":3840,"fullH":4362,"now":{"phone":{"left":914,"top":0},"tall":{"left":693,"top":0},"wide":{"left":0,"top":1008}},"moved":{"phone":false,"tall":false,"wide":true},"desk":"3840×2160"},{"ref":"vl-0178","title":"Vase of Flowers — dark academia floral phone wallpaper","thumb":"plates/vase-of-flowers-dark-floral-iphone-wallpaper-480x641.jpg","thumbW":480,"thumbH":641,"fullW":3840,"fullH":5124,"now":{"phone":{"left":738,"top":0},"tall":{"left":479,"top":0},"wide":{"left":0,"top":1271}},"moved":{"phone":false,"tall":false,"wide":true},"desk":"3840×2160"},{"ref":"vl-0179","title":"The Åse Farm in Telemark — dark moody landscape phone wallpaper","thumb":"plates/ase-farm-in-telemark-dark-landscape-desktop-wallpaper-480x371.jpg","thumbW":480,"thumbH":371,"fullW":3813,"fullH":2947,"now":{"phone":{"left":2452,"top":0},"tall":{"left":2155,"top":0},"wide":{"left":0,"top":397}},"moved":{"phone":true,"tall":true,"wide":true},"desk":"3813×2145"},{"ref":"vl-0216","title":"Apple Blossoms — dark academia still life phone wallpaper","thumb":"plates/apple-blossoms-still-life-iphone-wallpaper-480x560.jpg","thumbW":480,"thumbH":560,"fullW":3840,"fullH":4477,"now":{"phone":{"left":122,"top":0},"tall":{"left":122,"top":0},"wide":{"left":0,"top":560}},"moved":{"phone":true,"tall":true,"wide":true},"desk":"3840×2160"},{"ref":"vl-0219","title":"Bamboo in Four Seasons: Autumn — Chinese ink bamboo phone wallpaper","thumb":"plates/bamboo-in-four-seasons-autumn-iphone-wallpaper-480x1030.jpg","thumbW":480,"thumbH":1030,"fullW":2330,"fullH":5000,"now":{"phone":{"left":11,"top":0},"tall":{"left":0,"top":429},"wide":{"left":0,"top":2053}},"moved":{"phone":false,"tall":false,"wide":true},"desk":"2330×1311"},{"ref":"vl-0221","title":"Spring Flowers — dark academia floral phone wallpaper","thumb":"plates/spring-flowers-monet-floral-iphone-wallpaper-480x630.jpg","thumbW":480,"thumbH":630,"fullW":3840,"fullH":5043,"now":{"phone":{"left":0,"top":0},"tall":{"left":0,"top":0},"wide":{"left":0,"top":2145}},"moved":{"phone":true,"tall":true,"wide":true},"desk":"3840×2160"},{"ref":"vl-0226","title":"Ruin by the Sea — dark academia architectural phone wallpaper","thumb":"plates/ruin-by-the-sea-bocklin-iphone-wallpaper-480x653.jpg","thumbW":480,"thumbH":653,"fullW":3840,"fullH":5227,"now":{"phone":{"left":714,"top":0},"tall":{"left":450,"top":0},"wide":{"left":0,"top":512}},"moved":{"phone":false,"tall":false,"wide":true},"desk":"3840×2160"},{"ref":"vl-0230","title":"Panoramic View of the Alps, Les Dents du Midi — dark moody landscape phone wallpaper","thumb":"plates/panoramic-view-of-the-alps-les-dents-du-midi-courbet-iphone-wallpaper-480x343.jpg","thumbW":480,"thumbH":343,"fullW":5378,"fullH":3840,"now":{"phone":{"left":1803,"top":0},"tall":{"left":1609,"top":0},"wide":{"left":0,"top":403}},"moved":{"phone":false,"tall":false,"wide":true},"desk":"5378×3025"},{"ref":"vl-0236","title":"Villerville Seen from Le Ratier — landscape phone wallpaper","thumb":"plates/villerville-seen-from-le-ratier-daubigny-iphone-wallpaper-480x223.jpg","thumbW":480,"thumbH":223,"fullW":6105,"fullH":2841,"now":{"phone":{"left":2397,"top":0},"tall":{"left":2254,"top":0},"wide":{"left":525,"top":0}},"moved":{"phone":false,"tall":false,"wide":true},"desk":"5051×2841"},{"ref":"vl-0240","title":"Rocky, Wooded Landscape with a Dell and Weir — dark academia landscape phone wallpaper","thumb":"plates/rocky-wooded-landscape-with-a-dell-and-weir-gainsborough-iphone-wallpaper-480x368.jpg","thumbW":480,"thumbH":368,"fullW":5015,"fullH":3840,"now":{"phone":{"left":3239,"top":0},"tall":{"left":2855,"top":0},"wide":{"left":0,"top":511}},"moved":{"phone":true,"tall":true,"wide":true},"desk":"5015×2821"},{"ref":"vl-0251","title":"Vase with Flowers — dark academia floral still life phone wallpaper","thumb":"plates/vase-with-flowers-huysum-iphone-wallpaper-480x621.jpg","thumbW":480,"thumbH":621,"fullW":2501,"fullH":3236,"now":{"phone":{"left":504,"top":0},"tall":{"left":341,"top":0},"wide":{"left":0,"top":365}},"moved":{"phone":false,"tall":false,"wide":true},"desk":"2501×1407"},{"ref":"vl-0252","title":"Vase of Flowers — dark academia flower still life phone wallpaper","thumb":"plates/vase-of-flowers-huysum-iphone-wallpaper-480x625.jpg","thumbW":480,"thumbH":625,"fullW":3840,"fullH":5001,"now":{"phone":{"left":766,"top":0},"tall":{"left":514,"top":0},"wide":{"left":0,"top":136}},"moved":{"phone":false,"tall":false,"wide":true},"desk":"3840×2160"},{"ref":"vl-0253","title":"Flowers in an Urn — dark academia flower still life phone wallpaper","thumb":"plates/flowers-in-an-urn-huysum-iphone-wallpaper-480x650.jpg","thumbW":480,"thumbH":650,"fullW":2952,"fullH":4000,"now":{"phone":{"left":553,"top":0},"tall":{"left":351,"top":0},"wide":{"left":0,"top":1169}},"moved":{"phone":false,"tall":false,"wide":true},"desk":"2952×1661"},{"ref":"vl-0254","title":"Still Life with Flowers and Fruit — dark academia still life phone wallpaper","thumb":"plates/still-life-with-flowers-and-fruit-huysum-iphone-wallpaper-480x623.jpg","thumbW":480,"thumbH":623,"fullW":3082,"fullH":4000,"now":{"phone":{"left":618,"top":0},"tall":{"left":416,"top":0},"wide":{"left":0,"top":1984}},"moved":{"phone":false,"tall":false,"wide":true},"desk":"3082×1734"},{"ref":"vl-0256","title":"Interior with the Old Stove, Albertines Lyst — dark academia quiet grey interior phone wallpaper","thumb":"plates/interior-with-the-old-stove-albertines-lyst-hammershoi-iphone-wallpaper-480x587.jpg","thumbW":480,"thumbH":587,"fullW":3840,"fullH":4693,"now":{"phone":{"left":1667,"top":0},"tall":{"left":1200,"top":0},"wide":{"left":0,"top":1895}},"moved":{"phone":true,"tall":true,"wide":true},"desk":"3840×2160"},{"ref":"vl-0259","title":"Forstudie til \"Solregn. Gentofte Sø\" — still grey water phone wallpaper","thumb":"plates/forstudie-til-solregn-gentofte-so-hammershoi-iphone-wallpaper-480x388.jpg","thumbW":480,"thumbH":388,"fullW":4105,"fullH":3318,"now":{"phone":{"left":1199,"top":0},"tall":{"left":1199,"top":0},"wide":{"left":0,"top":599}},"moved":{"phone":true,"tall":true,"wide":true},"desk":"4105×2309"},{"ref":"vl-0261","title":"Roman Landscape — dark academia landscape phone wallpaper","thumb":"plates/roman-landscape-bocklin-iphone-wallpaper-480x491.jpg","thumbW":480,"thumbH":491,"fullW":3658,"fullH":3740,"now":{"phone":{"left":1423,"top":0},"tall":{"left":1423,"top":0},"wide":{"left":0,"top":1682}},"moved":{"phone":true,"tall":true,"wide":true},"desk":"3658×2058"},{"ref":"vl-0265","title":"The Summer (Landscape with couple) — dark moody green valley phone wallpaper","thumb":"plates/the-summer-landscape-with-couple-friedrich-iphone-wallpaper-480x327.jpg","thumbW":480,"thumbH":327,"fullW":5632,"fullH":3840,"now":{"phone":{"left":2120,"top":0},"tall":{"left":2120,"top":0},"wide":{"left":0,"top":564}},"moved":{"phone":true,"tall":true,"wide":true},"desk":"5632×3168"},{"ref":"vl-0275","title":"Still life with flowers and fruit — dark academia still life phone wallpaper","thumb":"plates/still-life-with-flowers-and-fruit-huysum-2-iphone-wallpaper-480x630.jpg","thumbW":480,"thumbH":630,"fullW":3840,"fullH":5037,"now":{"phone":{"left":758,"top":0},"tall":{"left":504,"top":0},"wide":{"left":0,"top":184}},"moved":{"phone":false,"tall":false,"wide":true},"desk":"3840×2160"},{"ref":"vl-0279","title":"Landscape — dark academia wooded meadow phone wallpaper","thumb":"plates/landscape-bertin-iphone-wallpaper-480x353.jpg","thumbW":480,"thumbH":353,"fullW":5227,"fullH":3840,"now":{"phone":{"left":1793,"top":0},"tall":{"left":1793,"top":0},"wide":{"left":0,"top":326}},"moved":{"phone":true,"tall":true,"wide":true},"desk":"5227×2940"},{"ref":"vl-0280","title":"Italian Landscape: The Abbey and the Monks — dark academia warm valley phone wallpaper","thumb":"plates/italian-landscape-the-abbey-and-the-monks-bertin-iphone-wallpaper-480x367.jpg","thumbW":480,"thumbH":367,"fullW":5023,"fullH":3840,"now":{"phone":{"left":1626,"top":0},"tall":{"left":1432,"top":0},"wide":{"left":0,"top":513}},"moved":{"phone":false,"tall":false,"wide":true},"desk":"5023×2825"},{"ref":"vl-0281","title":"River Landscape — dark academia still river phone wallpaper","thumb":"plates/river-landscape-bertin-iphone-wallpaper-480x579.jpg","thumbW":480,"thumbH":579,"fullW":2741,"fullH":3307,"now":{"phone":{"left":608,"top":0},"tall":{"left":441,"top":0},"wide":{"left":0,"top":1148}},"moved":{"phone":false,"tall":false,"wide":true},"desk":"2741×1542"},{"ref":"vl-0291","title":"Rocky Mountain Sheep — dark moody ram on a ledge phone wallpaper","thumb":"plates/rocky-mountain-sheep-bierstadt-iphone-wallpaper-480x573.jpg","thumbW":480,"thumbH":573,"fullW":2680,"fullH":3200,"now":{"phone":{"left":0,"top":0},"tall":{"left":0,"top":0},"wide":{"left":0,"top":0}},"moved":{"phone":true,"tall":true,"wide":true},"desk":"2680×1508"},{"ref":"vl-0297","title":"Sunlight and Shadow: The Newbury Marshes — marsh light phone wallpaper","thumb":"plates/sunlight-and-shadow-the-newbury-marshes-heade-iphone-wallpaper-480x215.jpg","thumbW":480,"thumbH":215,"fullW":8560,"fullH":3840,"now":{"phone":{"left":3262,"top":0},"tall":{"left":3262,"top":0},"wide":{"left":1733,"top":0}},"moved":{"phone":true,"tall":true,"wide":true},"desk":"6827×3840"},{"ref":"vl-0298","title":"Rocky Landscape with Two Men on a Horse — dark moody misty crag phone wallpaper","thumb":"plates/rocky-landscape-with-two-men-on-a-horse-morland-iphone-wallpaper-480x394.jpg","thumbW":480,"thumbH":394,"fullW":4673,"fullH":3840,"now":{"phone":{"left":2337,"top":0},"tall":{"left":2337,"top":0},"wide":{"left":0,"top":1121}},"moved":{"phone":true,"tall":true,"wide":true},"desk":"4673×2629"},{"ref":"vl-0299","title":"The Old Water Mill — mill under an oak phone wallpaper","thumb":"plates/the-old-water-mill-morland-iphone-wallpaper-480x382.jpg","thumbW":480,"thumbH":382,"fullW":4822,"fullH":3840,"now":{"phone":{"left":1525,"top":0},"tall":{"left":1331,"top":0},"wide":{"left":0,"top":955}},"moved":{"phone":false,"tall":false,"wide":true},"desk":"4822×2712"},{"ref":"vl-0301","title":"Landscape with a Column and Figure — classical landscape phone wallpaper","thumb":"plates/landscape-with-a-column-and-figure-lorrain-iphone-wallpaper-480x356.jpg","thumbW":480,"thumbH":356,"fullW":5175,"fullH":3840,"now":{"phone":{"left":3403,"top":0},"tall":{"left":3015,"top":0},"wide":{"left":0,"top":809}},"moved":{"phone":true,"tall":true,"wide":true},"desk":"5175×2911"},{"ref":"vl-0308","title":"Landscape with the Voyage of Jacob — dark academia river and tower phone wallpaper","thumb":"plates/landscape-with-the-voyage-of-jacob-lorrain-iphone-wallpaper-480x338.jpg","thumbW":480,"thumbH":338,"fullW":5254,"fullH":3700,"now":{"phone":{"left":1773,"top":0},"tall":{"left":1587,"top":0},"wide":{"left":0,"top":504}},"moved":{"phone":false,"tall":false,"wide":true},"desk":"5254×2955"},{"ref":"vl-0318","title":"Landscape with the Adoration of the Golden Calf — dark trees phone wallpaper","thumb":"plates/landscape-with-the-adoration-of-the-golden-calf-lorrain-iphone-wallpaper-480x271.jpg","thumbW":480,"thumbH":271,"fullW":6699,"fullH":3789,"now":{"phone":{"left":2475,"top":0},"tall":{"left":2284,"top":0},"wide":{"left":0,"top":0}},"moved":{"phone":false,"tall":false,"wide":true},"desk":"6699×3768"},{"ref":"vl-0319","title":"Dover — chalk cliffs phone wallpaper","thumb":"plates/dover-wilson-iphone-wallpaper-480x372.jpg","thumbW":480,"thumbH":372,"fullW":4953,"fullH":3840,"now":{"phone":{"left":1591,"top":0},"tall":{"left":1397,"top":0},"wide":{"left":0,"top":526}},"moved":{"phone":false,"tall":false,"wide":true},"desk":"4953×2786"},{"ref":"vl-0324","title":"The Destruction of the Children of Niobe — dark academia storm over a valley phone wallpaper","thumb":"plates/the-destruction-of-the-children-of-niobe-woollett-iphone-wallpaper-480x367.jpg","thumbW":480,"thumbH":367,"fullW":5024,"fullH":3840,"now":{"phone":{"left":1356,"top":0},"tall":{"left":1356,"top":0},"wide":{"left":0,"top":827}},"moved":{"phone":true,"tall":true,"wide":true},"desk":"5024×2826"},{"ref":"vl-0336","title":"View of Tivoli: the Cascatelle and the Villa of Maecenas — cascades below a town phone wallpaper","thumb":"plates/view-of-tivoli-the-cascatelle-and-the-villa-of-maecenas-wilson-iphone-wallpaper-480x355.jpg","thumbW":480,"thumbH":355,"fullW":4872,"fullH":3603,"now":{"phone":{"left":1628,"top":0},"tall":{"left":1628,"top":0},"wide":{"left":0,"top":660}},"moved":{"phone":true,"tall":true,"wide":true},"desk":"4872×2741"},{"ref":"vl-0343","title":"Fruit Piece — dark academia fruit still life phone wallpaper","thumb":"plates/fruit-piece-huysum-iphone-wallpaper-480x634.jpg","thumbW":480,"thumbH":634,"fullW":3840,"fullH":5074,"now":{"phone":{"left":749,"top":0},"tall":{"left":493,"top":0},"wide":{"left":0,"top":472}},"moved":{"phone":false,"tall":false,"wide":true},"desk":"3840×2160"},{"ref":"vl-0349","title":"Interior of a Protestant, Gothic Church during a Service — dark academia gothic nave phone wallpaper","thumb":"plates/interior-of-a-protestant-gothic-church-during-a-service-witte-iphone-wallpaper-480x610.jpg","thumbW":480,"thumbH":610,"fullW":3840,"fullH":4883,"now":{"phone":{"left":793,"top":0},"tall":{"left":547,"top":0},"wide":{"left":0,"top":1273}},"moved":{"phone":false,"tall":false,"wide":true},"desk":"3840×2160"},{"ref":"vl-0350","title":"Among the Sierra Nevada, California — light on a lake phone wallpaper","thumb":"plates/among-the-sierra-nevada-california-bierstadt-iphone-wallpaper-480x287.jpg","thumbW":480,"thumbH":287,"fullW":6402,"fullH":3825,"now":{"phone":{"left":2319,"top":0},"tall":{"left":2125,"top":0},"wide":{"left":0,"top":107}},"moved":{"phone":false,"tall":false,"wide":true},"desk":"6402×3601"},{"ref":"vl-0352","title":"The Cliff at Étretat — chalk arch phone wallpaper","thumb":"plates/the-cliff-at-etretat-courbet-iphone-wallpaper-480x399.jpg","thumbW":480,"thumbH":399,"fullW":4614,"fullH":3840,"now":{"phone":{"left":1426,"top":0},"tall":{"left":1426,"top":0},"wide":{"left":0,"top":857}},"moved":{"phone":true,"tall":true,"wide":true},"desk":"4614×2595"},{"ref":"vl-0353","title":"A Forest with Apollo and Daphne — dark academia forest clearing phone wallpaper","thumb":"plates/a-forest-with-apollo-and-daphne-bertin-iphone-wallpaper-480x396.jpg","thumbW":480,"thumbH":396,"fullW":4656,"fullH":3840,"now":{"phone":{"left":2042,"top":0},"tall":{"left":2042,"top":0},"wide":{"left":0,"top":1164}},"moved":{"phone":true,"tall":true,"wide":true},"desk":"4656×2619"},{"ref":"vl-0354","title":"Mount Starr King, Yosemite — sunbeams on a lake phone wallpaper","thumb":"plates/mount-starr-king-yosemite-bierstadt-iphone-wallpaper-480x325.jpg","thumbW":480,"thumbH":325,"fullW":5669,"fullH":3840,"now":{"phone":{"left":1949,"top":0},"tall":{"left":1755,"top":0},"wide":{"left":0,"top":544}},"moved":{"phone":false,"tall":false,"wide":true},"desk":"5669×3189"},{"ref":"vl-0355","title":"Mount Vesuvius at Midnight — volcano at night phone wallpaper","thumb":"plates/mount-vesuvius-at-midnight-bierstadt-iphone-wallpaper-480x338.jpg","thumbW":480,"thumbH":338,"fullW":4780,"fullH":3366,"now":{"phone":{"left":1902,"top":0},"tall":{"left":1902,"top":0},"wide":{"left":0,"top":299}},"moved":{"phone":true,"tall":true,"wide":true},"desk":"4780×2689"},{"ref":"vl-0356","title":"Orchid Blossoms — orchid in the dark phone wallpaper","thumb":"plates/orchid-blossoms-heade-iphone-wallpaper-480x577.jpg","thumbW":480,"thumbH":577,"fullW":3486,"fullH":4193,"now":{"phone":{"left":744,"top":0},"tall":{"left":744,"top":0},"wide":{"left":0,"top":560}},"moved":{"phone":true,"tall":true,"wide":true},"desk":"3486×1961"},{"ref":"vl-0357","title":"Haverstraw Bay — pale bay phone wallpaper","thumb":"plates/haverstraw-bay-gifford-iphone-wallpaper-480x226.jpg","thumbW":480,"thumbH":226,"fullW":8161,"fullH":3840,"now":{"phone":{"left":6385,"top":0},"tall":{"left":6001,"top":0},"wide":{"left":1324,"top":0}},"moved":{"phone":true,"tall":true,"wide":true},"desk":"6827×3840"},{"ref":"vl-0358","title":"An October Day in the White Mountains — autumn valley phone wallpaper","thumb":"plates/an-october-day-in-the-white-mountains-kensett-iphone-wallpaper-480x311.jpg","thumbW":480,"thumbH":311,"fullW":5000,"fullH":3237,"now":{"phone":{"left":1756,"top":0},"tall":{"left":1756,"top":0},"wide":{"left":0,"top":271}},"moved":{"phone":true,"tall":true,"wide":true},"desk":"5000×2813"},{"ref":"vl-0361","title":"Seashore — Meiji period, 19th century phone wallpaper","thumb":"plates/seashore-iphone-wallpaper-480x337.jpg","thumbW":480,"thumbH":337,"fullW":3000,"fullH":2106,"now":{"phone":{"left":0,"top":0},"tall":{"left":0,"top":0},"wide":{"left":0,"top":225}},"moved":{"phone":true,"tall":true,"wide":true},"desk":"3000×1688"},{"ref":"vl-0362","title":"Torpedoes — Hashimoto Gaho — Meiji period, 19th century phone wallpaper","thumb":"plates/torpedoes-hashimoto-gaho-iphone-wallpaper-480x317.jpg","thumbW":480,"thumbH":317,"fullW":3000,"fullH":1980,"now":{"phone":{"left":1294,"top":0},"tall":{"left":1294,"top":0},"wide":{"left":0,"top":144}},"moved":{"phone":true,"tall":true,"wide":true},"desk":"3000×1688"},{"ref":"vl-0363","title":"Seascape — Kaji Tameya — 1883 phone wallpaper","thumb":"plates/seascape-kaji-tameya-iphone-wallpaper-480x650.jpg","thumbW":480,"thumbH":650,"fullW":2217,"fullH":3000,"now":{"phone":{"left":114,"top":0},"tall":{"left":114,"top":0},"wide":{"left":0,"top":1569}},"moved":{"phone":true,"tall":true,"wide":true},"desk":"2217×1247"},{"ref":"vl-0366","title":"Mount Fuji Rising above Clouds — Yokoyama Taikan — ca. 1913 phone wallpaper","thumb":"plates/mount-fuji-rising-above-clouds-yokoyama-taikan-iphone-wallpaper-480x580.jpg","thumbW":480,"thumbH":580,"fullW":2481,"fullH":3000,"now":{"phone":{"left":390,"top":0},"tall":{"left":390,"top":0},"wide":{"left":0,"top":559}},"moved":{"phone":true,"tall":true,"wide":true},"desk":"2481×1396"},{"ref":"vl-0369","title":"The Garden of Eden — Yamamoto Hosui — Meiji era, 19th century phone wallpaper","thumb":"plates/the-garden-of-eden-yamamoto-hosui-iphone-wallpaper-480x700.jpg","thumbW":480,"thumbH":700,"fullW":2057,"fullH":3000,"now":{"phone":{"left":176,"top":0},"tall":{"left":176,"top":0},"wide":{"left":0,"top":1050}},"moved":{"phone":true,"tall":true,"wide":true},"desk":"2057×1157"},{"ref":"vl-0372","title":"Finger Painted Landscape — Gao Qipei — Qing, 18th century phone wallpaper","thumb":"plates/finger-painted-landscape-gao-qipei-iphone-wallpaper-480x602.jpg","thumbW":480,"thumbH":602,"fullW":2393,"fullH":3000,"now":{"phone":{"left":296,"top":0},"tall":{"left":296,"top":0},"wide":{"left":0,"top":0}},"moved":{"phone":true,"tall":true,"wide":true},"desk":"2393×1346"},{"ref":"vl-0373","title":"Fisherman's Cottage — dark moody pines at dusk phone wallpaper","thumb":"plates/fishermans-cottage-harald-sohlberg-iphone-wallpaper-480x552.jpg","thumbW":480,"thumbH":552,"fullW":2607,"fullH":3000,"now":{"phone":{"left":1222,"top":0},"tall":{"left":919,"top":0},"wide":{"left":0,"top":1533}},"moved":{"phone":true,"tall":true,"wide":true},"desk":"2607×1466"},{"ref":"vl-0374","title":"Snowdon from Llyn Nantlle — Welsh mountain lake phone wallpaper","thumb":"plates/snowdon-from-llyn-nantlle-richard-wilson-iphone-wallpaper-480x381.jpg","thumbW":480,"thumbH":381,"fullW":4501,"fullH":3571,"now":{"phone":{"left":1809,"top":0},"tall":{"left":1809,"top":0},"wide":{"left":0,"top":0}},"moved":{"phone":true,"tall":true,"wide":true},"desk":"4501×2532"},{"ref":"vl-0375","title":"Jacob with Laban and his Daughters — hazy pastoral oaks phone wallpaper","thumb":"plates/jacob-with-laban-and-his-daughters-claude-lorrain-iphone-wallpaper-480x364.jpg","thumbW":480,"thumbH":364,"fullW":5004,"fullH":3793,"now":{"phone":{"left":1196,"top":0},"tall":{"left":1196,"top":0},"wide":{"left":0,"top":698}},"moved":{"phone":true,"tall":true,"wide":true},"desk":"5004×2815"},{"ref":"vl-0376","title":"Gebirgssee — alpine lake at dusk phone wallpaper","thumb":"plates/gebirgssee-arnold-bocklin-iphone-wallpaper-480x295.jpg","thumbW":480,"thumbH":295,"fullW":4842,"fullH":2980,"now":{"phone":{"left":1825,"top":0},"tall":{"left":1825,"top":0},"wide":{"left":0,"top":253}},"moved":{"phone":true,"tall":true,"wide":true},"desk":"4842×2724"},{"ref":"vl-0377","title":"Before a Thunderstorm — dark storm sky phone wallpaper","thumb":"plates/before-a-thunderstorm-george-morland-iphone-wallpaper-480x344.jpg","thumbW":480,"thumbH":344,"fullW":5000,"fullH":3588,"now":{"phone":{"left":2672,"top":0},"tall":{"left":2672,"top":0},"wide":{"left":0,"top":388}},"moved":{"phone":true,"tall":true,"wide":false},"desk":"5000×2813"},{"ref":"vl-0378","title":"Landscape — red gable under a great tree phone wallpaper","thumb":"plates/landscape-gustave-courbet-iphone-wallpaper-480x408.jpg","thumbW":480,"thumbH":408,"fullW":4518,"fullH":3840,"now":{"phone":{"left":1307,"top":0},"tall":{"left":1307,"top":0},"wide":{"left":0,"top":650}},"moved":{"phone":true,"tall":true,"wide":false},"desk":"4518×2541"},{"ref":"vl-0379","title":"Sunshine in the Drawing Room — quiet grey interior phone wallpaper","thumb":"plates/sunshine-in-the-drawing-room-hammershoi-iphone-wallpaper-480x394.jpg","thumbW":480,"thumbH":394,"fullW":4146,"fullH":3406,"now":{"phone":{"left":1287,"top":0},"tall":{"left":1287,"top":0},"wide":{"left":0,"top":537}},"moved":{"phone":false,"tall":true,"wide":false},"desk":"4146×2332"},{"ref":"vl-0380","title":"Glass Vase with Flowers — dark floral still life phone wallpaper","thumb":"plates/glass-vase-with-flowers-jan-van-huysum-iphone-wallpaper-480x592.jpg","thumbW":480,"thumbH":592,"fullW":2874,"fullH":3544,"now":{"phone":{"left":424,"top":0},"tall":{"left":424,"top":0},"wide":{"left":0,"top":964}},"moved":{"phone":true,"tall":true,"wide":false},"desk":"2874×1617"},{"ref":"vl-0381","title":"Italian Landscape — hill town under blue sky phone wallpaper","thumb":"plates/italian-landscape-jean-victor-bertin-iphone-wallpaper-480x308.jpg","thumbW":480,"thumbH":308,"fullW":5986,"fullH":3840,"now":{"phone":{"left":1969,"top":0},"tall":{"left":1969,"top":0},"wide":{"left":0,"top":237}},"moved":{"phone":true,"tall":true,"wide":false},"desk":"5986×3367"},{"ref":"vl-0382","title":"Landscape, Site of Greece — tall trees and a blue peak phone wallpaper","thumb":"plates/landscape-site-of-greece-jean-victor-bertin-iphone-wallpaper-480x309.jpg","thumbW":480,"thumbH":309,"fullW":5971,"fullH":3840,"now":{"phone":{"left":2221,"top":0},"tall":{"left":2221,"top":0},"wide":{"left":0,"top":241}},"moved":{"phone":true,"tall":true,"wide":false},"desk":"5971×3359"},{"ref":"vl-0383","title":"The Great Day of His Wrath — apocalyptic cliff phone wallpaper","thumb":"plates/the-great-day-of-his-wrath-john-martin-iphone-wallpaper-480x310.jpg","thumbW":480,"thumbH":310,"fullW":5953,"fullH":3840,"now":{"phone":{"left":2092,"top":0},"tall":{"left":2092,"top":0},"wide":{"left":0,"top":246}},"moved":{"phone":true,"tall":true,"wide":false},"desk":"5953×3349"},{"ref":"vl-0384","title":"Landscape, From Lejre — bare field under cloud phone wallpaper","thumb":"plates/landscape-from-lejre-hammershoi-iphone-wallpaper-480x294.jpg","thumbW":480,"thumbH":294,"fullW":6262,"fullH":3840,"now":{"phone":{"left":2248,"top":0},"tall":{"left":2248,"top":0},"wide":{"left":0,"top":159}},"moved":{"phone":true,"tall":true,"wide":false},"desk":"6262×3522"},{"ref":"vl-0385","title":"Forest Floor Still-Life — night flowers and moths phone wallpaper","thumb":"plates/forest-floor-still-life-van-schrieck-iphone-wallpaper-480x563.jpg","thumbW":480,"thumbH":563,"fullW":3410,"fullH":4000,"now":{"phone":{"left":706,"top":0},"tall":{"left":706,"top":0},"wide":{"left":0,"top":1041}},"moved":{"phone":true,"tall":true,"wide":false},"desk":"3410×1918"},{"ref":"vl-0386","title":"Meleager and Atalanta — waterfall in a grey gorge phone wallpaper","thumb":"plates/meleager-and-atalanta-richard-wilson-iphone-wallpaper-480x380.jpg","thumbW":480,"thumbH":380,"fullW":4849,"fullH":3840,"now":{"phone":{"left":1960,"top":0},"tall":{"left":1960,"top":0},"wide":{"left":0,"top":556}},"moved":{"phone":true,"tall":true,"wide":false},"desk":"4849×2728"},{"ref":"vl-0387","title":"From the Old Christiansborg — grey palace wall phone wallpaper","thumb":"plates/the-old-christiansborg-hammershoi-iphone-wallpaper-480x370.jpg","thumbW":480,"thumbH":370,"fullW":4987,"fullH":3840,"now":{"phone":{"left":1534,"top":0},"tall":{"left":1534,"top":0},"wide":{"left":0,"top":518}},"moved":{"phone":true,"tall":true,"wide":false},"desk":"4987×2805"}];
+const CROP_TYPES = [{"key":"phone","label":"phone","vw":220,"vh":476},{"key":"tall","label":"tall","vw":240,"vh":427},{"key":"wide","label":"wide","vw":480,"vh":270}];
+const PAGE = {"title":"Desktop Positioner","crop":"wide","note":"gallery works whose 16:9 frame passes 1920×1080"};
+
+let activeCrop = CROP_TYPES.find(ct => ct.key === PAGE.crop) || CROP_TYPES[0];
+
+// --- List ---
+const entries = [];
+const listEl = document.getElementById('crop-list-entries');
+
+function renderList() {
+  if (!entries.length) {
+    listEl.innerHTML = '<span style="color:#333;font-size:10px">click a card to record position</span>';
+    return;
+  }
+  listEl.innerHTML = '';
+  entries.forEach((e, i) => {
+    const row = document.createElement('div');
+    row.className = 'crop-entry';
+    row.innerHTML = `<span class="entry-ref">${e.ref}</span><span class="entry-val">${e.pos}</span><span class="entry-del" data-i="${i}">×</span>`;
+    listEl.appendChild(row);
+  });
+}
+
+listEl.addEventListener('click', ev => {
+  const i = ev.target.dataset.i;
+  if (i !== undefined) { entries.splice(Number(i), 1); renderList(); }
+});
+
+document.getElementById('btn-clear').addEventListener('click', () => { entries.length = 0; renderList(); });
+document.getElementById('btn-copy').addEventListener('click', () => {
+  const text = entries.map(e => `${e.ref}  ${e.pos}`).join('\n');
+  navigator.clipboard.writeText(text).catch(() => prompt('Copy:', text));
+});
+
+function recordPos(ref, posStr) {
+  entries.push({ ref, pos: posStr });
+  renderList();
+  listEl.scrollTop = 99999;
+}
+
+// --- Crop type tabs ---
+const tabsEl = document.getElementById('crop-tabs');
+const cards = []; // {el, updateViewport} for rebuilding on tab switch
+
+CROP_TYPES.forEach(ct => {
+  const btn = document.createElement('button');
+  btn.className = 'crop-tab' + (ct.key === activeCrop.key ? ' active' : '');
+  btn.textContent = ct.label;
+  btn.addEventListener('click', () => {
+    activeCrop = ct;
+    tabsEl.querySelectorAll('.crop-tab').forEach(b => b.classList.toggle('active', b.textContent === ct.label));
+    cards.forEach(c => c.updateViewport(ct));
+  });
+  tabsEl.appendChild(btn);
+});
+
+// --- Card builder ---
+function makeCard(img) {
+  const card = document.createElement('div');
+  card.className = 'card';
+
+  const labelRow = document.createElement('div');
+  labelRow.className = 'card-label';
+  const refEl = document.createElement('span');
+  refEl.className = 'card-ref';
+  refEl.textContent = img.ref;
+  const titleEl = document.createElement('span');
+  titleEl.className = 'card-title';
+  titleEl.textContent = img.title;
+  titleEl.title = img.title;
+  labelRow.append(refEl, titleEl);
+  if (img.desk && PAGE.crop === 'wide') {
+    const deskEl = document.createElement('span');
+    deskEl.className = 'card-desk';
+    deskEl.textContent = img.desk;
+    labelRow.appendChild(deskEl);
+  }
+  const movedEl = document.createElement('span');
+  movedEl.className = 'card-placed';
+  movedEl.textContent = '·moved';
+  movedEl.title = 'this frame already sits off centre';
+  movedEl.style.display = 'none';
+  labelRow.appendChild(movedEl);
+
+  const viewport = document.createElement('div');
+  viewport.className = 'viewport';
+
+  const imgEl = document.createElement('img');
+  imgEl.src = `http://localhost:3000/images/${img.thumb}`;
+  imgEl.alt = img.title;
+  imgEl.loading = 'lazy';
+  imgEl.draggable = false;
+
+  const frameEl = document.createElement('div');
+  frameEl.className = 'viewport-frame';
+
+  viewport.append(imgEl, frameEl);
+
+  const posLabel = document.createElement('div');
+  posLabel.className = 'pos-label';
+
+  const btnRow = document.createElement('div');
+  btnRow.className = 'btn-row';
+  const recBtn = document.createElement('button');
+  recBtn.className = 'record-btn';
+  recBtn.textContent = 'record';
+  const centerBtn = document.createElement('button');
+  centerBtn.className = 'center-btn';
+  centerBtn.textContent = '⊕';
+  centerBtn.title = 'recenter';
+  btnRow.append(recBtn, centerBtn);
+
+  card.append(labelRow, viewport, posLabel, btnRow);
+
+  // Pan state
+  let panX = 0, panY = 0;
+  let maxPanX = 0, maxPanY = 0;
+  let coverScale = 1;
+  let vw = 0, vh = 0;
+
+  function updateViewport(ct) {
+    vw = ct.vw; vh = ct.vh;
+    viewport.style.width = vw + 'px';
+    viewport.style.height = vh + 'px';
+
+    // Cover scale: fit img.thumbW × img.thumbH into vw × vh, always cover
+    const sw = vw / img.thumbW;
+    const sh = vh / img.thumbH;
+    coverScale = Math.max(sw, sh);
+
+    const dw = Math.round(img.thumbW * coverScale);
+    const dh = Math.round(img.thumbH * coverScale);
+    imgEl.style.width = dw + 'px';
+    imgEl.style.height = dh + 'px';
+
+    maxPanX = Math.max(0, dw - vw);
+    maxPanY = Math.max(0, dh - vh);
+
+    movedEl.style.display = img.moved && img.moved[ct.key] ? '' : 'none';
+
+    // Проём открывается там, где он стоит сейчас, — и на первой отрисовке, и на
+    // переключении вкладки. У нетронутой работы это середина; у сдвинутой лист
+    // иначе показывал бы не тот кадр, который выпущен.
+    const at = img.now ? img.now[ct.key] : null;
+    if (at && img.fullW && img.fullH) {
+      const toPanX = at.left * coverScale * (img.thumbW / img.fullW);
+      const toPanY = at.top * coverScale * (img.thumbH / img.fullH);
+      panX = Math.max(0, Math.min(Math.round(toPanX), maxPanX));
+      panY = Math.max(0, Math.min(Math.round(toPanY), maxPanY));
+    } else {
+      panX = Math.round(maxPanX / 2);
+      panY = Math.round(maxPanY / 2);
+    }
+    applyPan();
+  }
+
+  function applyPan() {
+    imgEl.style.left = -panX + 'px';
+    imgEl.style.top = -panY + 'px';
+    updateLabel();
+  }
+
+  function updateLabel() {
+    const platePanX = img.fullW ? Math.round(panX / coverScale * (img.fullW / img.thumbW)) : null;
+    const platePanY = img.fullH ? Math.round(panY / coverScale * (img.fullH / img.thumbH)) : null;
+    const plateMaxX = img.fullW ? Math.round(maxPanX / coverScale * (img.fullW / img.thumbW)) : null;
+    const plateMaxY = img.fullH ? Math.round(maxPanY / coverScale * (img.fullH / img.thumbH)) : null;
+
+    const hasPan = panX !== 0 || panY !== 0;
+    posLabel.classList.toggle('has-pan', hasPan);
+
+    const parts = [];
+    if (plateMaxX > 0) parts.push('left ' + platePanX + 'px / ' + plateMaxX + 'px');
+    if (plateMaxY > 0) parts.push('top ' + platePanY + 'px / ' + plateMaxY + 'px');
+    posLabel.textContent = parts.length ? parts.join('  ·  ') : 'no room to pan';
+  }
+
+  function posString() {
+    const platePanX = img.fullW ? Math.round(panX / coverScale * (img.fullW / img.thumbW)) : null;
+    const platePanY = img.fullH ? Math.round(panY / coverScale * (img.fullH / img.thumbH)) : null;
+    const parts = [];
+    if (maxPanX > 0 && platePanX !== null) parts.push('left ' + platePanX + 'px');
+    if (maxPanY > 0 && platePanY !== null) parts.push('top ' + platePanY + 'px');
+    return parts.join('  ') || 'centered';
+  }
+
+  // Drag
+  let dragging = false;
+  let dragStartX, dragStartY, panStartX, panStartY;
+  let moved = false;
+
+  viewport.addEventListener('mousedown', e => {
+    dragging = true;
+    moved = false;
+    dragStartX = e.clientX;
+    dragStartY = e.clientY;
+    panStartX = panX;
+    panStartY = panY;
+    viewport.classList.add('dragging');
+    e.preventDefault();
+  });
+
+  window.addEventListener('mousemove', e => {
+    if (!dragging) return;
+    const dx = dragStartX - e.clientX;
+    const dy = dragStartY - e.clientY;
+    if (Math.abs(dx) > 2 || Math.abs(dy) > 2) moved = true;
+    panX = Math.max(0, Math.min(panStartX + dx, maxPanX));
+    panY = Math.max(0, Math.min(panStartY + dy, maxPanY));
+    applyPan();
+  });
+
+  window.addEventListener('mouseup', e => {
+    if (!dragging) return;
+    dragging = false;
+    viewport.classList.remove('dragging');
+    if (!moved) {
+      // click without drag → record
+      recordPos(img.ref, posString());
+    }
+  });
+
+  recBtn.addEventListener('click', () => recordPos(img.ref, posString()));
+  // ⊕ возвращает проём на выпущенное место, а не в середину: у нетронутой
+  // работы это одно и то же, у сдвинутой — нет.
+  centerBtn.addEventListener('click', () => updateViewport(activeCrop));
+
+  // Init with active crop type
+  updateViewport(activeCrop);
+
+  cards.push({ el: card, updateViewport });
+  return card;
+}
+
+const grid = document.getElementById('grid');
+for (const img of IMAGES) grid.appendChild(makeCard(img));
+</script>
+</body>
+</html>
