@@ -85,6 +85,18 @@ export async function onServer(job) {
   return withExtras(job, await askServer(job));
 }
 
+// Текст отказа. Наш ответ — json с полем `error`, и написан он для посетителя
+// (`HttpError` в server.js); но перед сервером стоит прокси, а серверный путь
+// с 24.08 — путь по умолчанию, и своё «502» после ста пятидесяти секунд прокси
+// отдаёт разметкой. Разбор такой страницы падает `SyntaxError`, и посетитель
+// прочитал бы в предложении посчитать в браузере про неожиданный «<».
+// Поэтому чужое и пустое заменяются здесь одной общей фразой: сказать
+// «не вышло» мы вправе, пересказать чужую аварию — уже нет.
+async function refusalText(response) {
+  const said = await response.json().catch(() => null);
+  return said?.error || 'The enlargement did not finish. Try again in a moment.';
+}
+
 async function askServer(job) {
   const body = new FormData();
   body.append('photo', job.file);
@@ -97,10 +109,11 @@ async function askServer(job) {
   // исчезла вторая загрузка — раньше браузер скачивал у нас же то, что
   // сам только что прислал, чтобы наложить размытие и виньетку.
   //
-  // Текст отказа идёт наружу как есть: он написан для посетителя
+  // Наш текст отказа идёт наружу как есть: он написан для посетителя
   // (`HttpError` в server.js), и пересказывать его своими словами значило бы
-  // потерять «через сколько откроется» у отказа по счётчику.
-  if (!response.ok) throw new Error((await response.json()).error);
+  // потерять «через сколько откроется» у отказа по счётчику. Чужой —
+  // не идёт вовсе (`refusalText`).
+  if (!response.ok) throw new Error(await refusalText(response));
   const blob = await response.blob();
   // Имени может не быть: заголовок наш собственный и нестандартный, и
   // посредник, режущий незнакомые, оставит здесь пусто. Раньше это стоило бы
@@ -127,9 +140,21 @@ async function withExtras(job, sent) {
   const extra = { ...job.effects, crop: false, treat: false };
   if (!Object.values(extra).some(Boolean)) return sent;
   const { finishLocally } = await import('./treat-local.js');
+  const { usable } = await import('./upscale-local.js');
   const enlarged = await createImageBitmap(sent.blob);
   const canvas = new OffscreenCanvas(enlarged.width, enlarged.height);
-  canvas.getContext('2d').drawImage(enlarged, 0, 0);
+  const ctx = canvas.getContext('2d');
+  // Тот же вопрос и та же проверка, что у браузерной ветки: холст сверх
+  // предела ничего не рисует и молча отдаёт пустое, а у сервера потолка
+  // площади нет вовсе — панорама возвращается почти семнадцатимегапиксельной,
+  // и на iOS это уже сверх. Отказом такое накрывать не за что: работа
+  // существует в одном экземпляре и уже оплачена, и обои без виньетки лучше,
+  // чем пустой файл вместо обоев.
+  if (!usable(ctx, enlarged.width, enlarged.height)) {
+    enlarged.close();
+    return sent;
+  }
+  ctx.drawImage(enlarged, 0, 0);
   enlarged.close();
   // Формат берётся у присланных байтов, а не у выбранного файла: считал
   // не этот браузер, и что вернулось — известно только из ответа.

@@ -135,7 +135,17 @@ const setOptions = enabled => {
 // повторён в самой подписи готового («Enlarged on our server»). Подпись
 // автору модели от этого не пропадает: она в подвале на каждой странице
 // и здесь же во всех остальных состояниях (LEGAL.md, требование BY).
+//
+// Здесь же гаснет и флаг предложения: стоит ли сейчас предложение посчитать
+// в браузере — и если стоит, то какими словами оно объяснено
+// (`renderOffered`). Живёт он ровно до следующей смены сцены, а всякая
+// перерисовка проходит через `setStage`; ставится флаг сразу после вызова,
+// в единственном месте, где предложение и появляется. Так его нельзя забыть
+// снять — а забытым он врал бы посетителю о том, куда уедет файл.
+let offered = null;
+
 const setStage = stage => {
+  offered = null;
   els.frame.classList.toggle('is-working', stage === 'working');
   els.frame.classList.toggle('is-done', stage === 'done');
   els.note.classList.toggle('is-ready', stage === 'done');
@@ -347,6 +357,7 @@ function renderWorking(note) {
 // площади, и число выходит другое (`localSize`).
 function renderOffered(reason) {
   setStage('measured');
+  offered = reason;
   els.choose.replaceChildren();
   els.actions.replaceChildren(
     button('Enlarge in my browser', 'btn', restoreInBrowser),
@@ -548,7 +559,13 @@ for (const name of EFFECTS) {
   els[name].addEventListener('change', () => {
     if (!opening.brought) return;
     renderGrowth();
-    renderPrivacy();
+    // Пока стоит предложение, перерисовывается оно целиком, а не одна строка
+    // над кнопкой: кадр меняет и обещанный в нём размер. Через `renderPrivacy`
+    // строка вернулась бы к «уедет к нам» — она считает по галочке, а галочка
+    // после отказа уже ничего не решает: отправлять нечего, и кнопка на экране
+    // одна, браузерная.
+    if (offered) renderOffered(offered);
+    else renderPrivacy();
     draw();
   });
 }

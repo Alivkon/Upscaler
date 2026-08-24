@@ -115,7 +115,14 @@ class Upscaler:
         if not raw:
             return Response("empty body", status_code=400)
         try:
-            src = np.asarray(Image.open(io.BytesIO(raw)).convert("RGB"))
+            opened = Image.open(io.BytesIO(raw))
+            # Профиль снимается до `convert` и возвращается с ответом: цветной
+            # профиль — это часть картинки, а не отметка о ней, и без него
+            # обои уезжают по цвету у всякого, кто снимал в Display P3.
+            # Сайт бережёт его на своей стороне (`keepIccProfile`), и потерять
+            # его здесь значило бы, что там его берегли зря.
+            icc = opened.info.get("icc_profile")
+            src = np.asarray(opened.convert("RGB"))
         except Exception:
             return Response("not an image", status_code=400)
         h, w, _ = src.shape
@@ -131,7 +138,7 @@ class Upscaler:
         # не видно. q95 4:4:4 — то же качество, каким собирался лист обоев,
         # на котором эту модель и выбрали.
         buf = io.BytesIO()
-        Image.fromarray(dst).save(buf, "JPEG", quality=95, subsampling=0)
+        Image.fromarray(dst).save(buf, "JPEG", quality=95, subsampling=0, icc_profile=icc)
         self.served += 1
         return Response(
             buf.getvalue(),

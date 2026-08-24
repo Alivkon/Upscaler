@@ -24,6 +24,7 @@ import { COLLECTIONS, collectionBySlug, worksOf } from './collections.js';
 import { finish, phoneWindow } from './treatment.js';
 import { serverLongestSide } from './public/frame.js';
 import { MODEL as MODEL_FILE, WEIGHED } from './public/model-files.js';
+import { MODEL, configured as upscalerReady, enlarge } from './upscaler.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // Канонический адрес. Умолчание — настоящий домен, а не локальный сервер:
@@ -35,7 +36,6 @@ const SITE_ORIGIN = (process.env.SITE_ORIGIN || 'https://tessarum.com').replace(
 // Предел ТЕЛА ЗАПРОСА, а не правило о картинках. Файл целиком лежит в памяти
 // (`memoryStorage`) и уезжает на счёт целиком, а сколько таких придёт разом,
 // сервер не решает. Поэтому число здесь есть,
-import { MODEL, configured as upscalerReady, enlarge } from './upscaler.js';
 // но названо оно нашей памятью, а не чужой картинкой: в браузере, где считает
 // машина посетителя, веса не спрашивают вовсе (public/intake.js).
 //
@@ -378,6 +378,9 @@ async function upright(file) {
 async function finishedImage(grown, file, { treat }) {
   const baseName =
     path.basename(file.originalname, path.extname(file.originalname)).replace(/[^a-zA-Z0-9_-]/g, '_') || 'photo';
+  // Расширение — от того, что вернулось, а не от того, что прислали: считает
+  // не эта машина, и формат ответа назван в `upscaler.js`.
+  const extension = grown.contentType.includes('png') ? '.png' : '.jpg';
   const filename = `${baseName}-${MODEL.slug}-${Date.now()}${extension}`;
   // Обработка идёт последней, уже по готовому размеру: приглушение решает
   // силу по пикселям, которые поедут на экран, а уменьшение после него мерило
@@ -411,9 +414,6 @@ app.post('/api/upscale', upload.single('photo'), async (req, res, next) => {
     const treat = req.body.treat === 'true';
     const crop = req.body.crop === 'true';
     const { file, width, height } = await upright(req.file);
-    // Расширение — от того, что вернулось, а не от того, что прислали: считает
-    // не эта машина, и формат ответа назван в `upscaler.js`.
-    const extension = grown.contentType.includes('png') ? '.png' : '.jpg';
     // Кадр режется ДО отправки, как и в браузере (`upscaleInBrowser`).
     // Здесь у этого есть и своя цена: за пиксели, которые мы выбросим сразу
     // после, видеокарта считает наравне с остальными, а у широкой картинки
@@ -425,12 +425,17 @@ app.post('/api/upscale', upload.single('photo'), async (req, res, next) => {
       : file;
     const [framedWidth, framedHeight] = window ? [window.width, window.height] : [width, height];
     const targetLongestSide = serverLongestSide(framedWidth, framedHeight);
-    allowance.spend();
     const grown = await enlarge(framed.buffer, {
       width: framedWidth,
       height: framedHeight,
       targetLongestSide
     });
+    // Списывается место после вызова, а не до: пока `enlarge` не вернулся,
+    // неизвестно, поднимался ли контейнер вообще. Отказы, до него не дошедшие
+    // — ключ не тот, адреса нет, приложение не выложено, — место возвращают
+    // через `finally`. Иначе полсотни таких запирают сайт на сутки за вызовы,
+    // которых не было, и открыл бы его только перезапуск.
+    allowance.spend();
     // Единственная запись о том, за что заплачено. Панель Modal покажет
     // те же секунды, но не покажет, чьей картинке они достались и был ли
     // запуск холодным, — а из этих двух чисел и складывается цена вызова.
@@ -455,6 +460,10 @@ app.post('/api/upscale', upload.single('photo'), async (req, res, next) => {
     res.setHeader('Cache-Control', 'no-store');
     res.end(made.buffer);
   } catch (error) {
+    // Оплаченный вызов занимает место и тогда, когда работы посетитель
+    // не увидел: считаются вызовы видеокарты, а не удачи. Поднимался ли
+    // контейнер, знает только `upscaler.js` — он и ставит пометку.
+    if (error?.charged) allowance?.spend?.();
     next(error);
   } finally {
     // Занятое место возвращается всегда, когда деньги не ушли: отказ по

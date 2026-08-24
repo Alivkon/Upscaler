@@ -66,7 +66,7 @@ export function resultLongestSide(width, height) {
 // точку в дальнем углу и читаем её обратно — если холст велик, точки там нет.
 export const TOO_BIG = 'This picture is too large for your browser to enlarge.';
 
-function usable(ctx, w, h) {
+export function usable(ctx, w, h) {
   ctx.fillStyle = '#fff';
   ctx.fillRect(w - 1, h - 1, 1, 1);
   const drawn = ctx.getImageData(w - 1, h - 1, 1, 1).data[3] === 255;

@@ -52,10 +52,25 @@ function headers() {
   };
 }
 
+// Пример из `.env.example`, скопированный целиком, — это не настройка,
+// но проверку «непусто» он проходит и выглядит настроенным. Тогда приёмка
+// молчит о выключенном увеличении, запрос уходит в никуда, и посетитель
+// платит за чужую невнимательность местом в суточном счётчике и отказом,
+// в котором сказано «слишком долго» вместо «выключено».
+const EXAMPLE = /your-workspace|replace_with_your/;
+const real = value => Boolean(value) && !EXAMPLE.test(value);
+
 // Есть ли куда звать — насколько это видно отсюда. Спрашивается до ворот
 // счёта в `limits.js`: без настройки запрос никуда не уходит, но место
 // в суточном счётчике занимал бы наравне с настоящими.
-export const configured = () => Boolean(url() && process.env.UPSCALE_KEY && process.env.UPSCALE_SECRET);
+export const configured = () => real(url()) && real(process.env.UPSCALE_KEY) && real(process.env.UPSCALE_SECRET);
+
+// Пометка на отказе: контейнер поднимался, вызов оплачен. Знает об этом
+// только тот, кто звал, а решает по этому счётчик в `limits.js` — платим
+// за вызовы, а не за попытки. Непомеченный отказ считается бесплатным
+// и место в счётчике возвращает, поэтому пометка ставится вслух и поимённо,
+// а не выводится из кода ответа где-то в `server.js`.
+const charged = error => Object.assign(error, { charged: true });
 
 // Уменьшение ПЕРЕД счётом, а не после. Модель считает по плиткам, и цена
 // вызова — это площадь входа; за пиксели, которые мы выбросим сразу после,
@@ -64,14 +79,34 @@ export const configured = () => Boolean(url() && process.env.UPSCALE_KEY && proc
 // с исходного разрешения, и кормить модель заранее ужатой картинкой значит
 // показывать не ту работу, которую он одобрил.
 async function shrunkToFit(buffer, width, height) {
+  // Уменьшает всегда сторона, а не площадь, и не по случайности: площадь
+  // любой картинки не больше квадрата её длинной стороны, а значит `byArea`
+  // при нынешних числах не может выйти меньше `bySide`. Строка стоит ради
+  // того дня, когда `MAX_SIDE` поднимут, — но сегодня ничего не решает,
+  // и искать в ней причину уменьшения не стоит.
   const byArea = Math.sqrt(MAX_PIXELS / (width * height));
   const bySide = MAX_SIDE / Math.max(width, height);
   const ratio = Math.min(1, byArea, bySide);
   if (ratio === 1) return buffer;
-  return sharp(buffer, { limitInputPixels: false })
-    .resize(Math.round(width * ratio), Math.round(height * ratio), { kernel: 'lanczos3' })
-    .jpeg({ quality: 95, chromaSubsampling: '4:4:4' })
-    .toBuffer();
+  return (
+    sharp(buffer, { limitInputPixels: false })
+      // Ни одна сторона не округляется в ноль: у полосы с пропорцией круче
+      // 4096:1 короткая после умножения меньше половины пикселя, и `resize`
+      // отвечает на это исключением. Посетителю оно достаётся голой аварией,
+      // за которую место в счётчике уже занято.
+      .resize(Math.max(1, Math.round(width * ratio)), Math.max(1, Math.round(height * ratio)), {
+        kernel: 'lanczos3'
+      })
+      // Профиль едет с картинкой — по той же причине, по какой его бережёт
+      // `upright`, и с большим весом: там путь для снимков с пометкой EXIF,
+      // а здесь через пережатие проходит всякая фотография с телефона, у них
+      // давно больше 2048 по длинной стороне. Потерянный тут Display P3
+      // не вернут ни модель, ни сборка ответа: цвет уедет на готовых обоях,
+      // а причина останется в одной строке пережатия.
+      .keepIccProfile()
+      .jpeg({ quality: 95, chromaSubsampling: '4:4:4' })
+      .toBuffer()
+  );
 }
 
 /**
@@ -95,9 +130,21 @@ export async function enlarge(buffer, { width, height, targetLongestSide }) {
       signal: AbortSignal.timeout(WAIT_MS)
     });
   } catch (error) {
-    // Связь оборвалась или вышло время. Наружу — «попробуйте ещё раз»:
-    // посетителю нечего делать с именем нашего поставщика видеокарт.
-    throw new HttpError(504, 'The enlargement took too long. Try again in a moment.');
+    // Наружу по-прежнему нечего сказать: посетителю нечего делать с именем
+    // нашего поставщика видеокарт. А вот в логе причина обязана остаться —
+    // опечатка в `UPSCALE_URL`, невыложенное приложение и невыстоявший вызов
+    // отсюда выглядят одинаково, стоят разного и лечатся разным. Без этой
+    // строки от первых двух в логе не остаётся ничего вовсе: наверх уходит
+    // наш собственный `HttpError`, в котором чужой причины уже нет.
+    console.error(`upscaler: вызов не состоялся (${error.name}: ${error.message})`);
+    // Вышло время — контейнер считал, и счёт за это придёт. Связь не встала
+    // вовсе — не звали никого: адрес не тот, DNS молчит, приложение не
+    // выложено. Второе для посетителя ничем не отличается от выключенного
+    // увеличения, так ему и говорится, и место в счётчике за него не
+    // списывается.
+    if (error.name === 'TimeoutError')
+      throw charged(new HttpError(504, 'The enlargement took too long. Try again in a moment.'));
+    throw new HttpError(503, 'Upscaling is switched off right now.');
   }
 
   if (!response.ok) throw await refusal(response);
@@ -113,6 +160,10 @@ export async function enlarge(buffer, { width, height, targetLongestSide }) {
   const [outWidth, outHeight] = resultSize(width, height, targetLongestSide);
   const output = await sharp(grown, { limitInputPixels: false })
     .resize(outWidth, outHeight, { fit: 'fill', kernel: 'lanczos3' })
+    // Профиль, переживший уменьшение и обработчик, доезжает и до готового
+    // файла: sharp умолчанием срезает его на каждом пережатии, и хватило бы
+    // одного из трёх, чтобы беречь его в двух других было незачем.
+    .keepIccProfile()
     .jpeg({ quality: 95, chromaSubsampling: '4:4:4' })
     .toBuffer();
 
@@ -133,13 +184,27 @@ export async function enlarge(buffer, { width, height, targetLongestSide }) {
 // уходить не должна.
 async function refusal(response) {
   const said = await response.text().catch(() => '');
-  if (response.status === 413) return new HttpError(400, 'That picture is too large for us to enlarge.');
-  if (response.status === 400) return new HttpError(400, 'That file could not be read as an image.');
-  if (response.status === 401 || response.status === 403) {
-    // Ключ не тот или протух. Посетителю это выглядит как выключенное
-    // увеличение — так оно для него и есть; настоящая причина в логе.
-    console.error(`upscaler: доступ закрыт (${response.status}) ${said}`);
+  // 413 и 400 приходят из самого обработчика, то есть контейнер уже поднялся
+  // и холодный старт оплачен, — в отличие от 401, который заворачивают
+  // на краю, до контейнера, и который поэтому не стоит ничего.
+  if (response.status === 413) return charged(new HttpError(400, 'That picture is too large for us to enlarge.'));
+  if (response.status === 400) return charged(new HttpError(400, 'That file could not be read as an image.'));
+  // 404 — не авария, а ненайденное приложение: адрес в `.env` указывает
+  // не туда или `modal deploy` не выполнялся вовсе. Домен при этом отвечает
+  // (он общий на всю Modal), так что связь стоит, а контейнера за ним нет
+  // и денег не уходило. Посетителю это то же выключенное увеличение.
+  if (response.status === 404 || response.status === 401 || response.status === 403) {
+    // Ключ не тот, протух, или приложения по адресу нет. Посетителю всё это
+    // выглядит выключенным увеличением — так оно для него и есть; настоящая
+    // причина остаётся в логе, и разбирать её нам, а не ему.
+    console.error(`upscaler: до модели не достучались (${response.status}) ${said}`);
     return new HttpError(503, 'Upscaling is switched off right now.');
   }
-  return new HttpError(502, 'The enlargement did not finish. Try again in a moment.');
+  // Всё остальное — авария на той стороне: модель упала, контейнеру не хватило
+  // памяти, вышло его собственное время. Что именно — сказано в ответе, и
+  // здесь он виден в последний раз: панель Modal покажет тот же сбой, но не
+  // покажет, чьей картинке он достался, а это единственный случай, когда
+  // чужие слова нужны целиком.
+  console.error(`upscaler: вызов не удался (${response.status}) ${said}`);
+  return charged(new HttpError(502, 'The enlargement did not finish. Try again in a moment.'));
 }
