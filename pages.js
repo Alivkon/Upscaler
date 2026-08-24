@@ -866,6 +866,19 @@ export function workPage({ item, others, origin }) {
   // пропорции: у телефонного кадра это около 290 px на большом экране
   // и примерно 70vw на телефоне.
   const shownPlate = shownWith(file.copies, plateSizes(file));
+  // Адрес работы в `src` записан целиком, а не путём от корня, как везде на
+  // сайте. Причина внешняя: Pinterest, когда в него вставляют ссылку на
+  // страницу, разбирает HTML сам и `/images/…` до адреса не достраивает —
+  // картинка с таким `src` у него отбраковывается («does not begin with
+  // http», assets.pinterest.com/js/pinmarklet.js), и на странице, полной
+  // 4K-обоев, он не находит ни одной пригодной. Браузеру от этого ни холодно
+  // ни жарко: `picture.src` в `work.js` и так отдаёт полный адрес.
+  //
+  // `data-pin-media` — то же самое, сказанное словами самого Pinterest:
+  // сохранять надо полный файл, а не выбранную копию из `srcset`. Соседние
+  // работы в «More in the collection» остаются с путями нарочно: пин с них
+  // указывал бы на эту страницу, а не на свою.
+  const pinned = ` data-pin-media="${origin}${escape(file.url)}" data-pin-url="${origin}/w/${escape(item.slug)}"`;
   // Под чертой — только то, что утверждается об этой работе: из чего она
   // сделана, кем и на каких условиях отдаётся. Предложение сделать своё
   // стояло сперва здесь и читалось как ещё одно такое утверждение, потом
@@ -903,7 +916,7 @@ export function workPage({ item, others, origin }) {
       <div class="plate">
         <figure class="record record--plate">
           <div ${frame} id="work-frame">
-            <img id="work-picture" src="${escape(file.url)}"${shownPlate} alt="${escape(item.alt)}" width="${file.width}" height="${file.height}" fetchpriority="high" />
+            <img id="work-picture" src="${origin}${escape(file.url)}"${shownPlate} alt="${escape(item.alt)}" width="${file.width}" height="${file.height}" fetchpriority="high"${pinned} />
             ${comparable ? beforeFrame(item) : ''}
           </div>
         </figure>
