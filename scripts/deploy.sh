@@ -24,9 +24,15 @@ echo "==> код"
 # (AGENTS.md, «Секреты и деньги»). Меняете переменные — правьте его там руками.
 # DEPLOYMENT.md образу не нужен, но едет: машина должна уметь рассказать
 # о себе тому, кто зашёл на неё по ssh, а не только тому, у кого открыт git.
+#
+# `service/` в списке нет намеренно: там обработчик, который считает на чужой
+# видеокарте, и едет он не сюда, а туда — `modal deploy service/upscale_modal.py`
+# со своей машины. Сайт зовёт его по адресу из `.env`; выкладка сайта и выкладка
+# модели с этого дня разные действия, и путать их нельзя — передеплой сайта
+# модель не обновляет, а передеплой модели не требует трогать сайт.
 rsync -a --delete --info=stats1 \
   Dockerfile docker-compose.yml .dockerignore package.json yarn.lock DEPLOYMENT.md \
-  gallery.js limits.js pages.js server.js treatment.js works.js \
+  gallery.js http-error.js limits.js pages.js server.js treatment.js upscaler.js works.js \
   catalogue public scripts \
   "$HOST:$DIR/"
 

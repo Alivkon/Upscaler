@@ -1,10 +1,24 @@
-// Приёмка: один файл проходит через измерение, обработку и выдачу.
+// Приёмка: в каком состоянии страница, что на ней написано и что происходит
+// по нажатию. Соседей у неё два, и оба заведены 24.08, когда файл дорос
+// до восьмисот строк:
+//
+//   `opening.js` — проём: что принесли и что в нём видно;
+//   `make.js` — как делается работа, тремя способами и без единого слова
+//   о странице.
+//
+// Здесь осталось то, чего нет ни у одного из них: состояния (`render*`),
+// фразы для посетителя и обработчики. Развилка «куда идёт работа» тоже здесь,
+// потому что она же решает, что написать над кнопкой.
 
 import { button, formatDims } from './record.js';
-// Только правила размера: сам счёт и его рантайм на шесть мегабайт грузятся
-// по требованию, уже из `restoreLocally`.
-import { TOO_BIG, resultLongestSide } from './upscale-local.js';
-import { phoneWindow, serverLongestSide } from './frame.js';
+import * as opening from './opening.js';
+import { inBrowser, onServer, withoutModel } from './make.js';
+// Правила размера и один вопрос «умеет ли этот браузер вообще» — оба дёшевы
+// и нужны до всякой работы. Сам счёт и его рантайм на шесть мегабайт грузятся
+// по требованию, уже из `make.js`, и с 24.08 у большинства посетителей
+// не грузятся вовсе: считает сервер.
+import { TOO_BIG, localUpscaleAvailable, resultLongestSide } from './upscale-local.js';
+import { phoneWindow, resultSize, serverLongestSide } from './frame.js';
 
 const ACCEPTED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 // Формат спрашивается, вес — нет. Порог в 10 МБ стоял здесь с первого дня,
@@ -24,7 +38,6 @@ const EFFECTS = ['crop', 'treat', 'blur', 'vignette'];
 
 const els = {
   frame: document.querySelector('#intake-frame'),
-  picture: document.querySelector('#intake-picture'),
   choose: document.querySelector('#intake-choose'),
   actions: document.querySelector('#intake-actions'),
   file: document.querySelector('#intake-file'),
@@ -42,18 +55,26 @@ const els = {
 // `finishLocally`. Собирается оно с разметки, а не хранится рядом: вторая
 // запись о том, что нажато, разошлась бы с первой молча.
 const chosen = () => Object.fromEntries(EFFECTS.map(name => [name, els[name].checked]));
-const anyEffect = () => EFFECTS.some(name => els[name].checked);
 
 // Строка над кнопкой отвечает на вопрос «куда уедет мой файл», и ответов два,
-// потому что путей два. Разметка приходит с первым (pages.js); второй ставится
-// здесь, когда посетителю предложено посчитать у нас и когда так и посчитали.
+// потому что путей два. Разметка приходит с первым — при пустой странице все
+// галочки сняты, и делать нечего, кроме как ничего. Второй ставится здесь,
+// и с 24.08 ставится рано: увеличение уходит на сервер по умолчанию, то есть
+// ответ меняется в ту секунду, когда нажали «Increase size», а не в ту, когда
+// нажали кнопку. Спрашивать согласие после отправки поздно.
 // «Made», а не «Enlarged»: увеличение — одна из пяти галочек, и снявший её
 // получает картинку, которую никто не увеличивал. Строка же обязана быть
 // верной во всех случаях — она отвечает не про увеличение, а про то, чья
 // машина считала. Отправка нам бывает только ради модели, и там слово
 // остаётся своим.
 const STAYS_HERE = 'Made in your own browser; your picture stays on your device.';
-const SENT_TO_US = 'Enlarged on our server; your picture is sent to us.';
+// Третья сторона названа именем. Пока отправка была запасным выходом, «to us»
+// покрывало и её: уезжало это к одному из ста. С 24.08 уезжает у всех, кто
+// нажал «Increase size», и «нам» перестало быть полным ответом — считает
+// чужая видеокарта, взятая на секунды. Кто такой Modal, объясняет ссылка,
+// стоящая тут же следующим словом («Model and licence», /license#model),
+// и объясняет первым предложением раздела.
+const SENT_TO_US = 'Enlarged on our server; your picture is sent to us and to Modal.';
 
 // Посетителю показывается наша фраза, а не текст исключения: «Failed to fetch
 // dynamically imported module: http://…/treat-local.js» — сообщение для
@@ -70,26 +91,8 @@ const FINISH_FAILED = 'Your browser could not apply these changes.';
 // browser…» теми же словами. Глагол теперь называет предмет, а не место:
 // место названо там, где ему и положено, в строке о приватности.
 const WORKING = 'Making your wallpaper';
-let received = null; // выбранный файл, его измеренные размеры и растр для превью
 let restored = null; // готовая работа: имя файла и адрес
-// Стоит ли сейчас на странице предложение посчитать у нас (`renderOffered`).
-// Нужен он одному месту — неудачному превью, — и там объяснено, зачем.
-let offered = false;
-// Три адреса, а не один: исходник нужен, чтобы вернуть картинку без обработки,
-// когда сняли последнюю галочку, — то есть он живёт дольше любого превью.
-let sourceUrl = null;
-let previewUrl = null;
-let resultUrl = null;
 
-// Превью считается по уменьшенной копии, а не по исходнику: обработка идёт
-// попиксельно, а щёлкать галочками будут подряд. Тысяча по длинной стороне —
-// вдвое больше проёма на плотном экране, то есть больше, чем видно.
-const PREVIEW_SIDE = 1000;
-// Щелчки приходят быстрее, чем считается превью, и без метки на холсте
-// оседало бы то, что досчиталось последним, а не то, что нажато последним.
-let previewToken = 0;
-
-const forget = url => url && URL.revokeObjectURL(url);
 const chooseFile = () => els.file.click();
 
 // Галочки запираются, пока задача выполняется и пока готовый файл на экране:
@@ -141,151 +144,75 @@ const setStage = stage => {
   els.about.hidden = stage === 'working' || stage === 'done';
 };
 
-// Изображение показывается по настоящему адресу — локальному для выбранного
-// файла и серверному для готовой работы, — поэтому размеры берутся замером,
-// а не расчётом.
-function showPicture(source) {
-  return new Promise((resolve, reject) => {
-    els.picture.onload = () => {
-      els.picture.hidden = false;
-      els.frame.classList.add('has-work');
-      // проём перестаёт быть кнопкой «выбрать»: в нём уже есть работа
-      for (const attribute of ['role', 'tabindex', 'aria-label']) els.frame.removeAttribute(attribute);
-      resolve();
-    };
-    els.picture.onerror = () => {
-      els.picture.hidden = true;
-      els.frame.classList.remove('has-work');
-      reject(new Error('That image could not be displayed.'));
-    };
-    els.picture.src = source;
-  });
-}
-
-async function receive(file) {
+// Принять принесённое. Формат спрашивает страница, потому что отказ по нему —
+// это фраза посетителю; всё остальное — показать, измерить, раскодировать —
+// делает проём и отвечает исключением.
+async function bring(file) {
   if (!file) return;
   if (!ACCEPTED_TYPES.has(file.type)) return renderFailed(FILE_REQUIREMENTS);
-  // Прежний файл держится до тех пор, пока новый не прочитан целиком. Тип
-  // у файла бывает верным, а сам он нечитаемым — оборванная закачка, битый
-  // JPEG, — и страница, успевшая закрыть прежний растр, осталась бы в виде
-  // «файл выбран» вокруг закрытого растра: `renderFailed` возвращает её
-  // в «измерено», раз `received` не пуст, и первая же галочка после этого
-  // падала бы на `drawImage`. Отказ по типу строкой выше ведёт себя так же —
-  // прежний выбор остаётся в силе, — и второй отказ обязан быть таким же.
-  const url = URL.createObjectURL(file);
-  let bitmap;
   try {
-    await showPicture(url);
-    // Растр держится всё время, пока файл выбран: каждая галочка пересчитывает
-    // превью с нуля, и раскодировать JPEG заново на каждый щелчок значило бы
-    // делать самую дорогую часть работы по четыре раза подряд.
-    bitmap = await createImageBitmap(file);
+    await opening.receive(file);
   } catch (error) {
-    URL.revokeObjectURL(url);
-    renderFailed(error.message);
-    // Проём успел показать нечитаемый файл или спрятаться вовсе, а выбран
-    // по-прежнему прежний — он и возвращается на место.
-    if (received) await showPicture(sourceUrl).catch(() => {});
-    return;
+    return renderFailed(error.message);
   }
-  forget(sourceUrl);
-  forget(previewUrl);
-  forget(resultUrl);
-  received?.bitmap.close();
-  sourceUrl = url;
-  previewUrl = resultUrl = null;
-  received = { file, bitmap, width: els.picture.naturalWidth, height: els.picture.naturalHeight };
   restored = null;
   renderMeasured();
-  showChosen();
+  draw();
 }
 
-// Показывает в проёме то, что сейчас нажато. Без галочек — исходник как есть,
-// без пересчёта: показать вместо него пережатую копию значило бы соврать о том,
-// что делает страница, когда она не делает ничего.
+// Перерисовать проём под нажатые галочки. Зовётся без `await` — из выбора
+// файла и из каждой галочки, — поэтому отказ разбирается здесь: превью,
+// которое устарело, отвечает «показано» и молчит, а живой отказ становится
+// фразой.
 //
-// Увеличения в превью нет и быть не может: модель считает минутами, а щелчок
-// обязан отвечать сразу. Поэтому показывается кадр в его собственном размере —
-// то, что произойдёт с картинкой, но не то, насколько она вырастет. Об этом
-// сказано в самой галочке (pages.js).
-//
-// Отказ ловится здесь, а не у зовущих: зовут её без `await` из двух мест —
-// выбор файла и каждая галочка, — и любой отказ внутри уходил бы в
-// необработанное отклонение. Видно это было бы как неработающая галочка:
-// в проёме осталась бы прежняя картинка, и ни строчки о том, почему.
-async function showChosen() {
-  const token = ++previewToken;
-  try {
-    if (!anyEffect()) return await showPicture(sourceUrl).catch(() => {});
-    const { finishLocally } = await import('./treat-local.js');
-    if (token !== previewToken) return;
-    const scale = Math.min(1, PREVIEW_SIDE / Math.max(received.width, received.height));
-    const base = new OffscreenCanvas(
-      Math.max(1, Math.round(received.width * scale)),
-      Math.max(1, Math.round(received.height * scale))
-    );
-    const ctx = base.getContext('2d');
-    ctx.imageSmoothingQuality = 'high';
-    ctx.drawImage(received.bitmap, 0, 0, base.width, base.height);
-    const blob = await finishLocally(base, chosen()).convertToBlob({ type: 'image/jpeg', quality: 0.92 });
-    if (token !== previewToken) return;
-    forget(previewUrl);
-    previewUrl = URL.createObjectURL(blob);
-    await showPicture(previewUrl).catch(() => {});
-  } catch (error) {
-    // Причина — в консоль: спотыкаются здесь чужие браузеры, и узнать, на чём
-    // именно, больше неоткуда. Устаревшее превью молчит: его картинку уже
-    // заменило следующее, и жаловаться ему не на что.
-    if (token !== previewToken) return;
-    console.warn('preview failed:', error);
-    // Предложение посчитать у нас переживает неудачное превью. `renderFailed`
-    // пересобирает нижний ряд заново, и кнопка «Make it on our server»
-    // исчезала бы ровно там, где она единственный выход: браузеру не далась
-    // большая картинка, встало предложение, посетитель щёлкнул виньетку —
-    // и превью не далось ему по той же нехватке памяти. На месте предложения
-    // оказывалась «Make my wallpaper», то есть путь, который только что упал.
-    //
-    // Тем же `renderOffered`, а не сохранением кнопок: он и соберёт тот же ряд,
-    // и скажет правду о случившемся — браузер не смог, а мы можем.
-    if (offered) renderOffered(FINISH_FAILED);
-    else renderFailed(FINISH_FAILED);
-  }
-}
+// Стоявшее здесь исключение — «предложение переживает неудачное превью» —
+// ушло 24.08 вместе с направлением предложения. Пока предлагали посчитать
+// у нас, упавшее в браузере превью его не касалось, и снимать кнопку было
+// нельзя: она была единственным выходом. Теперь предлагается обратное —
+// посчитать в браузере, — а браузер только что не справился с картинкой
+// в тысячу пикселей. Оставить ему кнопку на четырёхкратный счёт значило бы
+// позвать туда, откуда сейчас вернулись.
+const draw = () => opening.showChosen(chosen()).then(shown => shown || renderFailed(FINISH_FAILED));
 
 // Сначала кадр, потом размер — тот же порядок, в котором работает и счёт
 // (`upscaleInBrowser`). Обратный порядок здесь уже стоял: он растил картинку
 // целиком, кадрировал готовое и оттого называл размер, до которого обрезанному
 // кадру не хватало, — 4032 × 3024 с галочкой обещали 4K, а выходило 1701 × 3024.
 const framedSource = () => {
-  const { width, height } = received;
+  const { width, height } = opening.brought;
   if (!els.crop.checked) return { width, height };
   const window = phoneWindow(width, height);
   return { width: window.width, height: window.height };
 };
 
-// Во что развернётся кадр при данной длинной стороне.
-function resultSize(width, height, target) {
-  const ratio = target / Math.max(width, height);
-  return [Math.round(width * ratio), Math.round(height * ratio)];
-}
-
 // Размеры у двух путей разные, и называть надо тот, который сейчас побежит.
-// В браузере считает `upscale-local.js`, и правило берётся оттуда целиком,
-// вместе с потолками стороны и площади: свой расчёт здесь уже был и отставал
-// от здешнего — кнопка обещала 6424 × 8700 там, где выходило 6049 × 8192.
 // У сервера потолок один — на сторону (`serverLongestSide` во frame.js);
-// потолка площади у него нет, холста ведь тоже нет. Поэтому предложение
-// посчитать у нас называет своё число, а не то же самое, и берёт его из того
-// же файла, по которому сервер потом и считает.
+// потолка площади у него нет, холста ведь тоже нет. В браузере считает
+// `upscale-local.js`, и правило берётся оттуда целиком, вместе с потолками
+// стороны и площади: свой расчёт здесь уже был и отставал от здешнего —
+// кнопка обещала 6424 × 8700 там, где выходило 6049 × 8192.
+//
+// Первый теперь называет кнопка, второй — предложение посчитать в браузере,
+// и числа у них разные по-настоящему: с 24.08 у сервера есть свой третий
+// потолок, ×4 (устройство модели), а у браузера его нет.
 const serverSize = () => {
   const { width, height } = framedSource();
   return resultSize(width, height, serverLongestSide(width, height));
 };
 
+const localSize = () => {
+  const { width, height } = framedSource();
+  return resultSize(width, height, resultLongestSide(width, height));
+};
+
 // Вырастет ли картинка вообще. Порог — нижняя граница, и той, что уже
-// переросла его, модель вернула бы ровно её же размер.
+// переросла его, модель вернула бы ровно её же размер. Спрашивается это
+// у серверного правила, потому что считать будет сервер; браузерное отвечает
+// на тот же вопрос иначе только там, где у него кончается холст, — а туда
+// работа теперь и не идёт.
 //
-// Это не мелкая экономия, а самая частая дорога на сервер. Холст под большую
+// Это не мелкая экономия, а единственное, что стоит между большой
+// фотографией и оплаченным вызовом впустую. Холст под большую
 // картинку упирается в потолок площади (16.7 Мп у Safari) раньше, чем модель
 // успевает начать, и до 23.08 выходило так: снимок 24 Мп с фотоаппарата
 // проваливался в `TOO_BIG`, страница предлагала отправить фотографию нам,
@@ -303,33 +230,41 @@ const serverSize = () => {
 // галочкой «Increase size» уменьшение и шла его считать.
 const growthNeeded = () => {
   const { width, height } = framedSource();
-  return resultLongestSide(width, height) > Math.max(width, height);
+  return serverLongestSide(width, height) > Math.max(width, height);
 };
 
-// Позовём ли модель. Спрашивают об этом трижды — что делать, что написать
-// на время работы и как назвать файл, — и ответ обязан быть один: имя со
-// словом `4x-clearrealityv1` у файла, которого модель не касалась, — это
-// неверная запись о том, как файл сделан.
+// Позовём ли модель. Спрашивают об этом четырежды — что делать, куда уедет
+// файл, что написать на время работы и как назвать готовое, — и ответ обязан
+// быть один: имя с названием модели у файла, которого модель не касалась, —
+// это неверная запись о том, как файл сделан.
 const willEnlarge = () => els.enlarge.checked && growthNeeded();
+
+// Куда уедет файл — единственный вопрос над кнопкой, и ответ на него теперь
+// целиком в одной галочке: увеличение считает наша видеокарта, всё остальное
+// считает холст посетителя и никуда не отправляется. До выбора файла судить
+// не по чему — тогда отвечает сама галочка, потому что нажата она с намерением
+// увеличивать, а не с намерением остаться дома.
+const renderPrivacy = () => {
+  const sending = opening.brought ? willEnlarge() : els.enlarge.checked;
+  els.privacy.textContent = sending ? SENT_TO_US : STAYS_HERE;
+};
 
 // Что скажет подпись под галочкой увеличения. До выбора файла — одна
 // оговорка: называть нечего. После — оба размера, свой и тот, что выйдет,
 // потому что смысл галочки именно в разнице между ними. Кадр учтён: он
 // меняет и то, из чего растят, и то, что получится.
 function renderGrowth() {
-  if (!received) return (els.growth.textContent = 'no preview');
+  if (!opening.brought) return (els.growth.textContent = 'no preview');
   const { width, height } = framedSource();
   // «3840 × 2160 to 3840 × 2160» читается как поломка, хотя это верный ответ:
   // расти некуда. Сказано словами, а не двумя одинаковыми числами. Оговорки
   // про превью здесь уже нет — показывать нечего, потому что и делаться
   // ничего не будет.
   if (!growthNeeded()) return (els.growth.textContent = `${formatDims(width, height)}, already big enough`);
-  const grown = resultSize(width, height, resultLongestSide(width, height));
-  els.growth.textContent = `${formatDims(width, height)} (yours) to ${formatDims(...grown)}. No preview`;
+  els.growth.textContent = `${formatDims(width, height)} (yours) to ${formatDims(...serverSize())}. No preview`;
 }
 
 function renderEmpty() {
-  offered = false;
   els.choose.replaceChildren(button('Choose my picture', 'btn', chooseFile));
   // Нижнее место пусто: пока файла нет, делать нечего, и кнопка «Make my
   // wallpaper» под галочками обещала бы работу без предмета.
@@ -346,13 +281,12 @@ function renderEmpty() {
   // возвращаются сюда, когда файл им не подошёл (`renderFailed`).
   els.note.textContent = '';
   els.note.classList.remove('is-error');
-  els.privacy.textContent = STAYS_HERE;
+  renderPrivacy();
   setStage('empty');
   setOptions(true);
 }
 
 function renderMeasured() {
-  offered = false;
   // Кнопка называет работу целиком, одними и теми же словами при любых
   // галочках. Стояли здесь «Enlarge to 2160 × 3840» и «Resize to …», и глагол
   // приходилось выводить: увеличение перестало быть тем, что страница делает,
@@ -376,15 +310,15 @@ function renderMeasured() {
   // где сайт обещал будущее нарушение NC у модели (LEGAL.md).
   els.note.textContent = '';
   els.note.classList.remove('is-error');
-  // Выбор другого файла возвращает и обещание: предыдущий мог уехать к нам,
-  // этот пойдёт в браузер, как обычно.
-  els.privacy.textContent = STAYS_HERE;
+  // Обещание пересчитывается, а не ставится: у нового файла может не быть
+  // роста вовсе — тогда никуда он не поедет, сколько ни нажимай «Increase
+  // size».
+  renderPrivacy();
   setStage('measured');
   setOptions(true);
 }
 
 function renderWorking(note) {
-  offered = false;
   setStage('working');
   const waiting = button('Working…', 'btn');
   waiting.disabled = true;
@@ -399,24 +333,30 @@ function renderWorking(note) {
   setOptions(false);
 }
 
-// Браузер не справился. Сервер справится, но для этого картинку надо отправить
-// нам, а страница ровно над кнопкой обещает, что картинка остаётся на
-// устройстве («Enlarged in your own browser…», pages.js). Раньше отправка шла
-// сама собой из `catch`, и обещание становилось ложью в тот единственный
-// момент, когда оно имело значение, — причём молча: посетитель видел готовый
-// файл и ничего больше. Теперь решает он, и нажатием.
+// Наша видеокарта не справилась — не смогла, не успела или упёрлась в суточный
+// потолок вызовов. Браузер посетителя, возможно, справится: вторая ветка
+// никуда не делась, она бесплатна, и файл при ней остаётся на устройстве.
+//
+// Предложение шло в обратную сторону до 24.08 — считал браузер, а сервер
+// предлагался тем, у кого не вышло. Стороны поменялись вместе с моделью,
+// причина спрашивать осталась прежней: у второй ветки своя цена, и платит её
+// посетитель — двадцать шесть мегабайт загрузки и минуты счёта на слабой
+// машине. Начинать это молча за него не за что.
+//
+// Размер называется свой: у браузера нет потолка ×4, зато есть потолок
+// площади, и число выходит другое (`localSize`).
 function renderOffered(reason) {
-  offered = true;
   setStage('measured');
   els.choose.replaceChildren();
   els.actions.replaceChildren(
-    button('Make it on our server', 'btn', restoreOnServer),
+    button('Enlarge in my browser', 'btn', restoreInBrowser),
     button('Choose another', 'btn btn--ghost', chooseFile)
   );
-  els.note.textContent = `${reason} We can do it on our machines instead — that means sending your picture to us, and it comes back ${formatDims(...serverSize())}.`;
+  els.note.textContent = `${reason} Your own browser can do it instead — nothing leaves your device, it takes a few minutes, and it comes back ${formatDims(...localSize())}.`;
   els.note.classList.add('is-error');
-  // Обещание над кнопкой перестаёт быть верным ровно здесь и потому меняется.
-  els.privacy.textContent = SENT_TO_US;
+  // Обещание над кнопкой перестаёт быть верным ровно здесь и потому меняется:
+  // отправлять больше нечего.
+  els.privacy.textContent = STAYS_HERE;
   setOptions(true);
 }
 
@@ -449,7 +389,7 @@ function renderFinished() {
   // Где считали — сказано здесь же. Согласие на отправку спрашивается заранее
   // (`renderOffered`), но человек, вернувшийся к готовой работе, не обязан
   // помнить, что он тогда нажал.
-  const made = formatDims(els.picture.naturalWidth, els.picture.naturalHeight);
+  const made = formatDims(...opening.shownSize());
   els.note.textContent =
     restored.provider === 'server'
       ? `Your wallpaper is ready, ${made}. Enlarged on our server.`
@@ -462,7 +402,7 @@ function renderFinished() {
 // Авария возвращает страницу в предыдущее состояние и говорит, что случилось:
 // заметна она светлотой, а не цветом — хроматического акцента здесь нет вообще.
 function renderFailed(message) {
-  if (received) renderMeasured();
+  if (opening.brought) renderMeasured();
   else renderEmpty();
   els.note.textContent = message;
   els.note.classList.add('is-error');
@@ -475,195 +415,153 @@ function renderFailed(message) {
 //
 // Модель в имени стоит только когда она и правда считала: имя — это запись
 // о том, как файл сделан, и без увеличения модели в этой записи не место.
-function localName(extension) {
-  const base = received.file.name.replace(/\.[^.]+$/, '').replace(/[^a-zA-Z0-9_-]/g, '_') || 'photo';
-  const how = willEnlarge() ? '4x-clearrealityv1' : 'finished';
+function localName(extension, how = willEnlarge() ? '4x-clearrealityv1' : 'finished') {
+  const base = opening.brought.file.name.replace(/\.[^.]+$/, '').replace(/[^a-zA-Z0-9_-]/g, '_') || 'photo';
   return `${base}-${how}-${Date.now()}${extension}`;
 }
 
-// Формат сохраняется, как и на сервере: принесли PNG — вернётся PNG.
-// Всё остальное отдаётся JPEG: четырёхкратный PNG с телефонной картинки
-// весит десятки мегабайт, и это уже не «тот же файл, только крупнее».
+// Всё, что `make.js` должно знать о принесённом файле, — и ничего сверх.
+// Собирается на каждый вызов заново: галочки читаются в момент нажатия,
+// а не в момент выбора файла.
 //
-// Тип приходит доводом, а не берётся у выбранного файла: на пути через сервер
-// холст набран не из него, а из присланного нам ответа, и Real-ESRGAN отдаёт
-// PNG на любой вход. По типу загруженного JPEG пережимался бы в JPEG и уезжал
-// под серверным именем `.png` — байты одни, расширение другое.
+// Слова о ходе счёта складываются здесь, а не там: `make.js` пересылает числа
+// как есть, потому что фразы посетителю живут в одном файле со всеми
+// остальными фразами.
+const job = () => ({ ...opening.brought, effects: chosen(), name: localName, onProgress: sayProgress });
+
+// Три вида одного сообщения, по трём отрезкам работы. До первой плитки доля
+// скачанного — единственное, что вообще меняется: без неё строка стояла молча,
+// пока грузились двадцать семь мегабайт, и это читалось как поломка.
 //
-// Расширение возвращается наружу по той же причине: серверное имя оставляет
-// себе номер работы, но расширение обязано назвать то, что вышло.
-function toFile(canvas, provider, sourceType = received.file.type) {
-  const png = sourceType === 'image/png';
-  const extension = png ? '.png' : '.jpg';
-  return canvas
-    .convertToBlob(png ? { type: 'image/png' } : { type: 'image/jpeg', quality: 0.94 })
-    .then(blob => ({ blob, filename: localName(extension), extension, provider }));
+// Между «100 %» и первой плиткой лежит третий отрезок, и он не короткий:
+// разбор трёх мегабайт рантайма, сборка сессии и компиляция шейдеров.
+// Пока о нём не говорили, счётчик замирал на сотне — а с тёплым кэшем сотня
+// появлялась сразу и стояла всё время, то есть счётчик показывал ровно
+// наоборот: «сделано» в самом начале.
+//
+// Слова простые и без предмета: «warming up», а не «starting the model».
+// Модель — наше внутреннее устройство, посетитель принёс картинку и ждёт обои;
+// знать, что внутри считает нейросеть, ему не нужно ни для чего. Строка при
+// этом обязана отличаться от предыдущей не только числом: «getting ready,
+// 100%» → «getting ready…» читалось бы тем же замиранием, от которого её
+// и завели.
+function sayProgress({ loaded, starting, done, total, secondsLeft }) {
+  if (starting) {
+    els.note.textContent = `${WORKING}: warming up…`;
+    return;
+  }
+  if (loaded !== undefined) {
+    els.note.textContent = `${WORKING}: getting ready, ${Math.round(loaded * 100)}%.`;
+    return;
+  }
+  const left = secondsLeft > 90 ? `${Math.round(secondsLeft / 60)} min` : `${secondsLeft}s`;
+  els.note.textContent = `${WORKING}: ${done} of ${total} tiles, about ${left} left.`;
 }
 
-// Считает картинку прямо здесь. Возвращает готовый файл или null, если браузер
-// так не умеет, — тогда работа уходит на сервер, как раньше.
+// Кнопка. Развилка одна и она же — та, что названа над галочкой: растим —
+// значит, считает наша видеокарта; не растим — значит, отделка по исходному
+// растру, и она никуда не едет.
 //
-// Модули грузятся по требованию: рантайм счёта весит около шести мегабайт
-// сжатым, и странице, на которую только зашли, он не нужен.
-async function restoreLocally() {
-  const [{ localUpscaleAvailable, upscaleInBrowser }, { finishLocally }] = await Promise.all([
-    import('./upscale-local.js'),
-    import('./treat-local.js')
-  ]);
-  if (!(await localUpscaleAvailable())) return null;
-
-  const { canvas, provider } = await upscaleInBrowser(received.file, {
-    crop: els.crop.checked,
-    // Три вида одного сообщения, по трём отрезкам работы. До первой плитки
-    // доля скачанного — единственное, что вообще меняется: без неё строка
-    // стояла молча, пока грузились двадцать семь мегабайт, и это читалось
-    // как поломка.
-    //
-    // Между «100 %» и первой плиткой лежит третий отрезок, и он не короткий:
-    // разбор трёх мегабайт рантайма, сборка сессии и компиляция шейдеров.
-    // Пока о нём не говорили, счётчик замирал на сотне — а с тёплым кэшем
-    // сотня появлялась сразу и стояла всё время, то есть счётчик показывал
-    // ровно наоборот: «сделано» в самом начале.
-    //
-    // Слова простые и без предмета: «warming up», а не «starting the model».
-    // Модель — наше внутреннее устройство, посетитель принёс картинку и ждёт
-    // обои; знать, что внутри считает нейросеть, ему не нужно ни для чего.
-    // Строка при этом обязана отличаться от предыдущей не только числом:
-    // «getting ready, 100%» → «getting ready…» читалось бы тем же замиранием,
-    // от которого её и завели.
-    onProgress: ({ loaded, starting, done, total, secondsLeft }) => {
-      if (starting) {
-        els.note.textContent = `${WORKING}: warming up…`;
-        return;
-      }
-      if (loaded !== undefined) {
-        els.note.textContent = `${WORKING}: getting ready, ${Math.round(loaded * 100)}%.`;
-        return;
-      }
-      const left = secondsLeft > 90 ? `${Math.round(secondsLeft / 60)} min` : `${secondsLeft}s`;
-      els.note.textContent = `${WORKING}: ${done} of ${total} tiles, about ${left} left.`;
-    }
-  });
-  // Кадр уже вырезан — до счёта; здесь остаётся только отделка.
-  return toFile(finishLocally(canvas, { ...chosen(), crop: false }), provider);
-}
-
-// Увеличение снято — модель не зовут вовсе. Это не оптимизация: рантайм
-// на шесть мегабайт и минуты счёта ради виньетки были бы платой за работу,
-// которой не просили, а на слабой машине ещё и отказом там, где отказывать
-// нечему. Отделка считается по исходному растру в полном разрешении, тем же
-// `finishLocally`, что и превью, — то есть выйдет ровно показанное.
-async function finishOnly() {
-  const { finishLocally } = await import('./treat-local.js');
-  const canvas = new OffscreenCanvas(received.width, received.height);
-  canvas.getContext('2d').drawImage(received.bitmap, 0, 0);
-  return toFile(finishLocally(canvas, chosen()), 'browser');
-}
-
+// Так стало 24.08. До этого считал браузер, а сервер стоял запасным выходом,
+// и решала развилка не «что делать», а «справился ли он»: три условия
+// (`localUpscaleAvailable`, `TOO_BIG`, любое другое исключение), из которых
+// ни одно не отвечало на настоящие вопросы — вышло ли красиво и дождался ли
+// человек. Модель, которую выбрали по картинке, стоит на сервере; браузерная
+// осталась там, где ей и место, — на случай, когда серверной нельзя.
+//
+// Не «нажата ли галочка», а «есть ли что делать»: переросшую порог картинку
+// модель не трогает вовсе (`growthNeeded`), и путь у неё тот же, что у снятой
+// галочки.
 async function restore() {
-  // Не «нажата ли галочка», а «есть ли что делать»: переросшую порог картинку
-  // модель не трогает вовсе (`growthNeeded`), и путь у неё тот же, что у снятой
-  // галочки, — отделка по исходному растру.
-  const enlarging = willEnlarge();
+  if (willEnlarge()) return restoreOnServer();
   renderWorking(`${WORKING}…`);
-  let made;
   try {
-    made = enlarging ? await restoreLocally() : await finishOnly();
+    return showResult(await withoutModel(job()));
   } catch (error) {
     // Причина остаётся в консоли — это единственный способ узнать, на чём
-    // именно спотыкаются чужие машины. Посетителю причина тоже нужна: без неё
-    // предложение отправить файл нам выглядит как навязывание.
+    // именно спотыкаются чужие браузеры.
     console.warn('local finish failed:', error);
-    if (!enlarging) return renderFailed(FINISH_FAILED);
-    return renderOffered(error.message === TOO_BIG ? TOO_BIG : LOCAL_FAILED);
-  }
-  if (!made) return renderOffered('Your browser cannot enlarge pictures on its own.');
-  try {
-    forget(resultUrl);
-    resultUrl = URL.createObjectURL(made.blob);
-    restored = { filename: made.filename, url: resultUrl, provider: made.provider };
-    await showPicture(resultUrl);
-    renderFinished();
-  } catch (error) {
-    renderFailed(error.message);
+    return renderFailed(FINISH_FAILED);
   }
 }
 
-// Отправка нам — отдельная кнопка, а не запасной путь внутри `restore`:
-// см. `renderOffered`.
-//
-// Кадр и приглушение сервер по-прежнему считает сам: правило у них общее
-// (`ceil` из /rules/ceilings.mjs), и разойтись эти два ответа не могут.
-// Остальных четырёх у него нет вовсе, и они накладываются здесь, на его
-// ответ, — тем же `finishLocally`, что и в браузерном пути. Порядок при этом
-// сохраняется: кадр и приглушение идут первыми в обоих случаях.
+// Главный путь. Согласия здесь не спрашивают: строка над кнопкой отвечает
+// на «куда уедет мой файл» с той секунды, как нажата галочка (`renderPrivacy`).
 async function restoreOnServer() {
   els.privacy.textContent = SENT_TO_US;
   renderWorking('Working on our server.');
+  let made;
   try {
-    const body = new FormData();
-    body.append('photo', received.file);
-    body.append('treat', String(els.treat.checked));
-    body.append('crop', String(els.crop.checked));
-    const response = await fetch('/api/upscale', { method: 'POST', body });
-    // Ответ бывает двух видов: авария — по-прежнему JSON, удача — сама
-    // картинка байтами. Адреса у неё нет: на нашем диске файл больше не
-    // остаётся, и забрать его второй раз неоткуда (server.js). Отсюда и
-    // исчезла вторая загрузка — раньше браузер скачивал у нас же то, что
-    // сам только что прислал, чтобы наложить размытие и виньетку.
-    if (!response.ok) throw new Error((await response.json()).error);
-    let blob = await response.blob();
-    // Имени может не быть: заголовок наш собственный и нестандартный, и
-    // посредник, режущий незнакомые, оставит здесь пусто. Раньше это стоило бы
-    // слова «null» у скачанного файла; с тех пор как расширение правится на
-    // месте, пустое имя роняет весь путь в `catch` — то есть отказом накрывает
-    // готовую работу, которая существует в одном экземпляре и уже оплачена.
-    // Тогда имя собирается здесь, как в браузерном пути: номер работы в нём
-    // свой, зато файл доезжает.
-    let filename = response.headers.get('X-Filename') || localName(blob.type === 'image/png' ? '.png' : '.jpg');
-    const extra = { ...chosen(), crop: false, treat: false };
-    if (Object.values(extra).some(Boolean)) {
-      const { finishLocally } = await import('./treat-local.js');
-      const enlarged = await createImageBitmap(blob);
-      const canvas = new OffscreenCanvas(enlarged.width, enlarged.height);
-      canvas.getContext('2d').drawImage(enlarged, 0, 0);
-      enlarged.close();
-      // Формат берётся у присланных байтов, а не у выбранного файла: считал
-      // не этот браузер, и что вернулось — известно только из ответа.
-      const made = await toFile(finishLocally(canvas, extra), 'server', blob.type);
-      blob = made.blob;
-      // Расширение — от того, что вышло из пережатия; остальное имя серверное.
-      filename = filename.replace(/\.[^.]+$/, made.extension);
-    }
-    forget(resultUrl);
-    resultUrl = URL.createObjectURL(blob);
-    // Имя остаётся серверным: по нему берётся номер работы, и меняться
-    // от того, кто накладывал виньетку, он не должен.
-    restored = { filename, url: resultUrl, provider: 'server' };
-    await showPicture(restored.url);
+    made = await onServer(job());
+  } catch (error) {
+    console.warn('server upscale failed:', error);
+    // Отказ сервера — ещё не отказ вовсе, и чаще всего он даже не поломка:
+    // пять картинок в час с браузера, полсотни в сутки на всех (limits.js).
+    // Вторая ветка бесплатна и ничьего разрешения не спрашивает — предлагаем
+    // её. Тому, чей браузер так не умеет, предлагать нечего, и разговор
+    // кончается тем, что сказал сервер: его текст написан для посетителя.
+    if (!(await localUpscaleAvailable())) return renderFailed(error.message);
+    return renderOffered(error.message);
+  }
+  // Дальше отказ уже не про сервер: картинка сделана и оплачена. Обратно
+  // к предложению путь не ведёт.
+  return showResult(made);
+}
+
+// Вторая ветка, по кнопке из `renderOffered`. Отказ здесь окончательный:
+// предлагать за ним сервер, который только что отказал, было бы кольцом.
+async function restoreInBrowser() {
+  els.privacy.textContent = STAYS_HERE;
+  renderWorking(`${WORKING}…`);
+  let made;
+  try {
+    made = await inBrowser(job());
+  } catch (error) {
+    console.warn('local upscale failed:', error);
+    return renderFailed(error.message === TOO_BIG ? TOO_BIG : LOCAL_FAILED);
+  }
+  // `null` сюда не доходит: умеет ли браузер вообще, спрошено до того, как
+  // кнопка появилась. Проверка остаётся — обещания «не доходит» стоят ровно
+  // до следующей правки.
+  if (!made) return renderFailed(LOCAL_FAILED);
+  return showResult(made);
+}
+
+// Показать сделанное — одинаково для всех трёх способов: разница между ними
+// кончается на блобе.
+async function showResult(made) {
+  try {
+    restored = { filename: made.filename, url: await opening.showMade(made.blob), provider: made.provider };
     renderFinished();
   } catch (error) {
     renderFailed(error.message);
   }
 }
 
-els.file.addEventListener('change', () => receive(els.file.files[0]));
+els.file.addEventListener('change', () => bring(els.file.files[0]));
 // Отделочные галочки меняют картинку в проёме. Кадр вдобавок меняет и то,
-// из чего растят, — то есть подпись под увеличением. Перерисовка только когда
-// файл уже выбран: до этого ни называть, ни показывать нечего.
+// из чего растят, — то есть подпись под увеличением, а через неё и строку
+// о том, куда уедет файл: кадр уносит две трети площади, и картинка, которой
+// расти было некуда, после него растёт. Перерисовка только когда файл уже
+// выбран: до этого ни называть, ни показывать нечего.
 for (const name of EFFECTS) {
   els[name].addEventListener('change', () => {
-    if (!received) return;
+    if (!opening.brought) return;
     renderGrowth();
-    showChosen();
+    renderPrivacy();
+    draw();
   });
 }
-// У самого увеличения обработчика нет: подпись под ним обещает одно и то же
-// независимо от того, нажато оно или снято, — это описание галочки, а не
-// состояния. Картинку в проёме оно тоже не меняет; менять здесь нечего.
-els.frame.addEventListener('click', () => !received && chooseFile());
+// У увеличения обработчик появился 24.08 и держит он ровно одну строку —
+// ту, что над кнопкой. Картинку в проёме галочка по-прежнему не меняет,
+// подпись под ней тоже стоит одна на оба положения; а вот ответ на «куда
+// уедет мой файл» меняется целиком, потому что увеличение — единственное,
+// ради чего файл уезжает. Спросить об этом посетитель может до нажатия,
+// и до нажатия же должен получить верный ответ.
+els.enlarge.addEventListener('change', renderPrivacy);
+els.frame.addEventListener('click', () => !opening.brought && chooseFile());
 els.frame.addEventListener('keydown', event => {
-  if (!received && (event.key === 'Enter' || event.key === ' ')) {
+  if (!opening.brought && (event.key === 'Enter' || event.key === ' ')) {
     event.preventDefault();
     chooseFile();
   }
@@ -692,7 +590,25 @@ addEventListener('drop', event => {
   event.preventDefault();
   dragDepth = 0;
   document.body.classList.remove('is-dragging');
-  receive(event.dataTransfer.files[0]);
+  bring(event.dataTransfer.files[0]);
+});
+
+// Третий способ принести картинку — Ctrl-V. Снимок экрана нигде не лежит
+// файлом: он лежит в буфере, и до этой минуты его требовалось сперва куда-то
+// сохранить, чтобы потом выбрать в диалоге, — шаг, который ничего не решает.
+//
+// Слушает вся страница, как и перетаскивание: выбирать нечего — поля ввода
+// на приёмке нет ни одного, только галочки и кнопки, и вставлять больше некуда.
+//
+// Берётся первый файл, а не первый подходящий: `receive` сама скажет, каких
+// форматов не берёт, а молчаливый пропуск GIF читался бы как «Ctrl-V тут
+// не работает». Текст и ссылки в буфере файлов не дают вовсе — там выходить
+// не из чего, и обработчик расходится молча, не тронув выбранное раньше.
+addEventListener('paste', event => {
+  const file = event.clipboardData?.files[0];
+  if (!file) return;
+  event.preventDefault();
+  bring(file);
 });
 
 // Пустая запись рисуется скриптом, а не приходит с сервера: номера у неё ещё

@@ -974,7 +974,7 @@ export function intakePage({ origin, runtime, runtimeBytes }) {
     title: `Make any picture a phone wallpaper, ${SITE_NAME}`,
     description:
       'Crop a photo to phone wallpaper size, 2160 × 3840, and enlarge it if it is too small for the screen. ' +
-      'Runs in your browser. JPG, PNG and WebP.',
+      'Free, no account. JPG, PNG and WebP.',
     canonical: `${origin}/restore`,
     script: '/intake.js',
     body: `
@@ -1181,12 +1181,14 @@ export function intakePage({ origin, runtime, runtimeBytes }) {
                ниже неё ничего, и строка по-прежнему последняя, что читают.
                Взамен она встала там, где абзац над ней как раз и объясняет,
                что тут делают с картинкой, а она отвечает, где именно. -->
-          <!-- Само предложение вынесено в span и подписано: когда браузер
-               посчитать не смог и приёмка предлагает сделать это у нас
-               (renderOffered в intake.js), эта строка противоречит
-               предложению. Меняется она, а не прячется: вопрос «куда уедет
-               мой файл» остаётся у человека и в этом случае — просто ответ
-               на него другой. -->
+          <!-- Само предложение вынесено в span и подписано: ответов на «куда
+               уедет мой файл» два, и меняются они по галочке увеличения
+               (renderPrivacy в intake.js). Разметка приходит с тем, который
+               верен на пустой странице: галочки сняты, считать нечего, ничего
+               и не уезжает. Нажали «Increase size» — строка становится второй,
+               потому что увеличение считает наша видеокарта. Меняется она,
+               а не прячется: вопрос остаётся у человека в обоих случаях,
+               просто ответ на него другой. -->
           <!-- Строка подписана, потому что её тоже убирают у готовой работы
                (setStage в intake.js). Вопрос «куда уедет мой файл» задают
                до нажатия; после нажатия ответ на него уже дан, а для отправки
@@ -1295,14 +1297,28 @@ export function licensePage({ origin }) {
           </li>
         </ul>
 
-        <h2 id="model">The model that enlarges your picture</h2>
+        <h2 id="model">The models that enlarge your picture</h2>
         <p>
-          Enlarging happens in your own browser, not on our machines: the page downloads a small
-          neural network alongside itself and runs it on your device, so the picture you drop never
-          leaves it.
+          Enlarging happens on our machines. The picture you drop is sent to us, passed to a graphics
+          card we rent by the second from
+          <a href="https://modal.com" rel="noopener" target="_blank">Modal</a>, and sent straight
+          back to you. We write it to no disk and keep no copy — the enlarged file exists once, in
+          your browser, which is also why there is no second chance at downloading it.
         </p>
         <p>
-          That network is somebody else's work.
+          The network there is somebody else's work.
+          <a href="https://openmodeldb.info/models/4x-NMKD-Siax-CX" rel="noopener" target="_blank"
+            >4x-NMKD-Siax</a
+          >
+          by NMKD, under the
+          <a href="https://spdx.org/licenses/WTFPL.html" rel="license noopener" target="_blank">WTFPL</a>, which
+          asks nothing of anybody.
+        </p>
+        <p>
+          There is a second one, and you meet it only if the first refuses — our server has a daily
+          ceiling, and past it the page offers to do the work in your own browser instead. Then it
+          downloads a small neural network alongside itself and runs it on your device, and the
+          picture never leaves it. That one is
           <a href="https://openmodeldb.info/models/4x-ClearRealityV1" rel="noopener" target="_blank"
             >4x-ClearRealityV1</a
           >
@@ -1314,7 +1330,7 @@ export function licensePage({ origin }) {
         </p>
         <p>
           None of this touches the file you download. The enlarged picture is yours, on the terms the
-          original work carried; the licence above is ours to keep, not yours.
+          original work carried; the licences above are ours to keep, not yours.
         </p>
 
         <h2>The ordinary small print</h2>

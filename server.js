@@ -7,6 +7,7 @@ import express from 'express';
 import multer from 'multer';
 import sharp from 'sharp';
 import { IMAGES_DIR, ADJACENT, ensureImageDirectories, galleryItems, isImage } from './gallery.js';
+import { HttpError } from './http-error.js';
 import { upscaleAllowance } from './limits.js';
 import { collectionPage, errorPage, intakePage, licensePage, missingPage, robots, sitemap, workPage } from './pages.js';
 import { finish, phoneWindow } from './treatment.js';
@@ -21,8 +22,9 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url));
 // Для местной работы переменная задаётся в `.env`.
 const SITE_ORIGIN = (process.env.SITE_ORIGIN || 'https://tessarum.com').replace(/\/$/, '');
 // Предел ТЕЛА ЗАПРОСА, а не правило о картинках. Файл целиком лежит в памяти
-// (`memoryStorage`), уезжает в Replicate строкой base64 — ещё треть сверху, —
-// и сколько таких придёт разом, сервер не решает. Поэтому число здесь есть,
+// (`memoryStorage`) и уезжает на счёт целиком, а сколько таких придёт разом,
+// сервер не решает. Поэтому число здесь есть,
+import { MODEL, configured as upscalerReady, enlarge } from './upscaler.js';
 // но названо оно нашей памятью, а не чужой картинкой: в браузере, где считает
 // машина посетителя, веса не спрашивают вовсе (public/intake.js).
 //
@@ -32,15 +34,6 @@ const SITE_ORIGIN = (process.env.SITE_ORIGIN || 'https://tessarum.com').replace(
 const MAX_FILE_SIZE = 64 * 1024 * 1024;
 const ACCEPTED_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 const FILE_NOT_FOUND = 'File not found.';
-
-// Ошибка, текст которой предназначен посетителю. Всё остальное превращается
-// в «Внутренняя ошибка сервера», чтобы наружу не попадали детали конфигурации.
-class HttpError extends Error {
-  constructor(status, message) {
-    super(message);
-    this.status = status;
-  }
-}
 
 const app = express();
 // Кому верить, когда речь идёт об адресе посетителя. Счётчик в `limits.js`
@@ -276,56 +269,6 @@ app.get('/sitemap.xml', async (_req, res, next) => {
   }
 });
 
-// Строки, зависящие от модели, живут только здесь: эндпоинт для запроса
-// и `slug` для имени файла результата.
-const MODEL = {
-  title: 'Real-ESRGAN',
-  slug: 'real-esrgan',
-  endpoint: 'models/nightmareai/real-esrgan/predictions'
-};
-
-const TOKEN_PLACEHOLDER = 'r8_replace_with_your_replicate_api_token';
-
-// Есть ли чем платить — насколько это видно отсюда. Спрашивается до ворот
-// счёта: без токена запрос не доходит до Replicate вовсе, а место в счётчике
-// занимал бы наравне с настоящими.
-function apiToken() {
-  const token = process.env.REPLICATE_API_TOKEN;
-  return !token || token === TOKEN_PLACEHOLDER ? null : token;
-}
-
-function apiHeaders() {
-  const token = apiToken();
-  if (!token) throw new Error('Добавьте действительный REPLICATE_API_TOKEN в файл .env.');
-  return { Authorization: `Bearer ${token}` };
-}
-
-async function parseResponse(response) {
-  const data = await response.json().catch(() => ({}));
-  if (!response.ok || data.code >= 400 || data.success === false) {
-    throw new HttpError(
-      502,
-      data.detail || data.error || data.msg || data.message || `Replicate returned HTTP ${response.status}`
-    );
-  }
-  return data;
-}
-
-function asDataUrl(file) {
-  return `data:${file.mimetype};base64,${file.buffer.toString('base64')}`;
-}
-
-async function createPrediction(image, scale) {
-  const response = await fetch(`https://api.replicate.com/v1/${MODEL.endpoint}`, {
-    method: 'POST',
-    headers: { ...apiHeaders(), 'Content-Type': 'application/json', Prefer: 'wait=60', 'Cancel-After': '10m' },
-    body: JSON.stringify({ input: { image, scale, face_enhance: false } })
-  });
-  const data = await parseResponse(response);
-  if (!data.id) throw new HttpError(502, 'Replicate did not return a task id.');
-  return data;
-}
-
 // Снимок с телефона лежит в файле горизонтально, а рядом с ним стоит пометка
 // EXIF «повернуть». `metadata` отдаёт то, что лежит, а не то, что показывают,
 // и `extract` режет тоже лежащее: телефонный кадр вырезался поперёк картины,
@@ -340,7 +283,7 @@ async function createPrediction(image, scale) {
 // записью правила EXIF, где первая уже есть у sharp.
 //
 // Цена — одно лишнее пересжатие, и только у файлов с пометкой: у остальных
-// буфер уходит к Replicate тем же, каким пришёл. Дешевле не выходит — пометку
+// буфер уходит на счёт тем же, каким пришёл. Дешевле не выходит — пометку
 // нельзя исполнить, не переписав пиксели, а послать неисполненную значит
 // послать картинку набок.
 //
@@ -366,7 +309,7 @@ async function upright(file) {
   //
   // 95 и 4:4:4, а не «как было»: настоящее качество входа sharp не сообщает,
   // и взять его неоткуда. Верх вилки дешевле промаха вниз — лишние килобайты
-  // уезжают к Replicate и там же кончаются, а срезанная цветность не
+  // уезжают на счёт и там же кончаются, а срезанная цветность не
   // возвращается ничем.
   //
   // PNG не назван: он и так без потерь, и умолчания ему не вредят.
@@ -381,32 +324,6 @@ async function upright(file) {
   return { file: { ...file, buffer: data }, width: info.width, height: info.height };
 }
 
-// Real-ESRGAN принимает целочисленный множитель, поэтому берём ближайший
-// больший и обрезаем результат до нужной стороны.
-function realEsrganScale(sourceLongestSide, targetLongestSide) {
-  return Math.min(10, Math.max(2, Math.ceil(targetLongestSide / sourceLongestSide)));
-}
-
-async function waitForResult(prediction) {
-  const deadline = Date.now() + 10 * 60 * 1000;
-  let task = prediction;
-  while (Date.now() < deadline) {
-    if (task.status === 'succeeded') {
-      const url = Array.isArray(task.output) ? task.output[0] : task.output;
-      if (!url) throw new HttpError(502, 'The task finished without an image.');
-      return url;
-    }
-    if (task.status === 'failed' || task.status === 'canceled')
-      throw new HttpError(502, task.error || 'Replicate did not complete the upscale.');
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    const response = await fetch(task.urls?.get || `https://api.replicate.com/v1/predictions/${task.id}`, {
-      headers: apiHeaders()
-    });
-    task = await parseResponse(response);
-  }
-  throw new HttpError(504, 'Timed out waiting for the result. Try again.');
-}
-
 // Готовое возвращается байтами в ответе и на диск не ложится.
 //
 // Клали его в `images/generated`, и адрес этого файла был единственным
@@ -418,39 +335,35 @@ async function waitForResult(prediction) {
 // без них (research/2026-08-23-…).
 //
 // Обратная сторона названа: результат существует ровно один раз. Оборвётся
-// ответ на середине — предсказание Replicate оплачено и потеряно, второй
-// попытки по адресу больше нет.
-async function finishedImage(sourceUrl, file, { targetLongestSide, treat }) {
-  const response = await fetch(sourceUrl, { headers: apiHeaders() });
-  if (!response.ok) throw new HttpError(502, 'The finished image could not be downloaded from Replicate.');
-  const contentType = response.headers.get('content-type') || file.mimetype;
-  if (!contentType.startsWith('image/')) throw new HttpError(502, 'Replicate returned a file that is not an image.');
-  const extension = contentType.includes('png') ? '.png' : contentType.includes('webp') ? '.webp' : '.jpg';
+// ответ на середине — секунды видеокарты оплачены и потеряны, второй попытки
+// по адресу больше нет.
+//
+// Размер здесь уже готовый: до нужной стороны уменьшает `upscaler.js`, там же,
+// где известно, во сколько раз растит модель. Здесь остаётся имя и отделка.
+async function finishedImage(grown, file, { treat }) {
   const baseName =
     path.basename(file.originalname, path.extname(file.originalname)).replace(/[^a-zA-Z0-9_-]/g, '_') || 'photo';
   const filename = `${baseName}-${MODEL.slug}-${Date.now()}${extension}`;
-  let output = Buffer.from(await response.arrayBuffer());
-  if (targetLongestSide)
-    output = await sharp(output).resize(targetLongestSide, targetLongestSide, { fit: 'inside' }).toBuffer();
-  // Обработка и кадр идут последними, уже по готовому размеру: приглушение
-  // решает силу по пикселям, которые поедут на экран, а уменьшение после него
-  // мерило бы не тот файл. Обе галочки выключены — без них `finish` возвращает
-  // тот же буфер и ничего не пережимает.
-  // Кадр уже вырезан — до Replicate; здесь остаётся только отделка.
-  output = await finish(output, { treat });
-  return { buffer: output, filename, contentType };
+  // Обработка идёт последней, уже по готовому размеру: приглушение решает
+  // силу по пикселям, которые поедут на экран, а уменьшение после него мерило
+  // бы не тот файл. Галочка выключена — `finish` возвращает тот же буфер
+  // и ничего не пережимает.
+  // Кадр уже вырезан — до счёта; здесь остаётся только отделка.
+  const output = await finish(grown.buffer, { treat });
+  return { buffer: output, filename, contentType: grown.contentType };
 }
 
 app.post('/api/upscale', upload.single('photo'), async (req, res, next) => {
   let allowance = null;
   try {
     if (!req.file) return res.status(400).json({ error: 'Choose a JPG, PNG or WebP.' });
-    // Токен — до ворот счёта. Без него ни один запрос до Replicate не доходит,
-    // но место в счётчике занимает каждый: полсотни таких заперли бы сайт
-    // на сутки за вызовы, которых не было, и открыл бы его только перезапуск.
-    if (!apiToken()) throw new HttpError(503, 'Upscaling is switched off right now.');
+    // Настройка — до ворот счёта. Без адреса и ключей ни один запрос до
+    // видеокарты не доходит, но место в счётчике занимает каждый: полсотни
+    // таких заперли бы сайт на сутки за вызовы, которых не было, и открыл бы
+    // его только перезапуск.
+    if (!upscalerReady()) throw new HttpError(503, 'Upscaling is switched off right now.');
     // Счёт спрашивается до всякой работы; место занимается тем же вопросом
-    // и возвращается ниже, в `finally`, если до Replicate так и не дошли —
+    // и возвращается ниже, в `finally`, если до видеокарты так и не дошли —
     // платим за вызовы, а не за попытки (limits.js).
     allowance = upscaleAllowance(req, res);
     if (allowance.refusal) {
@@ -463,10 +376,13 @@ app.post('/api/upscale', upload.single('photo'), async (req, res, next) => {
     const treat = req.body.treat === 'true';
     const crop = req.body.crop === 'true';
     const { file, width, height } = await upright(req.file);
+  // Расширение — от того, что вернулось, а не от того, что прислали: считает
+  // не эта машина, и формат ответа назван в `upscaler.js`.
+  const extension = grown.contentType.includes('png') ? '.png' : '.jpg';
     // Кадр режется ДО отправки, как и в браузере (`upscaleInBrowser`).
     // Здесь у этого есть и своя цена: за пиксели, которые мы выбросим сразу
-    // после, Replicate берёт наравне с остальными, а у широкой картинки их
-    // две трети. Порог тоже назначается по тому, что останется, — иначе
+    // после, видеокарта считает наравне с остальными, а у широкой картинки
+    // их две трети. Порог тоже назначается по тому, что останется, — иначе
     // готовому кадру до него не хватит.
     const window = crop ? phoneWindow(width, height) : null;
     const framed = window
@@ -474,11 +390,20 @@ app.post('/api/upscale', upload.single('photo'), async (req, res, next) => {
       : file;
     const [framedWidth, framedHeight] = window ? [window.width, window.height] : [width, height];
     const targetLongestSide = serverLongestSide(framedWidth, framedHeight);
-    const scale = realEsrganScale(Math.max(framedWidth, framedHeight), targetLongestSide);
     allowance.spend();
-    const prediction = await createPrediction(asDataUrl(framed), scale);
-    const resultUrl = await waitForResult(prediction);
-    const made = await finishedImage(resultUrl, file, { targetLongestSide, treat });
+    const grown = await enlarge(framed.buffer, {
+      width: framedWidth,
+      height: framedHeight,
+      targetLongestSide
+    });
+    // Единственная запись о том, за что заплачено. Панель Modal покажет
+    // те же секунды, но не покажет, чьей картинке они достались и был ли
+    // запуск холодным, — а из этих двух чисел и складывается цена вызова.
+    console.log(
+      `upscale: ${framedWidth}x${framedHeight} → ${targetLongestSide}, плиток ${grown.tiles}, ` +
+        `${grown.seconds} с, ${grown.cold ? 'холодный' : 'тёплый'}, ${grown.provider}`
+    );
+    const made = await finishedImage(grown, file, { treat });
     // Ответ — сама картинка, а не адрес картинки. Имя едет заголовком:
     // по нему берётся номер работы и им же называется скачанное, и собрано
     // оно из тех же частей, что и в браузерном пути (`localName`).
@@ -491,7 +416,6 @@ app.post('/api/upscale', upload.single('photo'), async (req, res, next) => {
     // одного поля.
     res.setHeader('X-Filename', made.filename);
     res.setHeader('X-Model', MODEL.title);
-    res.setHeader('X-Task-Id', prediction.id);
     // Хранить нечего, кэшировать нечего: адрес один на все работы.
     res.setHeader('Cache-Control', 'no-store');
     res.end(made.buffer);
@@ -499,7 +423,7 @@ app.post('/api/upscale', upload.single('photo'), async (req, res, next) => {
     next(error);
   } finally {
     // Занятое место возвращается всегда, когда деньги не ушли: отказ по
-    // формату, нечитаемый файл, авария у Replicate. После `spend` — пусто.
+    // формату, нечитаемый файл, выключенное увеличение. После `spend` — пусто.
     allowance?.release?.();
   }
 });
@@ -546,7 +470,7 @@ app.use((error, req, res, next) => {
   }
   if (error instanceof HttpError) {
     // Ответ посетителю сам по себе следа не оставляет: во время аварии
-    // у Replicate в логе иначе не будет вообще ничего.
+    // у видеокарты в логе иначе не будет вообще ничего.
     if (error.status >= 500) console.error(error);
     return fail(req, res, error.status, error.message);
   }
@@ -564,11 +488,12 @@ app.use((error, req, res, next) => {
   fail(req, res, 500, 'Something went wrong on our side. Try again in a moment.');
 });
 
-// Витрина без токена работает целиком — своих вызовов к Replicate у неё нет,
-// — поэтому старт продолжается, но молчать об этом нельзя: приёмка отвечает
-// отказом, и без строчки в логе разбираться пришлось бы по 503.
-if (!apiToken()) console.warn('REPLICATE_API_TOKEN не задан: витрина работает, приёмка отвечает 503.');
+// Витрина без увеличения работает целиком — своих вызовов к видеокарте у неё
+// нет, — поэтому старт продолжается, но молчать об этом нельзя: приёмка
+// отвечает отказом, и без строчки в логе разбираться пришлось бы по 503.
+if (!upscalerReady())
+  console.warn('UPSCALE_URL/UPSCALE_KEY/UPSCALE_SECRET не заданы: витрина работает, приёмка отвечает 503.');
 
 const port = Number(process.env.PORT || 3000);
 const host = process.env.HOST || '0.0.0.0';
-app.listen(port, host, () => console.log(`Replicate Image Upscaler: http://${host}:${port}`));
+app.listen(port, host, () => console.log(`Tessarum: http://${host}:${port}`));
