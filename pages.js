@@ -146,6 +146,13 @@ function layout({
     ${image && imageWidth ? `<meta property="og:image:width" content="${imageWidth}" />` : ''}
     ${image && imageHeight ? `<meta property="og:image:height" content="${imageHeight}" />` : ''}
     ${image ? '<meta name="twitter:card" content="summary_large_image" />' : ''}
+    <!-- Расписка Pinterest в том, что домен наш. Он её читает один раз, когда
+         жмёшь «Claim your website» в настройках, и дальше подписывает нашим
+         именем каждый пин, ведущий сюда. Ключ выдан на аккаунт, а не на домен:
+         тот же самый предлагался и для другого сайта в том же окне.
+         Снимать после проверки нельзя — Pinterest перечитывает её и снимает
+         claim, если метка пропала. -->
+    <meta name="p:domain_verify" content="5d9476762f106685e0d233dc317fb09b" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16.png" />
@@ -299,6 +306,26 @@ const plateSizes = item => {
 const offered = item => item.crops?.tall || item;
 const tile = item => item.crops?.tall || item;
 
+// Заголовок в каталоге разрезается на имя работы и хвост для выдачи: «In the
+// Waves — seascape phone wallpaper». Режется он по первому тире с пробелами,
+// а не по каждому: у тринадцати японских и китайских работ заголовок музейный
+// и тире в нём два — «Carp — Aizawa Bunseki — Meiji period, 19th century phone
+// wallpaper», — и разрез по всем сразу молча терял хвост, то есть ровно те
+// слова, ради которых хвост и пишется.
+//
+// Тире, оставшиеся внутри имени и хвоста, становятся запятыми. Читают их
+// в двух местах — заголовком вкладки и заголовком в выдаче, — и в обоих тире
+// работает разделителем уровнем выше запятой: «Gusu Beauty – Winter, snow
+// landscape phone wallpaper» распадается надвое там, где часть одна. Запятая
+// перечисляет, а заголовок и есть перечисление. Дефис не трогается:
+// «Barbed-wire fence» — одно слово, а не два.
+const DASH = /\s*[—–]\s*/g;
+const titleParts = item => {
+  const cut = item.title.indexOf(' — ');
+  const [name, kind] = cut < 0 ? [item.title, ''] : [item.title.slice(0, cut), item.title.slice(cut + 3)];
+  return { name: name.replace(DASH, ', '), kind: kind.replace(DASH, ', ') };
+};
+
 // Что написано на карточке. Раньше стояли место и номер — «France · vl-0227», —
 // и оба были потрачены впустую. Место называет страну, а ищут не страну:
 // набирают «courbet» и «the brook». Номер не говорит ни человеку, ни поиску
@@ -324,7 +351,7 @@ const tile = item => item.crops?.tall || item;
 // поэтому здесь элемент выводится всегда.
 // `unknown` пропускается по той же причине, по какой его пропускает байлайн
 // страницы работы: «Unknown» — не имя, а шум.
-const cardName = item => item.title.split(' — ')[0];
+const cardName = item => titleParts(item).name;
 
 const cardCreator = item => {
   const { creator, creatorKind } = item.provenance || {};
@@ -455,7 +482,7 @@ const grid = (items, eager = 0, lead = '') =>
 const topicRow = topics =>
   topics.length
     ? `<nav class="topics" aria-label="Collections">${topics
-        .map(topic => `<a href="/collection/${escape(topic.slug)}">${escape(topic.nav)}</a>`)
+        .map(topic => `<a href="/collection/${escape(topic.slug)}">${escape(topic.heading)}</a>`)
         .join('\n        ')}</nav>`
     : '';
 
@@ -500,8 +527,9 @@ export function collectionPage({ items, topics = [], origin }) {
 //
 // Текст ссылки несёт слова темы, а не «см. также»: по тексту ссылки страницу
 // и понимают, и «here» ведёт ровно никуда. Слова берутся из `term`, а не из
-// `nav`: подпись в ряду тем стоит во множественном числе, а внутри фразы
-// нужна форма определения — «more moody landscape phone wallpapers».
+// `heading`: в ряду тем стоит имя раздела целиком («Moody landscape
+// collection»), а внутри фразы нужна одна форма определения —
+// «more moody landscape phone wallpapers».
 const inTopics = topics =>
   topics.length
     ? `<p class="in-topic">${topics
@@ -606,10 +634,20 @@ const creatorFields = item => {
 // Совпадение проверяется по фамилии, потому что у Одюбона имя уже стоит
 // в заголовке работы, и без проверки вышло бы «Wood Pewee by John James
 // Audubon — Audubon bird illustration phone wallpaper».
+//
+// Годы жизни в скобках фамилией не считаются. У одиннадцати работ из японской
+// подборки создатель записан так, как его называет музей, — «Yokoyama Taikan
+// (1868-1958)», — и последним словом там стоят даты. Заголовок их не содержит
+// и содержать не может, так что проверка не срабатывала ни разу и байлайн
+// вставал рядом с именем, которое в заголовке уже стояло: «Mount Fuji Rising
+// above Clouds by Yokoyama Taikan (1868-1958), Yokoyama Taikan, ca. 1913».
 const bylineFor = ({ provenance, title }) => {
   const { creator, creatorKind } = provenance || {};
   if (!creator || creatorKind === 'unknown') return '';
-  const surname = creator.split(' ').at(-1);
+  const surname = creator
+    .replace(/\s*\([^()]*\)$/, '')
+    .split(' ')
+    .at(-1);
   return title.toLowerCase().includes(surname.toLowerCase()) ? '' : ` by ${creator}`;
 };
 
@@ -785,7 +823,7 @@ const TREATMENT_NAMES = Object.fromEntries(
 // страница отдаёт именно телефонный кадр, и версия обязана давать то же самое,
 // иначе «та же картинка, только темнее» окажется неправдой по форме.
 const versions = item => {
-  const name = item.title.split(' — ')[0];
+  const { name } = titleParts(item);
   const rows = (item.versions || [])
     .map(version => {
       const file = version.crops?.tall || version;
@@ -815,7 +853,7 @@ const versions = item => {
 // стоит «wallpaper» — слово выдачи. Одно и то же не сказано дважды, но обоих
 // слов у работы по одному.
 const alternates = item => {
-  const name = item.title.split(' — ')[0];
+  const { name } = titleParts(item);
   const widePlate = item.width > item.height;
   const rows = [
     {
@@ -885,10 +923,10 @@ export function workPage({ item, others, topics = [], origin }) {
   // обоев годится в обои, — а в `<title>` он остаётся, потому что там его
   // читает не человек, а выдача.
   //
-  // Разделитель — em-dash с пробелами, и второго такого в заголовках нет
-  // (проверено по всем 210 записям), так что разрез однозначен. У работ без
-  // хвоста — это тридцать фотографий — имя и есть весь заголовок.
-  const [name, kind] = item.title.split(' — ');
+  // Режет заголовок `titleParts`: по первому тире с пробелами, а тире внутри
+  // половин становятся запятыми. У работ без хвоста — это тридцать фотографий —
+  // имя и есть весь заголовок.
+  const { name, kind } = titleParts(item);
   const headline = `${name}${bylineFor(item)}${kind ? `, ${kind}` : ''}`;
   // Заголовком встаёт имя работы — но только если оно у неё есть. Тире
   // отделяет имя от хвоста, написанного для поиска, и у тридцати фотографий
@@ -946,19 +984,44 @@ export function workPage({ item, others, topics = [], origin }) {
   // пропорции: у телефонного кадра это около 290 px на большом экране
   // и примерно 70vw на телефоне.
   const shownPlate = shownWith(file.copies, plateSizes(file));
-  // Адрес работы в `src` записан целиком, а не путём от корня, как везде на
-  // сайте. Причина внешняя: Pinterest, когда в него вставляют ссылку на
-  // страницу, разбирает HTML сам и `/images/…` до адреса не достраивает —
-  // картинка с таким `src` у него отбраковывается («does not begin with
-  // http», assets.pinterest.com/js/pinmarklet.js), и на странице, полной
-  // 4K-обоев, он не находит ни одной пригодной. Браузеру от этого ни холодно
-  // ни жарко: `picture.src` в `work.js` и так отдаёт полный адрес.
+  // Описание пина — своим полем, а не тем же `alt`. `alt` написан для того,
+  // кто картинку не видит, и начинается со служебного («Dimmed vertical iPhone
+  // background from a painting: …»); в сетке Pinterest от описания видно
+  // первые 75–100 знаков — ровно эту часть, а не те слова, по которым ищут.
+  // Поле необязательное и откатывается на `alt`, пока не написано: 359 записей
+  // пишутся постепенно.
+  const pinDescription = item.pin || item.alt;
+  // `data-pin-media` — сказанное словами самого Pinterest: сохранять надо
+  // полный файл, а не выбранную копию из `srcset`. Атрибуты требуют полного
+  // адреса, поэтому здесь `origin`, — но сам `src` остаётся путём от корня,
+  // как везде на сайте. `data-pin-description` — то же описание, что и у
+  // кнопки: расширением Pinterest сохраняют мимо неё, и без атрибута в пин
+  // ушёл бы `alt`.
   //
-  // `data-pin-media` — то же самое, сказанное словами самого Pinterest:
-  // сохранять надо полный файл, а не выбранную копию из `srcset`. Соседние
-  // работы в «More in the collection» остаются с путями нарочно: пин с них
-  // указывал бы на эту страницу, а не на свою.
-  const pinned = ` data-pin-media="${origin}${escape(file.url)}" data-pin-url="${origin}/w/${escape(item.slug)}"`;
+  // Соседние работы в «More in the collection» этих атрибутов не получают
+  // нарочно: пин с них указывал бы на эту страницу, а не на свою.
+  const pinned =
+    ` data-pin-media="${origin}${escape(file.url)}" data-pin-url="${origin}/w/${escape(item.slug)}"` +
+    ` data-pin-description="${escape(pinDescription)}"`;
+  // Отправка в Pinterest — контурной кнопкой рядом с Download, а не значком
+  // с логотипом. Страница работы набрана музейной этикеткой, и красный кружок
+  // в ней читается рекламой; `btn--ghost` — та же форма и тот же шрифт, что
+  // у Download, только контуром, и лишнего веса действию не даёт.
+  //
+  // Адрес — старый `pin/create/button`, тот самый, которым ходит кнопка
+  // в браузере. Новый конструктор пинов, куда ссылку вставляют руками,
+  // на наши страницы отвечает «no suitable images», а этот открывает выбор
+  // доски как ни в чём не бывало (проверено 24.08.2026). Что там сломано,
+  // снаружи не видно, и чинить со своей стороны нечего.
+  //
+  // `media` и `description` проставлены нарочно: без них Pinterest выбирает
+  // кадр сам и берёт не тот — на пин уходит целая картина вместо кропа,
+  // который страница и предлагает.
+  const savePin =
+    'https://www.pinterest.com/pin/create/button/' +
+    `?url=${encodeURIComponent(`${origin}/w/${item.slug}`)}` +
+    `&amp;media=${encodeURIComponent(`${origin}${file.url}`)}` +
+    `&amp;description=${encodeURIComponent(pinDescription)}`;
   // Под чертой — только то, что утверждается об этой работе: из чего она
   // сделана, кем и на каких условиях отдаётся. Предложение сделать своё
   // стояло сперва здесь и читалось как ещё одно такое утверждение, потом
@@ -996,7 +1059,7 @@ export function workPage({ item, others, topics = [], origin }) {
       <div class="plate">
         <figure class="record record--plate">
           <div ${frame} id="work-frame">
-            <img id="work-picture" src="${origin}${escape(file.url)}"${shownPlate} alt="${escape(item.alt)}" width="${file.width}" height="${file.height}" fetchpriority="high"${pinned} />
+            <img id="work-picture" src="${escape(file.url)}"${shownPlate} alt="${escape(item.alt)}" width="${file.width}" height="${file.height}" fetchpriority="high"${pinned} />
             ${comparable ? beforeFrame(item) : ''}
           </div>
         </figure>
@@ -1064,7 +1127,7 @@ export function intakePage({ origin, runtime, runtimeBytes }) {
         <figure class="record record--plate">
           <div class="record__image" id="intake-frame" role="button" tabindex="0" aria-label="Choose a picture">
             <p class="prompt">
-              <span class="prompt__wide">Drop your picture here</span>
+              <span class="prompt__wide">Drop or paste your picture here</span>
               <span class="prompt__narrow">Tap to choose</span>
               <span class="prompt__fine">JPG, PNG or WebP</span>
               <!-- Совет, а не требование, и оба его числа выведены, а не

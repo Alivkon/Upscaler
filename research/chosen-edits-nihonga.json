@@ -1,0 +1,173 @@
+{
+  "_": "Что Charlie отметил на листе ~/tessarum-harvest/nihonga/edits.html (ключ pick-edit-nihonga), 24.08.2026. Лист собран scripts/research/nihonga-edits.mjs по отбору с research/nihonga-browse.html. Прошлые круги — chosen-edits.json и chosen-edits-v2.json, там другие рефы.",
+  "asked": "2026-08-24",
+  "said": "add these to gallery: …",
+  "names": "На листе версии зовутся orig · bal · snap · app · ceil · niobe, и у каждой двойник -vig. В museum-works.json те же правила зовутся none · bal · snap · dim80-desat-whole · ceil · niobe, суффикс -vig тот же.",
+  "order": "Порядок версий — порядок, в котором Charlie их тикал: галочки складываются в Set, а Set хранит порядок вставки. ПЕРВАЯ ГЛАВНАЯ (treatment.mjs): она стоит в проёме страницы и её видит поиск по картинкам. Это допущение, а не сказанное вслух: у vl-0388 главной вышла app, потому что она отмечена первой, а не потому, что названа лучшей.",
+  "shape": {
+    "ticks": 18,
+    "works": 10,
+    "ticked": 9,
+    "on_the_gallery": 8,
+    "pulled_as_duplicate": 1,
+    "parked": 0,
+    "empty": 1
+  },
+  "notes": [
+    "vl-0392 (ворон по золоту) выпущена как `Unknown (Japan)`. Сначала была отложена — решил, что без имени автора её брать нельзя, и это неверно: `creatorKind: \"unknown\"` заведён в verify-catalogue.mjs наравне с person и organization, и семьдесят работ каталога уже стоят под «Unknown (…)». Автора действительно нет: имя файла на Викискладе — общая подпись Sailko на партию снимков («appezzamento di zucche»), и она заведомо неверна — кадр 01 в той же партии ширма с тыквами, кадр 07 другая ширма с павловнией, а 08 ворон. «Неизвестен» — это и есть честная запись, а не пропуск. Заодно исправлен slug: стоял gourd-trellis-screen-shimomura-kanzan, то есть неверный дважды.",
+    "vl-0395 СНЯТА С ВИТРИНЫ 24.08 как повтор vl-0393. Это один лист Киёчики — Rijksmuseum RP-P-1989-177: у vl-0393 мастером стоит целый триптих, у vl-0395 — файл «(cropped)» с Викисклада, вырезка из того же скана. Сначала я оставил обе, сравнив телефонные кадры: один падал на всадника, другой на флаг Красного Креста, и я счёл их разными картинами. Проверка не та. Кадры и правда разные, работа — нет, и в самой записи vl-0395 стояло `work: \"…(detail)\"`. Чарли увидел повтор на листе кадрировки. На остальных 367 работах ни один источник не встречается дважды. Оставлен vl-0393 (всадник стоит сам по себе, кадр с флагом читается обрывком). Почему verify не поймал: повтор ищется по `provenance.page`, а тут две разные страницы Викисклада на один музейный объект. Общее у них — номер RP-P-1989-177 в обоих адресах.",
+    "vl-0393 — единственная тёмная по замеру: luma 76,1 при пороге 78, warm 0,054, то есть холодная. Отсюда dark moody, не dark academia. Остальные восемь светлее порога, слов о темноте у них нет.",
+    "vl-0393 — единственная с физическим полем листа: trim top 230 · bottom 150 · left 275 · right 140, мерено по краю печати и проверено глазом на 960 px. Заодно ушла колофонная надпись в левом поле.",
+    "vl-0391 стоит по центру ширмы. 24.08 Чарли прошёл лист кадрировки и записал left 3265px — середина с точностью до трёх пикселей, то есть посмотрел и не двинул. Опасение, что центр попадает в пустое золото, было сказано по уменьшенной плите: в самом кадре ветка сливы входит снизу справа и занимает нижнюю треть, как и обещает alt. Смещение на солнце (`\"crop\": {\"left\": 994}`) записано в research/to-crop-positions.md и не применено.",
+    "«Уходящая весна» Кавая Гёкудо была на листе и не отмечена ни разу. Пустой тик — решение, а не пропуск.",
+    "vl-0392 — CC BY 3.0 (снимок Sailko), первая в собрании: у остальных пятнадцати cc-by работ лицензия 4.0. Карточка берёт название и ссылку из LICENSES (works.js), где заведено одно значение «CC BY 4.0» на всю лицензию, поэтому чип и ссылка ведут на текст 4.0. Номер версии сказан в credit-строке рядом, так что страница не врёт, но и не точна. Развести версии — правка в LICENSES.",
+    "Кадры выставлены 24.08 по листу crop-positioner-only.html (--only на девять работ). Сдвинуты четыре: vl-0389 left 57, vl-0392 left 982, vl-0393 left 1987, vl-0394 left 1354. Остальные оставлены по центру, и это записано как решение. vl-0394 отмечен дважды — сначала left 0, потом left 1357: лист копит клики и не заменяет прежний. Взят последний, 1357 больше хода плиты (1354), в файл записан настоящий предел."
+  ],
+  "works": [
+    {
+      "ref": "vl-0388",
+      "work": "Towing a Boat",
+      "artist": "Yokoyama Taikan",
+      "sheet": "01",
+      "ticked": [
+        "app",
+        "orig-vig",
+        "bal-vig",
+        "snap-vig",
+        "app-vig"
+      ],
+      "versions": [
+        "dim80-desat-whole",
+        "none-vig",
+        "bal-vig",
+        "snap-vig",
+        "dim80-desat-whole-vig"
+      ],
+      "on_the_gallery": true
+    },
+    {
+      "ref": "vl-0389",
+      "work": "River Sky in Evening Snow",
+      "artist": "Yokoyama Taikan",
+      "sheet": "02",
+      "ticked": [
+        "bal"
+      ],
+      "versions": [
+        "bal"
+      ],
+      "on_the_gallery": true
+    },
+    {
+      "ref": "vl-0390",
+      "work": "Mountain Village after Storm",
+      "artist": "Yokoyama Taikan",
+      "sheet": "03",
+      "ticked": [
+        "app",
+        "orig"
+      ],
+      "versions": [
+        "dim80-desat-whole",
+        "none"
+      ],
+      "on_the_gallery": true
+    },
+    {
+      "ref": "vl-0391",
+      "work": "Yoroboshi (right screen)",
+      "artist": "Shimomura Kanzan",
+      "sheet": "04",
+      "ticked": [
+        "orig"
+      ],
+      "versions": [
+        "none"
+      ],
+      "on_the_gallery": true
+    },
+    {
+      "ref": "vl-0392",
+      "work": "Crow on gold, screen detail",
+      "artist": "Unknown (Japan)",
+      "sheet": "05",
+      "ticked": [
+        "orig-vig",
+        "app-vig"
+      ],
+      "versions": [
+        "none-vig",
+        "dim80-desat-whole-vig"
+      ],
+      "on_the_gallery": true
+    },
+    {
+      "ref": "vl-0393",
+      "work": "Bivouac at Yingkou",
+      "artist": "Kobayashi Kiyochika",
+      "sheet": "06",
+      "ticked": [
+        "bal",
+        "app"
+      ],
+      "versions": [
+        "bal",
+        "dim80-desat-whole"
+      ],
+      "on_the_gallery": true
+    },
+    {
+      "ref": "vl-0394",
+      "work": "The Great Fire seen from Hisamatsu",
+      "artist": "Kobayashi Kiyochika",
+      "sheet": "07",
+      "ticked": [
+        "snap"
+      ],
+      "versions": [
+        "snap"
+      ],
+      "on_the_gallery": true
+    },
+    {
+      "ref": "vl-0395",
+      "work": "Bivouac at Yingkou (detail)",
+      "artist": "Kobayashi Kiyochika",
+      "sheet": "08",
+      "ticked": [
+        "bal",
+        "snap",
+        "ceil"
+      ],
+      "versions": [
+        "bal",
+        "snap",
+        "ceil"
+      ],
+      "on_the_gallery": false,
+      "pulled": "2026-08-24 — повтор vl-0393 (RP-P-1989-177), снята с витрины"
+    },
+    {
+      "ref": "vl-0396",
+      "work": "Yūjin yochi ari",
+      "artist": "Yokoyama Taikan",
+      "sheet": "09",
+      "ticked": [
+        "bal"
+      ],
+      "versions": [
+        "bal"
+      ],
+      "on_the_gallery": true
+    },
+    {
+      "ref": null,
+      "work": "Parting Spring",
+      "artist": "Kawai Gyokudō",
+      "sheet": "10",
+      "ticked": [],
+      "versions": [],
+      "on_the_gallery": false
+    }
+  ]
+}

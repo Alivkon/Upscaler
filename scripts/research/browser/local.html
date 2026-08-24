@@ -1,0 +1,134 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>local upscale</title>
+<style>
+  body { font: 14px/1.5 ui-monospace, monospace; background: #111; color: #ddd; margin: 20px }
+  #log { white-space: pre-wrap }
+  .ok { color: #7c7 } .bad { color: #e77 } .hd { color: #89f }
+</style>
+<h3 id="hd">local upscale</h3>
+<div id="log"></div>
+<script type="module">
+// Счёт у пользователя: та же картинка, та же модель, только считает не сервер
+// за деньги, а видеокарта в браузере бесплатно. Страница гоняет весь набор и
+// шлёт результаты обратно на serve.mjs, чтобы дальше их резал sharp — тем же
+// кодом, что резал Topaz, иначе сравнение будет не про модели, а про рескейл.
+import * as ort from './dist/ort.webgpu.min.mjs';
+ort.env.wasm.wasmPaths = '/dist/';   // относительный путь тут считается от
+// самого модуля, а он лежит в /dist/, и получается /dist/dist/… — только абсолютный
+ort.env.wasm.numThreads = navigator.hardwareConcurrency || 4;
+
+const P = new URLSearchParams(location.search);
+const MODEL = P.get('model') || 'clearreality-x4';
+const EP = P.get('ep') || 'webgpu';
+const TILE = +(P.get('tile') || 192);
+const OV = +(P.get('ov') || 16);
+// Второй набор картинок живёт в своём манифесте и своей папке результатов,
+// чтобы старый счёт не смешался с проверочным.
+const SET = P.get('set') || '';
+const SUF = SET ? '_' + SET : '';
+const logEl = document.getElementById('log');
+
+const say = (s, cls = '') => { logEl.insertAdjacentHTML('beforeend', `<div class="${cls}">${s}</div>`); console.log(s); };
+const post = (o) => fetch('/log', { method: 'POST', body: JSON.stringify({ model: MODEL, ep: EP, ...o }) });
+const c8 = (v) => (v <= 0 ? 0 : v >= 1 ? 255 : (v * 255 + 0.5) | 0);
+
+// Края достраиваются повтором крайнего пикселя: иначе на швах у границы кадра
+// модель видит чёрное поле и рисует по нему тёмную кайму. Заодно ширина и
+// высота дотягиваются до целого числа плиток — у realplksr вход жёсткий 256×256,
+// и плитка с краю не того размера просто не проходит.
+function padded(img, ov, tile) {
+  const w = img.width, h = img.height;
+  const pw = Math.ceil(w / tile) * tile, ph = Math.ceil(h / tile) * tile;
+  const W2 = pw + 2 * ov, H2 = ph + 2 * ov;
+  const c = new OffscreenCanvas(W2, H2);
+  const x = c.getContext('2d', { willReadFrequently: true });
+  x.drawImage(img, ov, ov);
+  x.drawImage(c, ov + w - 1, ov, 1, h, ov + w, ov, W2 - (ov + w), h);   // вправо
+  x.drawImage(c, 0, ov + h - 1, W2, 1, 0, ov + h, W2, H2 - (ov + h));   // вниз
+  x.drawImage(c, 0, ov, W2, 1, 0, 0, W2, ov);                           // вверх
+  x.drawImage(c, ov, 0, 1, H2, 0, 0, ov, H2);                           // влево
+  return { px: x, pw, ph };
+}
+
+async function runTile(sess, inName, outName, id) {
+  const n = id.width * id.height;
+  const f = new Float32Array(n * 3);
+  for (let i = 0; i < n; i++) { f[i] = id.data[i * 4] / 255; f[n + i] = id.data[i * 4 + 1] / 255; f[2 * n + i] = id.data[i * 4 + 2] / 255; }
+  const r = await sess.run({ [inName]: new ort.Tensor('float32', f, [1, 3, id.height, id.width]) });
+  return r[outName];
+}
+
+async function upscale(sess, inName, outName, img) {
+  const w = img.width, h = img.height;
+  const { px, pw, ph } = padded(img, OV, TILE);
+  let scale = 0, oc = null, octx = null, tiles = 0;
+  for (let y = 0; y < ph; y += TILE) {
+    for (let x = 0; x < pw; x += TILE) {
+      const o = await runTile(sess, inName, outName, px.getImageData(x, y, TILE + 2 * OV, TILE + 2 * OV));
+      const OW = o.dims[3], OH = o.dims[2], d = o.data;
+      if (!scale) {
+        scale = Math.round(OW / (TILE + 2 * OV));
+        oc = new OffscreenCanvas(w * scale, h * scale);
+        octx = oc.getContext('2d');
+      }
+      // из плитки берётся только то, что попадает в настоящий кадр: добивка
+      // справа и снизу — служебная, в картинку она не идёт
+      const cw = Math.min(TILE, w - x) * scale, ch = Math.min(TILE, h - y) * scale;
+      if (cw <= 0 || ch <= 0) continue;
+      const m = OV * scale, plane = OW * OH;
+      const out = new ImageData(cw, ch);
+      for (let yy = 0; yy < ch; yy++) for (let xx = 0; xx < cw; xx++) {
+        const si = (yy + m) * OW + (xx + m), di = (yy * cw + xx) * 4;
+        out.data[di] = c8(d[si]); out.data[di + 1] = c8(d[plane + si]); out.data[di + 2] = c8(d[2 * plane + si]); out.data[di + 3] = 255;
+      }
+      octx.putImageData(out, x * scale, y * scale);
+      tiles++;
+    }
+  }
+  return { oc, scale, tiles };
+}
+
+(async () => {
+  document.getElementById('hd').textContent = `${MODEL} · ${EP} · tile ${TILE}+${OV}`;
+  say(`webgpu: ${!!navigator.gpu}`, navigator.gpu ? 'ok' : 'bad');
+  const man = await (await fetch(SET ? `manifest-${SET}.json` : 'manifest.json')).json();
+
+  let sess;
+  const t0 = performance.now();
+  try {
+    // enableMemPattern выключен намеренно: с ним WebGPU пытается переиспользовать
+    // буфер предыдущего узла и падает «Shape mismatch attempting to re-use buffer
+    // {1,224,224,3} != {1,896,896,3}» — это вход плитки и он же после ×4.
+    sess = await ort.InferenceSession.create(`models/${MODEL}.onnx`,
+      { executionProviders: [EP], enableMemPattern: false, graphOptimizationLevel: P.get('opt') || 'all' });
+  } catch (e) { say(`session failed: ${e.message}`, 'bad'); post({ fatal: e.message }); return; }
+  const load = (performance.now() - t0) / 1000;
+  const inName = sess.inputNames[0], outName = sess.outputNames[0];
+  say(`loaded in ${load.toFixed(1)}s · in ${inName} · out ${outName}`, 'hd');
+  post({ event: 'loaded', secs: +load.toFixed(1), tile: TILE, ov: OV });
+
+  const only = P.get('only');
+  for (const p of man) {
+    if (only && !only.split(',').includes(p.id)) continue;
+    if (p.need <= 1.02) { say(`${p.id} skip — no model needed (${p.w}×${p.h})`); continue; }
+    const img = await createImageBitmap(await (await fetch(p.url)).blob());
+    const t = performance.now();
+    try {
+      const { oc, scale, tiles } = await upscale(sess, inName, outName, img);
+      const secs = (performance.now() - t) / 1000;
+      const blob = await oc.convertToBlob({ type: 'image/png' });
+      await fetch(`/save/${MODEL}_${EP}${SUF}/${p.id}.png`, { method: 'POST', body: blob });
+      const mp = (p.w * p.h) / 1e6;
+      say(`${p.id} ${p.w}×${p.h} ×${scale} · ${tiles} tiles · ${secs.toFixed(1)}s (${(secs / mp).toFixed(1)}s/Mp) · ${(blob.size / 1e6).toFixed(1)}MB`, 'ok');
+      post({ id: p.id, w: p.w, h: p.h, scale, tiles, secs: +secs.toFixed(1), sPerMp: +(secs / mp).toFixed(1), bytes: blob.size });
+    } catch (e) {
+      say(`${p.id} FAILED ${e.message}`, 'bad');
+      post({ id: p.id, error: String(e.message).slice(0, 700) });
+    }
+    img.close();
+  }
+  say('DONE', 'hd');
+  post({ event: 'done' });
+})();
+</script>

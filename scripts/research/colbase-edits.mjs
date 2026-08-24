@@ -1,6 +1,14 @@
 // colbase-edits.mjs — the same six treatment versions, for ColBase candidates.
 // Mirrors gedits.mjs but reads from ColBase instead of museum-works.json.
 //
+// УСТАРЕЛ КАК ОБРАЗЕЦ, 24.08. Шесть версий здесь — не полный набор: 23.08
+// виньетка стала обработкой генератора, и с тех пор на работу идёт
+// двенадцать версий — каждая правка и её двойник с углами. Этот файл
+// сохранён как есть, потому что по нему уже отбирали, но лист, склонированный
+// с него, выйдет без виньеток и это заметят только на телефоне.
+// Клонировать: `gedits.mjs`. Готовое зеркало для внешнего источника:
+// `nihonga-edits.mjs`.
+//
 //   node colbase-edits.mjs
 //   TARGET=1440 node colbase-edits.mjs    slide width (default 1080)
 //   FORCE=1 node colbase-edits.mjs        redraw everything

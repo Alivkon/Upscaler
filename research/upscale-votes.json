@@ -285,5 +285,82 @@
     },
     "finding": "the router does not transfer: busy% is the same on both sides (28.7 vs 29.3) and no threshold separates them. Second measure built on luminance transitions to die out of sample. Both errors happen equally often, and one of them ships a soft wallpaper, not a wasted nickel.",
     "note": "research/2026-08-22-busyness-does-not-say-who-needs-paying.md"
+  },
+  "round13_wallpaper_blind": {
+    "sheet": "~/Pictures/wall-test/ — nine files A..I, no sheet",
+    "question": "set each as the desktop wallpaper and say which you like",
+    "picture": "7afb0e0536ec4ac6d465a425cefefa5c.jpg — foggy meadow, 1200x800, 107 KB",
+    "screen": "HDMI-A-1 1920x1080, scale 1",
+    "method": "every arm x4 to 4800x3200 in node (onnxruntime wasm, tile 200 + 16), then one identical 16:9 crop and lanczos to exactly 1920x1080, jpeg q95 4:4:4 — the compositor rescales nothing",
+    "key": {
+      "A": "RealPLKSR x4",
+      "B": "4xNomos2_otf_esrgan",
+      "C": "Real-ESRGAN x4",
+      "D": "4x_NMKD-Siax_200k",
+      "E": "4x-UltraSharpV2",
+      "F": "4x_foolhardy_Remacri",
+      "G": "ClearRealityV1 x4 — the arm already shipping",
+      "H": "lanczos, no model — the floor",
+      "I": "4x_RealisticRescaler_100000_G",
+      "J": "Topaz Standard V2 x4 on Replicate — $0.05, added after the reveal",
+      "K": "Topaz Standard V2 x2 — the factor the product would actually call"
+    },
+    "verdict": {
+      "D": "favourite",
+      "I": "very blurry but not bad",
+      "C": "interesting, a bit too frivolous and cartoonish",
+      "F": "a bit noisy",
+      "H": "a bit noisy",
+      "A": "not good, very noisy",
+      "B": "blurry",
+      "E": "fine",
+      "G": "noisy — rejected"
+    },
+    "note": "H is the no-model floor and it reads noisy too, so part of what looks like model noise in A and F is the source jpeg's own grain enlarged 4x, not invented. C repeats the blob-on-vegetation complaint from round 5. G, the arm in the product, drew no comment either way. B and E came in after the key was shown: E (UltraSharpV2, 49 MB) acceptable, B (Nomos2, 69 MB) blurry. G is the only arm still without a verdict. G rejected as noisy: the 1.8 MB model the site ships is in the reject pile, so the only two arms he accepts cost 49 MB (UltraSharpV2) and 68 MB (Siax).",
+    "browser_speed_webgpu": {
+      "machine": "Intel Arc 140V (Ultra 7 258V), chromium --enable-unsafe-webgpu, tile 192",
+      "ClearRealityV1": {
+        "0.24Mp": "1.3s",
+        "0.85Mp": "3.1s",
+        "2.80Mp": "8.9s",
+        "sPerMp": "3.2-5.4"
+      },
+      "NMKD-Siax": {
+        "0.24Mp": "34.0s",
+        "0.85Mp": "83.2s",
+        "2.80Mp": "tab crashed at tile 192 and again at tile 128",
+        "sPerMp": "98-142"
+      },
+      "note": "Siax is ~27x slower than ClearRealityV1 and dies on the phone-sized picture, the same way Real-ESRGAN did in round 11 — same architecture, same parameter count, shared memory on the integrated GPU.",
+      "UltraSharpV2": {
+        "0.24Mp": "tab crashed",
+        "0.85Mp": "tab crashed",
+        "2.80Mp": "tab crashed",
+        "retry": "crashed again at tile 128 on the 400x600 picture — the smallest in the set",
+        "note": "49 MB, and it cannot finish a single picture in the browser. E is not a candidate at all."
+      }
+    },
+    "server_cpu_estimate": {
+      "measured_here": "8 cores, 1200x800 = 0.96 Mp: ClearRealityV1 10s, RealPLKSR 248s, Remacri 383s, Siax 426s, RealESRGAN 440s, UltraSharpV2 574s, RealisticRescaler 628s",
+      "box": "2 vCPU AMD EPYC 9354P, no GPU at all",
+      "scaling": "x3.3, validated: ClearRealityV1 lands at 34 s/Mp, the figure already in TODO.md for the no-GPU fallback on that box",
+      "verdict": "Siax ~25 min/Mp, UltraSharpV2 ~33 min/Mp on the box, both cores pinned — not a path"
+    },
+    "replicate_search": "no Siax, no UltraSharpV2, no Remacri on Replicate — it hosts vanilla Real-ESRGAN and the SDXL upscalers, not the OpenModelDB community finetunes. Putting Siax there means pushing a private Cog model, billed for total online time including idle (T4 $0.000225/s = ~$583/mo always-on), not per call.",
+    "gpu_box_math": "cheapest dedicated GPU box is Hetzner GEX from EUR 184/mo (RTX 4000 Ada); marketplace hourly from ~$0.50/h. The server-wide rate gate is 50 calls/day, so the paid Topaz route costs at most 50 x 30 x $0.05 = $75/mo at full saturation every day — less than half the cheapest box. The gate caps spend below the box price by construction.",
+    "verdict_topaz": "J (Topaz x4) vs D (Siax): 'barely a difference, i think D is slightly better'. The model he likes is free — and unrunnable everywhere we could run it.",
+    "modal_measured": {
+      "when": "24.08.2026, deployed and measured — no longer derived from an hourly rate",
+      "setup": "Modal, T4, onnxruntime-gpu 1.20.2 on nvidia/cuda:12.4.1-cudnn9, Siax baked into the image, scaledown_window 10s",
+      "provider_confirmed": "CUDAExecutionProvider — not a silent CPU fallback",
+      "cold_start": "26.8s and 26.7s wall on two independent cold containers; ~13s of that is container start + model load",
+      "warm": "11.3s inference for 1200x800 (24 tiles); 13.8s for 828x1023 (30 tiles); 36.1s for 1366x2048 (77 tiles)",
+      "unit": "~0.47 s per 232x232 tile, flat across all three sizes — cost is per tile, not per megapixel",
+      "big_picture": "1366x2048 -> 5464x8192 (44.8 Mp) finished cleanly in 36.1s. This is the picture that killed the browser tab twice, at tile 192 and at tile 128. Confirms the crash was the integrated Arc's shared memory, not the model.",
+      "cost_measured": "$0.0044 per picture including full cold start; 50/day all-cold = $6.58/month against Topaz's $75 ceiling",
+      "vs_topaz": "Topaz x4 took 13.4s on Replicate; warm Siax takes 11.3s. Same speed, and Siax is the one he preferred.",
+      "port_check": "the Python tiling matches the JS .modelbake.mjs pixel for pixel — mean difference 0.001/255 once both are encoded as the same jpeg",
+      "estimate_was": "$0.006/picture, ~20s cold start — both a little pessimistic but the right shape"
+    }
   }
 }

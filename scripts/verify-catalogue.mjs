@@ -23,7 +23,10 @@ const PROVENANCE = ['creator', 'creatorKind', 'date', 'work', 'credit', 'page'];
 // у соседей написано откуда. Проверка нужна потому, что заметить это можно
 // только глазами: пустая строка не роняет ни сервер, ни сборку.
 const REQUIRED = ['ref', 'slug', 'title', 'alt', 'added', 'origin'];
-const OPTIONAL = ['tags', 'license', 'provenance', 'file', 'hidden'];
+const OPTIONAL = ['tags', 'license', 'provenance', 'file', 'pin', 'hidden'];
+// Pinterest режет описание на 500 знаках и делает это молча: пин уходит
+// с обрубленной посередине фразой, и увидеть это можно только на самом пине.
+const PIN_LIMIT = 500;
 
 const problems = [];
 const complain = (where, what) => problems.push(`${where}: ${what}`);
@@ -87,6 +90,15 @@ function checkWork(ref, work) {
     complain(where, `лицензия ${JSON.stringify(work.license)} не заведена в LICENSES (works.js)`);
   }
   if ('provenance' in work) checkProvenance(where, work.provenance);
+  // Поле необязательное, но пустым не бывает. Пустая строка читается ровно
+  // как отсутствие поля — страница всё равно откатится на `alt`, — то есть
+  // это брошенная на полпути запись, и выглядит она как написанная.
+  if ('pin' in work) {
+    if (!text(work.pin)) complain(where, '`pin` пуст — либо текст, либо поля нет');
+    else if (work.pin.length > PIN_LIMIT) {
+      complain(where, `\`pin\` — ${work.pin.length} знаков, а Pinterest покажет ${PIN_LIMIT}`);
+    }
+  }
   // Проверяется именно `=== true`, а не истинность. Поле снимает работу
   // с витрины, и снимает молча: `"hidden": "no"` истинно, читается как отказ
   // и спрятало бы работу навсегда — заметить это можно только пересчитав

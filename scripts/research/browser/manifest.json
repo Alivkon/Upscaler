@@ -1,0 +1,154 @@
+[
+  {
+    "id": "n01",
+    "url": "src/n01",
+    "w": 500,
+    "h": 667,
+    "need": 2.88,
+    "usedBigger": false
+  },
+  {
+    "id": "n02",
+    "url": "src/n02.jpg",
+    "w": 400,
+    "h": 600,
+    "need": 3.6,
+    "usedBigger": false
+  },
+  {
+    "id": "n03",
+    "url": "src/n03.jpg",
+    "w": 736,
+    "h": 915,
+    "need": 1.96,
+    "usedBigger": false
+  },
+  {
+    "id": "n04",
+    "url": "src/n04.jpg",
+    "w": 1056,
+    "h": 1200,
+    "need": 1.36,
+    "usedBigger": false
+  },
+  {
+    "id": "n05",
+    "url": "src/n05.jpg",
+    "w": 736,
+    "h": 1308,
+    "need": 1.96,
+    "usedBigger": false
+  },
+  {
+    "id": "n06",
+    "url": "src/n06.jpg",
+    "w": 1024,
+    "h": 1024,
+    "need": 1.41,
+    "usedBigger": true
+  },
+  {
+    "id": "n07",
+    "url": "src/n07.jpg",
+    "w": 1366,
+    "h": 2048,
+    "need": 1.05,
+    "usedBigger": true
+  },
+  {
+    "id": "n08",
+    "url": "src/n08.jpg",
+    "w": 1443,
+    "h": 2048,
+    "need": 1,
+    "usedBigger": true
+  },
+  {
+    "id": "n09",
+    "url": "src/n09.jpg",
+    "w": 1170,
+    "h": 1152,
+    "need": 1.23,
+    "usedBigger": false
+  },
+  {
+    "id": "n10",
+    "url": "src/n10.jpg",
+    "w": 720,
+    "h": 949,
+    "need": 2,
+    "usedBigger": false
+  },
+  {
+    "id": "n11",
+    "url": "src/n11.jpg",
+    "w": 1440,
+    "h": 1440,
+    "need": 1,
+    "usedBigger": true
+  },
+  {
+    "id": "n12",
+    "url": "src/n12.jpg",
+    "w": 828,
+    "h": 1023,
+    "need": 1.74,
+    "usedBigger": false
+  },
+  {
+    "id": "n13",
+    "url": "src/n13.jpg",
+    "w": 1440,
+    "h": 1920,
+    "need": 1,
+    "usedBigger": true
+  },
+  {
+    "id": "n14",
+    "url": "src/n14.jpg",
+    "w": 1080,
+    "h": 1502,
+    "need": 1.33,
+    "usedBigger": false
+  },
+  {
+    "id": "n15",
+    "url": "src/n15.jpg",
+    "w": 802,
+    "h": 1200,
+    "need": 1.8,
+    "usedBigger": false
+  },
+  {
+    "id": "n16",
+    "url": "src/n16.jpg",
+    "w": 1170,
+    "h": 2080,
+    "need": 1.23,
+    "usedBigger": false
+  },
+  {
+    "id": "n17",
+    "url": "src/n17.jpg",
+    "w": 736,
+    "h": 981,
+    "need": 1.96,
+    "usedBigger": false
+  },
+  {
+    "id": "n18",
+    "url": "src/n18.jpg",
+    "w": 1137,
+    "h": 1825,
+    "need": 1.27,
+    "usedBigger": true
+  },
+  {
+    "id": "n19",
+    "url": "src/n19.jpg",
+    "w": 1080,
+    "h": 1307,
+    "need": 1.33,
+    "usedBigger": false
+  }
+]

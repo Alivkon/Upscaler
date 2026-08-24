@@ -1,0 +1,59 @@
+{
+  "_": "Что Charlie отметил на листе ~/tessarum-harvest/nihonga2/edits.html (ключ pick-edit-new), 24.08.2026. Лист собран scripts/research/gedits.mjs в режиме FOLDER по пяти файлам, выбранным глазом с research/nihonga2-browse.html. Первый круг нихонги — chosen-edits-nihonga.json, там другие рефы.",
+  "asked": "5 работ × 12 версий = 60 слайдов. Шесть правок (orig, bal, snap, app, ceil, niobe) и у каждой двойник с виньеткой, включая оригинал. Плиты 1440 × 3120, окно центральное: у режима FOLDER правила кадра нет и взять его неоткуда.",
+  "said": "Отмечено две версии на двух работах: «only two to add, alpes shunkyo ceil-vig, and spring of mountain yamamaoto orig-vig». Три работы из пяти не отмечены вовсе, и у всех трёх причина не во вкусе — они не годились ещё до листа, см. rejected.",
+  "names": "Имена версий на листе и в museum-works.json разные: orig → none, app → dim80-desat-whole, остальные совпадают. Виньетка — суффикс -vig. Таблица правил — treatment.mjs в wallpaper-gen, строки 218-223.",
+  "works": [
+    {
+      "ref": "vl-0397",
+      "work": "Alpes japonaises",
+      "artist": "Yamamoto Shunkyo",
+      "ticked": ["ceil-vig"],
+      "versions": ["ceil-vig"],
+      "on_the_gallery": true,
+      "source": "https://commons.wikimedia.org/wiki/File:Alpes_japonaises,_M.C._2019-182(2).jpg",
+      "master": "4746 × 6711, CC0, Musée Cernuschi M.C. 2019-182",
+      "plate": "3840 × 5430, кадр phone 2506 × 5430 — плиту 2160 × 3840 берёт своими пикселями",
+      "luma": 40.3,
+      "mood": "dark moody, не dark academia: палитра тёплая (warm 0.417), но сюжет — горный пейзаж, а не интерьер, натюрморт или руина"
+    },
+    {
+      "ref": "vl-0398",
+      "work": "Spring of Mountain",
+      "artist": "Yamamoto Shunkyo",
+      "ticked": ["orig-vig"],
+      "versions": ["none-vig"],
+      "on_the_gallery": true,
+      "source": "https://commons.wikimedia.org/wiki/File:Yamamoto_Shunkyo_-_Spring_of_Mountain_-_Google_Art_Project.jpg",
+      "master": "4545 × 10363, PD, Adachi Museum of Art через Google Art Project",
+      "plate": "3840 × 8756, кадр phone 3840 × 8320",
+      "luma": 149.6,
+      "mood": "светлая — ни dark academia, ни dark moody",
+      "note": "Google пишет facet_medium 日本画 прямым текстом: нихонга подтверждена источником, а не выведена по имени художника. Дата 1933 — Сёва, и это не мешает: нихонга движение, а не период, и абзац темы дат работам не приписывает."
+    }
+  ],
+  "rejected": [
+    {
+      "file": "Yoroboshi by Shimomura Kazan.jpg",
+      "ticked": [],
+      "why": "дубль vl-0391. Тот же «Ёробоси» Симомуры Кандзана, тот же Токийский национальный музей, тот же 1915 год. Склад держит работу дважды под двумя написаниями имени (Kazan / Kanzan), и сверка листа шла по адресу файла, а не по работе, — оттого второй экземпляр прошёл насквозь. Размеры решают спор: отобранный 9065 × 4168, уже стоящий 9064 × 4195. Тот же скан, и отобранный на 27 px короче."
+    },
+    {
+      "file": "Yadorigi yamato-e Guimet MA4.jpeg",
+      "ticked": [],
+      "why": "не нихонга: школа Тоса, ширма ямато-э с эпизодами «Гэндзи», Эдо, 1600-1650. Прочитано в вики-тексте файла, а не выведено из имени. Три века до нихонги."
+    },
+    {
+      "file": "Fans on a stream Guimet MA6264 n1.jpg",
+      "ticked": [],
+      "why": "не нихонга: мастерская Таварая Сотацу, шестистворчатая ширма, Эдо, начало XVII века. Снимок Marie-Lan Nguyen в Гиме, 2024."
+    }
+  ],
+  "notes": [
+    "ПУСТОЙ ТИК — РЕШЕНИЕ, А НЕ ПРОПУСК. Три отвергнутые записаны явно, иначе они пропадут из истории и всплывут на следующем листе.",
+    "Отвергнуты не глазом. Ни одна из трёх не дошла до вкуса: две оказались Эдо, третья — дублем уже выпущенной работы. Это промахи фильтра листа, а не суждения о картинах.",
+    "ФИЛЬТР ЛИСТА СВЕРЯЕТСЯ С ВИТРИНОЙ ПО АДРЕСУ ФАЙЛА, И ЭТОГО МАЛО. Одна работа на складе может лежать двумя файлами, и тогда сверка по URL пропускает дубль. Чинить — сверкой по работе (автор + название + музей), а не по ссылке. То же записано в 2026-08-21-the-same-painting-twice.md про другой источник.",
+    "КАТЕГОРИЯ «Paintings on screens from Japan» ПЕРИОДЫ МЕШАЕТ. Из неё пришли обе работы Эдо. Фильтр NOT_NIHONGA в nihonga2-browse.mjs ловит по имени файла (Genji folding screen, Kano School) и на этих именах молчит. Надёжнее — смотреть категории файла: у обеих стоит Paintings of the Edo period (Musée Guimet) и Edo period (Musée Guimet).",
+    "ТРИ ИМЕНИ В АБЗАЦЕ ТЕМЫ ПЕРЕСЧИТАНЫ. С приходом двух Сюнкё вес сменился: Тайкан 5, Кокэй 3, Сюнкё 2, Кандзан 1. В абзаце Кандзан заменён на Сюнкё — перечисление там по весу, а не по красоте."
+  ]
+}

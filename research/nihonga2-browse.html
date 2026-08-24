@@ -1,0 +1,840 @@
+<!doctype html>
+<html lang="ru">
+<head><meta charset="utf-8"><title>Нихонга: обход по категориям</title>
+<style>
+  body { font-family: sans-serif; padding: 16px; max-width: 1600px; margin: 0 auto; }
+  .grid { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; }
+  figure { margin: 0; width: 420px; }
+  figure img { max-width: 420px; max-height: 560px; display: block; background: #f2f2f2; }
+  figcaption { font-size: .8em; color: #666; max-width: 420px; }
+  label { display: block; font-size: .85em; cursor: pointer; }
+  .lic { color: #999; }
+  h2 small { font-weight: normal; color: #888; }
+  #bar { position: sticky; top: 0; background: #fff; border-bottom: 1px solid #ccc; padding: 8px 0; z-index: 10; }
+  #box { width: 100%; height: 80px; font-family: monospace; font-size: 12px; }
+</style>
+</head>
+<body>
+<div id="bar">
+  <b>Отобрано (<span id="count">0</span>):</b>
+  <button id="clear" type="button">снять все</button><br>
+  <textarea id="box" readonly placeholder="отмечайте работы — ссылки соберутся сюда"></textarea>
+</div>
+<h1>Нихонга: обход по категориям</h1>
+<p>132 работ у 30 категорий. Порог — телефонная плита
+1440 × 3120, и считается он <b>по кадру</b>: у горизонтали решает высота,
+у вертикали ширина. 📱 — высота от 3120, 4K — длинная сторона от 3840.
+Клик по картинке — страница файла на складе, там лицензия и полный размер.</p>
+<p>Отброшено: 697 мельче плиты, 13 не-работ, 14 не нихонга
+(pdf, лак Рейксмузеума, ширмы Эдо), 23 под CC BY-SA,
+5 уже на витрине и <b>57 показанных прежним листом</b>.</p>
+<p><b>Осторожно со снимками в залах</b> (<code>At Kyoto 2024 …</code> и подобные):
+работы настоящие, но сняты в музее, и блик с трапецией там вероятны. Отсеять их
+может только глаз — по имени файла они не ловятся.</p>
+<p>Отметки живут в <code>localStorage</code> под ключом <code>pick-nihonga2</code>:
+сотня работ не переживает перезагрузку страницы, и это уже проверено на dark academia.</p>
+<h2>Tsuchida Bakusen <small>21</small></h2>
+<div class="grid">
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Tsuchida_Bakusen,_Women_of_an_Island_(Shima_no_onna).jpg"> 9048 × 4000 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Tsuchida_Bakusen,_Women_of_an_Island_(Shima_no_onna).jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/Tsuchida_Bakusen%2C_Women_of_an_Island_%28Shima_no_onna%29.jpg/500px-Tsuchida_Bakusen%2C_Women_of_an_Island_%28Shima_no_onna%29.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Tsuchida Bakusen, Women of an Island (Shima no onna)</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Island_Women_by_Bakusen_Tsuchida,_detail,_1912,_color_on_silk_-_National_Museum_of_Modern_Art,_Tokyo_-_DSC06667.JPG"> 3648 × 5472 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Island_Women_by_Bakusen_Tsuchida,_detail,_1912,_color_on_silk_-_National_Museum_of_Modern_Art,_Tokyo_-_DSC06667.JPG" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c4/Island_Women_by_Bakusen_Tsuchida%2C_detail%2C_1912%2C_color_on_silk_-_National_Museum_of_Modern_Art%2C_Tokyo_-_DSC06667.JPG/500px-Island_Women_by_Bakusen_Tsuchida%2C_detail%2C_1912%2C_color_on_silk_-_National_Museum_of_Modern_Art%2C_Tokyo_-_DSC06667.JPG?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Island Women by Bakusen Tsuchida, detail, 1912, color on silk - National Museum of Modern Art, Tokyo - DSC06667</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Sketch_of_Chrysanthemums_by_Bakusen_Tsuchida,_detail,_c._1933,_pencil_and_color_on_paper_-_National_Museum_of_Modern_Art,_Tokyo_-_DSC06716.JPG"> 5472 × 3648 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Sketch_of_Chrysanthemums_by_Bakusen_Tsuchida,_detail,_c._1933,_pencil_and_color_on_paper_-_National_Museum_of_Modern_Art,_Tokyo_-_DSC06716.JPG" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/Sketch_of_Chrysanthemums_by_Bakusen_Tsuchida%2C_detail%2C_c._1933%2C_pencil_and_color_on_paper_-_National_Museum_of_Modern_Art%2C_Tokyo_-_DSC06716.JPG/500px-Sketch_of_Chrysanthemums_by_Bakusen_Tsuchida%2C_detail%2C_c._1933%2C_pencil_and_color_on_paper_-_National_Museum_of_Modern_Art%2C_Tokyo_-_DSC06716.JPG?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Sketch of Chrysanthemums by Bakusen Tsuchida, detail, c. 1933, pencil and color on paper - National Museum of Modern Art, Tokyo - DSC06716</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Sketch_of_Chrysanthemums_by_Bakusen_Tsuchida,_detail,_c._1933,_pencil_and_color_on_paper_-_National_Museum_of_Modern_Art,_Tokyo_-_DSC06719.JPG"> 5472 × 3648 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Sketch_of_Chrysanthemums_by_Bakusen_Tsuchida,_detail,_c._1933,_pencil_and_color_on_paper_-_National_Museum_of_Modern_Art,_Tokyo_-_DSC06719.JPG" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/Sketch_of_Chrysanthemums_by_Bakusen_Tsuchida%2C_detail%2C_c._1933%2C_pencil_and_color_on_paper_-_National_Museum_of_Modern_Art%2C_Tokyo_-_DSC06719.JPG/500px-Sketch_of_Chrysanthemums_by_Bakusen_Tsuchida%2C_detail%2C_c._1933%2C_pencil_and_color_on_paper_-_National_Museum_of_Modern_Art%2C_Tokyo_-_DSC06719.JPG?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Sketch of Chrysanthemums by Bakusen Tsuchida, detail, c. 1933, pencil and color on paper - National Museum of Modern Art, Tokyo - DSC06719</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Sketch_of_Chrysanthemums_by_Bakusen_Tsuchida,_detail,_c._1933,_pencil_and_color_on_paper_-_National_Museum_of_Modern_Art,_Tokyo_-_DSC06722.JPG"> 5472 × 3648 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Sketch_of_Chrysanthemums_by_Bakusen_Tsuchida,_detail,_c._1933,_pencil_and_color_on_paper_-_National_Museum_of_Modern_Art,_Tokyo_-_DSC06722.JPG" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/Sketch_of_Chrysanthemums_by_Bakusen_Tsuchida%2C_detail%2C_c._1933%2C_pencil_and_color_on_paper_-_National_Museum_of_Modern_Art%2C_Tokyo_-_DSC06722.JPG/500px-Sketch_of_Chrysanthemums_by_Bakusen_Tsuchida%2C_detail%2C_c._1933%2C_pencil_and_color_on_paper_-_National_Museum_of_Modern_Art%2C_Tokyo_-_DSC06722.JPG?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Sketch of Chrysanthemums by Bakusen Tsuchida, detail, c. 1933, pencil and color on paper - National Museum of Modern Art, Tokyo - DSC06722</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Sketch_of_White_Lilies_by_Bakusen_Tsuchida,_detail,_1935,_sumi_and_color_on_paper_-_National_Museum_of_Modern_Art,_Tokyo_-_DSC06712.JPG"> 3648 × 5472 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Sketch_of_White_Lilies_by_Bakusen_Tsuchida,_detail,_1935,_sumi_and_color_on_paper_-_National_Museum_of_Modern_Art,_Tokyo_-_DSC06712.JPG" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a3/Sketch_of_White_Lilies_by_Bakusen_Tsuchida%2C_detail%2C_1935%2C_sumi_and_color_on_paper_-_National_Museum_of_Modern_Art%2C_Tokyo_-_DSC06712.JPG/500px-Sketch_of_White_Lilies_by_Bakusen_Tsuchida%2C_detail%2C_1935%2C_sumi_and_color_on_paper_-_National_Museum_of_Modern_Art%2C_Tokyo_-_DSC06712.JPG?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Sketch of White Lilies by Bakusen Tsuchida, detail, 1935, sumi and color on paper - National Museum of Modern Art, Tokyo - DSC06712</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Island_Women_by_Bakusen_Tsuchida,_1912,_color_on_silk_-_National_Museum_of_Modern_Art,_Tokyo_-_DSC06665.JPG"> 5093 × 3476 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Island_Women_by_Bakusen_Tsuchida,_1912,_color_on_silk_-_National_Museum_of_Modern_Art,_Tokyo_-_DSC06665.JPG" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/Island_Women_by_Bakusen_Tsuchida%2C_1912%2C_color_on_silk_-_National_Museum_of_Modern_Art%2C_Tokyo_-_DSC06665.JPG/500px-Island_Women_by_Bakusen_Tsuchida%2C_1912%2C_color_on_silk_-_National_Museum_of_Modern_Art%2C_Tokyo_-_DSC06665.JPG?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Island Women by Bakusen Tsuchida, 1912, color on silk - National Museum of Modern Art, Tokyo - DSC06665</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Sketch_of_White_Lilies_by_Bakusen_Tsuchida,_1935,_sumi_and_color_on_paper_-_National_Museum_of_Modern_Art,_Tokyo_-_DSC06708.JPG"> 3381 × 5173 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Sketch_of_White_Lilies_by_Bakusen_Tsuchida,_1935,_sumi_and_color_on_paper_-_National_Museum_of_Modern_Art,_Tokyo_-_DSC06708.JPG" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/33/Sketch_of_White_Lilies_by_Bakusen_Tsuchida%2C_1935%2C_sumi_and_color_on_paper_-_National_Museum_of_Modern_Art%2C_Tokyo_-_DSC06708.JPG/500px-Sketch_of_White_Lilies_by_Bakusen_Tsuchida%2C_1935%2C_sumi_and_color_on_paper_-_National_Museum_of_Modern_Art%2C_Tokyo_-_DSC06708.JPG?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Sketch of White Lilies by Bakusen Tsuchida, 1935, sumi and color on paper - National Museum of Modern Art, Tokyo - DSC06708</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Sketch_for_Serving_Girl_in_a_Spa,_No._2,_by_Bakusen_Tsuchida,_c._1918,_conte_on_paper_-_National_Museum_of_Modern_Art,_Tokyo_-_DSC06694.JPG"> 5044 × 3335 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Sketch_for_Serving_Girl_in_a_Spa,_No._2,_by_Bakusen_Tsuchida,_c._1918,_conte_on_paper_-_National_Museum_of_Modern_Art,_Tokyo_-_DSC06694.JPG" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d8/Sketch_for_Serving_Girl_in_a_Spa%2C_No._2%2C_by_Bakusen_Tsuchida%2C_c._1918%2C_conte_on_paper_-_National_Museum_of_Modern_Art%2C_Tokyo_-_DSC06694.JPG/500px-Sketch_for_Serving_Girl_in_a_Spa%2C_No._2%2C_by_Bakusen_Tsuchida%2C_c._1918%2C_conte_on_paper_-_National_Museum_of_Modern_Art%2C_Tokyo_-_DSC06694.JPG?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Sketch for Serving Girl in a Spa, No. 2, by Bakusen Tsuchida, c. 1918, conte on paper - National Museum of Modern Art, Tokyo - DSC06694</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Sketch_of_Dandelions_by_Bakusen_Tsuchida,_c._1924,_sumi_and_color_on_paper_-_National_Museum_of_Modern_Art,_Tokyo_-_DSC06701.JPG"> 4834 × 3374 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Sketch_of_Dandelions_by_Bakusen_Tsuchida,_c._1924,_sumi_and_color_on_paper_-_National_Museum_of_Modern_Art,_Tokyo_-_DSC06701.JPG" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Sketch_of_Dandelions_by_Bakusen_Tsuchida%2C_c._1924%2C_sumi_and_color_on_paper_-_National_Museum_of_Modern_Art%2C_Tokyo_-_DSC06701.JPG/500px-Sketch_of_Dandelions_by_Bakusen_Tsuchida%2C_c._1924%2C_sumi_and_color_on_paper_-_National_Museum_of_Modern_Art%2C_Tokyo_-_DSC06701.JPG?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Sketch of Dandelions by Bakusen Tsuchida, c. 1924, sumi and color on paper - National Museum of Modern Art, Tokyo - DSC06701</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:TsuchidaBakusen-1922-Landscape_in_V%C3%A9theuil.png"> 4602 × 3468 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:TsuchidaBakusen-1922-Landscape_in_V%C3%A9theuil.png" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/ee/TsuchidaBakusen-1922-Landscape_in_V%C3%A9theuil.png/500px-TsuchidaBakusen-1922-Landscape_in_V%C3%A9theuil.png?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>TsuchidaBakusen-1922-Landscape in Vétheuil</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Sketch_of_Peonies_by_Bakusen_Tsuchida,_date_unknown,_sumi_and_color_on_paper_-_National_Museum_of_Modern_Art,_Tokyo_-_DSC06704.JPG"> 3315 × 4786 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Sketch_of_Peonies_by_Bakusen_Tsuchida,_date_unknown,_sumi_and_color_on_paper_-_National_Museum_of_Modern_Art,_Tokyo_-_DSC06704.JPG" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Sketch_of_Peonies_by_Bakusen_Tsuchida%2C_date_unknown%2C_sumi_and_color_on_paper_-_National_Museum_of_Modern_Art%2C_Tokyo_-_DSC06704.JPG/500px-Sketch_of_Peonies_by_Bakusen_Tsuchida%2C_date_unknown%2C_sumi_and_color_on_paper_-_National_Museum_of_Modern_Art%2C_Tokyo_-_DSC06704.JPG?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Sketch of Peonies by Bakusen Tsuchida, date unknown, sumi and color on paper - National Museum of Modern Art, Tokyo - DSC06704</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Sketch_for_Serving_Girl_in_a_Spa,_No._1,_by_Bakusen_Tsuchida,_c._1918,_conte_on_paper_-_National_Museum_of_Modern_Art,_Tokyo_-_DSC06692.JPG"> 4506 × 3353 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Sketch_for_Serving_Girl_in_a_Spa,_No._1,_by_Bakusen_Tsuchida,_c._1918,_conte_on_paper_-_National_Museum_of_Modern_Art,_Tokyo_-_DSC06692.JPG" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e9/Sketch_for_Serving_Girl_in_a_Spa%2C_No._1%2C_by_Bakusen_Tsuchida%2C_c._1918%2C_conte_on_paper_-_National_Museum_of_Modern_Art%2C_Tokyo_-_DSC06692.JPG/500px-Sketch_for_Serving_Girl_in_a_Spa%2C_No._1%2C_by_Bakusen_Tsuchida%2C_c._1918%2C_conte_on_paper_-_National_Museum_of_Modern_Art%2C_Tokyo_-_DSC06692.JPG?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Sketch for Serving Girl in a Spa, No. 1, by Bakusen Tsuchida, c. 1918, conte on paper - National Museum of Modern Art, Tokyo - DSC06692</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Sketch_of_Millets_by_Bakusen_Tsuchida,_date_unknown,_pencil_and_color_on_paper_-_National_Museum_of_Modern_Art,_Tokyo_-_DSC06696.JPG"> 3407 × 4383 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Sketch_of_Millets_by_Bakusen_Tsuchida,_date_unknown,_pencil_and_color_on_paper_-_National_Museum_of_Modern_Art,_Tokyo_-_DSC06696.JPG" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Sketch_of_Millets_by_Bakusen_Tsuchida%2C_date_unknown%2C_pencil_and_color_on_paper_-_National_Museum_of_Modern_Art%2C_Tokyo_-_DSC06696.JPG/500px-Sketch_of_Millets_by_Bakusen_Tsuchida%2C_date_unknown%2C_pencil_and_color_on_paper_-_National_Museum_of_Modern_Art%2C_Tokyo_-_DSC06696.JPG?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Sketch of Millets by Bakusen Tsuchida, date unknown, pencil and color on paper - National Museum of Modern Art, Tokyo - DSC06696</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Sketch_for_Maiko_in_a_Garden,_by_Bakusen_Tsuchida,_c._1924,_cinnabar_on_paper_-_National_Museum_of_Modern_Art,_Tokyo_-_DSC06688.JPG"> 3015 × 4678 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Sketch_for_Maiko_in_a_Garden,_by_Bakusen_Tsuchida,_c._1924,_cinnabar_on_paper_-_National_Museum_of_Modern_Art,_Tokyo_-_DSC06688.JPG" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/Sketch_for_Maiko_in_a_Garden%2C_by_Bakusen_Tsuchida%2C_c._1924%2C_cinnabar_on_paper_-_National_Museum_of_Modern_Art%2C_Tokyo_-_DSC06688.JPG/500px-Sketch_for_Maiko_in_a_Garden%2C_by_Bakusen_Tsuchida%2C_c._1924%2C_cinnabar_on_paper_-_National_Museum_of_Modern_Art%2C_Tokyo_-_DSC06688.JPG?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Sketch for Maiko in a Garden, by Bakusen Tsuchida, c. 1924, cinnabar on paper - National Museum of Modern Art, Tokyo - DSC06688</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Sketch_for_Ohara-me,_No._5,_by_Bakusen_Tsuchida,_c._1924,_cinnabar_on_paper_-_National_Museum_of_Modern_Art,_Tokyo_-_DSC06686.JPG"> 3133 × 3906 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Sketch_for_Ohara-me,_No._5,_by_Bakusen_Tsuchida,_c._1924,_cinnabar_on_paper_-_National_Museum_of_Modern_Art,_Tokyo_-_DSC06686.JPG" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/64/Sketch_for_Ohara-me%2C_No._5%2C_by_Bakusen_Tsuchida%2C_c._1924%2C_cinnabar_on_paper_-_National_Museum_of_Modern_Art%2C_Tokyo_-_DSC06686.JPG/500px-Sketch_for_Ohara-me%2C_No._5%2C_by_Bakusen_Tsuchida%2C_c._1924%2C_cinnabar_on_paper_-_National_Museum_of_Modern_Art%2C_Tokyo_-_DSC06686.JPG?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Sketch for Ohara-me, No. 5, by Bakusen Tsuchida, c. 1924, cinnabar on paper - National Museum of Modern Art, Tokyo - DSC06686</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Sketch_for_Ohara-me,_No._4,_by_Bakusen_Tsuchida,_c._1924,_cinnabar_on_paper_-_National_Museum_of_Modern_Art,_Tokyo_-_DSC06683.JPG"> 3080 × 3862 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Sketch_for_Ohara-me,_No._4,_by_Bakusen_Tsuchida,_c._1924,_cinnabar_on_paper_-_National_Museum_of_Modern_Art,_Tokyo_-_DSC06683.JPG" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/Sketch_for_Ohara-me%2C_No._4%2C_by_Bakusen_Tsuchida%2C_c._1924%2C_cinnabar_on_paper_-_National_Museum_of_Modern_Art%2C_Tokyo_-_DSC06683.JPG/500px-Sketch_for_Ohara-me%2C_No._4%2C_by_Bakusen_Tsuchida%2C_c._1924%2C_cinnabar_on_paper_-_National_Museum_of_Modern_Art%2C_Tokyo_-_DSC06683.JPG?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Sketch for Ohara-me, No. 4, by Bakusen Tsuchida, c. 1924, cinnabar on paper - National Museum of Modern Art, Tokyo - DSC06683</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Sketch_for_Ohara-me,_No._2,_by_Bakusen_Tsuchida,_c._1924,_cinnabar_on_paper_-_National_Museum_of_Modern_Art,_Tokyo_-_DSC06680.JPG"> 2983 × 3648 · 📱 <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Sketch_for_Ohara-me,_No._2,_by_Bakusen_Tsuchida,_c._1924,_cinnabar_on_paper_-_National_Museum_of_Modern_Art,_Tokyo_-_DSC06680.JPG" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Sketch_for_Ohara-me%2C_No._2%2C_by_Bakusen_Tsuchida%2C_c._1924%2C_cinnabar_on_paper_-_National_Museum_of_Modern_Art%2C_Tokyo_-_DSC06680.JPG/500px-Sketch_for_Ohara-me%2C_No._2%2C_by_Bakusen_Tsuchida%2C_c._1924%2C_cinnabar_on_paper_-_National_Museum_of_Modern_Art%2C_Tokyo_-_DSC06680.JPG?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Sketch for Ohara-me, No. 2, by Bakusen Tsuchida, c. 1924, cinnabar on paper - National Museum of Modern Art, Tokyo - DSC06680</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Sketch_for_Ohara-me,_No._3,_by_Bakusen_Tsuchida,_c._1924,_cinnabar_on_paper_-_National_Museum_of_Modern_Art,_Tokyo_-_DSC06682.JPG"> 2922 × 3553 · 📱 <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Sketch_for_Ohara-me,_No._3,_by_Bakusen_Tsuchida,_c._1924,_cinnabar_on_paper_-_National_Museum_of_Modern_Art,_Tokyo_-_DSC06682.JPG" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/cf/Sketch_for_Ohara-me%2C_No._3%2C_by_Bakusen_Tsuchida%2C_c._1924%2C_cinnabar_on_paper_-_National_Museum_of_Modern_Art%2C_Tokyo_-_DSC06682.JPG/500px-Sketch_for_Ohara-me%2C_No._3%2C_by_Bakusen_Tsuchida%2C_c._1924%2C_cinnabar_on_paper_-_National_Museum_of_Modern_Art%2C_Tokyo_-_DSC06682.JPG?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Sketch for Ohara-me, No. 3, by Bakusen Tsuchida, c. 1924, cinnabar on paper - National Museum of Modern Art, Tokyo - DSC06682</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Sketch_for_Ohara-me,_No._1,_by_Bakusen_Tsuchida,_c._1924,_cinnabar_on_paper_-_National_Museum_of_Modern_Art,_Tokyo_-_DSC06678.JPG"> 2850 × 3546 · 📱 <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Sketch_for_Ohara-me,_No._1,_by_Bakusen_Tsuchida,_c._1924,_cinnabar_on_paper_-_National_Museum_of_Modern_Art,_Tokyo_-_DSC06678.JPG" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Sketch_for_Ohara-me%2C_No._1%2C_by_Bakusen_Tsuchida%2C_c._1924%2C_cinnabar_on_paper_-_National_Museum_of_Modern_Art%2C_Tokyo_-_DSC06678.JPG/500px-Sketch_for_Ohara-me%2C_No._1%2C_by_Bakusen_Tsuchida%2C_c._1924%2C_cinnabar_on_paper_-_National_Museum_of_Modern_Art%2C_Tokyo_-_DSC06678.JPG?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Sketch for Ohara-me, No. 1, by Bakusen Tsuchida, c. 1924, cinnabar on paper - National Museum of Modern Art, Tokyo - DSC06678</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Tsuchida_Bakusen_1933.jpg"> 2400 × 3200 · 📱 <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Tsuchida_Bakusen_1933.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3b/Tsuchida_Bakusen_1933.jpg/500px-Tsuchida_Bakusen_1933.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Tsuchida Bakusen 1933</figcaption>
+</figure>
+</div>
+<hr>
+<h2>Prints by Imao Keinen in the Rijksmuseum Amsterdam <small>16</small></h2>
+<div class="grid">
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Bloemen-_en_vogelschetsen_van_Keinen,_RP-P-2004-508D.jpg"> 5642 × 4376 · 📱 · 4K <span class="lic">CC0</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Bloemen-_en_vogelschetsen_van_Keinen,_RP-P-2004-508D.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/38/Bloemen-_en_vogelschetsen_van_Keinen%2C_RP-P-2004-508D.jpg/500px-Bloemen-_en_vogelschetsen_van_Keinen%2C_RP-P-2004-508D.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Bloemen- en vogelschetsen van Keinen, RP-P-2004-508D</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Inhoudsopgave_Bloemen-_en_vogelschetsen_van_Keinen_(serietitel)_Keinen_kacho_gafu_(serietitel_op_object),_RP-P-2004-508D-1.jpg"> 5632 × 4368 · 📱 · 4K <span class="lic">CC0</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Inhoudsopgave_Bloemen-_en_vogelschetsen_van_Keinen_(serietitel)_Keinen_kacho_gafu_(serietitel_op_object),_RP-P-2004-508D-1.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/ba/Inhoudsopgave_Bloemen-_en_vogelschetsen_van_Keinen_%28serietitel%29_Keinen_kacho_gafu_%28serietitel_op_object%29%2C_RP-P-2004-508D-1.jpg/500px-Inhoudsopgave_Bloemen-_en_vogelschetsen_van_Keinen_%28serietitel%29_Keinen_kacho_gafu_%28serietitel_op_object%29%2C_RP-P-2004-508D-1.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Inhoudsopgave Bloemen- en vogelschetsen van Keinen (serietitel) Keinen kacho gafu (serietitel op object), RP-P-2004-508D-1</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Twee_kwartels_Bloemen-_en_vogelschetsen_van_Keinen_(serietitel)_Keinen_kacho_gafu_(serietitel_op_object),_RP-P-2004-508D-10.jpg"> 5656 × 4332 · 📱 · 4K <span class="lic">CC0</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Twee_kwartels_Bloemen-_en_vogelschetsen_van_Keinen_(serietitel)_Keinen_kacho_gafu_(serietitel_op_object),_RP-P-2004-508D-10.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/49/Twee_kwartels_Bloemen-_en_vogelschetsen_van_Keinen_%28serietitel%29_Keinen_kacho_gafu_%28serietitel_op_object%29%2C_RP-P-2004-508D-10.jpg/500px-Twee_kwartels_Bloemen-_en_vogelschetsen_van_Keinen_%28serietitel%29_Keinen_kacho_gafu_%28serietitel_op_object%29%2C_RP-P-2004-508D-10.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Twee kwartels Bloemen- en vogelschetsen van Keinen (serietitel) Keinen kacho gafu (serietitel op object), RP-P-2004-508D-10</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Koppel_eenden_in_de_sneeuw_Bloemen-_en_vogelschetsen_van_Keinen_(serietitel)_Keinen_kacho_gafu_(serietitel_op_object),_RP-P-2004-508D-13.jpg"> 5646 × 4330 · 📱 · 4K <span class="lic">CC0</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Koppel_eenden_in_de_sneeuw_Bloemen-_en_vogelschetsen_van_Keinen_(serietitel)_Keinen_kacho_gafu_(serietitel_op_object),_RP-P-2004-508D-13.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/Koppel_eenden_in_de_sneeuw_Bloemen-_en_vogelschetsen_van_Keinen_%28serietitel%29_Keinen_kacho_gafu_%28serietitel_op_object%29%2C_RP-P-2004-508D-13.jpg/500px-Koppel_eenden_in_de_sneeuw_Bloemen-_en_vogelschetsen_van_Keinen_%28serietitel%29_Keinen_kacho_gafu_%28serietitel_op_object%29%2C_RP-P-2004-508D-13.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Koppel eenden in de sneeuw Bloemen- en vogelschetsen van Keinen (serietitel) Keinen kacho gafu (serietitel op object), RP-P-2004-508D-13</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Twee_groene_vogels_op_bloesemtak_Bloemen-_en_vogelschetsen_van_Keinen_(serietitel)_Keinen_kacho_gafu_(serietitel_op_object),_RP-P-2004-508D-3.jpg"> 5640 × 4334 · 📱 · 4K <span class="lic">CC0</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Twee_groene_vogels_op_bloesemtak_Bloemen-_en_vogelschetsen_van_Keinen_(serietitel)_Keinen_kacho_gafu_(serietitel_op_object),_RP-P-2004-508D-3.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Twee_groene_vogels_op_bloesemtak_Bloemen-_en_vogelschetsen_van_Keinen_%28serietitel%29_Keinen_kacho_gafu_%28serietitel_op_object%29%2C_RP-P-2004-508D-3.jpg/500px-Twee_groene_vogels_op_bloesemtak_Bloemen-_en_vogelschetsen_van_Keinen_%28serietitel%29_Keinen_kacho_gafu_%28serietitel_op_object%29%2C_RP-P-2004-508D-3.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Twee groene vogels op bloesemtak Bloemen- en vogelschetsen van Keinen (serietitel) Keinen kacho gafu (serietitel op object), RP-P-2004-508D-3</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Vijf_mussen_in_gevecht_Bloemen-_en_vogelschetsen_van_Keinen_(serietitel)_Keinen_kacho_gafu_(serietitel_op_object),_RP-P-2004-508D-12.jpg"> 5648 × 4326 · 📱 · 4K <span class="lic">CC0</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Vijf_mussen_in_gevecht_Bloemen-_en_vogelschetsen_van_Keinen_(serietitel)_Keinen_kacho_gafu_(serietitel_op_object),_RP-P-2004-508D-12.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/26/Vijf_mussen_in_gevecht_Bloemen-_en_vogelschetsen_van_Keinen_%28serietitel%29_Keinen_kacho_gafu_%28serietitel_op_object%29%2C_RP-P-2004-508D-12.jpg/500px-Vijf_mussen_in_gevecht_Bloemen-_en_vogelschetsen_van_Keinen_%28serietitel%29_Keinen_kacho_gafu_%28serietitel_op_object%29%2C_RP-P-2004-508D-12.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Vijf mussen in gevecht Bloemen- en vogelschetsen van Keinen (serietitel) Keinen kacho gafu (serietitel op object), RP-P-2004-508D-12</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Blauw-oranje_vogel_op_tak_kijkend_naar_spin_Bloemen-_en_vogelschetsen_van_Keinen_(serietitel)_Keinen_kacho_gafu_(serietitel_op_object),_RP-P-2004-508D-6.jpg"> 5654 × 4320 · 📱 · 4K <span class="lic">CC0</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Blauw-oranje_vogel_op_tak_kijkend_naar_spin_Bloemen-_en_vogelschetsen_van_Keinen_(serietitel)_Keinen_kacho_gafu_(serietitel_op_object),_RP-P-2004-508D-6.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/ef/Blauw-oranje_vogel_op_tak_kijkend_naar_spin_Bloemen-_en_vogelschetsen_van_Keinen_%28serietitel%29_Keinen_kacho_gafu_%28serietitel_op_object%29%2C_RP-P-2004-508D-6.jpg/500px-Blauw-oranje_vogel_op_tak_kijkend_naar_spin_Bloemen-_en_vogelschetsen_van_Keinen_%28serietitel%29_Keinen_kacho_gafu_%28serietitel_op_object%29%2C_RP-P-2004-508D-6.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Blauw-oranje vogel op tak kijkend naar spin Bloemen- en vogelschetsen van Keinen (serietitel) Keinen kacho gafu (serietitel op object), RP-P-2004-508D-6</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Vogel_bij_rups_Bloemen-_en_vogelschetsen_van_Keinen_(serietitel)_Keinen_kacho_gafu_(serietitel_op_object),_RP-P-2004-508D-8.jpg"> 5628 × 4330 · 📱 · 4K <span class="lic">CC0</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Vogel_bij_rups_Bloemen-_en_vogelschetsen_van_Keinen_(serietitel)_Keinen_kacho_gafu_(serietitel_op_object),_RP-P-2004-508D-8.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/Vogel_bij_rups_Bloemen-_en_vogelschetsen_van_Keinen_%28serietitel%29_Keinen_kacho_gafu_%28serietitel_op_object%29%2C_RP-P-2004-508D-8.jpg/500px-Vogel_bij_rups_Bloemen-_en_vogelschetsen_van_Keinen_%28serietitel%29_Keinen_kacho_gafu_%28serietitel_op_object%29%2C_RP-P-2004-508D-8.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Vogel bij rups Bloemen- en vogelschetsen van Keinen (serietitel) Keinen kacho gafu (serietitel op object), RP-P-2004-508D-8</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Badende_vogel_bij_roze_bloem_Bloemen-_en_vogelschetsen_van_Keinen_(serietitel)_Keinen_kacho_gafu_(serietitel_op_object),_RP-P-2004-508D-9.jpg"> 5648 × 4306 · 📱 · 4K <span class="lic">CC0</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Badende_vogel_bij_roze_bloem_Bloemen-_en_vogelschetsen_van_Keinen_(serietitel)_Keinen_kacho_gafu_(serietitel_op_object),_RP-P-2004-508D-9.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/cb/Badende_vogel_bij_roze_bloem_Bloemen-_en_vogelschetsen_van_Keinen_%28serietitel%29_Keinen_kacho_gafu_%28serietitel_op_object%29%2C_RP-P-2004-508D-9.jpg/500px-Badende_vogel_bij_roze_bloem_Bloemen-_en_vogelschetsen_van_Keinen_%28serietitel%29_Keinen_kacho_gafu_%28serietitel_op_object%29%2C_RP-P-2004-508D-9.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Badende vogel bij roze bloem Bloemen- en vogelschetsen van Keinen (serietitel) Keinen kacho gafu (serietitel op object), RP-P-2004-508D-9</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Drie_kuikens_Bloemen-_en_vogelschetsen_van_Keinen_(serietitel)_Keinen_kacho_gafu_(serietitel_op_object),_RP-P-2004-508D-4.jpg"> 5642 × 4310 · 📱 · 4K <span class="lic">CC0</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Drie_kuikens_Bloemen-_en_vogelschetsen_van_Keinen_(serietitel)_Keinen_kacho_gafu_(serietitel_op_object),_RP-P-2004-508D-4.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/97/Drie_kuikens_Bloemen-_en_vogelschetsen_van_Keinen_%28serietitel%29_Keinen_kacho_gafu_%28serietitel_op_object%29%2C_RP-P-2004-508D-4.jpg/500px-Drie_kuikens_Bloemen-_en_vogelschetsen_van_Keinen_%28serietitel%29_Keinen_kacho_gafu_%28serietitel_op_object%29%2C_RP-P-2004-508D-4.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Drie kuikens Bloemen- en vogelschetsen van Keinen (serietitel) Keinen kacho gafu (serietitel op object), RP-P-2004-508D-4</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Zwart-wit_vogeltje_tussen_roze_rozen_Bloemen-_en_vogelschetsen_van_Keinen_(serietitel)_Keinen_kacho_gafu_(serietitel_op_object),_RP-P-2004-508D-5.jpg"> 5636 × 4300 · 📱 · 4K <span class="lic">CC0</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Zwart-wit_vogeltje_tussen_roze_rozen_Bloemen-_en_vogelschetsen_van_Keinen_(serietitel)_Keinen_kacho_gafu_(serietitel_op_object),_RP-P-2004-508D-5.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/Zwart-wit_vogeltje_tussen_roze_rozen_Bloemen-_en_vogelschetsen_van_Keinen_%28serietitel%29_Keinen_kacho_gafu_%28serietitel_op_object%29%2C_RP-P-2004-508D-5.jpg/500px-Zwart-wit_vogeltje_tussen_roze_rozen_Bloemen-_en_vogelschetsen_van_Keinen_%28serietitel%29_Keinen_kacho_gafu_%28serietitel_op_object%29%2C_RP-P-2004-508D-5.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Zwart-wit vogeltje tussen roze rozen Bloemen- en vogelschetsen van Keinen (serietitel) Keinen kacho gafu (serietitel op object), RP-P-2004-508D-5</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Koppel_fazanten_op_rots_Bloemen-_en_vogelschetsen_van_Keinen_(serietitel)_Keinen_kacho_gafu_(serietitel_op_object),_RP-P-2004-508D-2.jpg"> 5618 × 4298 · 📱 · 4K <span class="lic">CC0</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Koppel_fazanten_op_rots_Bloemen-_en_vogelschetsen_van_Keinen_(serietitel)_Keinen_kacho_gafu_(serietitel_op_object),_RP-P-2004-508D-2.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a4/Koppel_fazanten_op_rots_Bloemen-_en_vogelschetsen_van_Keinen_%28serietitel%29_Keinen_kacho_gafu_%28serietitel_op_object%29%2C_RP-P-2004-508D-2.jpg/500px-Koppel_fazanten_op_rots_Bloemen-_en_vogelschetsen_van_Keinen_%28serietitel%29_Keinen_kacho_gafu_%28serietitel_op_object%29%2C_RP-P-2004-508D-2.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Koppel fazanten op rots Bloemen- en vogelschetsen van Keinen (serietitel) Keinen kacho gafu (serietitel op object), RP-P-2004-508D-2</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Wereld_der_Kunsten_-_24_Bijutsu_sekai_-_24_(titel_op_object),_RP-P-OB-JAP-59H.jpg"> 3994 × 5692 · 📱 · 4K <span class="lic">CC0</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Wereld_der_Kunsten_-_24_Bijutsu_sekai_-_24_(titel_op_object),_RP-P-OB-JAP-59H.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Wereld_der_Kunsten_-_24_Bijutsu_sekai_-_24_%28titel_op_object%29%2C_RP-P-OB-JAP-59H.jpg/500px-Wereld_der_Kunsten_-_24_Bijutsu_sekai_-_24_%28titel_op_object%29%2C_RP-P-OB-JAP-59H.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Wereld der Kunsten - 24 Bijutsu sekai - 24 (titel op object), RP-P-OB-JAP-59H</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Wereld_der_Kunsten_-_22_Bijutsu_sekai_-_22_(titel_op_object),_RP-P-OB-JAP-59G.jpg"> 4020 × 5532 · 📱 · 4K <span class="lic">CC0</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Wereld_der_Kunsten_-_22_Bijutsu_sekai_-_22_(titel_op_object),_RP-P-OB-JAP-59G.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Wereld_der_Kunsten_-_22_Bijutsu_sekai_-_22_%28titel_op_object%29%2C_RP-P-OB-JAP-59G.jpg/500px-Wereld_der_Kunsten_-_22_Bijutsu_sekai_-_22_%28titel_op_object%29%2C_RP-P-OB-JAP-59G.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Wereld der Kunsten - 22 Bijutsu sekai - 22 (titel op object), RP-P-OB-JAP-59G</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Prentenboek_over_bloemen_en_vogels_door_Keinen_-_zomerdeel,_RP-P-OB-JAP-46.jpg"> 3804 × 5100 · 📱 · 4K <span class="lic">CC0</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Prentenboek_over_bloemen_en_vogels_door_Keinen_-_zomerdeel,_RP-P-OB-JAP-46.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c0/Prentenboek_over_bloemen_en_vogels_door_Keinen_-_zomerdeel%2C_RP-P-OB-JAP-46.jpg/500px-Prentenboek_over_bloemen_en_vogels_door_Keinen_-_zomerdeel%2C_RP-P-OB-JAP-46.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Prentenboek over bloemen en vogels door Keinen - zomerdeel, RP-P-OB-JAP-46</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Brokaten_uit_de_hoofdstad_Miyako_no_nishiki_(titel_op_object),_RP-P-2005-531.jpg"> 3638 × 5260 · 📱 · 4K <span class="lic">CC0</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Brokaten_uit_de_hoofdstad_Miyako_no_nishiki_(titel_op_object),_RP-P-2005-531.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Brokaten_uit_de_hoofdstad_Miyako_no_nishiki_%28titel_op_object%29%2C_RP-P-2005-531.jpg/500px-Brokaten_uit_de_hoofdstad_Miyako_no_nishiki_%28titel_op_object%29%2C_RP-P-2005-531.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Brokaten uit de hoofdstad Miyako no nishiki (titel op object), RP-P-2005-531</figcaption>
+</figure>
+</div>
+<hr>
+<h2>Gyoshū Hayami <small>15</small></h2>
+<div class="grid">
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:%E9%80%9F%E6%B0%B4%E5%BE%A1%E8%88%9F%E3%80%8A%E6%B4%9B%E5%8C%97%E4%BF%AE%E5%AD%A6%E9%99%A2%E6%9D%91%E3%80%8B1918%EF%BC%88%E5%A4%A7%E6%AD%A37%EF%BC%89%E5%B9%B4%E3%80%81%E6%BB%8B%E8%B3%80%E7%9C%8C%E7%AB%8B%E7%BE%8E%E8%A1%93%E9%A4%A8.jpg"> 4689 × 6404 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:%E9%80%9F%E6%B0%B4%E5%BE%A1%E8%88%9F%E3%80%8A%E6%B4%9B%E5%8C%97%E4%BF%AE%E5%AD%A6%E9%99%A2%E6%9D%91%E3%80%8B1918%EF%BC%88%E5%A4%A7%E6%AD%A37%EF%BC%89%E5%B9%B4%E3%80%81%E6%BB%8B%E8%B3%80%E7%9C%8C%E7%AB%8B%E7%BE%8E%E8%A1%93%E9%A4%A8.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e2/%E9%80%9F%E6%B0%B4%E5%BE%A1%E8%88%9F%E3%80%8A%E6%B4%9B%E5%8C%97%E4%BF%AE%E5%AD%A6%E9%99%A2%E6%9D%91%E3%80%8B1918%EF%BC%88%E5%A4%A7%E6%AD%A37%EF%BC%89%E5%B9%B4%E3%80%81%E6%BB%8B%E8%B3%80%E7%9C%8C%E7%AB%8B%E7%BE%8E%E8%A1%93%E9%A4%A8.jpg/500px-%E9%80%9F%E6%B0%B4%E5%BE%A1%E8%88%9F%E3%80%8A%E6%B4%9B%E5%8C%97%E4%BF%AE%E5%AD%A6%E9%99%A2%E6%9D%91%E3%80%8B1918%EF%BC%88%E5%A4%A7%E6%AD%A37%EF%BC%89%E5%B9%B4%E3%80%81%E6%BB%8B%E8%B3%80%E7%9C%8C%E7%AB%8B%E7%BE%8E%E8%A1%93%E9%A4%A8.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>速水御舟《洛北修学院村》1918（大正7）年、滋賀県立美術館</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:%E9%80%9F%E6%B0%B4%E5%BE%A1%E8%88%9F%E3%80%8A%E9%8D%8B%E5%B3%B6%E3%81%AE%E7%9A%BF%E3%81%AB%E6%9F%98%E6%A6%B4%E3%80%8B1921%EF%BC%88%E5%A4%A7%E6%AD%A310%EF%BC%89%E5%B9%B4.jpg"> 6032 × 4297 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:%E9%80%9F%E6%B0%B4%E5%BE%A1%E8%88%9F%E3%80%8A%E9%8D%8B%E5%B3%B6%E3%81%AE%E7%9A%BF%E3%81%AB%E6%9F%98%E6%A6%B4%E3%80%8B1921%EF%BC%88%E5%A4%A7%E6%AD%A310%EF%BC%89%E5%B9%B4.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/%E9%80%9F%E6%B0%B4%E5%BE%A1%E8%88%9F%E3%80%8A%E9%8D%8B%E5%B3%B6%E3%81%AE%E7%9A%BF%E3%81%AB%E6%9F%98%E6%A6%B4%E3%80%8B1921%EF%BC%88%E5%A4%A7%E6%AD%A310%EF%BC%89%E5%B9%B4.jpg/500px-%E9%80%9F%E6%B0%B4%E5%BE%A1%E8%88%9F%E3%80%8A%E9%8D%8B%E5%B3%B6%E3%81%AE%E7%9A%BF%E3%81%AB%E6%9F%98%E6%A6%B4%E3%80%8B1921%EF%BC%88%E5%A4%A7%E6%AD%A310%EF%BC%89%E5%B9%B4.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>速水御舟《鍋島の皿に柘榴》1921（大正10）年</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Gyoshu_hayami,_rotolo_con_schizzi,_insetti,_1925,_03.jpg"> 5448 × 3510 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Gyoshu_hayami,_rotolo_con_schizzi,_insetti,_1925,_03.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Gyoshu_hayami%2C_rotolo_con_schizzi%2C_insetti%2C_1925%2C_03.jpg/500px-Gyoshu_hayami%2C_rotolo_con_schizzi%2C_insetti%2C_1925%2C_03.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Gyoshu hayami, rotolo con schizzi, insetti, 1925, 03</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Gyoshu_hayami,_rotolo_con_schizzi,_insetti,_1925,_05_farfalle_e_falene.jpg"> 5412 × 3402 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Gyoshu_hayami,_rotolo_con_schizzi,_insetti,_1925,_05_farfalle_e_falene.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f7/Gyoshu_hayami%2C_rotolo_con_schizzi%2C_insetti%2C_1925%2C_05_farfalle_e_falene.jpg/500px-Gyoshu_hayami%2C_rotolo_con_schizzi%2C_insetti%2C_1925%2C_05_farfalle_e_falene.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Gyoshu hayami, rotolo con schizzi, insetti, 1925, 05 farfalle e falene</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:%E9%80%9F%E6%B0%B4%E5%BE%A1%E8%88%9F%E3%80%8A%E6%A4%BF%E8%8A%B1%E5%A6%8D%E5%BD%A9%E3%80%8B1926%EF%BC%88%E5%A4%A7%E6%AD%A315%EF%BC%89%E5%B9%B4%E3%80%81%E5%80%8B%E4%BA%BA%E8%94%B5.jpg"> 4194 × 3971 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:%E9%80%9F%E6%B0%B4%E5%BE%A1%E8%88%9F%E3%80%8A%E6%A4%BF%E8%8A%B1%E5%A6%8D%E5%BD%A9%E3%80%8B1926%EF%BC%88%E5%A4%A7%E6%AD%A315%EF%BC%89%E5%B9%B4%E3%80%81%E5%80%8B%E4%BA%BA%E8%94%B5.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/ac/%E9%80%9F%E6%B0%B4%E5%BE%A1%E8%88%9F%E3%80%8A%E6%A4%BF%E8%8A%B1%E5%A6%8D%E5%BD%A9%E3%80%8B1926%EF%BC%88%E5%A4%A7%E6%AD%A315%EF%BC%89%E5%B9%B4%E3%80%81%E5%80%8B%E4%BA%BA%E8%94%B5.jpg/500px-%E9%80%9F%E6%B0%B4%E5%BE%A1%E8%88%9F%E3%80%8A%E6%A4%BF%E8%8A%B1%E5%A6%8D%E5%BD%A9%E3%80%8B1926%EF%BC%88%E5%A4%A7%E6%AD%A315%EF%BC%89%E5%B9%B4%E3%80%81%E5%80%8B%E4%BA%BA%E8%94%B5.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>速水御舟《椿花妍彩》1926（大正15）年、個人蔵</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Gyoshu_hayami,_rotolo_con_schizzi,_insetti,_1925,_04.jpg"> 4512 × 3528 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Gyoshu_hayami,_rotolo_con_schizzi,_insetti,_1925,_04.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b2/Gyoshu_hayami%2C_rotolo_con_schizzi%2C_insetti%2C_1925%2C_04.jpg/500px-Gyoshu_hayami%2C_rotolo_con_schizzi%2C_insetti%2C_1925%2C_04.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Gyoshu hayami, rotolo con schizzi, insetti, 1925, 04</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Gyoshu_hayami,_rotolo_con_schizzi,_insetti,_1925,_06_farfalle_e_falene.jpg"> 4542 × 3444 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Gyoshu_hayami,_rotolo_con_schizzi,_insetti,_1925,_06_farfalle_e_falene.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/Gyoshu_hayami%2C_rotolo_con_schizzi%2C_insetti%2C_1925%2C_06_farfalle_e_falene.jpg/500px-Gyoshu_hayami%2C_rotolo_con_schizzi%2C_insetti%2C_1925%2C_06_farfalle_e_falene.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Gyoshu hayami, rotolo con schizzi, insetti, 1925, 06 farfalle e falene</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:%E9%80%9F%E6%B0%B4%E5%BE%A1%E8%88%9F%E3%80%8A%E8%8A%B1%E3%83%8E%E5%82%8D%E3%80%8B1932%EF%BC%88%E6%98%AD%E5%92%8C7%EF%BC%89%E5%B9%B4%E3%80%81%E6%A0%AA%E5%BC%8F%E4%BC%9A%E7%A4%BE%E6%AD%8C%E8%88%9E%E4%BC%8E%E5%BA%A7.jpg"> 2949 × 5044 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:%E9%80%9F%E6%B0%B4%E5%BE%A1%E8%88%9F%E3%80%8A%E8%8A%B1%E3%83%8E%E5%82%8D%E3%80%8B1932%EF%BC%88%E6%98%AD%E5%92%8C7%EF%BC%89%E5%B9%B4%E3%80%81%E6%A0%AA%E5%BC%8F%E4%BC%9A%E7%A4%BE%E6%AD%8C%E8%88%9E%E4%BC%8E%E5%BA%A7.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/28/%E9%80%9F%E6%B0%B4%E5%BE%A1%E8%88%9F%E3%80%8A%E8%8A%B1%E3%83%8E%E5%82%8D%E3%80%8B1932%EF%BC%88%E6%98%AD%E5%92%8C7%EF%BC%89%E5%B9%B4%E3%80%81%E6%A0%AA%E5%BC%8F%E4%BC%9A%E7%A4%BE%E6%AD%8C%E8%88%9E%E4%BC%8E%E5%BA%A7.jpg/500px-%E9%80%9F%E6%B0%B4%E5%BE%A1%E8%88%9F%E3%80%8A%E8%8A%B1%E3%83%8E%E5%82%8D%E3%80%8B1932%EF%BC%88%E6%98%AD%E5%92%8C7%EF%BC%89%E5%B9%B4%E3%80%81%E6%A0%AA%E5%BC%8F%E4%BC%9A%E7%A4%BE%E6%AD%8C%E8%88%9E%E4%BC%8E%E5%BA%A7.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>速水御舟《花ノ傍》1932（昭和7）年、株式会社歌舞伎座</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Gyoshu_hayami,_galline,_1924,_02.jpg"> 3906 × 3462 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Gyoshu_hayami,_galline,_1924,_02.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a1/Gyoshu_hayami%2C_galline%2C_1924%2C_02.jpg/500px-Gyoshu_hayami%2C_galline%2C_1924%2C_02.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Gyoshu hayami, galline, 1924, 02</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Gyoshu_hayami,_rotolo_con_schizzi,_insetti,_1925,_07_farfalla.jpg"> 3714 × 3552 · 📱 <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Gyoshu_hayami,_rotolo_con_schizzi,_insetti,_1925,_07_farfalla.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/dc/Gyoshu_hayami%2C_rotolo_con_schizzi%2C_insetti%2C_1925%2C_07_farfalla.jpg/500px-Gyoshu_hayami%2C_rotolo_con_schizzi%2C_insetti%2C_1925%2C_07_farfalla.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Gyoshu hayami, rotolo con schizzi, insetti, 1925, 07 farfalla</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Gyoshu_hayami,_rotolo_con_schizzi,_insetti,_1925,_08_farfalla.jpg"> 3378 × 3600 · 📱 <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Gyoshu_hayami,_rotolo_con_schizzi,_insetti,_1925,_08_farfalla.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/06/Gyoshu_hayami%2C_rotolo_con_schizzi%2C_insetti%2C_1925%2C_08_farfalla.jpg/500px-Gyoshu_hayami%2C_rotolo_con_schizzi%2C_insetti%2C_1925%2C_08_farfalla.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Gyoshu hayami, rotolo con schizzi, insetti, 1925, 08 farfalla</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Gyoshu_hayami,_galline,_1924,_01.jpg"> 2370 × 4824 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Gyoshu_hayami,_galline,_1924,_01.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f1/Gyoshu_hayami%2C_galline%2C_1924%2C_01.jpg/500px-Gyoshu_hayami%2C_galline%2C_1924%2C_01.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Gyoshu hayami, galline, 1924, 01</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Gyoshu_hayami,_rotolo_con_schizzi,_pesci,_1925,_05.jpg"> 3090 × 3126 · 📱 <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Gyoshu_hayami,_rotolo_con_schizzi,_pesci,_1925,_05.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Gyoshu_hayami%2C_rotolo_con_schizzi%2C_pesci%2C_1925%2C_05.jpg/500px-Gyoshu_hayami%2C_rotolo_con_schizzi%2C_pesci%2C_1925%2C_05.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Gyoshu hayami, rotolo con schizzi, pesci, 1925, 05</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:%E9%80%9F%E6%B0%B4%E5%BE%A1%E8%88%9F%E3%80%8A%E7%A7%8B%E8%88%88%E3%80%8B1929%EF%BC%88%E6%98%AD%E5%92%8C4%EF%BC%89%E5%B9%B4.jpg"> 1679 × 5201 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:%E9%80%9F%E6%B0%B4%E5%BE%A1%E8%88%9F%E3%80%8A%E7%A7%8B%E8%88%88%E3%80%8B1929%EF%BC%88%E6%98%AD%E5%92%8C4%EF%BC%89%E5%B9%B4.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/%E9%80%9F%E6%B0%B4%E5%BE%A1%E8%88%9F%E3%80%8A%E7%A7%8B%E8%88%88%E3%80%8B1929%EF%BC%88%E6%98%AD%E5%92%8C4%EF%BC%89%E5%B9%B4.jpg/500px-%E9%80%9F%E6%B0%B4%E5%BE%A1%E8%88%9F%E3%80%8A%E7%A7%8B%E8%88%88%E3%80%8B1929%EF%BC%88%E6%98%AD%E5%92%8C4%EF%BC%89%E5%B9%B4.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>速水御舟《秋興》1929（昭和4）年</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:%E9%80%9F%E6%B0%B4%E5%BE%A1%E8%88%9F%E3%80%8A%E8%8F%8A%E3%81%AB%E7%8C%AB%E3%80%8B1922%EF%BC%88%E5%A4%A7%E6%AD%A3_11%EF%BC%89%E5%B9%B4%E3%80%81%E8%B1%8A%E7%94%B0%E5%B8%82%E7%BE%8E%E8%A1%93%E9%A4%A8.jpg"> 1625 × 4201 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:%E9%80%9F%E6%B0%B4%E5%BE%A1%E8%88%9F%E3%80%8A%E8%8F%8A%E3%81%AB%E7%8C%AB%E3%80%8B1922%EF%BC%88%E5%A4%A7%E6%AD%A3_11%EF%BC%89%E5%B9%B4%E3%80%81%E8%B1%8A%E7%94%B0%E5%B8%82%E7%BE%8E%E8%A1%93%E9%A4%A8.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/45/%E9%80%9F%E6%B0%B4%E5%BE%A1%E8%88%9F%E3%80%8A%E8%8F%8A%E3%81%AB%E7%8C%AB%E3%80%8B1922%EF%BC%88%E5%A4%A7%E6%AD%A3_11%EF%BC%89%E5%B9%B4%E3%80%81%E8%B1%8A%E7%94%B0%E5%B8%82%E7%BE%8E%E8%A1%93%E9%A4%A8.jpg/500px-%E9%80%9F%E6%B0%B4%E5%BE%A1%E8%88%9F%E3%80%8A%E8%8F%8A%E3%81%AB%E7%8C%AB%E3%80%8B1922%EF%BC%88%E5%A4%A7%E6%AD%A3_11%EF%BC%89%E5%B9%B4%E3%80%81%E8%B1%8A%E7%94%B0%E5%B8%82%E7%BE%8E%E8%A1%93%E9%A4%A8.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>速水御舟《菊に猫》1922（大正 11）年、豊田市美術館</figcaption>
+</figure>
+</div>
+<hr>
+<h2>Nihonga <small>10</small></h2>
+<div class="grid">
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Yoroboshi_by_Shimomura_Kazan.jpg"> 9065 × 4168 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Yoroboshi_by_Shimomura_Kazan.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/62/Yoroboshi_by_Shimomura_Kazan.jpg/500px-Yoroboshi_by_Shimomura_Kazan.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Yoroboshi by Shimomura Kazan</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:%E5%AE%85%E9%87%8E%E7%94%B0%E5%A4%AB%E4%BD%9C%E3%80%81%E8%A6%B3%E4%B8%96%E9%9F%B3%E5%B0%8A.jpg"> 5569 × 6285 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:%E5%AE%85%E9%87%8E%E7%94%B0%E5%A4%AB%E4%BD%9C%E3%80%81%E8%A6%B3%E4%B8%96%E9%9F%B3%E5%B0%8A.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/%E5%AE%85%E9%87%8E%E7%94%B0%E5%A4%AB%E4%BD%9C%E3%80%81%E8%A6%B3%E4%B8%96%E9%9F%B3%E5%B0%8A.jpg/500px-%E5%AE%85%E9%87%8E%E7%94%B0%E5%A4%AB%E4%BD%9C%E3%80%81%E8%A6%B3%E4%B8%96%E9%9F%B3%E5%B0%8A.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>宅野田夫作、観世音尊</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Tsuchida_Bakusen_-_Maiko_in_a_Garden_(Bugi-Rinsen).jpg"> 4000 × 8713 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Tsuchida_Bakusen_-_Maiko_in_a_Garden_(Bugi-Rinsen).jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/Tsuchida_Bakusen_-_Maiko_in_a_Garden_%28Bugi-Rinsen%29.jpg/500px-Tsuchida_Bakusen_-_Maiko_in_a_Garden_%28Bugi-Rinsen%29.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Tsuchida Bakusen - Maiko in a Garden (Bugi-Rinsen)</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Hibo_Kannon_(%E6%82%B2%E6%AF%8D%E8%A6%B3%E9%9F%B3)_Original_on_Silk_Scroll.jpg"> 2424 × 5600 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Hibo_Kannon_(%E6%82%B2%E6%AF%8D%E8%A6%B3%E9%9F%B3)_Original_on_Silk_Scroll.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0d/Hibo_Kannon_%28%E6%82%B2%E6%AF%8D%E8%A6%B3%E9%9F%B3%29_Original_on_Silk_Scroll.jpg/500px-Hibo_Kannon_%28%E6%82%B2%E6%AF%8D%E8%A6%B3%E9%9F%B3%29_Original_on_Silk_Scroll.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Hibo Kannon (悲母観音) Original on Silk Scroll</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Shunyo_by_Kitano_Tsunetomi.jpg"> 2669 × 4949 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Shunyo_by_Kitano_Tsunetomi.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/da/Shunyo_by_Kitano_Tsunetomi.jpg/500px-Shunyo_by_Kitano_Tsunetomi.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Shunyo by Kitano Tsunetomi</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Yozakura_by_Kitano_Tsunetomi.jpg"> 2161 × 6011 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Yozakura_by_Kitano_Tsunetomi.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c8/Yozakura_by_Kitano_Tsunetomi.jpg/500px-Yozakura_by_Kitano_Tsunetomi.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Yozakura by Kitano Tsunetomi</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Hana-Kanzashi_no_onna_by_Yamakawa_Sh%C5%ABh%C5%8D.jpg"> 3145 × 4121 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Hana-Kanzashi_no_onna_by_Yamakawa_Sh%C5%ABh%C5%8D.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Hana-Kanzashi_no_onna_by_Yamakawa_Sh%C5%ABh%C5%8D.jpg/500px-Hana-Kanzashi_no_onna_by_Yamakawa_Sh%C5%ABh%C5%8D.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Hana-Kanzashi no onna by Yamakawa Shūhō</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Kibara_by_Hashiguchi_Goy%C5%8D.jpg"> 1679 × 4098 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Kibara_by_Hashiguchi_Goy%C5%8D.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/72/Kibara_by_Hashiguchi_Goy%C5%8D.jpg/500px-Kibara_by_Hashiguchi_Goy%C5%8D.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Kibara by Hashiguchi Goyō</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Hari-kuy%C5%8D_by_Kitani_Chigusa_from_the_picture_post_card.jpg"> 2071 × 3261 · 📱 <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Hari-kuy%C5%8D_by_Kitani_Chigusa_from_the_picture_post_card.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/57/Hari-kuy%C5%8D_by_Kitani_Chigusa_from_the_picture_post_card.jpg/500px-Hari-kuy%C5%8D_by_Kitani_Chigusa_from_the_picture_post_card.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Hari-kuyō by Kitani Chigusa from the picture post card</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Shoen_Uemura_-_Firefly.jpg"> 1881 × 3382 · 📱 <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Shoen_Uemura_-_Firefly.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/48/Shoen_Uemura_-_Firefly.jpg/500px-Shoen_Uemura_-_Firefly.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Shoen Uemura - Firefly</figcaption>
+</figure>
+</div>
+<hr>
+<h2>Paintings on screens from Japan <small>10</small></h2>
+<div class="grid">
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Important_Cultural_Property_Western_Kings_on_Horseback_-_Google_Art_Project.jpg"> 11910 × 8976 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Important_Cultural_Property_Western_Kings_on_Horseback_-_Google_Art_Project.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/Important_Cultural_Property_Western_Kings_on_Horseback_-_Google_Art_Project.jpg/500px-Important_Cultural_Property_Western_Kings_on_Horseback_-_Google_Art_Project.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Important Cultural Property Western Kings on Horseback - Google Art Project</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Fans_on_a_stream_Guimet_MA6264_n2.jpg"> 7705 × 5137 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Fans_on_a_stream_Guimet_MA6264_n2.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5d/Fans_on_a_stream_Guimet_MA6264_n2.jpg/500px-Fans_on_a_stream_Guimet_MA6264_n2.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Fans on a stream Guimet MA6264 n2</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Kaze_by_Kitano_Tsunetomi.jpg"> 6213 × 5869 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Kaze_by_Kitano_Tsunetomi.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/Kaze_by_Kitano_Tsunetomi.jpg/500px-Kaze_by_Kitano_Tsunetomi.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Kaze by Kitano Tsunetomi</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Fans_on_a_stream_Guimet_MA6264_n1.jpg"> 6753 × 4502 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Fans_on_a_stream_Guimet_MA6264_n1.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Fans_on_a_stream_Guimet_MA6264_n1.jpg/500px-Fans_on_a_stream_Guimet_MA6264_n1.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Fans on a stream Guimet MA6264 n1</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Yadorigi_yamato-e_Guimet_MA4.jpeg"> 4461 × 4581 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Yadorigi_yamato-e_Guimet_MA4.jpeg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/40/Yadorigi_yamato-e_Guimet_MA4.jpeg/500px-Yadorigi_yamato-e_Guimet_MA4.jpeg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Yadorigi yamato-e Guimet MA4</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Momiji_no_ga_Guimet_MA571.jpg"> 4213 × 4620 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Momiji_no_ga_Guimet_MA571.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5c/Momiji_no_ga_Guimet_MA571.jpg/500px-Momiji_no_ga_Guimet_MA571.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Momiji no ga Guimet MA571</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Kagaribi_yamato-e_Guimet_MA569.jpeg"> 4121 × 4557 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Kagaribi_yamato-e_Guimet_MA569.jpeg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/aa/Kagaribi_yamato-e_Guimet_MA569.jpeg/500px-Kagaribi_yamato-e_Guimet_MA569.jpeg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Kagaribi yamato-e Guimet MA569</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Yomogyu_yamato-e_Guimet_MA572.jpeg"> 4118 × 4445 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Yomogyu_yamato-e_Guimet_MA572.jpeg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/Yomogyu_yamato-e_Guimet_MA572.jpeg/500px-Yomogyu_yamato-e_Guimet_MA572.jpeg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Yomogyu yamato-e Guimet MA572</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Maboroshi_yamato-e_Guimet_MA3.jpg"> 4102 × 4181 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Maboroshi_yamato-e_Guimet_MA3.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/16/Maboroshi_yamato-e_Guimet_MA3.jpg/500px-Maboroshi_yamato-e_Guimet_MA3.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Maboroshi yamato-e Guimet MA3</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Unknown_artist_-_Scenes_from_the_Tale_of_Genji_-_1948.124_-_Cleveland_Museum_of_Art.jpg"> 3400 × 3204 · 📱 <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Unknown_artist_-_Scenes_from_the_Tale_of_Genji_-_1948.124_-_Cleveland_Museum_of_Art.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Unknown_artist_-_Scenes_from_the_Tale_of_Genji_-_1948.124_-_Cleveland_Museum_of_Art.jpg/500px-Unknown_artist_-_Scenes_from_the_Tale_of_Genji_-_1948.124_-_Cleveland_Museum_of_Art.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Unknown artist - Scenes from the Tale of Genji - 1948.124 - Cleveland Museum of Art</figcaption>
+</figure>
+</div>
+<hr>
+<h2>Shimomura Kanzan <small>8</small></h2>
+<div class="grid">
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Kanzano_shimomura,_appezzamento_di_zucche_(paravent1),_1910_ca._02.jpg"> 3648 × 5472 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Kanzano_shimomura,_appezzamento_di_zucche_(paravent1),_1910_ca._02.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/09/Kanzano_shimomura%2C_appezzamento_di_zucche_%28paravent1%29%2C_1910_ca._02.jpg/500px-Kanzano_shimomura%2C_appezzamento_di_zucche_%28paravent1%29%2C_1910_ca._02.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Kanzano shimomura, appezzamento di zucche (paravent1), 1910 ca. 02</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Kanzano_shimomura,_appezzamento_di_zucche_(paravent1),_1910_ca._03.jpg"> 5472 × 3648 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Kanzano_shimomura,_appezzamento_di_zucche_(paravent1),_1910_ca._03.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5d/Kanzano_shimomura%2C_appezzamento_di_zucche_%28paravent1%29%2C_1910_ca._03.jpg/500px-Kanzano_shimomura%2C_appezzamento_di_zucche_%28paravent1%29%2C_1910_ca._03.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Kanzano shimomura, appezzamento di zucche (paravent1), 1910 ca. 03</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Kanzano_shimomura,_appezzamento_di_zucche_(paravent1),_1910_ca._04.jpg"> 5472 × 3648 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Kanzano_shimomura,_appezzamento_di_zucche_(paravent1),_1910_ca._04.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d9/Kanzano_shimomura%2C_appezzamento_di_zucche_%28paravent1%29%2C_1910_ca._04.jpg/500px-Kanzano_shimomura%2C_appezzamento_di_zucche_%28paravent1%29%2C_1910_ca._04.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Kanzano shimomura, appezzamento di zucche (paravent1), 1910 ca. 04</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Kanzano_shimomura,_appezzamento_di_zucche_(paravent1),_1910_ca._05.jpg"> 3648 × 5472 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Kanzano_shimomura,_appezzamento_di_zucche_(paravent1),_1910_ca._05.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/7d/Kanzano_shimomura%2C_appezzamento_di_zucche_%28paravent1%29%2C_1910_ca._05.jpg/500px-Kanzano_shimomura%2C_appezzamento_di_zucche_%28paravent1%29%2C_1910_ca._05.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Kanzano shimomura, appezzamento di zucche (paravent1), 1910 ca. 05</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Kanzano_shimomura,_appezzamento_di_zucche_(paravent1),_1910_ca._07.jpg"> 3318 × 5412 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Kanzano_shimomura,_appezzamento_di_zucche_(paravent1),_1910_ca._07.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d1/Kanzano_shimomura%2C_appezzamento_di_zucche_%28paravent1%29%2C_1910_ca._07.jpg/500px-Kanzano_shimomura%2C_appezzamento_di_zucche_%28paravent1%29%2C_1910_ca._07.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Kanzano shimomura, appezzamento di zucche (paravent1), 1910 ca. 07</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Maeda_Tsunanori.jpg"> 3309 × 5203 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Maeda_Tsunanori.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/29/Maeda_Tsunanori.jpg/500px-Maeda_Tsunanori.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Maeda Tsunanori</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Manjushiri_in_the_Shape_of_a_Child,_by_Kanzan_Shimomura,_1894-1898,_color_on_paper_-_National_Museum_of_Modern_Art,_Tokyo_-_DSC06657.JPG"> 3936 × 3155 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Manjushiri_in_the_Shape_of_a_Child,_by_Kanzan_Shimomura,_1894-1898,_color_on_paper_-_National_Museum_of_Modern_Art,_Tokyo_-_DSC06657.JPG" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/34/Manjushiri_in_the_Shape_of_a_Child%2C_by_Kanzan_Shimomura%2C_1894-1898%2C_color_on_paper_-_National_Museum_of_Modern_Art%2C_Tokyo_-_DSC06657.JPG/500px-Manjushiri_in_the_Shape_of_a_Child%2C_by_Kanzan_Shimomura%2C_1894-1898%2C_color_on_paper_-_National_Museum_of_Modern_Art%2C_Tokyo_-_DSC06657.JPG?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Manjushiri in the Shape of a Child, by Kanzan Shimomura, 1894-1898, color on paper - National Museum of Modern Art, Tokyo - DSC06657</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:ShimomuraKanzan-1919-Portrait_of_T%27ao_Yen-ming.png"> 2086 × 4632 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:ShimomuraKanzan-1919-Portrait_of_T%27ao_Yen-ming.png" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/93/ShimomuraKanzan-1919-Portrait_of_T%27ao_Yen-ming.png/500px-ShimomuraKanzan-1919-Portrait_of_T%27ao_Yen-ming.png?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>ShimomuraKanzan-1919-Portrait of T'ao Yen-ming</figcaption>
+</figure>
+</div>
+<hr>
+<h2>Paintings by Hashimoto Gahō in the Metropolitan Museum of Art <small>6</small></h2>
+<div class="grid">
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:MET_DP211847.jpg"> 2908 × 3794 · 📱 <span class="lic">CC0</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:MET_DP211847.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b4/MET_DP211847.jpg/500px-MET_DP211847.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>MET DP211847</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:MET_DP211843.jpg"> 2756 × 3849 · 📱 · 4K <span class="lic">CC0</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:MET_DP211843.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/MET_DP211843.jpg/500px-MET_DP211843.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>MET DP211843</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:MET_DP211835.jpg"> 2786 × 3790 · 📱 <span class="lic">CC0</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:MET_DP211835.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/57/MET_DP211835.jpg/500px-MET_DP211835.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>MET DP211835</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:MET_DP211837.jpg"> 2775 × 3777 · 📱 <span class="lic">CC0</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:MET_DP211837.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/MET_DP211837.jpg/500px-MET_DP211837.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>MET DP211837</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:MET_DP211838.jpg"> 2796 × 3746 · 📱 <span class="lic">CC0</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:MET_DP211838.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/MET_DP211838.jpg/500px-MET_DP211838.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>MET DP211838</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:MET_DP211828.jpg"> 2767 × 3777 · 📱 <span class="lic">CC0</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:MET_DP211828.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e8/MET_DP211828.jpg/500px-MET_DP211828.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>MET DP211828</figcaption>
+</figure>
+</div>
+<hr>
+<h2>Yamamoto Shunkyo <small>6</small></h2>
+<div class="grid">
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Yamamoto_Shunkyo_-_Spring_of_Mountain_-_Google_Art_Project.jpg"> 4545 × 10363 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Yamamoto_Shunkyo_-_Spring_of_Mountain_-_Google_Art_Project.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/3/37/Yamamoto_Shunkyo_-_Spring_of_Mountain_-_Google_Art_Project.jpg/500px-Yamamoto_Shunkyo_-_Spring_of_Mountain_-_Google_Art_Project.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Yamamoto Shunkyo - Spring of Mountain - Google Art Project</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Arashi_Kichisabur%C3%B4_II_als_Tsukimoto_Ensh%C3%BB,_RP-P-2011-37.jpg"> 4570 × 5890 · 📱 · 4K <span class="lic">CC0</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Arashi_Kichisabur%C3%B4_II_als_Tsukimoto_Ensh%C3%BB,_RP-P-2011-37.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a6/Arashi_Kichisabur%C3%B4_II_als_Tsukimoto_Ensh%C3%BB%2C_RP-P-2011-37.jpg/500px-Arashi_Kichisabur%C3%B4_II_als_Tsukimoto_Ensh%C3%BB%2C_RP-P-2011-37.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Arashi Kichisaburô II als Tsukimoto Enshû, RP-P-2011-37</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Recesses_of_Shiobara_(Autumn)_by_Shunkyo_Yamamoto,_2_of_4,_1909,_color_on_silk_-_National_Museum_of_Modern_Art,_Tokyo_-_DSC06639.JPG"> 5472 × 3648 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Recesses_of_Shiobara_(Autumn)_by_Shunkyo_Yamamoto,_2_of_4,_1909,_color_on_silk_-_National_Museum_of_Modern_Art,_Tokyo_-_DSC06639.JPG" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/Recesses_of_Shiobara_%28Autumn%29_by_Shunkyo_Yamamoto%2C_2_of_4%2C_1909%2C_color_on_silk_-_National_Museum_of_Modern_Art%2C_Tokyo_-_DSC06639.JPG/500px-Recesses_of_Shiobara_%28Autumn%29_by_Shunkyo_Yamamoto%2C_2_of_4%2C_1909%2C_color_on_silk_-_National_Museum_of_Modern_Art%2C_Tokyo_-_DSC06639.JPG?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Recesses of Shiobara (Autumn) by Shunkyo Yamamoto, 2 of 4, 1909, color on silk - National Museum of Modern Art, Tokyo - DSC06639</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Recesses_of_Shiobara_(Autumn)_by_Shunkyo_Yamamoto,_1_of_4,_1909,_color_on_silk_-_National_Museum_of_Modern_Art,_Tokyo_-_DSC06636.JPG"> 5472 × 3648 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Recesses_of_Shiobara_(Autumn)_by_Shunkyo_Yamamoto,_1_of_4,_1909,_color_on_silk_-_National_Museum_of_Modern_Art,_Tokyo_-_DSC06636.JPG" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/00/Recesses_of_Shiobara_%28Autumn%29_by_Shunkyo_Yamamoto%2C_1_of_4%2C_1909%2C_color_on_silk_-_National_Museum_of_Modern_Art%2C_Tokyo_-_DSC06636.JPG/500px-Recesses_of_Shiobara_%28Autumn%29_by_Shunkyo_Yamamoto%2C_1_of_4%2C_1909%2C_color_on_silk_-_National_Museum_of_Modern_Art%2C_Tokyo_-_DSC06636.JPG?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Recesses of Shiobara (Autumn) by Shunkyo Yamamoto, 1 of 4, 1909, color on silk - National Museum of Modern Art, Tokyo - DSC06636</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Recesses_of_Shiobara_(Autumn)_by_Shunkyo_Yamamoto,_3_of_4,_1909,_color_on_silk_-_National_Museum_of_Modern_Art,_Tokyo_-_DSC06641.JPG"> 5472 × 3648 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Recesses_of_Shiobara_(Autumn)_by_Shunkyo_Yamamoto,_3_of_4,_1909,_color_on_silk_-_National_Museum_of_Modern_Art,_Tokyo_-_DSC06641.JPG" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/06/Recesses_of_Shiobara_%28Autumn%29_by_Shunkyo_Yamamoto%2C_3_of_4%2C_1909%2C_color_on_silk_-_National_Museum_of_Modern_Art%2C_Tokyo_-_DSC06641.JPG/500px-Recesses_of_Shiobara_%28Autumn%29_by_Shunkyo_Yamamoto%2C_3_of_4%2C_1909%2C_color_on_silk_-_National_Museum_of_Modern_Art%2C_Tokyo_-_DSC06641.JPG?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Recesses of Shiobara (Autumn) by Shunkyo Yamamoto, 3 of 4, 1909, color on silk - National Museum of Modern Art, Tokyo - DSC06641</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Recesses_of_Shiobara_(Autumn)_by_Shunkyo_Yamamoto,_4_of_4,_1909,_color_on_silk_-_National_Museum_of_Modern_Art,_Tokyo_-_DSC06643.JPG"> 5472 × 3648 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Recesses_of_Shiobara_(Autumn)_by_Shunkyo_Yamamoto,_4_of_4,_1909,_color_on_silk_-_National_Museum_of_Modern_Art,_Tokyo_-_DSC06643.JPG" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9b/Recesses_of_Shiobara_%28Autumn%29_by_Shunkyo_Yamamoto%2C_4_of_4%2C_1909%2C_color_on_silk_-_National_Museum_of_Modern_Art%2C_Tokyo_-_DSC06643.JPG/500px-Recesses_of_Shiobara_%28Autumn%29_by_Shunkyo_Yamamoto%2C_4_of_4%2C_1909%2C_color_on_silk_-_National_Museum_of_Modern_Art%2C_Tokyo_-_DSC06643.JPG?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Recesses of Shiobara (Autumn) by Shunkyo Yamamoto, 4 of 4, 1909, color on silk - National Museum of Modern Art, Tokyo - DSC06643</figcaption>
+</figure>
+</div>
+<hr>
+<h2>Hishida Shunsō <small>4</small></h2>
+<div class="grid">
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Crow_and_Sparrows,_2_of_2,_by_Shunso_Hishida,_1910,_color_on_paper_-_National_Museum_of_Modern_Art,_Tokyo_-_DSC06661.JPG"> 5472 × 3648 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Crow_and_Sparrows,_2_of_2,_by_Shunso_Hishida,_1910,_color_on_paper_-_National_Museum_of_Modern_Art,_Tokyo_-_DSC06661.JPG" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/0/03/Crow_and_Sparrows%2C_2_of_2%2C_by_Shunso_Hishida%2C_1910%2C_color_on_paper_-_National_Museum_of_Modern_Art%2C_Tokyo_-_DSC06661.JPG/500px-Crow_and_Sparrows%2C_2_of_2%2C_by_Shunso_Hishida%2C_1910%2C_color_on_paper_-_National_Museum_of_Modern_Art%2C_Tokyo_-_DSC06661.JPG?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Crow and Sparrows, 2 of 2, by Shunso Hishida, 1910, color on paper - National Museum of Modern Art, Tokyo - DSC06661</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Crow_and_Sparrows,_1_of_2,_by_Shunso_Hishida,_1910,_color_on_paper_-_National_Museum_of_Modern_Art,_Tokyo_-_DSC06660.JPG"> 5247 × 3171 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Crow_and_Sparrows,_1_of_2,_by_Shunso_Hishida,_1910,_color_on_paper_-_National_Museum_of_Modern_Art,_Tokyo_-_DSC06660.JPG" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/74/Crow_and_Sparrows%2C_1_of_2%2C_by_Shunso_Hishida%2C_1910%2C_color_on_paper_-_National_Museum_of_Modern_Art%2C_Tokyo_-_DSC06660.JPG/500px-Crow_and_Sparrows%2C_1_of_2%2C_by_Shunso_Hishida%2C_1910%2C_color_on_paper_-_National_Museum_of_Modern_Art%2C_Tokyo_-_DSC06660.JPG?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Crow and Sparrows, 1 of 2, by Shunso Hishida, 1910, color on paper - National Museum of Modern Art, Tokyo - DSC06660</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Shunso_hishida,_passeri_e_boccioli_di_prugno,_1910,_02.jpg"> 3048 × 5208 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Shunso_hishida,_passeri_e_boccioli_di_prugno,_1910,_02.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/dd/Shunso_hishida%2C_passeri_e_boccioli_di_prugno%2C_1910%2C_02.jpg/500px-Shunso_hishida%2C_passeri_e_boccioli_di_prugno%2C_1910%2C_02.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Shunso hishida, passeri e boccioli di prugno, 1910, 02</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Shunso_hishida,_passeri_e_boccioli_di_prugno,_1910,_01.jpg"> 1668 × 4698 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Shunso_hishida,_passeri_e_boccioli_di_prugno,_1910,_01.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Shunso_hishida%2C_passeri_e_boccioli_di_prugno%2C_1910%2C_01.jpg/500px-Shunso_hishida%2C_passeri_e_boccioli_di_prugno%2C_1910%2C_01.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Shunso hishida, passeri e boccioli di prugno, 1910, 01</figcaption>
+</figure>
+</div>
+<hr>
+<h2>Kanō Hōgai <small>4</small></h2>
+<div class="grid">
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Lions_by_Hogai_Kano,_c._1886,_sumi_and_color_on_paper_-_National_Museum_of_Modern_Art,_Tokyo_-_DSC06653.JPG"> 2587 × 5121 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Lions_by_Hogai_Kano,_c._1886,_sumi_and_color_on_paper_-_National_Museum_of_Modern_Art,_Tokyo_-_DSC06653.JPG" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d7/Lions_by_Hogai_Kano%2C_c._1886%2C_sumi_and_color_on_paper_-_National_Museum_of_Modern_Art%2C_Tokyo_-_DSC06653.JPG/500px-Lions_by_Hogai_Kano%2C_c._1886%2C_sumi_and_color_on_paper_-_National_Museum_of_Modern_Art%2C_Tokyo_-_DSC06653.JPG?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Lions by Hogai Kano, c. 1886, sumi and color on paper - National Museum of Modern Art, Tokyo - DSC06653</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Ch%C5%8Dan-ji_(Taito,_Tokyo)_02.jpg"> 3024 × 4032 · 📱 · 4K <span class="lic">CC0</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Ch%C5%8Dan-ji_(Taito,_Tokyo)_02.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Ch%C5%8Dan-ji_%28Taito%2C_Tokyo%29_02.jpg/500px-Ch%C5%8Dan-ji_%28Taito%2C_Tokyo%29_02.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Chōan-ji (Taito, Tokyo) 02</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:MET_DP-12232-074.jpg"> 2998 × 4000 · 📱 · 4K <span class="lic">CC0</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:MET_DP-12232-074.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d5/MET_DP-12232-074.jpg/500px-MET_DP-12232-074.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>MET DP-12232-074</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:MET_2015_300_85_Sig_Burke.jpg"> 2585 × 4000 · 📱 · 4K <span class="lic">CC0</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:MET_2015_300_85_Sig_Burke.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a4/MET_2015_300_85_Sig_Burke.jpg/500px-MET_2015_300_85_Sig_Burke.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>MET 2015 300 85 Sig Burke</figcaption>
+</figure>
+</div>
+<hr>
+<h2>Takeuchi Seihō <small>3</small></h2>
+<div class="grid">
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Jonge_eenden,_RP-P-2004-77.jpg"> 5694 × 4692 · 📱 · 4K <span class="lic">CC0</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Jonge_eenden,_RP-P-2004-77.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/Jonge_eenden%2C_RP-P-2004-77.jpg/500px-Jonge_eenden%2C_RP-P-2004-77.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Jonge eenden, RP-P-2004-77</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Procesboek_van_De_eenden_Process_of_printing_wood_engraving_(titel_op_object),_RP-P-2004-76.jpg"> 3524 × 5472 · 📱 · 4K <span class="lic">CC0</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Procesboek_van_De_eenden_Process_of_printing_wood_engraving_(titel_op_object),_RP-P-2004-76.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/91/Procesboek_van_De_eenden_Process_of_printing_wood_engraving_%28titel_op_object%29%2C_RP-P-2004-76.jpg/500px-Procesboek_van_De_eenden_Process_of_printing_wood_engraving_%28titel_op_object%29%2C_RP-P-2004-76.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Procesboek van De eenden Process of printing wood engraving (titel op object), RP-P-2004-76</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Wrestling_in_the_Field_by_Seiho_Takeuchi,_1937,_sumi,_cinnabar,_charcoal,_and_shell_white_on_paper_-_National_Museum_of_Modern_Art,_Tokyo_-_DSC06633.JPG"> 4479 × 3297 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Wrestling_in_the_Field_by_Seiho_Takeuchi,_1937,_sumi,_cinnabar,_charcoal,_and_shell_white_on_paper_-_National_Museum_of_Modern_Art,_Tokyo_-_DSC06633.JPG" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/Wrestling_in_the_Field_by_Seiho_Takeuchi%2C_1937%2C_sumi%2C_cinnabar%2C_charcoal%2C_and_shell_white_on_paper_-_National_Museum_of_Modern_Art%2C_Tokyo_-_DSC06633.JPG/500px-Wrestling_in_the_Field_by_Seiho_Takeuchi%2C_1937%2C_sumi%2C_cinnabar%2C_charcoal%2C_and_shell_white_on_paper_-_National_Museum_of_Modern_Art%2C_Tokyo_-_DSC06633.JPG?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Wrestling in the Field by Seiho Takeuchi, 1937, sumi, cinnabar, charcoal, and shell white on paper - National Museum of Modern Art, Tokyo - DSC06633</figcaption>
+</figure>
+</div>
+<hr>
+<h2>Monkeys and Rabbits by Takeuchi Seihō <small>3</small></h2>
+<div class="grid">
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Seiho_takeuchi,_scimmie_e_conigli,_1908,_03.jpg"> 4866 × 3648 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Seiho_takeuchi,_scimmie_e_conigli,_1908,_03.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d1/Seiho_takeuchi%2C_scimmie_e_conigli%2C_1908%2C_03.jpg/500px-Seiho_takeuchi%2C_scimmie_e_conigli%2C_1908%2C_03.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Seiho takeuchi, scimmie e conigli, 1908, 03</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Seiho_takeuchi,_scimmie_e_conigli,_1908,_02.jpg"> 4500 × 3648 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Seiho_takeuchi,_scimmie_e_conigli,_1908,_02.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Seiho_takeuchi%2C_scimmie_e_conigli%2C_1908%2C_02.jpg/500px-Seiho_takeuchi%2C_scimmie_e_conigli%2C_1908%2C_02.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Seiho takeuchi, scimmie e conigli, 1908, 02</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Seiho_takeuchi,_scimmie_e_conigli,_1908,_04.jpg"> 4404 × 3648 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Seiho_takeuchi,_scimmie_e_conigli,_1908,_04.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/62/Seiho_takeuchi%2C_scimmie_e_conigli%2C_1908%2C_04.jpg/500px-Seiho_takeuchi%2C_scimmie_e_conigli%2C_1908%2C_04.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Seiho takeuchi, scimmie e conigli, 1908, 04</figcaption>
+</figure>
+</div>
+<hr>
+<h2>Imao Keinen <small>3</small></h2>
+<div class="grid">
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Imao_Keinen_-_Seven_Lucky_Gods_-_2013.31.207_-_Minneapolis_Institute_of_Art.jpg"> 5903 × 4600 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Imao_Keinen_-_Seven_Lucky_Gods_-_2013.31.207_-_Minneapolis_Institute_of_Art.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/5d/Imao_Keinen_-_Seven_Lucky_Gods_-_2013.31.207_-_Minneapolis_Institute_of_Art.jpg/500px-Imao_Keinen_-_Seven_Lucky_Gods_-_2013.31.207_-_Minneapolis_Institute_of_Art.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Imao Keinen - Seven Lucky Gods - 2013.31.207 - Minneapolis Institute of Art</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Keinen_Kacho_Gafu_(Picture_Album_of_Flowers_and_Birds_by_Keinan)_-_Vanderbilt_Fine_Arts_Gallery_-_1995.053a-d.tif"> 2671 × 4297 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Keinen_Kacho_Gafu_(Picture_Album_of_Flowers_and_Birds_by_Keinan)_-_Vanderbilt_Fine_Arts_Gallery_-_1995.053a-d.tif" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/79/Keinen_Kacho_Gafu_%28Picture_Album_of_Flowers_and_Birds_by_Keinan%29_-_Vanderbilt_Fine_Arts_Gallery_-_1995.053a-d.tif/lossy-page1-500px-Keinen_Kacho_Gafu_%28Picture_Album_of_Flowers_and_Birds_by_Keinan%29_-_Vanderbilt_Fine_Arts_Gallery_-_1995.053a-d.tif.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Keinen Kacho Gafu (Picture Album of Flowers and Birds by Keinan) - Vanderbilt Fine Arts Gallery - 1995.053a-d</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Imao_Keinen_-_A_Pair_of_Peacocks_in_Spring_-_Google_Art_Project.jpg"> 1913 × 3776 · 📱 <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Imao_Keinen_-_A_Pair_of_Peacocks_in_Spring_-_Google_Art_Project.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/21/Imao_Keinen_-_A_Pair_of_Peacocks_in_Spring_-_Google_Art_Project.jpg/500px-Imao_Keinen_-_A_Pair_of_Peacocks_in_Spring_-_Google_Art_Project.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Imao Keinen - A Pair of Peacocks in Spring - Google Art Project</figcaption>
+</figure>
+</div>
+<hr>
+<h2>Alpes japonaises, M.C. 2019-182 <small>3</small></h2>
+<div class="grid">
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Alpes_japonaises,_M.C._2019-182(2).jpg"> 4746 × 6711 · 📱 · 4K <span class="lic">CC0</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Alpes_japonaises,_M.C._2019-182(2).jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Alpes_japonaises%2C_M.C._2019-182%282%29.jpg/500px-Alpes_japonaises%2C_M.C._2019-182%282%29.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Alpes japonaises, M.C. 2019-182(2)</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Alpes_japonaises,_M.C._2019-182(4).jpg"> 7360 × 3424 · 📱 · 4K <span class="lic">CC0</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Alpes_japonaises,_M.C._2019-182(4).jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b4/Alpes_japonaises%2C_M.C._2019-182%284%29.jpg/500px-Alpes_japonaises%2C_M.C._2019-182%284%29.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Alpes japonaises, M.C. 2019-182(4)</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Alpes_japonaises,_M.C._2019-182.jpg"> 2800 × 5284 · 📱 · 4K <span class="lic">CC0</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Alpes_japonaises,_M.C._2019-182.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/Alpes_japonaises%2C_M.C._2019-182.jpg/500px-Alpes_japonaises%2C_M.C._2019-182.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Alpes japonaises, M.C. 2019-182</figcaption>
+</figure>
+</div>
+<hr>
+<h2>Yūrei-ga <small>2</small></h2>
+<div class="grid">
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Kinugawa_no_Kasane.jpg"> 3101 × 5214 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Kinugawa_no_Kasane.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/94/Kinugawa_no_Kasane.jpg/500px-Kinugawa_no_Kasane.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Kinugawa no Kasane</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Munetada_Yurei_no_Zu_cropped_Totomi_Koseki_Zue_Frame_29.jpg"> 3052 × 4584 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Munetada_Yurei_no_Zu_cropped_Totomi_Koseki_Zue_Frame_29.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/fe/Munetada_Yurei_no_Zu_cropped_Totomi_Koseki_Zue_Frame_29.jpg/500px-Munetada_Yurei_no_Zu_cropped_Totomi_Koseki_Zue_Frame_29.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Munetada Yurei no Zu cropped Totomi Koseki Zue Frame 29</figcaption>
+</figure>
+</div>
+<hr>
+<h2>Lotus Fountain <small>2</small></h2>
+<div class="grid">
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:160211_Higashi_Honganji_Kyoto_Japan01s3.jpg"> 6000 × 4000 · 📱 · 4K <span class="lic">CC BY 2.5</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:160211_Higashi_Honganji_Kyoto_Japan01s3.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/28/160211_Higashi_Honganji_Kyoto_Japan01s3.jpg/500px-160211_Higashi_Honganji_Kyoto_Japan01s3.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>160211 Higashi Honganji Kyoto Japan01s3</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Japan,_taxi_stand_at_a_temple.jpg"> 3369 × 4995 · 📱 · 4K <span class="lic">CC BY 4.0</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Japan,_taxi_stand_at_a_temple.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/Japan%2C_taxi_stand_at_a_temple.jpg/500px-Japan%2C_taxi_stand_at_a_temple.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Japan, taxi stand at a temple</figcaption>
+</figure>
+</div>
+<hr>
+<h2>Paintings by Tomioka Tessai <small>2</small></h2>
+<div class="grid">
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Scene_Inspired_by_the_Scrolls_of_Frolicking_Animals_and_Humans_MET_DP-19489-002.jpg"> 3002 × 4000 · 📱 · 4K <span class="lic">CC0</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Scene_Inspired_by_the_Scrolls_of_Frolicking_Animals_and_Humans_MET_DP-19489-002.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/28/Scene_Inspired_by_the_Scrolls_of_Frolicking_Animals_and_Humans_MET_DP-19489-002.jpg/500px-Scene_Inspired_by_the_Scrolls_of_Frolicking_Animals_and_Humans_MET_DP-19489-002.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Scene Inspired by the Scrolls of Frolicking Animals and Humans MET DP-19489-002</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Collaborative_Painting_of_Sixteen_Arhats_MET_DP-19476-002.jpg"> 2072 × 4000 · 📱 · 4K <span class="lic">CC0</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Collaborative_Painting_of_Sixteen_Arhats_MET_DP-19476-002.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/82/Collaborative_Painting_of_Sixteen_Arhats_MET_DP-19476-002.jpg/500px-Collaborative_Painting_of_Sixteen_Arhats_MET_DP-19476-002.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Collaborative Painting of Sixteen Arhats MET DP-19476-002</figcaption>
+</figure>
+</div>
+<hr>
+<h2>Paintings by Suzuki Shōnen <small>2</small></h2>
+<div class="grid">
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Suzuki_Sh%C5%8Dnen_-_Woodcutter_Returning_from_the_Mountain_in_Spring_-_2007.106.10_-_Minneapolis_Institute_of_Art.jpg"> 3059 × 6829 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Suzuki_Sh%C5%8Dnen_-_Woodcutter_Returning_from_the_Mountain_in_Spring_-_2007.106.10_-_Minneapolis_Institute_of_Art.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/Suzuki_Sh%C5%8Dnen_-_Woodcutter_Returning_from_the_Mountain_in_Spring_-_2007.106.10_-_Minneapolis_Institute_of_Art.jpg/500px-Suzuki_Sh%C5%8Dnen_-_Woodcutter_Returning_from_the_Mountain_in_Spring_-_2007.106.10_-_Minneapolis_Institute_of_Art.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Suzuki Shōnen - Woodcutter Returning from the Mountain in Spring - 2007.106.10 - Minneapolis Institute of Art</figcaption>
+</figure>
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Suzuki_Sh%C5%8Dnen_-_Fireflies_at_Uji_River_-_2013.31.31_-_Minneapolis_Institute_of_Art.jpg"> 2167 × 7763 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Suzuki_Sh%C5%8Dnen_-_Fireflies_at_Uji_River_-_2013.31.31_-_Minneapolis_Institute_of_Art.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/70/Suzuki_Sh%C5%8Dnen_-_Fireflies_at_Uji_River_-_2013.31.31_-_Minneapolis_Institute_of_Art.jpg/500px-Suzuki_Sh%C5%8Dnen_-_Fireflies_at_Uji_River_-_2013.31.31_-_Minneapolis_Institute_of_Art.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Suzuki Shōnen - Fireflies at Uji River - 2013.31.31 - Minneapolis Institute of Art</figcaption>
+</figure>
+</div>
+<hr>
+<h2>Ainu genre painting <small>1</small></h2>
+<div class="grid">
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Book_2_-_National_Archives_of_Japan_-_Tokyo,_Japan_-_DSC06520.JPG"> 5472 × 3648 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Book_2_-_National_Archives_of_Japan_-_Tokyo,_Japan_-_DSC06520.JPG" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Book_2_-_National_Archives_of_Japan_-_Tokyo%2C_Japan_-_DSC06520.JPG/500px-Book_2_-_National_Archives_of_Japan_-_Tokyo%2C_Japan_-_DSC06520.JPG?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Book 2 - National Archives of Japan - Tokyo, Japan - DSC06520</figcaption>
+</figure>
+</div>
+<hr>
+<h2>Kobayashi Kokei <small>1</small></h2>
+<div class="grid">
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Kokei_kobayashi,_melanzane,_1930,_02.jpg"> 1482 × 4932 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Kokei_kobayashi,_melanzane,_1930,_02.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/ed/Kokei_kobayashi%2C_melanzane%2C_1930%2C_02.jpg/500px-Kokei_kobayashi%2C_melanzane%2C_1930%2C_02.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Kokei kobayashi, melanzane, 1930, 02</figcaption>
+</figure>
+</div>
+<hr>
+<h2>The Art of Japan (Brinkley, 1901)/Volume 1/Hashimoto Gaho <small>1</small></h2>
+<div class="grid">
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:The_Art_Of_Japan_1-68.jpg"> 2042 × 4345 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:The_Art_Of_Japan_1-68.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/2a/The_Art_Of_Japan_1-68.jpg/500px-The_Art_Of_Japan_1-68.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>The Art Of Japan 1-68</figcaption>
+</figure>
+</div>
+<hr>
+<h2>Hashimoto Gahō <small>1</small></h2>
+<div class="grid">
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Shoto-en_Fudeduka_2024-05-04.jpg"> 3024 × 4032 · 📱 · 4K <span class="lic">CC0</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Shoto-en_Fudeduka_2024-05-04.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/Shoto-en_Fudeduka_2024-05-04.jpg/500px-Shoto-en_Fudeduka_2024-05-04.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Shoto-en Fudeduka 2024-05-04</figcaption>
+</figure>
+</div>
+<hr>
+<h2>Ryōkan-dō <small>1</small></h2>
+<div class="grid">
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Ryokan-do_02.jpg"> 4624 × 3472 · 📱 · 4K <span class="lic">CC BY 4.0</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Ryokan-do_02.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/8d/Ryokan-do_02.jpg/500px-Ryokan-do_02.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Ryokan-do 02</figcaption>
+</figure>
+</div>
+<hr>
+<h2>Suzuki Shōnen <small>1</small></h2>
+<div class="grid">
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Suzuki_Shonen_-_Tanuki_under_a_Bridge_-_2006.120_-_Indianapolis_Museum_of_Art.jpg"> 5311 × 4641 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Suzuki_Shonen_-_Tanuki_under_a_Bridge_-_2006.120_-_Indianapolis_Museum_of_Art.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/c/c5/Suzuki_Shonen_-_Tanuki_under_a_Bridge_-_2006.120_-_Indianapolis_Museum_of_Art.jpg/500px-Suzuki_Shonen_-_Tanuki_under_a_Bridge_-_2006.120_-_Indianapolis_Museum_of_Art.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Suzuki Shonen - Tanuki under a Bridge - 2006.120 - Indianapolis Museum of Art</figcaption>
+</figure>
+</div>
+<hr>
+<h2>Serving Girl in a Spa by Tsuchida Bakusen <small>1</small></h2>
+<div class="grid">
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Tsuchida_Bakusen_-_Serving_Girl_in_a_Spa_(Yuna),_1918.jpg"> 7974 × 4000 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Tsuchida_Bakusen_-_Serving_Girl_in_a_Spa_(Yuna),_1918.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/4/44/Tsuchida_Bakusen_-_Serving_Girl_in_a_Spa_%28Yuna%29%2C_1918.jpg/500px-Tsuchida_Bakusen_-_Serving_Girl_in_a_Spa_%28Yuna%29%2C_1918.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Tsuchida Bakusen - Serving Girl in a Spa (Yuna), 1918</figcaption>
+</figure>
+</div>
+<hr>
+<h2>Terasaki Kogyo <small>1</small></h2>
+<div class="grid">
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:%E5%AF%BA%E5%B4%8E%E5%BA%83%E6%A5%AD%E5%86%99%E7%9C%9F1.JPG"> 3240 × 4320 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:%E5%AF%BA%E5%B4%8E%E5%BA%83%E6%A5%AD%E5%86%99%E7%9C%9F1.JPG" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/be/%E5%AF%BA%E5%B4%8E%E5%BA%83%E6%A5%AD%E5%86%99%E7%9C%9F1.JPG/500px-%E5%AF%BA%E5%B4%8E%E5%BA%83%E6%A5%AD%E5%86%99%E7%9C%9F1.JPG?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>寺崎広業写真1</figcaption>
+</figure>
+</div>
+<hr>
+<h2>Nude by Murakami Kagaku <small>1</small></h2>
+<div class="grid">
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Murakami-Kagaku-Rafu.jpg"> 3591 × 5376 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Murakami-Kagaku-Rafu.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/be/Murakami-Kagaku-Rafu.jpg/500px-Murakami-Kagaku-Rafu.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Murakami-Kagaku-Rafu</figcaption>
+</figure>
+</div>
+<hr>
+<h2>Murakami Kagaku <small>1</small></h2>
+<div class="grid">
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Murakami_Kagaku_-_Seated_Avalokiteshvara_with_Lotus_-_Google_Art_Project.jpg"> 1846 × 3136 · 📱 <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Murakami_Kagaku_-_Seated_Avalokiteshvara_with_Lotus_-_Google_Art_Project.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/fe/Murakami_Kagaku_-_Seated_Avalokiteshvara_with_Lotus_-_Google_Art_Project.jpg/500px-Murakami_Kagaku_-_Seated_Avalokiteshvara_with_Lotus_-_Google_Art_Project.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Murakami Kagaku - Seated Avalokiteshvara with Lotus - Google Art Project</figcaption>
+</figure>
+</div>
+<hr>
+<h2>Kiyohime at the Hidaka River by Murakami Kagaku <small>1</small></h2>
+<div class="grid">
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Murakami-Kiyohime-1919.jpg"> 1505 × 3894 · 📱 · 4K <span class="lic">Public domain</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Murakami-Kiyohime-1919.jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Murakami-Kiyohime-1919.jpg/500px-Murakami-Kiyohime-1919.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Murakami-Kiyohime-1919</figcaption>
+</figure>
+</div>
+<hr>
+<h2>Heihachiro Fukuda <small>1</small></h2>
+<div class="grid">
+<figure>
+  <label><input type="checkbox" class="pick" value="https://commons.wikimedia.org/wiki/File:Osaka_(53854630504).jpg"> 5904 × 3936 · 📱 · 4K <span class="lic">CC BY 2.0</span></label>
+  <a href="https://commons.wikimedia.org/wiki/File:Osaka_(53854630504).jpg" target="_blank" rel="noreferrer"><img loading="lazy" src="https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/Osaka_%2853854630504%29.jpg/500px-Osaka_%2853854630504%29.jpg?utm_source=commons.wikimedia.org&amp;utm_campaign=imageinfo&amp;utm_content=thumbnail" alt=""></a>
+  <figcaption>Osaka (53854630504)</figcaption>
+</figure>
+</div>
+<script>
+const KEY = 'pick-nihonga2';
+const box = document.getElementById('box'), count = document.getElementById('count');
+const picked = new Set(JSON.parse(localStorage.getItem(KEY) || '[]'));
+
+function render() {
+  const list = [...picked];
+  box.value = list.join('\n');
+  count.textContent = list.length;
+  localStorage.setItem(KEY, JSON.stringify(list));
+}
+for (const cb of document.querySelectorAll('.pick')) cb.checked = picked.has(cb.value);
+document.addEventListener('change', e => {
+  if (!e.target.classList.contains('pick')) return;
+  if (e.target.checked) picked.add(e.target.value); else picked.delete(e.target.value);
+  render();
+});
+document.getElementById('clear').addEventListener('click', () => {
+  picked.clear();
+  for (const cb of document.querySelectorAll('.pick')) cb.checked = false;
+  render();
+});
+render();
+</script>
+</body>
+</html>

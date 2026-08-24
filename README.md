@@ -13,6 +13,10 @@ yarn dev      # http://127.0.0.1:3000
 
 См. [ADDING.md](ADDING.md).
 
+## Собрать тематическую страницу
+
+`/collection/dark-academia` и подобные — [COLLECTIONS.md](COLLECTIONS.md).
+
 ## Сколько раз можно нажать «Restore»
 
 Маршрут `/api/upscale` платный, поэтому он считает вызовы (`limits.js`):

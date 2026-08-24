@@ -349,6 +349,10 @@ async function catalogueItems() {
       filename: path.basename(file),
       title: work.title,
       alt: work.alt,
+      // Описание для Pinterest. Пустая строка, а не `undefined`: страница
+      // откатывается с него на `alt`, и обе ветви обязаны отвечать на вопрос
+      // одинаково — присланной работе такое поле взять негде.
+      pin: work.pin || '',
       // Пустой список, а не `undefined`: в каталоге поле необязательно
       // (verify-catalogue.mjs), а страница работы читает у него длину. Работа
       // без тегов роняла бы `/w/<slug>` в 500, и проверка каталога этого
@@ -424,6 +428,7 @@ async function uploadedItems() {
       // из каталога, — иначе они встанут в `<title>` дважды.
       title: 'Restored wallpaper',
       alt: `Restored wallpaper at ${width} × ${height}`,
+      pin: '',
       tags: [],
       // Присланную работу не прячут, а не публикуют: список закрыт, и всё,
       // что в нём есть, в нём есть намеренно. Поле стоит ради одинаковой формы

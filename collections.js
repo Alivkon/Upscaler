@@ -1,5 +1,9 @@
 // Тематические страницы: часть коллекции, а не отдельный сайт обоев.
 //
+// Как собрать новую — COLLECTIONS.md: что включать в `title`, `description`
+// и абзац, чего не включать и почему. Здесь — только то, из чего страница
+// собрана; там — правила, по которым её пишут.
+//
 // Зачем они вообще. Ассистент с доступом к поиску на «намеренный» запрос
 // («dark academia wallpaper iphone») почти не возвращает редакционных обзоров:
 // в выдаче стоят собственные тематические страницы складов, и цитируется с них
@@ -29,6 +33,13 @@
 // Само слово при этом не потеряно нигде, кроме этого случая: оно стоит
 // в `title`, в адресе, в описании и в первой же фразе абзаца под заголовком.
 //
+// Тем же `heading` подписана ссылка в ряду тем под сеткой указателя. Было там
+// отдельное поле `nav` с короткой подписью («Dark academia»), и снято 24.08:
+// ссылка ведёт на раздел, и назвать её стоит так же, как называет себя сам
+// раздел, — «Dark academia collection». Заодно ушла разноголосица форм,
+// из-за которой ряд стоял во множественном («Moody landscapes»), а страница,
+// куда он вёл, — в единственном.
+//
 // На указателе `h1` нет вовсе и по обратной причине — там подменять нечем,
 // и это записано у `collectionPage`.
 //
@@ -56,9 +67,12 @@
 // и есть. Пусть остаётся неизвестным — на странице работы «Uncropped» стоит
 // рядом с кадрами, и кто спросит, тот увидит.
 //
-// Тем две, не четыре. `dark academia`, `brown aesthetic`, `old money` и
-// `moody landscape` тянут из одного пула примерно в 40 работ: четыре страницы
-// на один пул выглядят пустыми и спорят между собой в одной выдаче.
+// `dark academia`, `brown aesthetic`, `old money` и `moody landscape` тянут
+// из одного пула примерно в 40 работ, и это не препятствие: тема — другой
+// ответ на другой запрос, а не другой набор картинок. Стояло здесь, что
+// страницы на один пул «спорят между собой в одной выдаче»; это поверье,
+// и снято 24.08 — Google схлопывает почти-дубликаты, спорящие за ОДИН
+// запрос, а у тем разные заголовки, абзацы и адреса.
 //
 // Состав каждой темы — ручной отбор, а не правило по тегам. Отбор идёт листом
 // с галочками (`.dasheet.mjs` → `.dasheet.html`), результат ложится сюда, а
@@ -76,8 +90,120 @@ import { accession } from './public/record.js';
 // указателе, — развеска решена там один раз.
 export const COLLECTIONS = [
   {
+    slug: 'nihonga',
+    // Единственная тема, чьё слово читателю незнакомо. «Dark academia» и
+    // «moody landscape» объясняют себя сами, «nihonga» — нет, и отсюда одно
+    // отличие в абзаце: слот «характер подборки» занят определением, а не
+    // прилагательными. Ассистенту, которого спросили «что такое nihonga»,
+    // цитировать сейчас нечего — тег на wallpaperflare путает слово с
+    // «nihongo», японским языком. Быть страницей, где и определение,
+    // и сами файлы, — сильнее любого набора эпитетов.
+    term: 'nihonga',
+    // Тире здесь нет ни в одной строке, и это правка по замечанию 24.08.
+    // У прежних двух тем оно стоит в `title` и в абзаце; здесь вместо него
+    // двоеточие и точка. Заодно снята фраза `kept up against Western oil`:
+    // читалась она как «сопротивлялись маслу», а сказать надо было, что
+    // техника продолжилась после того, как масло приехало.
+    title: 'Nihonga phone wallpapers: free, no account',
+    heading: 'Nihonga collection',
+    description:
+      'Nihonga phone wallpaper from Japanese museum paintings: mineral pigment and ink on silk, Meiji and Taishō. Up to 2160 × 3840, free, no account.',
+    note: ({ count, full }) =>
+      `${count} nihonga paintings. Nihonga means mineral pigment and ink on silk, the Japanese ` +
+      'way of painting that continued after Western oil reached Meiji Japan. By Yokoyama Taikan, ' +
+      'Kobayashi Kokei and Yamamoto Shunkyo, from the Tokyo National Museum and other public ' +
+      `collections. Each is a phone wallpaper, ${full} at 2160 × 3840 or larger, free to ` +
+      'download and set as your background, no account and no watermark.',
+    // Отбор здесь не глазами, а по технике, и это единственная тема, где так
+    // можно. «Нихонга» — не период и не манера: это минеральная краска и тушь
+    // по шёлку в отличие от привезённого масла, и музей пишет технику в поле
+    // (`hinshitu_keijo` в ColBase, `technique` в Кливленде). Спрашивать глаз
+    // не о чем — слово либо верно для работы, либо нет.
+    //
+    // Из двадцати двух японских работ 1880–1920-х снято восемь, все по технике:
+    //
+    // - масло на холсте, то есть ёга, обратная сторона того же раскола —
+    //   vl-0361, vl-0362, vl-0363, vl-0364, vl-0369. Замерено по ColBase,
+    //   не предположено: vl-0361 и vl-0363 выглядят нихонга и не являются им;
+    // - ксилография Киётики — vl-0393, vl-0394, vl-0395. Гравюра режется
+    //   резчиком и печатается печатником, это не живопись вовсе.
+    //
+    // Все восемь остаются на витрине и в других темах (vl-0363 стоит
+    // в moody landscape). Тема — другой ответ на другой запрос, а не
+    // приговор работе.
+    //
+    // vl-0392 — золотая ширма с вороном, дата и автор неизвестны. Оставлена:
+    // абзац не утверждает про работы ни даты, ни авторства сверх трёх
+    // названных имён, и проверять ему нечего.
+    //
+    // ТРИ ИМЕНИ В АБЗАЦЕ — ПО ВЕСУ, И ВЕС ПЕРЕСЧИТЫВАЕТСЯ ПРИ КАЖДОМ
+    // ПОПОЛНЕНИИ. Стояло «Yokoyama Taikan, Kobayashi Kokei and Shimomura
+    // Kanzan»; с приходом vl-0397 и vl-0398 Кандзан съехал на четвёртое
+    // место с одной работой, а Ямамото Сюнкё встал на третье с двумя.
+    // Это ровно та ошибка, о которой предупреждает COLLECTIONS.md на примере
+    // «dim rooms»: за словом стояли две работы из 43, и шло оно первым.
+    // Счёт — `node -e` по `provenance.creator` тех же refs, что ниже:
+    // Тайкан 5, Кокэй 3, Сюнкё 2, дальше по одной.
+    refs: [
+      'vl-0157',
+      'vl-0359',
+      'vl-0360',
+      'vl-0365',
+      'vl-0366',
+      'vl-0367',
+      'vl-0368',
+      'vl-0370',
+      'vl-0388',
+      'vl-0389',
+      'vl-0390',
+      'vl-0391',
+      'vl-0392',
+      'vl-0396',
+      'vl-0397',
+      'vl-0398'
+    ]
+  },
+  {
+    slug: 'moody-landscape',
+    term: 'moody landscape',
+    title: 'Moody landscape phone wallpapers — free, no account',
+    heading: 'Moody landscape collection',
+    description:
+      'Moody landscape phone wallpaper from museum painting — storms, gloom and dark weather. Up to 2160 × 3840, free, no account.',
+    note: ({ count, full }) =>
+      `${count} landscape paintings with the weather in them: a thunderstorm coming on, Vesuvius ` +
+      'at midnight, rain over the mountains, a ruin above a dark sea. Painted between 1660 and 1893, ' +
+      `mostly from the Cleveland Museum of Art. Each is a phone wallpaper at 9:16, ${full} of them ` +
+      'at 2160 × 3840 or larger, free to download and set as your background, ' +
+      'with no account and no watermark.',
+    // Работ мало и это нарочно: пейзажей в коллекции 79, но по-настоящему
+    // сумрачных среди них четырнадцать, а страница из светлых пейзажей под
+    // словом «moody» — обещание, которого сетка не выполняет. Счёт странице
+    // не вредит: по замеру выдачи страница на 7 обоев стояла выше страницы
+    // на 288, ранжирует совпадение заголовка, а не длина списка.
+    //
+    // Одиннадцать из четырнадцати стоят и в dark academia, и страница вышла
+    // всё равно. Совпадают у тем картинки, не текст, а картинки ранжируются
+    // страницей работы, которой ни одна тема не владеет.
+    refs: [
+      'vl-0226',
+      'vl-0353',
+      'vl-0355',
+      'vl-0377',
+      'vl-0086',
+      'vl-0043',
+      'vl-0324',
+      'vl-0179',
+      'vl-0363',
+      'vl-0064',
+      'vl-0240',
+      'vl-0308',
+      'vl-0063',
+      'vl-0354'
+    ]
+  },
+  {
     slug: 'dark-academia',
-    nav: 'Dark academia',
     term: 'dark academia',
     title: 'Dark academia phone wallpapers — free, no account',
     heading: 'Dark academia collection',
@@ -136,51 +262,6 @@ export const COLLECTIONS = [
       'vl-0319',
       'vl-0375',
       'vl-0336'
-    ]
-  },
-  {
-    slug: 'moody-landscape',
-    // `nav` — подпись в ряду тем под сеткой указателя, `term` — слова внутри
-    // фразы на странице работы. Формы разные: ряд перечисляет разделы и стоит
-    // во множественном («Moody landscapes»), а фраза «More moody landscape
-    // phone wallpapers» требует единственного — во множественном она попросту
-    // не по-английски.
-    nav: 'Moody landscapes',
-    term: 'moody landscape',
-    title: 'Moody landscape phone wallpapers — free, no account',
-    heading: 'Moody landscape collection',
-    description:
-      'Moody landscape phone wallpaper from museum painting — storms, gloom and dark weather. Up to 2160 × 3840, free, no account.',
-    note: ({ count, full }) =>
-      `${count} landscape paintings with the weather in them: a thunderstorm coming on, Vesuvius ` +
-      'at midnight, rain over the mountains, a ruin above a dark sea. Painted between 1660 and 1893, ' +
-      `mostly from the Cleveland Museum of Art. Each is a phone wallpaper at 9:16, ${full} of them ` +
-      'at 2160 × 3840 or larger, free to download and set as your background, ' +
-      'with no account and no watermark.',
-    // Работ мало и это нарочно: пейзажей в коллекции 79, но по-настоящему
-    // сумрачных среди них четырнадцать, а страница из светлых пейзажей под
-    // словом «moody» — обещание, которого сетка не выполняет. Счёт странице
-    // не вредит: по замеру выдачи страница на 7 обоев стояла выше страницы
-    // на 288, ранжирует совпадение заголовка, а не длина списка.
-    //
-    // Одиннадцать из четырнадцати стоят и в dark academia. Это не двойник:
-    // темы отвечают разным запросам, а совпадают у них картинки, не текст, —
-    // и картинки ранжируются страницей работы, которой ни одна тема не владеет.
-    refs: [
-      'vl-0226',
-      'vl-0353',
-      'vl-0355',
-      'vl-0377',
-      'vl-0086',
-      'vl-0043',
-      'vl-0324',
-      'vl-0179',
-      'vl-0363',
-      'vl-0064',
-      'vl-0240',
-      'vl-0308',
-      'vl-0063',
-      'vl-0354'
     ]
   }
 ];

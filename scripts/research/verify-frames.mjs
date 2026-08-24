@@ -22,7 +22,14 @@ import sharp from 'sharp';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../..');
 const IMG = path.join(ROOT, 'images');
-const only = process.argv[2] ? new Set(process.argv[2].split(',')) : null;
+// Рефы принимаются и через запятую, и через пробел: `ADDING.md` пишет
+// `verify-frames.mjs [refs]`, то есть списком аргументов, а читалось здесь
+// только `argv[2]`. Пробельный вызов на трёх рефах молча сверял ОДИН
+// и печатал «все кадры вырезаны там, где записано» — успех, которого никто
+// не проверял. Инструмент проверки, тихо проверяющий меньше запрошенного,
+// хуже отсутствующего: он гасит подозрение вместо того, чтобы его вызвать.
+const refArgs = process.argv.slice(2).flatMap(a => a.split(',')).map(a => a.trim()).filter(Boolean);
+const only = refArgs.length ? new Set(refArgs) : null;
 
 // Те же пропорции и та же арифметика, что у генератора. Повторены, а не
 // импортированы: проверка не должна брать ответ у того, кого проверяет.

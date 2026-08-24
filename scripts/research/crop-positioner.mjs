@@ -401,7 +401,7 @@ const html = `<!DOCTYPE html>
 <div class="top-bar">
   <h1>${PAGE.title}</h1>
   <div class="crop-tabs" id="crop-tabs"></div>
-  <span class="note">${images.length} works · ${PAGE.note} · drag to pan, click to record · server at localhost:3000</span>
+  <span class="note">${images.length} works · ${PAGE.note} · drag to pan, click to record · plates from <span id="origin">:3000</span></span>
 </div>
 
 <div class="grid" id="grid"></div>
@@ -461,6 +461,12 @@ function recordPos(ref, posStr) {
 
 // --- Crop type tabs ---
 const tabsEl = document.getElementById('crop-tabs');
+// Шапка называет хост, с которого приехали плиты. Не украшение: если витрина
+// на :3000 не поднята или поднята на другой машине, карточки открываются
+// пустыми рамками, и по надписи видно, куда лист стучался.
+const PLATE_HOST = (location.hostname || 'localhost') + ':3000';
+document.getElementById('origin').textContent = PLATE_HOST;
+
 const cards = []; // {el, updateViewport} for rebuilding on tab switch
 
 CROP_TYPES.forEach(ct => {
@@ -507,7 +513,13 @@ function makeCard(img) {
   viewport.className = 'viewport';
 
   const imgEl = document.createElement('img');
-  imgEl.src = \`http://localhost:3000/images/\${img.thumb}\`;
+  // Хост берётся у самой страницы, а порт остаётся 3000. Стояло здесь
+  // \`http://localhost:3000\` намертво, и лист был годен только на той машине,
+  // где он собран: с телефона \`localhost\` — это сам телефон, и карточки
+  // открывались пустыми рамками. Кадры смотрят с телефона, значит и лист
+  // обязан открываться с телефона. Витрина слушает 0.0.0.0, так что по имени
+  // хоста она отвечает и снаружи.
+  imgEl.src = \`http://\${location.hostname || 'localhost'}:3000/images/\${img.thumb}\`;
   imgEl.alt = img.title;
   imgEl.loading = 'lazy';
   imgEl.draggable = false;

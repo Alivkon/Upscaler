@@ -4,8 +4,9 @@
 
 1. Положить файл в `images/plates/`
 2. Создать `catalogue/vl-XXXX.json` — следующий номер по порядку
-3. Добавить `"vl-XXXX"` в самое начало `catalogue/order.json` — начало = первым в галерее
-4. `yarn verify`
+3. Добавить `"vl-XXXX"` в `catalogue/order.json` — куда угодно, место всё равно решит следующий шаг
+4. `node scripts/shuffle-order.mjs` — перемешать развеску, чтобы партия не встала на витрине кучей
+5. `yarn verify`
 
 ## Своя фотография
 
@@ -131,7 +132,7 @@ cd ~/repos/wallpaper-gen && node museum.mjs --only vl-0356
 
 Скрипт обновляет плиту, кадры и `Upscaler/images/manifest/museum.json`. Вывод подтверждает размеры и применение trim. Кадры сразу доступны на `:3000`.
 
-**На витрину** — создать `catalogue/vl-XXXX.json` (пример выше), добавить ref в `catalogue/order.json`, запустить `yarn verify`. После этого работа появляется в галерее.
+**На витрину** — создать `catalogue/vl-XXXX.json` (пример выше), добавить ref в `catalogue/order.json`, запустить `node scripts/shuffle-order.mjs` и `yarn verify`. После этого работа появляется в галерее.
 
 ## Два слова и два места
 

@@ -1,0 +1,26 @@
+[
+  {
+    "id": "n02",
+    "url": "src/n02.jpg",
+    "w": 400,
+    "h": 600,
+    "need": 3.6,
+    "usedBigger": false
+  },
+  {
+    "id": "n07",
+    "url": "src/n07.jpg",
+    "w": 1366,
+    "h": 2048,
+    "need": 1.05,
+    "usedBigger": true
+  },
+  {
+    "id": "n12",
+    "url": "src/n12.jpg",
+    "w": 828,
+    "h": 1023,
+    "need": 1.74,
+    "usedBigger": false
+  }
+]
