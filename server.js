@@ -9,7 +9,18 @@ import sharp from 'sharp';
 import { IMAGES_DIR, ADJACENT, ensureImageDirectories, galleryItems, isImage } from './gallery.js';
 import { HttpError } from './http-error.js';
 import { upscaleAllowance } from './limits.js';
-import { collectionPage, errorPage, intakePage, licensePage, missingPage, robots, sitemap, workPage } from './pages.js';
+import {
+  collectionPage,
+  errorPage,
+  intakePage,
+  licensePage,
+  missingPage,
+  robots,
+  sitemap,
+  topicPage,
+  workPage
+} from './pages.js';
+import { COLLECTIONS, collectionBySlug, worksOf } from './collections.js';
 import { finish, phoneWindow } from './treatment.js';
 import { serverLongestSide } from './public/frame.js';
 import { MODEL as MODEL_FILE, WEIGHED } from './public/model-files.js';
@@ -218,7 +229,7 @@ const sample = (items, count) => {
 
 async function showCollection(_req, res, next) {
   try {
-    html(res, 200, collectionPage({ items: shown(await galleryItems()), origin: SITE_ORIGIN }));
+    html(res, 200, collectionPage({ items: shown(await galleryItems()), topics: COLLECTIONS, origin: SITE_ORIGIN }));
   } catch (error) {
     next(error);
   }
@@ -228,6 +239,24 @@ app.get('/', showCollection);
 // Адреса страниц указателя существовали и могли быть кем-то сохранены.
 // Отвечать им 404 — терять то, что они накопили; ведём на указатель.
 app.get('/page/:page', (_req, res) => res.redirect(301, '/'));
+
+// Тематическая страница — часть коллекции под своим адресом. Разбор и тексты
+// в `collections.js`; здесь только то, что адрес отвечает.
+//
+// Неизвестная тема падает в `next()`, а не в редирект на указатель: адрес
+// `/collection/<чего-то>` мы никому не давали, и отвечать на него 200-м
+// значило бы наплодить бесконечное множество страниц с одним содержимым —
+// ровно то, за что выдача наказывает.
+app.get('/collection/:slug', async (req, res, next) => {
+  try {
+    const topic = collectionBySlug(req.params.slug);
+    if (!topic) return next();
+    const items = worksOf(topic, shown(await galleryItems()));
+    html(res, 200, topicPage({ topic, items, origin: SITE_ORIGIN }));
+  } catch (error) {
+    next(error);
+  }
+});
 
 app.get('/w/:slug', async (req, res, next) => {
   try {
@@ -242,11 +271,16 @@ app.get('/w/:slug', async (req, res, next) => {
     // работы уводили одни и те же соседи, а остальная коллекция снизу не
     // показывалась никогда. Случайная выборка показывает её всю и заодно
     // раскладывает внутренние ссылки по всем работам, а не по десяти.
+    const visible = shown(items);
     const others = sample(
-      shown(items).filter(work => work !== item),
+      visible.filter(work => work !== item),
       ADJACENT
     );
-    html(res, 200, workPage({ item, others, origin: SITE_ORIGIN }));
+    // Темы, в которых работа стоит. Считаются по тем же показанным: скрытую
+    // работу тема не покажет, и звать со страницы скрытой работы в тему,
+    // которая её не содержит, значило бы обещать невыполнимое.
+    const topics = COLLECTIONS.filter(topic => worksOf(topic, visible).includes(item));
+    html(res, 200, workPage({ item, others, topics, origin: SITE_ORIGIN }));
   } catch (error) {
     next(error);
   }
@@ -263,7 +297,8 @@ app.get('/robots.txt', (_req, res) => res.type('text/plain').send(robots({ origi
 app.get('/sitemap.xml', async (_req, res, next) => {
   try {
     const items = shown(await galleryItems());
-    res.type('application/xml').send(sitemap({ items, origin: SITE_ORIGIN }));
+    const topics = COLLECTIONS.map(topic => ({ slug: topic.slug, items: worksOf(topic, items) }));
+    res.type('application/xml').send(sitemap({ items, topics, origin: SITE_ORIGIN }));
   } catch (error) {
     next(error);
   }
@@ -376,9 +411,9 @@ app.post('/api/upscale', upload.single('photo'), async (req, res, next) => {
     const treat = req.body.treat === 'true';
     const crop = req.body.crop === 'true';
     const { file, width, height } = await upright(req.file);
-  // Расширение — от того, что вернулось, а не от того, что прислали: считает
-  // не эта машина, и формат ответа назван в `upscaler.js`.
-  const extension = grown.contentType.includes('png') ? '.png' : '.jpg';
+    // Расширение — от того, что вернулось, а не от того, что прислали: считает
+    // не эта машина, и формат ответа назван в `upscaler.js`.
+    const extension = grown.contentType.includes('png') ? '.png' : '.jpg';
     // Кадр режется ДО отправки, как и в браузере (`upscaleInBrowser`).
     // Здесь у этого есть и своя цена: за пиксели, которые мы выбросим сразу
     // после, видеокарта считает наравне с остальными, а у широкой картинки

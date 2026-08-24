@@ -16,6 +16,7 @@
 // Тексты по-английски — там же, раздел «Английский». Приёмка тоже: сайт
 // с двумя языками в шапке выглядит недоделанным, а не заботливым.
 
+import { measure } from './collections.js';
 import { formatBytes, formatDims, formatType } from './public/record.js';
 import { MIN_SOURCE } from './public/upscale-local.js';
 
@@ -440,7 +441,25 @@ const grid = (items, eager = 0, lead = '') =>
 // с конца, всегда одни и те же десять, а остальное пряталось за «Next»,
 // куда не ходят. Длина страницы стоит разметки, а не байтов: всё, кроме
 // первых карточек, грузится лениво.
-export function collectionPage({ items, origin }) {
+// Ряд ссылок на темы под сеткой указателя.
+//
+// Тема — новый адрес, и прийти на него неоткуда: страницы работ на неё ссылаются
+// (`inTopics`), но сами лежат вглубь от указателя. Указатель — самая сильная
+// страница сайта, и ссылка отсюда — то немногое в ранжировании, что мы решаем
+// сами. Она же и человеку: коллекция в сто работ листается плохо, а «покажи
+// только сумрачные» — это то, чего от неё и хотят.
+//
+// Стоит под сеткой, а не над. Надстрочник над сеткой с указателя убран нарочно
+// (см. ниже), и ставить туда ряд ссылок значило бы вернуть его другими словами:
+// первым на странице должна стоять работа, а не оглавление.
+const topicRow = topics =>
+  topics.length
+    ? `<nav class="topics" aria-label="Collections">${topics
+        .map(topic => `<a href="/collection/${escape(topic.slug)}">${escape(topic.nav)}</a>`)
+        .join('\n        ')}</nav>`
+    : '';
+
+export function collectionPage({ items, topics = [], origin }) {
   return layout({
     current: 'collection',
     title: `${SITE_NAME}, phone and 4K desktop wallpapers at full resolution`,
@@ -467,6 +486,64 @@ export function collectionPage({ items, origin }) {
     // строчки в аудите значит держать текст, который никто не прочтёт.
     body: `
       ${grid(items, EAGER_CARDS, inviteCard())}
+      ${topicRow(topics)}
+    `
+  });
+}
+
+// Ссылка со страницы работы в тему, где эта работа стоит.
+//
+// Ради обхода в первую очередь. Тема — новый адрес, и прийти на него поиску
+// неоткуда: из указателя ссылки нет (там сетка, а не текст), извне тем более.
+// Работ же в теме полсотни, и каждая ставит на неё ссылку — это единственное
+// в ранжировании, что мы решаем сами.
+//
+// Текст ссылки несёт слова темы, а не «см. также»: по тексту ссылки страницу
+// и понимают, и «here» ведёт ровно никуда. Слова берутся из `term`, а не из
+// `nav`: подпись в ряду тем стоит во множественном числе, а внутри фразы
+// нужна форма определения — «more moody landscape phone wallpapers».
+const inTopics = topics =>
+  topics.length
+    ? `<p class="in-topic">${topics
+        .map(topic => `<a href="/collection/${escape(topic.slug)}">More ${escape(topic.term)} phone wallpapers →</a>`)
+        .join('\n          ')}</p>`
+    : '';
+
+// Тематическая страница — часть коллекции, показанная отдельным адресом.
+// Устройство и причины — в `collections.js`, там же тексты; здесь только
+// разметка, и она нарочно отличается от указателя ровно в одном: над сеткой
+// стоит `h1` и абзац.
+//
+// На указателе заголовка нет намеренно (см. `collectionPage`): там он лишил бы
+// нас управления тем, что Google покажет в выдаче. Здесь наоборот — заголовок
+// нужен, потому что подменять его есть чем и нечем плохим: `h1` несёт те же
+// слова, что `title`, и подмена нам ничего не портит.
+//
+// Абзац стоит НАД сеткой, а не под ней. Цитируют то, что ассистент прочитал
+// первым, и увидеть текст ниже сотни карточек он может, а поставить его первым
+// в ответ — нет. Это же и человеку: он листает вниз, а не вверх.
+export function topicPage({ topic, items, origin }) {
+  return layout({
+    current: 'collection',
+    title: topic.title,
+    description: topic.description,
+    canonical: `${origin}/collection/${topic.slug}`,
+    // Превью — первая работа темы её телефонным кадром, как и у указателя:
+    // тема телефонная, и широкая плита в превью обещала бы не то.
+    image: items.length ? `${origin}${offered(items[0]).url}` : undefined,
+    imageWidth: items.length ? offered(items[0]).width : undefined,
+    imageHeight: items.length ? offered(items[0]).height : undefined,
+    // Числа в абзац приходят замером тех же работ, что стоят под ним
+    // (`measure` в `collections.js`), а не строкой: вписанное руками число
+    // разъезжается со списком молча — и разъехавшееся число в тексте,
+    // написанном ради дословной цитаты, врёт уже не нам одним.
+    body: `
+      <div class="topic">
+        <h1 class="topic__title">${escape(topic.heading)}</h1>
+        <p class="topic__note">${escape(topic.note(measure(items)))}</p>
+      </div>
+      ${grid(items, EAGER_CARDS)}
+      <p class="topic__back"><a href="/">All ${SITE_NAME} wallpapers →</a></p>
     `
   });
 }
@@ -772,7 +849,10 @@ const alternates = item => {
           </div>`;
 };
 
-export function workPage({ item, others, origin }) {
+// Темы, в которых работа стоит, приходят списком снаружи: страница работы
+// о составе тем не знает и знать не должна — состав живёт в `collections.js`,
+// и считает его `server.js` один раз на запрос.
+export function workPage({ item, others, topics = [], origin }) {
   // Проём показывает кадр 9:16, и всё, что страница о работе утверждает —
   // размер, вес, тип, разметка, превью, — относится к нему же: посетитель
   // получает по кнопке именно этот файл. Плита названа отдельно и ниже.
@@ -925,9 +1005,11 @@ export function workPage({ item, others, origin }) {
             <h1 class="caption__title">${escape(named ? name : item.ref)}</h1>
             <div class="actions">
               <a class="btn" href="${escape(file.url)}" download="${escape(file.filename)}">Download</a>
+              <a class="btn btn--ghost btn--pin" href="${savePin}" target="_blank" rel="noopener">Pinterest</a>
             </div>
           </div>
           ${terms ? `<div class="terms">${terms}</div>` : ''}
+          ${inTopics(topics)}
           ${alternates(item)}
           ${versions(item)}
         </div>
@@ -1401,7 +1483,7 @@ export function errorPage({ status, message }) {
 // адресов страниц называет изображения лишь косвенно. Изображения объявлены
 // у страницы работы (оба её кадра) и не продублированы у указателя: страница
 // работы и есть то место, куда мы хотим привести пришедшего из поиска.
-export function sitemap({ items, origin }) {
+export function sitemap({ items, topics = [], origin }) {
   // Даты сравниваются как строки: и `2026-08-16`, и полный ISO начинаются
   // с года, месяца и дня, поэтому порядок совпадает с хронологическим.
   const latestOf = list =>
@@ -1459,6 +1541,14 @@ export function sitemap({ items, origin }) {
         ].map(address => `${origin}${address}`)
       })
     ),
+    // Тематические страницы. `lastmod` у темы — день последнего пополнения
+    // самой темы, а не коллекции: тема меняется, когда в неё добавили работу,
+    // и объявлять её изменившейся от чужого пополнения значит звать обход зря.
+    //
+    // Файлы здесь не перечислены. Все они уже названы у страниц работ, а
+    // повторять их у темы — обещать обходу, что тот же файл стоит на двух
+    // страницах как содержимое; на теме он стоит карточкой, ведущей к работе.
+    ...topics.map(topic => url(`${origin}/collection/${topic.slug}`, { lastmod: latestOf(topic.items) })),
     url(`${origin}/restore`),
     url(`${origin}/license`)
   ];

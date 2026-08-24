@@ -139,9 +139,38 @@ for (const ref of files.filter(name => REF_PATTERN.test(name))) {
   }
 }
 
+// Темы. Список работ в `collections.js` правится руками, а на самой странице
+// пропавший `ref` виден только тем, что работ стало на одну меньше, — то есть
+// не виден. Проверяется здесь и то, что работа есть, и то, что она не скрыта:
+// скрытая — это отказ, и вернуть её на витрину через тему нельзя.
+const { COLLECTIONS } = await import('../collections.js');
+const topicSlugs = new Set();
+for (const topic of COLLECTIONS) {
+  const where = `collections.js/${topic.slug}`;
+  if (topicSlugs.has(topic.slug)) complain(where, 'две темы с одним адресом');
+  topicSlugs.add(topic.slug);
+  if (!topic.refs.length) complain(where, 'тема без работ');
+  const seenRefs = new Set();
+  for (const ref of topic.refs) {
+    if (seenRefs.has(ref)) complain(where, `${ref} назван дважды`);
+    seenRefs.add(ref);
+    if (!files.includes(ref)) {
+      complain(where, `${ref} в теме есть, а записи ${ref}.json нет`);
+      continue;
+    }
+    try {
+      const work = JSON.parse(await fs.readFile(workFile(ref), 'utf8'));
+      if (work.hidden === true) complain(where, `${ref} снят с витрины, а тема его показывает`);
+    } catch {
+      // о нечитаемой записи уже пожаловались выше
+    }
+  }
+}
+
 if (problems.length) {
   for (const problem of problems) console.error(`  ${problem}`);
   console.error(`\nкаталог: ${problems.length} проблем в ${files.length} записях`);
   process.exit(1);
 }
 console.log(`каталог: ${files.length} записей, ${slugs.size} адресов, порядок задан`);
+console.log(`темы: ${COLLECTIONS.map(topic => `${topic.slug} — ${topic.refs.length}`).join(', ')}`);

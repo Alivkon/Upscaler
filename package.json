@@ -6,8 +6,8 @@
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
-    "format": "prettier --write server.js gallery.js http-error.js limits.js pages.js upscaler.js works.js treatment.js scripts public",
-    "verify": "node --check server.js && node --check gallery.js && node --check http-error.js && node --check limits.js && node --check pages.js && node --check upscaler.js && node --check works.js && node --check treatment.js && node scripts/verify-catalogue.mjs && node scripts/verify-limits.mjs && prettier --check server.js gallery.js http-error.js limits.js pages.js upscaler.js works.js treatment.js scripts public",
+    "format": "prettier --write server.js collections.js gallery.js http-error.js limits.js pages.js upscaler.js works.js treatment.js scripts public",
+    "verify": "node --check server.js && node --check collections.js && node --check gallery.js && node --check http-error.js && node --check limits.js && node --check pages.js && node --check upscaler.js && node --check works.js && node --check treatment.js && node scripts/verify-catalogue.mjs && node scripts/verify-limits.mjs && prettier --check server.js collections.js gallery.js http-error.js limits.js pages.js upscaler.js works.js treatment.js scripts public",
     "test": "yarn run verify"
   },
   "dependencies": {

@@ -168,6 +168,44 @@ button {
 main > .collection {
   padding-top: clamp(24rem, 4vw, 40rem);
 }
+
+/* ── тема ─────────────────────────────────────────────────────
+   Часть коллекции под своим адресом. Разбор — `collections.js`.
+
+   Заголовок здесь есть, хотя на указателе его нет: там он был надстрочником
+   и отдавал выдаче лишнего кандидата на подмену `title`, здесь он несёт те же
+   слова, что `title`, и подмена ничего не портит. Поэтому он и набран как
+   заголовок — прямым кеглем и светлым, — а не как надстрочник капителью.
+
+   Мера строки та же узкая, что у условий (`.prose`): абзац читают строку
+   за строкой, и во всю ширину сетки он был бы нечитаем. */
+.topic {
+  padding: clamp(24rem, 4vw, 40rem) var(--gutter) 0;
+  max-width: calc(64ch + 2 * var(--gutter));
+}
+.topic__title {
+  margin: 0 0 10rem;
+  font-size: 16rem;
+  font-weight: 500;
+  color: var(--fg);
+}
+.topic__note {
+  margin: 0;
+  color: var(--fg-dim);
+}
+/* Сетка стоит под абзацем, и верхнее поле ей задаёт он, а не линейка шапки:
+   правило перебивает `main > .collection` — два класса против класса с типом. */
+.topic + .collection {
+  padding-top: clamp(20rem, 3vw, 32rem);
+}
+/* Ссылка обратно в коллекцию целиком. Ради обхода в первую очередь: тема,
+   на которую ведут только карточки работ, стоит в стороне от указателя,
+   а внутренняя ссылка — то немногое в ранжировании, что мы решаем сами. */
+.topic__back {
+  padding: 0 var(--gutter);
+  margin: clamp(32rem, 5vw, 52rem) 0 0;
+  color: var(--fg-dim);
+}
 /* «Коллекция недоступна», «такой работы нет» — сообщение на месте содержимого */
 .notice {
   padding: 0 var(--gutter);
@@ -696,6 +734,40 @@ body.is-dragging .record--plate {
   border-top: 1px solid var(--rule);
   margin-top: 26rem;
   padding-top: 16rem;
+}
+/* Ряд ссылок на темы под сеткой указателя. Набран как строка характеристик —
+   мелко, капителью, приглушённо: это оглавление, а не призыв, и спорить
+   с работами над ним оно не должно. */
+.topics {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 18rem;
+  padding: 0 var(--gutter);
+  margin-top: clamp(32rem, 5vw, 52rem);
+  font-size: 11rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+}
+.topics a {
+  color: inherit;
+  text-decoration-color: var(--rule);
+  text-underline-offset: 4px;
+}
+.topics a:hover {
+  color: var(--fg);
+}
+/* Ссылка в тему, где работа стоит. Тише условий и без своей линейки: это
+   не факт о работе, а выход отсюда, и выходов на странице уже два — кнопка
+   и «More in the collection». Третий не должен спорить с ними за внимание. */
+.in-topic {
+  margin: 14rem 0 0;
+  font-size: 12rem;
+  color: var(--fg-dim);
+}
+.in-topic a {
+  text-decoration-color: var(--rule);
+  text-underline-offset: 3px;
 }
 /* Строка размывалась, пока держали «Было»: утверждение теряло разрешение
    вместе с работой. Приём ушёл вместе с переключением целых кадров — под
