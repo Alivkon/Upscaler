@@ -362,5 +362,70 @@
       "port_check": "the Python tiling matches the JS .modelbake.mjs pixel for pixel — mean difference 0.001/255 once both are encoded as the same jpeg",
       "estimate_was": "$0.006/picture, ~20s cold start — both a little pessimistic but the right shape"
     }
+  },
+  "round14_hard_source_blind": {
+    "sheet": "~/Pictures/rhodo-test/ — eleven arms A..K in two stacks, no sheet",
+    "question": "the product upscaled this one badly — rerun every model on it and say which you like",
+    "picture": "44d2d000b13edb8acbd7fde2cfe76889.jpg — rhododendrons in fog, 736x559, 95 KB, chroma 4:2:0. Half the pixels of round 13 and it needs a real x4: the product delivered 1256x2236, a 9:16 crop at left=211 of the source (found by cross-correlation, NCC 0.998).",
+    "method": "every arm x4 to 2944x2236 in node (onnxruntime wasm, tile 200+16; realplksr 224+16 — its input is a fixed 256), then two cuts with the same letters: phone/ = the product geometry 1256x2236 pixel for pixel, desk/ = a 1920x1080 window cut 1:1 out of the same x4. NOTHING is downscaled — round 13 shrank 4800x3200 to the screen because the product really did deliver a shrunken picture; here it delivers x4 as is, and shrinking would hide exactly what the complaint is about. Letters reshuffled so not one carries over from round 13.",
+    "fidelity_check": "our Siax vs the file the product delivered: mean 6.8 of 255 over the same crop, difference is tone and codec — we recomputed what he rejected, not something else",
+    "key": {
+      "A": "4xNomos2_otf_esrgan",
+      "B": "Real-ESRGAN x4",
+      "C": "Topaz Standard V2 x2 — 1472x1118, pulled up to 2944 by lanczos",
+      "D": "4x_foolhardy_Remacri",
+      "E": "ClearRealityV1 x4 — the arm shipping in the browser",
+      "F": "RealPLKSR x4",
+      "G": "4x-UltraSharpV2",
+      "H": "Topaz Standard V2 x4 on Replicate — paid",
+      "I": "lanczos, no model — the floor",
+      "J": "4x_NMKD-Siax_200k — the arm shipping on Modal, the one he complained about",
+      "K": "4x_RealisticRescaler_100000_G"
+    },
+    "verdict": {
+      "A": "bad",
+      "B": "blurry but fine",
+      "C": "weird, not great",
+      "D": "weird and worse",
+      "E": "not great but not too bad",
+      "F": "terrible",
+      "G": "okayish — best looking of the round",
+      "H": "not great but acceptable",
+      "I": "bad",
+      "J": "defects but acceptable",
+      "K": "most honest — blurry, but does not invent detail"
+    },
+    "note": "Nobody is good. The best word in the round is \"okayish\". THE FLOOR IS BAD: I is lanczos with no model at all and it is called bad, where in round 13 the same floor was only \"a bit noisy\" — so what is being judged here is the source, not the models. The paid arm does not rescue it either: Topaz x4 lands on \"not great but acceptable\", the same shelf as the free Siax he complained about. Topaz x2 pulled up by lanczos (C) scores WORSE than Topaz x4 (H) — the factor cannot be economised when x4 is what was promised. Verdicts do not carry between rounds: Real-ESRGAN was \"cartoonish\" in 13 and \"blurry but fine\" here, ClearRealityV1 was rejected as noisy in 13 and sits mid-table here, Siax was the favourite in 13 and is merely acceptable here. AFTER THE REVEAL, the split that matters: K (RealisticRescaler) is called the most honest — blurry, but it does not invent detail — while G (UltraSharpV2) is the best looking. Two different criteria, and on this picture they point at different arms. Invention has been disqualifying in this project before: generative upscalers were ruled out by design for real photographs. What flips between rounds is only the TOP: Siax favourite -> merely acceptable, ClearRealityV1 rejected -> mid-table, Real-ESRGAN cartoonish -> fine. The bottom and the middle carry: RealPLKSR bad in both, Nomos2 low in both, UltraSharpV2 fine in both, and RealisticRescaler gets the same words in both rounds — very blurry but not bad, then blurry but honest.",
+    "licences": "The winner of this round cannot be shipped: 4x-UltraSharpV2 is CC-BY-NC-SA-4.0 (openmodeldb, author Kim2091, DAT2) — exactly the mine LEGAL.md describes, and it goes off the day upscaling is paid for. The only clean licence near the top is Real-ESRGAN x4plus, BSD-3-Clause, commercial use allowed — and its verdict here is \"blurry but fine\". Siax stays WTFPL. 4x_RealisticRescaler_100000_G is WTFPL too (openmodeldb, author Mutin Choler, ESRGAN 64/23) — the honest arm costs nothing legally, the good-looking one costs the NC mine.",
+    "cpu_measured_here": "8 cores, 736x559 = 0.41 Mp: ClearRealityV1 6s, RealPLKSR 95s, Siax 150s, Real-ESRGAN 152s, Nomos2 151s, Remacri 151s, RealisticRescaler 150s, UltraSharpV2 246s",
+    "topaz_cost": "x4 8.0s and x2 4.8s on the rented GPU, ~$0.10 for both calls",
+    "scripts": ".rhodobake.mjs (bake all arms), .rhodotopaz.mjs (the paid arm), .rhodocut.mjs (two blind stacks under one key)"
+  },
+  "round15_head_to_head": {
+    "sheet": "~/Pictures/pair-test/desk/ — six pairs 1a/1b .. 6a/6b, letters shuffled inside each pair separately",
+    "question": "does the better model depend on the picture? two arms, six sources, one pair at a time",
+    "arms": "A: 4x_NMKD-Siax_200k (WTFPL, shipping on Modal). B: 4x_RealisticRescaler_100000_G (WTFPL, called the most honest in round 14).",
+    "method": "each source CROPPED (never downscaled — downscaling would add sharpness the source does not have) to a centred window of at most 0.45 Mp, then x4 by both arms (onnxruntime wasm, tile 200+16), then a centred 1920x1080 window cut 1:1 out of each result. Nothing resampled after the model.",
+    "pictures": {
+      "1": "rhododendrons in fog 736x559 — the round 14 complaint",
+      "2": "foggy meadow 1200x800 — THE PICTURE SIAX WAS CROWNED ON in round 13",
+      "3": "koi and lotus 400x600 — dark water, little fine texture",
+      "4": "knife and bowl on a tray 802x1200 — smooth surfaces, clean edges",
+      "5": "trees in fog with peonies 640x427 — branches at the resolution limit",
+      "6": "portrait 1440x1920 — face and fabric"
+    },
+    "verdict": {
+      "1": "rescaler much better; siax invented stuff cartoonishly",
+      "2": "rescaler",
+      "3": "rescaler",
+      "4": "rescaler",
+      "5": "rescaler",
+      "6": "both not great, but rescaler is bad in a less unpleasant way"
+    },
+    "result": "RESCALER 6 OF 6. There is no fork by source: the answer does not depend on the picture, and that includes picture 2, the very meadow on which Siax was crowned in round 13. The hypothesis this round was built to test — pick the blurry-honest model for thin sources and Siax otherwise — is dead, and in the cheapest possible way: one model wins everywhere.",
+    "why_round13_said_otherwise": "Round 13 showed nine arms ONE AT A TIME as full-screen wallpapers; RealisticRescaler scored \"very blurry but not bad\" and Siax \"favourite\". Head-to-head pairs are a far more sensitive instrument than nine solo viewings: alone, the sharper arm reads as better; side by side, its invention becomes visible and the blur stops being a defect. The method, not the picture, produced the earlier answer.",
+    "cost_of_switching": "None worth the name. Both WTFPL, so no licence work. Same speed on the same frames: 141/144, 178/186, 78/76, 184/185, 152/150, 146/148 seconds per arm. 70 MB vs 68 MB baked into the Modal image. The change is MODEL, MODEL_URL and MODEL_SHA in service/upscale_modal.py plus a redeploy; the file is in the same Hugging Face repo (yuvraj108c/ComfyUI-Upscaler-Onnx, 72996856 bytes, sha256 51773d75391906f1886bc99ce603e0ac7a7cc89fb4a77419c4bd63e466339d9c).",
+    "open": "Picture 6 is the weak win: faces and fabric came out poorly on BOTH arms. Nothing in this round says any of the eleven arms handles a portrait, and TODO already carries an item about redoing the model comparisons with faces enabled on Topaz.",
+    "scripts": ".pairbake.mjs"
   }
 }
