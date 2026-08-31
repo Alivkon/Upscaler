@@ -90,6 +90,24 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 const gtmBody = `<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=${GTM_ID}"
 height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>`;
 
+// Cloudflare Web Analytics. Считает то, чего не видит Search Console: что
+// посетитель делал после клика и откуда пришли те, кто пришёл не из Google.
+// Куки не ставит, поэтому баннера согласия не требует — в отличие от того,
+// что обычно кладут внутрь GTM (см. LEGAL.md).
+//
+// Токен, как и `GTM_ID`, не секрет: он уезжает в разметке любому посетителю,
+// и лежит здесь по той же причине, что и тот — и так же безусловно, без
+// «если задан»: способ выложить сайт без счётчика, о котором никто не узнает,
+// заводить не за чем.
+const CF_BEACON_TOKEN = 'a24a53c2e5b946e6bf627a454d5dba8b';
+
+// `type="module"` — тем же текстом, каким снипет выдала панель Cloudflare.
+// Модуль откладывается сам, `defer` ему не нужен: маяк уходит после разбора
+// страницы и не спорит за очередь с картинками, ради которых сюда и пришли.
+// Место в конце `<body>` тоже из снипета — Cloudflare просит ставить перед
+// закрывающим тегом. Терять этим нечего: считается загруженная страница.
+const cfBeacon = `<script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "${CF_BEACON_TOKEN}"}'></script>`;
+
 // `canonical` необязателен, и это про страницу «не найдено». Канонический адрес
 // — заявление «настоящий адрес этой страницы вот такой»; со страницы 404,
 // указывающей на указатель, оно читается как «здесь на самом деле указатель»,
@@ -186,6 +204,7 @@ function layout({
       <a href="/license">License</a>
     </footer>
     ${script ? `<script type="module" src="${script}"></script>` : ''}
+    ${cfBeacon}
   </body>
 </html>
 `;
