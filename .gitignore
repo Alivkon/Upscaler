@@ -19,6 +19,8 @@ images/gallery.json
 # Logs
 *.log
 logs/
+# Журнал запросов: состояние работающего сервера, как и `images/gallery.json`.
+log/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
