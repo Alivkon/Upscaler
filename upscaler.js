@@ -40,6 +40,12 @@ const MAX_SIDE = 2048;
 // у него в ответе причина, а здесь была бы только оборванная связь.
 const WAIT_MS = 150_000;
 
+// Граница между «мелочью, ради которой звали модель» и «тоном, который она
+// менять не должна» — в пикселях кадра ×4, то есть четыре здесь это примерно
+// один пиксель того, что уехало в модель. Всё, что исходник показывал сам,
+// приходит из исходника; модели остаётся то, что мельче.
+const TONE_SIGMA = 4;
+
 const url = () => (process.env.UPSCALE_URL || '').trim();
 
 // Ключ и секрет заводятся один раз в панели Modal (Settings → Proxy Auth
@@ -110,6 +116,77 @@ async function shrunkToFit(buffer, width, height) {
   );
 }
 
+// Пересадка тона: у модели берём только то, чего в оригинале нет, а тон, цвет
+// и крупную форму кладём обратно из оригинала.
+//
+//     out = grown − blur(grown) + blur(lanczos)
+//
+// где lanczos — тот же вход, увеличенный без всякой модели. Почему это вообще
+// понадобилось: увеличитель меняет картинку не только там, где добавляет
+// резкость. У нынешней модели уход в низких частотах — 5,3 уровня, и он
+// не бесцветный: −5,3 / −2,5 / −3,3 по каналам, то есть сдвиг оттенка.
+// Заказчик судит по верности — «то же самое, только больше и резче», — и
+// вслепую против оригинала сырой выход модели проиграл на семи картинках
+// из семи, а с пересадкой выиграл на пяти (research/2026-09-12-round22-
+// against-original.md). Времени она стоит двух размытий кадра и одного
+// lanczos — 0,6 с на кадре в 12 Мп против полусотни секунд инференса, — а вот
+// памяти стоит заметно: три сырых кадра ×4 разом, и на самом тяжёлом входе,
+// какой пропускают потолки, это +0,6 ГБ к пику.
+async function tonedLikeOriginal(sent, grown) {
+  // Размер кадра спрашиваем у самой картинки, а не считаем как ×4 от входа:
+  // множитель живёт в модели, и складывать надо с тем, что она вернула.
+  //
+  // `keepIccProfile` здесь не про готовый файл, а про то, чтобы sharp не
+  // переводил пиксели в sRGB по встроенному профилю: обе картинки должны
+  // прийти в одной системе координат — в той, в какой их отдала модель.
+  const model = () => sharp(grown, { limitInputPixels: false }).removeAlpha().keepIccProfile();
+  const { data: fine, info } = await model().raw().toBuffer({ resolveWithObject: true });
+  const soft = await model().blur(TONE_SIGMA).raw().toBuffer();
+  const original = await sharp(sent, { limitInputPixels: false })
+    .removeAlpha()
+    .keepIccProfile()
+    .resize(info.width, info.height, { kernel: 'lanczos3' })
+    .blur(TONE_SIGMA)
+    .raw()
+    .toBuffer();
+
+  // Складываем на месте, в буфер модели: сырой кадр ×4 — это от полусотни
+  // до двухсот мегабайт, и трёх таких хватает, четвёртый заводить не за чем.
+  for (let i = 0; i < fine.length; i++) {
+    const value = fine[i] - soft[i] + original[i];
+    fine[i] = value < 0 ? 0 : value > 255 ? 255 : value;
+  }
+  return { data: fine, raw: { width: info.width, height: info.height, channels: info.channels } };
+}
+
+// Профиль на готовый файл. Из сырых пикселей он не доезжает, а вернуть его
+// средствами sharp нельзя: `withIccProfile` принимает только путь к файлу
+// и не прикладывает профиль, а ПЕРЕВОДИТ в него пиксели, считая исходные
+// sRGB, — картинка с Display P3 от такого перевода бледнеет вместо того,
+// чтобы остаться собой (то же и с `composite`, и с `withMetadata`). Поэтому
+// кладём байты сами и туда же, куда их кладёт libvips: сразу за SOI, тем же
+// сегментом APP2 — подпись `ICC_PROFILE`, номер куска и их число. Профиль
+// длиннее 64 КБ поэтому и режется на куски: длина сегмента в jpeg двухбайтная.
+function withProfile(jpeg, icc) {
+  const PIECE = 65_519;
+  const pieces = icc ? Math.ceil(icc.length / PIECE) : 0;
+  // Профиля не было или он не помещается в 255 кусков — отдаём как есть:
+  // файл без профиля читается как sRGB, файл с обрезанным — никак.
+  if (!pieces || pieces > 255) return jpeg;
+  const segments = [];
+  for (let piece = 1; piece <= pieces; piece++) {
+    const part = icc.subarray((piece - 1) * PIECE, piece * PIECE);
+    const head = Buffer.alloc(18);
+    head.writeUInt16BE(0xffe2, 0);
+    head.writeUInt16BE(16 + part.length, 2);
+    head.write('ICC_PROFILE\0', 4, 'latin1');
+    head[16] = piece;
+    head[17] = pieces;
+    segments.push(head, part);
+  }
+  return Buffer.concat([jpeg.subarray(0, 2), ...segments, jpeg.subarray(2)]);
+}
+
 /**
  * Считает картинку у нас и возвращает готовые байты.
  *
@@ -151,6 +228,7 @@ export async function enlarge(buffer, { width, height, targetLongestSide }) {
   if (!response.ok) throw await refusal(response);
 
   const grown = Buffer.from(await response.arrayBuffer());
+  const toned = await tonedLikeOriginal(sent, grown);
   // Обе стороны названы поимённо, а не «вписать в квадрат»: пропорция берётся
   // у исходника, тем же `resultSize`, каким страница назвала размер до
   // отправки. Вписыванием вторая сторона выводилась бы из пропорции того, что
@@ -159,17 +237,20 @@ export async function enlarge(buffer, { width, height, targetLongestSide }) {
   // `fill` вместо `cover` по той же причине: разница пропорций тут доли
   // пикселя, и обрезать ради неё край картинки не за что.
   const [outWidth, outHeight] = resultSize(width, height, targetLongestSide);
-  const output = await sharp(grown, { limitInputPixels: false })
+  const output = await sharp(toned.data, { raw: toned.raw, limitInputPixels: false })
     .resize(outWidth, outHeight, { fit: 'fill', kernel: 'lanczos3' })
-    // Профиль, переживший уменьшение и обработчик, доезжает и до готового
-    // файла: sharp умолчанием срезает его на каждом пережатии, и хватило бы
-    // одного из трёх, чтобы беречь его в двух других было незачем.
-    .keepIccProfile()
     .jpeg({ quality: 95, chromaSubsampling: '4:4:4' })
     .toBuffer();
 
+  // Профиль, переживший уменьшение и обработчик, доезжает и до готового файла:
+  // sharp умолчанием срезает его на каждом пережатии, и хватило бы одного
+  // из трёх, чтобы беречь его в двух других было незачем. Берётся он у того,
+  // что мы отправили, а не у того, что вернула модель: обработчик профиль
+  // переносит, но отвечает за него не он.
+  const { icc } = await sharp(sent).metadata();
+
   return {
-    buffer: output,
+    buffer: withProfile(output, icc),
     contentType: 'image/jpeg',
     // Не отладка: за холодный старт платим отдельно, и без этих чисел цена
     // вызова известна только из панели Modal.

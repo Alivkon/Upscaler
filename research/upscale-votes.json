@@ -1,5 +1,5 @@
 {
-  "date": "2026-08-22",
+  "date": "2026-09-02",
   "round5": {
     "sheet": "batch.html",
     "key": {
@@ -427,5 +427,305 @@
     "cost_of_switching": "None worth the name. Both WTFPL, so no licence work. Same speed on the same frames: 141/144, 178/186, 78/76, 184/185, 152/150, 146/148 seconds per arm. 70 MB vs 68 MB baked into the Modal image. The change is MODEL, MODEL_URL and MODEL_SHA in service/upscale_modal.py plus a redeploy; the file is in the same Hugging Face repo (yuvraj108c/ComfyUI-Upscaler-Onnx, 72996856 bytes, sha256 51773d75391906f1886bc99ce603e0ac7a7cc89fb4a77419c4bd63e466339d9c).",
     "open": "Picture 6 is the weak win: faces and fabric came out poorly on BOTH arms. Nothing in this round says any of the eleven arms handles a portrait, and TODO already carries an item about redoing the model comparisons with faces enabled on Topaz.",
     "scripts": ".pairbake.mjs"
+  },
+  "round16_generative_leashed": {
+    "sheet": "~/Pictures/gen-test/desk/ — twelve pairs 1a/1b .. 12a/12b at 1:1, and ~/Pictures/gen-test/wall/ — the same twelve whole-frame at 1920x1080. Key: ~/Pictures/gen-test/.key.txt",
+    "question": "round 14 threw diffusion out on principle, but it was tested on FACTORY SETTINGS. Does a generative upscaler with its reins pulled in beat the honest reconstructive one?",
+    "arms": "control: 4x_RealisticRescaler_100000_G, the shipping model — the very same files judged in round 15, not recomputed. seedvr2: ByteDance SeedVR2-3B via zsxkib/seedvr2 on Replicate, constrained BY CONSTRUCTION — no text prompt exists, sample_steps 1, cfg_scale 1.0 (guidance off), apply_color_fix true. clarity: philz1337x/clarity-upscaler constrained BY SETTING — empty prompt and empty negative (factory default is 'masterpiece, best quality, highres, <lora:more_details>'), creativity 0.15 vs 0.35, resemblance 1.5 vs 0.6, dynamic 3 vs 6.",
+    "method": "same six sources and the same 0.45 Mp centred crops as round 15, so the control arm is literally the round-15 files. Each generative arm paired against the control separately: 6 pictures x 2 arms = 12 pairs, SHUFFLED ACROSS THE WHOLE LIST so the pair number does not reveal the arm, letters shuffled inside each pair. Shown twice: a 1:1 window, and the whole frame fit to 1920x1080 after Charlie called the 1:1 view too zoomed to judge.",
+    "handicap": "SeedVR2 takes NO scale or resolution input — every output lands at ~3.65 Mp whatever you feed it, so the factor is set by the source size, not by the caller: x3.92 on the koi, x2.84 on the portrait. Each seedvr2 result was lanczos'd up to the control's x4 size before cutting. That is a real production cost (the product promises a fixed wallpaper size), but it means the arm was judged partly through added blur — heaviest on pairs 2, 5, 11, 12 (~x2.9), almost nil on pair 6 (x3.92).",
+    "verdict_seedvr2": {
+      "4 knife and bowl": "rescaler (pair 2) — 'not strong, too high zoom unclear'",
+      "5 trees and peonies": "rescaler (pair 3)",
+      "1 rhododendrons": "rescaler (pair 5) — 'still 5b, but there is potential I feel, maybe not this model but another one'",
+      "3 koi and lotus": "rescaler (pair 6) — '100%'. THE UNHANDICAPPED PAIR (x3.92, no top-up worth the name)",
+      "6 portrait": "SEEDVR2 (pair 11)",
+      "2 foggy meadow": "seedvr2 (pair 12), but 'too small' — difference barely visible"
+    },
+    "verdict_clarity": {
+      "2 foggy meadow": "rescaler (pair 4) — 'both bad, but 4b'",
+      "5 trees and peonies": "rescaler (pair 8)",
+      "6 portrait": "rescaler (pair 9), weakly — 'too small but lean a'",
+      "1 rhododendrons": "rescaler (pair 10)",
+      "4 knife and bowl": "NO CALL (pair 7) — 'too small again', no visible difference",
+      "3 koi and lotus": "not judged (pair 1)"
+    },
+    "result": "LEASHING DOES NOT RESCUE THE CATEGORY, WITH ONE EXCEPTION THAT MATTERS. Clarity with its reins pulled in went 0 for 4 with one tie and one unjudged: an empty prompt and creativity 0.15 slowed the repainting but did not stop it — saturation still climbs and the fractal tiling still writes letterform-like scribbles into foliage. SeedVR2 lost 4 of 6, including the one pair where the lanczos handicap was negligible, and lost it '100%'. BUT IT WON THE PORTRAIT — the first time in sixteen rounds that any of thirteen models has beaten the incumbent on a face, and on that same face Clarity lost. The pattern is coherent, not a coin flip: SeedVR2 fabricates where there is dense real texture (koi scales, foliage) and helps where the content is a face or smooth fog. Its prior is trained on faces and video; that is exactly where it pays and exactly where it costs.",
+    "money": "Replicate zsxkib/seedvr2 $0.10 a picture, 23x the shipping $0.0044 — but that is the wrapper, not the model: fal.ai charges $0.001/Mp, so ~$0.0037 for the same 3.65 Mp, cheaper than what we pay now. Clarity $0.016. Total spent this round ~$0.70. Self-hosting SeedVR2-3B is legally clean (Apache 2.0) and would remove the scale handicap outright (the model takes explicit output dimensions; the Replicate wrapper does not expose them), but it needs >=18 GB VRAM — L4 at $0.000222/s, not our T4 — and swaps a 70 MB ONNX for a 3B transformer whose cold start is unmeasured.",
+    "licences": "SeedVR2 Apache-2.0, clean. Clarity rides SD checkpoints. ResShift/SinSR are NTU S-Lab License 1.0, NON-COMMERCIAL — the same mine LEGAL.md describes for ClearRealityV1, so they are out for the same reason. OSEDiff is Apache-2.0 itself but rides SD 2.1 under OpenRAIL++-M plus RAM and DAPE checkpoints: three licences to clear for a model whose own paper admits it hallucinates structures.",
+    "open": "Pair 1 (clarity on the koi) never judged, and pair 7 got no call. Neither would move the result. The live question is the face: one win on one portrait is exactly the evidence this project has always refused to act on, and the round-15 lesson says never crown off one picture."
+  },
+  "round17_faces": {
+    "sheet": "~/Pictures/face-test/desk/ (окно 1:1 на лице) и ~/Pictures/face-test/wall/ (весь кадр обоями). Ключ ~/Pictures/face-test/.key.txt. Двенадцать пар, номера перемешаны сквозным списком.",
+    "question": "круг 16 дал одну победу генеративной ветки — портрет. Шум одной картинки или находка? Шесть портретов вместо одного.",
+    "arms": "control: 4x_RealisticRescaler_100000_G. seedvr2: как в круге 16. codeformer: sczhou/codeformer, codeformer_fidelity 0.9 (не 0.5 по умолчанию), upscale 4, background_enhance и face_upsample включены — ЕДИНСТВЕННАЯ модель, у которой поводок это честное число от 0 до 1, а не подбор настроек.",
+    "pictures": "1 крупный портрет с веснушками и волосами через глаз (картинка кругов 15-16). 2 два профиля на расстоянии, низкий контраст. 3 два лица под жёстким зелёным светом, очки. 4 лицо наполовину за рукой, темно. 5 лицо мелко в кадре, контровой свет из окна. 6 профиль против света.",
+    "method_fix": "ОКНО НАВЕДЕНО НА ЛИЦО, и это исправление прошлого круга, а не украшение. В круге 16 окно 1:1 бралось из середины кадра — у портрета это грудь, и три пары получили ответ «too small»: мерили ткань, спрашивали про лицо. На новом наборе центральная обрезка вырезала голову начисто у двух картинок из шести. Доли лица сняты по сетке с исходников; вертикальный упор сработал у всех шести, так что лицо стоит на 0.22-0.42 сверху окна, а не по центру, и обойный показ наведён туда же — иначе `cover` по центру срезал бы голову у всех.",
+    "handicap": "снова несимметрично, и не в пользу seedvr2: codeformer отдаёт честные ×4, seedvr2 опять сел на ~×2.85 и был досчитан ланцошем. Все шесть пар seedvr2 несут этот пересчёт, ни одна пара codeformer — нет.",
+    "verdict_codeformer": {
+      "1 веснушки крупно": "rescaler (пара 1), неуверенно — «unclear but probably b»",
+      "4 лицо за рукой, темно": "CODEFORMER (пара 3), слабо — «both bad, b slight better»",
+      "6 профиль против света": "CODEFORMER (пара 4) — НО «it disappeared the piercing»: выиграл и стёр пирсинг, который в исходнике есть",
+      "2 два профиля": "CODEFORMER (пара 6) — и здесь ВПЕРВЫЕ мультяшным назван НЕ генеративный арм, а rescaler: «b is cartoon»",
+      "5 лицо мелко, контровой свет": "НЕТ ПРИГОВОРА (пара 7) — «first is blurry, second is lying»",
+      "3 зелёный свет": "не судилась (пара 11)"
+    },
+    "verdict_seedvr2": {
+      "3 зелёный свет": "SEEDVR2 (пара 2) — единственная победа",
+      "6 профиль против света": "rescaler (пара 5)",
+      "4 лицо за рукой, темно": "rescaler (пара 8) — «8a is really bad»",
+      "1, 2, 5": "не судились (пары 9, 10, 12) — круг остановлен досрочно"
+    },
+    "result": "SEEDVR2 ВЫБЫВАЕТ, и выбывает по существу, а не по счёту. На картинке 4 он СОСТАРИЛ ЛИЦО: дорисовал гусиные лапки, тяжёлые тени под глазом, углубил носогубную складку и огрубил кожу на щеке — исходник показывает гладкое молодое лицо в темноте. Это не «больше подробности», это другой человек, и это класс ошибки хуже размытия: стёртая деталь — потеря, дорисованные морщины — подмена. Поведение объясняет и разброс его результатов: приор заполняет пустоту КОЖНОЙ ФАКТУРОЙ, поэтому там, где сигнала мало (темно), он пишет поры и линии, которых не было, а там, где сигнала хватает (картинка 3, яркий свет), выигрывает. Charlie остановил круг на счёте 1-2, не досматривая: «lets not finish seedvr2 we cant use».",
+    "result_codeformer": "CODEFORMER 3-1 ПРИ ОДНОМ ОТКАЗЕ — больше, чем любая модель когда-либо забирала у действующей на лицах. Но выигрывает он ровно тем, что запрещено, и Charlie называл это, ГОЛОСУЯ ЗА НЕГО: в паре 4 выбрал его и тут же заметил стёртый пирсинг, в паре 7 назвал прямо — «lying». Это fidelity 0.9, то есть поводок затянут почти до упора, и он всё равно снимает с лица настоящее железо. РУЧКА РЕАЛЬНА, НО 0.9 НЕДОСТАТОЧНО.",
+    "the_line": "Пара 7 — вся задача в одной строке: «first is blurry, second is lying». На лицах два способа проиграть меняются местами: у восстановительной ветки отказ это размытие, у генеративной — враньё, и видно каждый раз, какой именно. Отдельно стоит запомнить пару 6: впервые мультяшной назвали ДЕЙСТВУЮЩУЮ модель, и случилось это на низкоконтрастном зернистом исходнике.",
+    "money": "seedvr2 $0.60 за шесть (Replicate $0.10 за вызов; на fal та же модель ~$0.0037). codeformer — копейки, вызовы 4-11 секунд. Контрольная ветка бесплатна и считалась на своей машине, 150-265 с на картинку на wasm.",
+    "open": "Пара 11 (codeformer на картинке 3) не судилась. Следующий шаг, если он нужен: fidelity 1.0 против 0.9 — единственная непроверенная точка на единственной честной ручке, какая нашлась во всём разборе."
+  },
+  "round18_fidelity_stop": {
+    "question": "круг 17: CodeFormer при fidelity 0.9 выиграл три пары из четырёх и стёр при этом настоящий пирсинг. 0.9 — поводок почти до упора. Держит ли упор, 1.0?",
+    "method": "НЕ ПАРАМИ, и намеренно. Вопрос тут фактический, а не вкусовой: пирсинг на картинке 6 либо на месте, либо нет, и меряется это глазами об исходник. Вкусовой прибор на фактическом вопросе только добавил бы шума. Те же шесть окон и тот же файл rescaler, что в круге 17 — пересчитывать нечего, ветка одна новая.",
+    "evidence": "Картинка 6, два золотых штифта под внешним краем брови. В ИСХОДНИКЕ оба на месте и различимы. RESCALER держит оба. CODEFORMER 0.9 — обоих нет, на их месте лёгкая размазня. CODEFORMER 1.0 — обоих нет, ровно так же. Упор не держит.",
+    "measurement": {
+      "what": "средняя абсолютная разница по каналам, 0-255, кадр приведён к ширине 1200",
+      "0.9 vs 1.0": "1.52, 0.24, 0.27, 0.29, 0.10, 0.23 — по картинкам 1..6",
+      "0.9 vs rescaler": "10.50, 3.92, 5.38, 4.03, 2.89, 3.93",
+      "src vs rescaler": "9.10, 3.84, 5.76, 4.20, 3.06, 4.95",
+      "reading": "последняя десятая ручки двигает картинку в 13-20 раз слабее, чем выбор модели, на пяти картинках из шести. То есть весь оставшийся ход поводка — это примерно двадцатая часть той разницы, которую делает сам выбор ветки. Ручка на этом участке почти не работает."
+    },
+    "result": "РУЧКА ЗАКРЫТА. `codeformer_fidelity` — единственный честный числовой поводок, найденный во всём разборе, и на упоре он не удерживает модель от стирания настоящей детали с лица. Пары на 1.0 против действующей НЕ ставились сознательно: 1.0 численно неотличима от 0.9, так что пары лишь воспроизвели бы счёт круга 17 и потратили бы внимание Charlie на уже отвеченный вопрос.",
+    "what_it_closes": "Отвод генеративных моделей теперь опирается не на «диффузия перерисовывает сцену» (это был приговор заводским настройкам Clarity), а на три проверенных поводка — устройством (SeedVR2), настройкой (Clarity) и числом (CodeFormer) — из которых НИ ОДИН не держит там, где в исходнике пусто. Модель не «слишком свободна»: ей нечем заполнить пустоту, кроме приора.",
+    "money": "шесть вызовов CodeFormer, копейки. Замечено попутно: на счету Replicate меньше $5, и это режет скорость до 6 запросов в минуту с пачкой в один — .fidbake.mjs ждёт по `retry_after`, иначе круг падает на второй картинке."
+  },
+  "round19_rich_source": {
+    "question": "круг 19: жалоба «нынешняя модель до смешного мутная». Проверяли на самой богатой картинке, какую модель когда-либо видела: вереск и гритстоун, 719×1024, 286 КБ, 3,19 бита на пиксель. Все прошлые круги стояли в полосе 0,55–2,27, то есть выбор нынешней модели сделан на тонких исходниках и на этом конце не проверялся ни разу.",
+    "method": "Слепо и парами, нынешняя ветка в каждой паре. Четыре окна на претендента: весь кадр целиком, потом три полосы во всю ширину плиты — вереск (мелкий плотный стипль), лишайник на камне (пятна среднего размера), ветки на небе (тонкая линия на ровном фоне). Окна наведены на фактуры, а не в середину кадра. Стороны разложены поровну, не монеткой. Имя претендента убрано и из страницы, и из имён файлов. Листалка перекидывает A/B на месте, сохраняя точку и масштаб; масштаб держится один на весь круг.",
+    "arms": {
+      "rescaler": "4x_RealisticRescaler_100000_G, WTFPL — нынешняя, во всех парах",
+      "esrgan": "RealESRGAN_x4, BSD-3 — претендент 1, лицензия чистая",
+      "ultra": "4x-UltraSharpV2, CC BY-NC-SA — претендент 2, ЛИНЕЙКА: показывает запас, но выиграть не может по праву",
+      "topaz": "Topaz Standard V2 ×4, платная — претендент 3, дописан после вопроса «а Topaz пробовали?»; настройки как в круге 14, чтобы приговор сравнивался с уже вынесенным"
+    },
+    "votes": {
+      "1-full": "rescaler (над Real-ESRGAN)",
+      "1-heather": "rescaler (над Real-ESRGAN)",
+      "1-rock": "esrgan",
+      "1-tree": "rescaler (над Real-ESRGAN)",
+      "2-full": "ultra",
+      "2-heather": "ultra",
+      "2-rock": "rescaler (над UltraSharpV2)",
+      "2-tree": "rescaler (над UltraSharpV2)",
+      "3-full": "topaz",
+      "3-heather": "topaz",
+      "3-rock": "topaz",
+      "3-tree": "rescaler (над Topaz)",
+      "4-full": "nomosweb",
+      "4-heather": "nomosweb",
+      "4-rock": "nomosweb",
+      "4-tree": "nomosweb"
+    },
+    "score": "Real-ESRGAN 1:3. UltraSharpV2 2:2. Topaz 3:1. 4xNomosWebPhoto_RealPLKSR — 4:0, всухую, включая тот самый вереск. Шестнадцать пар, нынешняя ветка в каждой; взята в шести из шестнадцати.",
+    "verdict": "Круг начинался с «both are pretty bad» и кончился победителем. NomosWebPhoto обошёл нынешнюю во всех четырёх окнах, Topaz — в трёх из четырёх. ВАЖНО: это одна картинка, и правило проекта прямо запрещает менять модель по одной (круг 14: «одна картинка не выбирает лучшую; отсеять худших она может»). Победа 4:0 — сильный повод на полноценный круг из шести картинок, а не решение.",
+    "split_by_texture": "Развилка нашлась, но не там, где её искали круги 13–15. Не по типу исходника, а ПО ФАКТУРЕ ВНУТРИ ОДНОГО КАДРА: UltraSharpV2 берёт вереск (где соцветие — два-три пикселя и нынешняя крошит его в грязь) и проигрывает камень (гритстоун уходит в воск и мазок). Одним `if` в upscaler.js такое не разводится.",
+    "measurement_failed": {
+      "what": "мерили резкость (средний модуль градиента по яркости) и обратный ход (уменьшить ×4 назад до исходного и сравнить с оригиналом)",
+      "sharpness": "перевёрнута. Порядок по глазам почти в точности обратен порядку по резкости: Nomos2 набрал 2,67× тем, что застелил кадр сеточкой и осыпал вереск блёстками; UltraSharpV2, лучший на вереске, дал 1,37× — меньше нынешней 1,46×",
+      "roundtrip": "выдумку не ловит. Siax (6,57) и Nomos2 (7,73) — ЛУЧШИЕ по этой цифре, лучше даже lanczos (7,99), и оба выдумывают откровенно: симметричный звон при уменьшении усредняется обратно",
+      "lesson": "обе напрашивавшиеся цифры не годятся. Инструмент здесь по-прежнему глаз, парами."
+    },
+    "post_sharpen_ruled_out": "Нерезкая маска поверх честной ветки (sigma 1,0 и 1,6) проверена первой, потому что выдумать ничего не может и лицензии не трогает. Не лечит: резкость втрое, а усиливается ровно то, что модель уже наломала — крошка становится чётче, соцветий не появляется. Форма теряется на шаге модели, пост-обработкой её не вернуть.",
+    "disagreement": "Пара 1-heather: у меня Real-ESRGAN был явно лучше нынешней, Charlie отдал нынешней. То есть резкая лиловость Real-ESRGAN мешает ему сильнее, чем муть нынешней. Записано, потому что мой глаз тут ошибся бы за него.",
+    "topaz_history": "Ответ на вопрос «а Topaz пробовали?»: дважды, и оба раза в той же тонкой полосе. Круг 13 — показан рядом, после раскрытия, «разницы с Topaz почти нет, D чуть лучше». Круг 14 — вслепую третьим из одиннадцати, «not great but acceptable», выше Siax. То есть Topaz ни разу не был побит уверенно, и на богатом исходнике не проверялся тоже. На вереске он держит тон ближе всех к оригиналу (97,4/94,1/88,2 против 96,6/93,3/87,5) при резкости 1,86×.",
+    "cost": {
+      "topaz": "$0.05 за картинку, ~$75/мес при 50 картинках в сутки",
+      "modal_now": "$0.0044 за картинку, ~$6.60/мес",
+      "ratio": "одиннадцатикратно; вопрос встаёт только если Topaz выиграет"
+    },
+    "why_the_shelf_was_short": "Семь из восьми локальных моделей — файлы из одного репозитория HuggingFace (yuvraj108c/ComfyUI-Upscaler-Onnx), у которого просто был готовый ONNX. Набор кандидатов был задан тем, что уже сконвертировано, а не тем, что хорошо.",
+    "open": "Конвертация 4xNomosWebPhoto_RealPLKSR (CC-BY-4.0, обучена ровно на нашей деградации: пережатый веб-джипег, вебп, размытие объектива) — единственная непробованная реконструктивная ветка. Плюс вопрос, что за файл realplksr_x4.onnx: если это голый претрейн, приговор «terrible» из кругов 13–14 не относится к архитектуре.",
+    "the_bigger_question": "Картинка 719×1024. Сделать из неё 4K-плиту — это шестнадцатикратный рост числа пикселей, и честно этого не делает никто: в двух пикселях соцветия нет, поэтому каждая ветка либо оставляет муть, либо выдумывает. Тот же случай, что DESKTOP_GATE уже разбирает для 41 работы: не отдавать обещание, которого картинка не выполняет. Вопрос круга не «какой моделью замазать», а «стоит ли такой мелкий исходник вообще предлагать как обои».",
+    "phone_round": "Круги 3 и 4 отсужены с телефона: Charlie был в дороге, localhost не открыть. Пары вшиты в артефакт base64, обе картинки пары держатся в DOM разом и переключаются классом — смена src дала бы белый кадр на раскодирование, и глаз потерял бы именно тот миг. Артефакт: https://claude.ai/code/artifact/aa6eb759-4d9e-428a-a700-3b644938bf14, ключ — .key-phone.txt, сборка — .phonepairs.mjs и .phonepage.mjs.",
+    "my_eye_was_wrong_twice": "1-heather: я отдал бы Real-ESRGAN, Charlie взял нынешнюю. 4-*: я записал у NomosWebPhoto «мелкая сетка по кадру и бусины на соцветиях, беда Nomos2 потише» — он взял его всухую, все четыре окна. То есть мой глаз на этом материале не заменяет его ни как фильтр, ни как предсказание. Показывать пары, а не мнение.",
+    "nomosweb_facts": {
+      "licence": "CC-BY-4.0, Philip Hofmann — подпись, ни NC, ни SA",
+      "onnx": "официальный fp32 opset17 лежит в релизе на GitHub; OpenModelDB его не перечисляет. Наша конвертация сошлась с torch до 7e-05 — эквивалентны, наша проверена",
+      "file": "/home/charlie/.cache/upscaler-models/4xNomosWebPhoto_RealPLKSR.onnx, 29 737 320 байт",
+      "input": "размер входа полностью динамический, плитка 200/16 идёт без правок. Жёсткие 256 у старого realplksr_x4 — артефакт экспорта darktable, не архитектуры",
+      "speed": "228 с/Мп против 458 у нынешней на том же стенде — вдвое быстрее",
+      "tone": "темнит: 88,4/85,3/79,7 против 96,6/93,3/87,5 у исходника, около 8 уровней",
+      "tile_sensitivity": "28 слоёв GroupNorm нормируют по всему полю плитки, поэтому вид зависит от размера плитки. На целой картинке плитка 200 против 512: среднее 5,77 из 255, НО максимум 209 — где-то шов прыгает сильно. До выкладки найти и посмотреть",
+      "fp16": "не поддерживает (spandrel: supports_half=False) — держать fp32"
+    },
+    "realplksr_verdict_overturned": "realplksr_x4.onnx опознан побитово: это 4x_realplksr_mssim_pretrain (musl) из репозитория darktable — голый претрейн, 284 из 284 тензоров совпали. Ни GAN-, ни перцептивной дообучки (только MSSIM, то есть мутный по устройству), деградация — одни уменьшения, ни одного джипег-артефакта за всё обучение. Приговоры «terrible» из кругов 13 и 14 к архитектуре RealPLKSR не относятся: проверяли слабейшего члена семейства на входе, которого он не видел.",
+    "licence_contradiction": "4x-ClearRealityV1 — браузерная ветка, вокруг которой написана мина в LEGAL.md: OpenModelDB says CC-BY-NC-SA-4.0, карточка автора на HuggingFace — Apache-2.0, и в YAML, и в тексте. Если карточка автора главнее, мины в браузерной ветке нет вовсе. НЕ ПРАВИТЬ LEGAL.md по этому одному наблюдению — проверить отдельно.",
+    "next": "1) Полный круг на шести картинках: NomosWebPhoto против нынешней, и обязательно на тонких исходниках круга 15 — там нынешнюю выбирали, и надо знать, не проседает ли он. 2) NomosWebPhoto против Topaz напрямую: обоих сравнивали только с нынешней, между собой ни разу. 3) Шов от плитки. 4) 4xBHI_dat2_real (CC-BY-4.0, DAT-2) — его деградацию замерили по логам обучения, и она ближе к нашему корпусу, чем у NomosWebPhoto (q30-99 против q70-100)."
+  },
+  "round20_alternatives": {
+    "question": "Есть ли на свободной полке ветка лучше победителя круга 19, и не была ли его победа отчасти победой яркости",
+    "date": "2026-09-05",
+    "method": "13 слепых пар на том же вереске 719x1024. Держатель — nomosweb, победитель круга 19, а не нынешняя: «лучше мути» уже доказано. Четыре претендента x три окна (весь кадр, вереск 1:1, камень 1:1), стороны разложены поровну. ЯРКОСТЬ ВЫРОВНЕНА множителем к средней исходника перед нарезкой. Тринадцатая пара — контроль: вчерашняя пара nomosweb против нынешней на вереске, с той же поправкой.",
+    "arms": {
+      "webdat2": "4xRealWebPhoto_v4_dat2, CC-BY-4.0, DAT-2 — jpg+webp 40-95 и двойной круг «скачал из веба, залил в веб»",
+      "websrgan": "4xNomosWebPhoto_esrgan, CC-BY-4.0, ESRGAN — данные победителя круга 19, другая архитектура: проверка, за что дали приз",
+      "bokehdat": "4xNomosUniDAT_bokeh_jpg, CC-BY-4.0, DAT — jpg 40-100, размытие в обучение НЕ клали, чтобы не резать размытый фон",
+      "span": "4xNomosUni_span_multijpg, CC-BY-4.0, SPAN — jpg до 40 многопроходный, 0,6 с/плитка против 28"
+    },
+    "votes": {
+      "1-full": "nomosweb",
+      "1-heather": "ничья",
+      "1-rock": "nomosweb",
+      "2-full": "webdat2",
+      "2-heather": "webdat2",
+      "2-rock": "webdat2",
+      "3-full": "websrgan",
+      "3-heather": "nomosweb",
+      "3-rock": "nomosweb",
+      "4-full": "nomosweb",
+      "4-heather": "bokehdat",
+      "4-rock": "nomosweb",
+      "5-heather": "ничья (контроль)"
+    },
+    "score": {
+      "webdat2": "3:0 всухую",
+      "websrgan": "1:2",
+      "bokehdat": "1:2",
+      "span": "0:2 + ничья",
+      "nomosweb (держатель)": "6 побед, 5 поражений, 1 ничья за 12 пар"
+    },
+    "verdict": "Новый лидер — 4xRealWebPhoto_v4_dat2, взял все три окна включая общий вид. Заменяет nomosweb на месте кандидата в круг на шести картинках. Решением НЕ является: снова одна картинка.",
+    "control_result": "ВАЖНО. Пара nomosweb против нынешней на вереске, вчера ушедшая всухую, с выровненной яркостью стала НИЧЬЕЙ. Победа круга 19 на вереске яркости не пережила. Счёт 4:0 круга 19 считать слабее, чем он выглядел.",
+    "brightness_confound": "Замер по всем веткам против исходника (яркость 93,6): siax +0,4, lanczos +0,5, topaz +1,3, ultra -2,0, rescaler -2,7, esrgan -5,8, nomos2 -7,0, span -7,1, nomosweb -7,5, webdat2 -7,8, websrgan -15,0. Победитель круга 19 был И самой тёмной веткой, с отрывом от той, которую обыграл. Тёмный кадр читается плотнее. ВСЕ ДАЛЬНЕЙШИЕ КРУГИ РЕЗАТЬ С ВЫРОВНЕННОЙ ЯРКОСТЬЮ. Потемнение чинится одной константой усиления после вывода — в отличие от мути. Множители: span 1,088, nomosweb 1,094, webdat2 1,097, bokehdat 1,115, websrgan 1,198, rescaler 1,034.",
+    "esrgan_sibling": "4xNomosWebPhoto_esrgan обучен на тех же данных, что победитель круга 19, но темнит на 15 против 7,5 — вдвое. Значит потемнение идёт от сети и прогона, а не от набора данных. Каналы едут вместе (-16,2/-15,3/-15,1): ровный сдвиг, не перепутанные каналы.",
+    "speed": "span — 17 с на кадр против 810 у самой тяжёлой ветки, в сорок восемь раз — и проиграл или сыграл вничью все три окна. Вопрос о дешёвой ветке снят. Новый лидер тяжелее прежнего втрое: 817 с против ~270 у nomosweb и 536 у нынешней на том же стенде. DAT-2 — трансформер; цену прогона на T4 посчитать ДО выкладки.",
+    "corrections_to_handover": "1) 4xBHI_dat2_real ONNX не отдаёт — только .pth и .safetensors плюс логи деградаций; песочница с torch и spandrel ушла, так что это самый дорогой кандидат, а не дешёвый. 2) У того же автора есть линейка RealWebPhoto под наш корпус буквально (скачано из веба и залито обратно, то есть сжато дважды), часть с готовым fp32 opset17 ONNX. Полка была короткой второй раз подряд.",
+    "nomosweb_jpeg_range": "Сжатие в обучении 4xNomosWebPhoto_RealPLKSR — только q70-100, обрезано автором нарочно (рассуждал про превью Google Images). Самая джипег-грамотная ветка полки, но веткой для битых скрейпов не является. Фраза «не видел ни одного джипег-артефакта» из круга 19 относилась к СТАРОМУ realplksr_x4.",
+    "next": "1) Круг на шести картинках: 4xRealWebPhoto_v4_dat2 против нынешней, обязательно с тонкими исходниками круга 15 и обязательно с выровненной яркостью. 2) Цена прогона DAT-2 на T4. 3) Шов от плитки (максимум 209 из 255 между плиткой 200 и 512) — не проверен и на новой ветке тоже. 4) Проверить лицензионное противоречие 4x-ClearRealityV1 отдельно."
+  },
+  "round21_thin_sources": {
+    "date": "2026-09-05",
+    "question": "Пора ли менять 4x_RealisticRescaler_100000_G — на тех самых тонких исходниках, на которых его и выбрали (круг 15).",
+    "method": "12 пар вслепую, 6 картинок, каждая играет дважды — против каждого претендента. Держатель нынешняя, она в каждой паре. Окно 900×1400, 1:1. Яркость выровнена по каждой картинке отдельно. Стороны, порядок показа и окна перемешаны; в имени файла только номер пары.",
+    "hygiene": "Окно у каждого претендента своё: картинка играет дважды, держатель в обеих парах, и при одном окне его кусок побайтово повторялся бы — узнанный повтор выдал бы держателя.",
+    "votes": {
+      "1": "b",
+      "2": "a",
+      "3": "b",
+      "4": "=",
+      "5": "=",
+      "6": "=",
+      "7": "=",
+      "8": "=",
+      "9": "a",
+      "10": "b",
+      "11": "a",
+      "12": "b"
+    },
+    "score": {
+      "4xNomosWebPhoto_RealPLKSR": {
+        "wins": 0,
+        "losses": 4,
+        "ties": 2,
+        "note": "победитель круга 19 всухую 4:0 на богатом вереске — здесь 0:4"
+      },
+      "4xRealWebPhoto_v4_dat2": {
+        "wins": 2,
+        "losses": 1,
+        "ties": 3,
+        "note": "лидер круга 20; перевес есть, мандата нет"
+      }
+    },
+    "by_picture": {
+      "1_рододендроны_туман": "nomosweb проиграл, webdat2 ничья — жалоба круга 14 не снята ни одним",
+      "2_туманная_поляна": "nomosweb проиграл, webdat2 выиграл",
+      "3_карпы_лотос": "nomosweb проиграл, webdat2 ничья",
+      "4_нож_пиала_гладкие": "оба проиграли — нынешняя выигрывает гладкие поверхности всухую",
+      "5_деревья_пионы": "обе ничьи",
+      "6_портрет": "nomosweb ничья, webdat2 выиграл"
+    },
+    "verdict": "МЕНЯТЬ НЕЛЬЗЯ. nomosweb дисквалифицирован: 4:0 на богатом источнике и 0:4 на тонких — он зависит от сюжета, а корпус в основном тонкий. webdat2 2:1:3 — это не мандат, тем более при 2,6× цены на процессоре и неизмеренной цене на T4.",
+    "the_real_finding": "Половина круга (6 из 12) — ничьи. На тех исходниках, которых в корпусе большинство, ветки почти не расходятся. Значит «до смешного мутная» из круга 19 — это про богатый источник, растянутый в ×4, то есть про физику, а не про выбор модели.",
+    "rule_confirmed": "Круг 14: одна картинка не выбирает лучшую, отсеять худших она может. Круг 19 выбрал по одной картинке и выбрал неверно.",
+    "brightness": "Перекос оказался свойством сюжета: на вереске он решал пары, здесь все множители лежат в 0,97–1,05. Устойчиво только одно: nomosweb темнее исходника на всех шести.",
+    "speed_cpu": "nomosweb ~35 с на выходной мегапиксель, webdat2 ~90 с. На T4 отношение неизвестно и без замера непредсказуемо: у трансформера на тензорных ядрах масштабирование другое.",
+    "next": "Ничего не менять. Открытый вопрос теперь не модельный — стоит ли исходник 719×1024 вообще предлагать как обои (та же форма, что DESKTOP_GATE)."
+  },
+  "round22_against_original": {
+    "date": "2026-09-12",
+    "question": "Почему увеличенный вереск не похож на оригинал. Впервые в паре стоит сам оригинал (lanczos ×4), а не другая ветка.",
+    "method": "Оригинал = A всегда, кандидат = B, тап на том же месте и в том же масштабе, кадр целиком, зум до 1:1. Четыре кандидата вслепую на двух страницах. Оценка кандидату: как оригинал только лучше / изменено терпимо / не похоже.",
+    "fidelity_metric": "Низкочастотный уход от lanczos ×4 (blur σ=6): topaz 3.3, rescaler 5.3 (сдвиг цвета R −5.3 G −2.5 B −3.3), nomosweb 8.1, webdat2 8.1, websrgan 17.1. Скрипт .fidelity.mjs.",
+    "tone_transplant": "out = model − blur(model) + blur(lanczos), σ=4 на ×4. Уход 5–8 → ~0.5 у всех, высокие частоты не тронуты. Скрипт .tonefix.mjs.",
+    "votes": {
+      "I": {
+        "topaz": "нет",
+        "webdat2-tone": "да"
+      },
+      "II": {
+        "rescaler": "нет",
+        "rescaler-tone": "да"
+      },
+      "preference": "II (rescaler-tone) over I (webdat2-tone)"
+    },
+    "verdict": "Модель не менять. Нынешняя + пересадка тона — «как оригинал, только лучше», и предпочтена webdat2 с той же починкой. Topaz при наименьшем уходе тона всё равно «не похоже»: метрика ловит цвет, но не то, что Topaz делает с фактурой.",
+    "what_was_wrong": "Круги 13–22 сравнивали ветки между собой, оригинала в паре не было ни разу. Между двумя изменёнными картинками выигрывает та, что изменена сильнее. Яркостной перекос круга 20 был первым симптомом.",
+    "before_shipping": "Проверить пересадку на шести тонких исходниках круга 15: там в низких частотах сидят блоки JPEG (8×8 = 32 px на ×4), и пересадка может вернуть блочность, которую модель убрала. Одна картинка не выбирает.",
+    "cost": "Пересадка — два гауссовых размытия кадра ×4 и lanczos исходника; на фоне 500+ с инференса бесплатно. Место в конвейере не выбрано: upscaler.js (sharp) или upscale_modal.py (numpy)."
+  },
+  "round22_thin_against_original": {
+    "date": "2026-09-12",
+    "question": "Не возвращает ли пересадка тона блоки JPEG на тонких исходниках круга 15. Оригинал в паре.",
+    "method": "Шесть картинок, оригинал = A, кандидаты = нынешняя как есть и нынешняя с пересадкой (σ=4), вслепую, порядок сбалансирован 3/3. Две страницы.",
+    "votes": {
+      "рододендроны": {
+        "raw": "терпимо",
+        "tone": "терпимо"
+      },
+      "карпы и лотос": {
+        "raw": "нет",
+        "tone": "да"
+      },
+      "деревья, пионы": {
+        "raw": "нет",
+        "tone": "нет"
+      },
+      "туманная поляна": {
+        "raw": "нет",
+        "tone": "да"
+      },
+      "нож и пиала": {
+        "raw": "нет",
+        "tone": "да"
+      },
+      "портрет": {
+        "raw": "нет",
+        "tone": "да"
+      }
+    },
+    "score": {
+      "tone": {
+        "da": 4,
+        "terpimo": 1,
+        "net": 1
+      },
+      "raw": {
+        "da": 0,
+        "terpimo": 1,
+        "net": 5
+      }
+    },
+    "with_heather": {
+      "tone": {
+        "da": 5,
+        "terpimo": 1,
+        "net": 1
+      },
+      "raw": {
+        "da": 0,
+        "terpimo": 1,
+        "net": 6
+      }
+    },
+    "verdict": "Блочность не вернулась ни разу. Пересадка ни на одной картинке не хуже, на пяти из семи переводит «не похоже» в «как оригинал, только лучше». Ставить в конвейер.",
+    "open": "Пионы (картинка 5): оба «нет». Не тон и не цвет — то, что модель делает со структурой. Пост-шаг это не лечит."
   }
 }
