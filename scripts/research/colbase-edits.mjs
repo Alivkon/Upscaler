@@ -1,13 +1,12 @@
-// colbase-edits.mjs — the same six treatment versions, for ColBase candidates.
-// Mirrors gedits.mjs but reads from ColBase instead of museum-works.json.
+// colbase-edits.mjs — six treatment versions of a work, for ColBase candidates.
+// Reads from ColBase instead of museum-works.json.
 //
-// УСТАРЕЛ КАК ОБРАЗЕЦ, 24.08. Шесть версий здесь — не полный набор: 23.08
-// виньетка стала обработкой генератора, и с тех пор на работу идёт
-// двенадцать версий — каждая правка и её двойник с углами. Этот файл
-// сохранён как есть, потому что по нему уже отбирали, но лист, склонированный
-// с него, выйдет без виньеток и это заметят только на телефоне.
-// Клонировать: `gedits.mjs`. Готовое зеркало для внешнего источника:
-// `nihonga-edits.mjs`.
+// УСТАРЕЛ КАК ОБРАЗЕЦ, 24.08, А С 12.09.2026 ВДВОЙНЕ. Шесть версий здесь не
+// были полным набором уже тогда: 23.08 виньетка стала обработкой генератора,
+// и на работу пошло двенадцать версий. Теперь нет и самих шести правок —
+// у обработки три значения (скан, `dim`, `ceil`). Файл сохранён как есть,
+// потому что по нему уже отбирали; клонировать для нового листа — текущий
+// `treat-sheet.mjs`, а не этот файл и не его ровесник `nihonga-edits.mjs`.
 //
 //   node colbase-edits.mjs
 //   TARGET=1440 node colbase-edits.mjs    slide width (default 1080)
@@ -88,7 +87,7 @@ function mainImageUrl(item) {
   throw new Error('no image url in response');
 }
 
-// ------------------------------------------------ treatment math (from gedits.mjs)
+// --------------------------- treatment math (from the old twelve-version sheet)
 const lum = (r, g, b) => 0.2126 * r + 0.7152 * g + 0.0722 * b;
 const shoulder = (v, knee, s) => (v <= knee ? v : knee + (v - knee) * s);
 const clamp = v => (v < 0 ? 0 : v > 255 ? 255 : v);

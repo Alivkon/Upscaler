@@ -136,6 +136,7 @@ function layout({
   body,
   ld,
   script,
+  preload,
   runtime,
   runtimeBytes,
   current,
@@ -179,6 +180,13 @@ function layout({
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Sometype+Mono:wght@400..500&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="/styles.css" />
+    <!-- Модуль, названный в шапке, браузер качает сразу, а не когда разбор
+         дойдёт до script в конце тела; на странице работы — ещё и не
+         дожидаясь work.js, который его импортирует, то есть на оборот до сети
+         раньше. Для галочки «Dimmed» этот оборот видимый: пока её скрипт
+         не выполнился, страница стоит приглушённой, и снявший галочку
+         успевает увидеть не тот файл — и скачать его. -->
+    ${preload ? `<link rel="modulepreload" href="${escape(preload)}" />` : ''}
     ${runtime ? `<meta name="ort-version" content="${escape(runtime)}" />` : ''}
     <!-- Вес того, что качает первая картинка. Сервер видит эти файлы у себя
          на диске, браузер — нет: отдаются они сжатыми на лету, и длины в
@@ -247,10 +255,11 @@ const scaled = base => `${Math.round(base * SCALE)}px`;
 // Копий бывает несколько, и тогда браузер выбирает по `sizes` сам. Одна
 // ступень обслуживает либо обычный экран, либо плотный, но не оба сразу:
 // карточка в 400 px просит 400 px при DPR 1 и 1200 px при DPR 3.
-const shownWith = (copies, sizes) =>
-  copies.length
-    ? ` srcset="${copies.map(copy => `${escape(copy.url)} ${copy.width}w`).join(', ')}" sizes="${sizes}"`
-    : '';
+// Список копий отдельно от атрибута: тот же список нужен второй раз — у скана,
+// в `data-scan-srcset`, — а собранный там заново он разошёлся бы с этим молча.
+const srcsetOf = copies => copies.map(copy => `${copy.url} ${copy.width}w`).join(', ');
+
+const shownWith = (copies, sizes) => (copies.length ? ` srcset="${escape(srcsetOf(copies))}" sizes="${sizes}"` : '');
 
 // Проём страницы работы задан **высотой**, а не шириной: рамка ростом
 // `min(72vh, 620px)`, изображение внутри `height: 100%; width: auto`
@@ -325,6 +334,81 @@ const plateSizes = item => {
 const offered = item => item.crops?.tall || item;
 const tile = item => item.crops?.tall || item;
 
+// Тот же файл, не тронутый приглушением: на него галочка «Dimmed» и переводит
+// страницу. Спрашивают всегда «а что вместо вот этого файла», потому что файлов
+// у страницы несколько и у каждого своя роль — кадр в проёме, целая плита,
+// плитки ряда, — и отображение это живёт здесь одно на всех: заведи его дважды,
+// и в одном из мест галочка однажды подставит не тот кадр.
+//
+// Отвечает помощник по имени кадра, а не по порядку: у скана кадры те же
+// и названы так же (`scan` в gallery.js). `null` — подставлять нечего, и тогда
+// у элемента нет ни атрибутов, ни галочки над ним.
+const scanOf = (item, file) => {
+  if (!item.scan) return null;
+  const kind = Object.keys(item.crops || {}).find(name => item.crops[name] === file);
+  return kind ? item.scan.crops?.[kind] || null : file === item ? item.scan : null;
+};
+
+// СОГЛАШЕНИЕ ОБ АТРИБУТАХ, И ОНО ОДНО НА ВСЮ СТРАНИЦУ: `data-scan-<атрибут>`
+// несёт значение `<атрибут>` у скана, а `public/dimmed.js` по галочке меняет
+// эти два значения местами — и тем же движением возвращает обратно. Поэтому
+// скрипт не держит списка имён: он читает с элемента то, что здесь написано,
+// и новое переключаемое место заводится одной строкой тут, а не двумя в двух
+// файлах.
+//
+// Голый `data-scan` рядом — метка, по которой скрипт эти элементы и находит:
+// селектора «атрибут, имя которого начинается на…» в CSS нет, а список имён
+// в `querySelectorAll` был бы тем самым вторым списком.
+//
+// Пустая строка — значение, а не пропуск: она означает «а у скана этого
+// атрибута нет», и переключение его снимет. Поэтому отсеивается только `null`
+// и `undefined` — «сказать нечего».
+const scanData = pairs => {
+  const written = Object.entries(pairs)
+    .filter(([, value]) => value != null)
+    .map(([name, value]) => ` data-scan-${name}="${escape(value)}"`)
+    .join('');
+  return written ? ` data-scan${written}` : '';
+};
+
+// Пара атрибутов картинки: чем подменить `src` и `srcset`. Считается в одном
+// месте на двух хозяев — карточку указателя и плитку ряда кадров; проём
+// страницы работы берёт ту же пару и добавляет к ней третий атрибут.
+//
+// Решает всё показанный файл, а не скан, и вот почему. Копий у каждого из
+// двух может не быть, и случая три. У показанного копии есть, у скана тоже —
+// подменяется список на список. У показанного есть, у скана нет — `srcset`
+// у скана пустая строка, и она его снимет: оставленный приглушённый список
+// пережил бы подмену `src` и перебил бы её, потому что копию браузер выбирает
+// по нему, а `src` берёт только тогда, когда выбирать не из чего. У показанного
+// копий нет — `srcset` не подменяется вовсе, даже если у скана он есть: рядом
+// с ним нет `sizes` (`shownWith` пишет их вместе), и подставленный список
+// браузер мерил бы по `100vw`, то есть просил бы самую большую копию.
+const scanPair = (file, scan) => {
+  if (!scan) return {};
+  return { src: scan.url, srcset: file.copies.length ? srcsetOf(scan.copies) : null };
+};
+
+const scanShot = (file, scan) => scanData(scanPair(file, scan));
+
+// Галочка. С сервера всегда нажата — приглушённое и есть то, что видит поиск;
+// снятое состояние восстанавливает `public/dimmed.js` из `localStorage`, потому
+// что разметка одна на всех, а выбор у каждого свой.
+//
+// Набрана она строкой настроек приёмки (`.options__row`), а не своим элементом:
+// галочка на сайте одна и та же вещь, и вторая её реализация разошлась бы
+// с первой молча — ровно так, как об этом сказано в styles.css над правилами
+// `.options__row input`.
+//
+// Отступ приходит доводом: вставляют галочку в двух местах разной глубины —
+// под абзацем темы и под кнопками работы, — и один зашитый отступ был бы
+// верным ровно в одном из них.
+const dimmedBox = pad => `<label class="options__row dimmed">
+${pad}  <input type="checkbox" id="dimmed" checked />
+${pad}  <span class="options__box" aria-hidden="true"></span>
+${pad}  <span class="options__text">Dimmed</span>
+${pad}</label>`;
+
 // Заголовок в каталоге разрезается на имя работы и хвост для выдачи: «In the
 // Waves — seascape phone wallpaper». Режется он по первому тире с пробелами,
 // а не по каждому: у тринадцати японских и китайских работ заголовок музейный
@@ -383,7 +467,7 @@ const cardCreator = item => {
 // `--ratio` проставлен здесь, а не по загрузке файла: размеры работы известны
 // из каталога, и проём принимает её пропорции ещё до того, как что-то
 // загрузилось. Иначе указатель прыгал бы по мере загрузки картинок.
-function card(item, { eager = false, priority = false } = {}) {
+function card(item, { eager = false, priority = false, hasDimmedBox = true } = {}) {
   // Показывается и отдаётся один файл. Раньше это были разные кадры — 9:16
   // в проёме, 9:19.5 по кнопке, — и подпись приходилось оговаривать: размер
   // под «Download» описывал не ту картинку, что видна. Теперь оговаривать
@@ -391,6 +475,12 @@ function card(item, { eager = false, priority = false } = {}) {
   // сегодняшнее, а вопросы разные — «чем показана» и «что отдаёт».
   const shownFile = tile(item);
   const file = offered(item);
+  // Второй файл называется только там, где есть чем его вызвать, — на странице
+  // с галочкой. На указателе её нет и `dimmed.js` не подключён (`collectionPage`),
+  // так что атрибуты, которых там никто не прочтёт, были бы обещанием
+  // переключения, которого на этой странице не бывает.
+  const scanShown = hasDimmedBox ? scanOf(item, shownFile) : null;
+  const scanOffered = hasDimmedBox ? scanOf(item, file) : null;
   const ratio = `${shownFile.width} / ${shownFile.height}`;
   const loading = ` loading="${eager ? 'eager' : 'lazy'}"${priority ? ' fetchpriority="high"' : ''}`;
   // Сетка — `repeat(auto-fill, minmax(280rem, 1fr))`: карточка держится между
@@ -415,14 +505,14 @@ function card(item, { eager = false, priority = false } = {}) {
   return `<figure class="item">
           <div class="record">
             <a class="record__image" href="/w/${escape(item.slug)}" style="--ratio: ${ratio}" tabindex="-1">
-              <img src="${escape(shownFile.url)}"${shown} alt="${escape(item.alt)}" width="${shownFile.width}" height="${shownFile.height}"${loading} />
+              <img src="${escape(shownFile.url)}"${shown}${scanShot(shownFile, scanShown)} alt="${escape(item.alt)}" width="${shownFile.width}" height="${shownFile.height}"${loading} />
             </a>
           </div>
           <figcaption class="caption">
             <h3 class="caption__title"><a href="/w/${escape(item.slug)}">${escape(cardName(item))}</a></h3>
             <p class="caption__by">${escape(creator)}</p>
             <p class="caption__spec">${specLine([formatDims(file.width, file.height), item.ref])}</p>
-            <a class="link" href="${escape(file.url)}" download>Download</a>
+            <a class="link" href="${escape(file.url)}"${scanData({ href: scanOffered?.url })} download>Download</a>
           </figcaption>
         </figure>`;
 }
@@ -480,9 +570,12 @@ const inviteCard = () => `<figure class="item item--invite">
 // `eager` — сколько первых карточек грузить сразу. По умолчанию ни одной:
 // сетка «ещё из коллекции» на странице работы стоит ниже сгиба, и торопить
 // её значит отнимать канал у самой работы.
-const grid = (items, eager = 0, lead = '') =>
+//
+// `hasDimmedBox` — есть ли на странице галочка. По умолчанию да: сетку без
+// галочки показывает один только указатель, и он же один это и говорит.
+const grid = (items, eager = 0, lead = '', { hasDimmedBox = true } = {}) =>
   `<div class="collection">\n        ${lead ? `${lead}\n        ` : ''}${items
-    .map((item, index) => card(item, { eager: index < eager, priority: eager > 0 && index === 0 }))
+    .map((item, index) => card(item, { eager: index < eager, priority: eager > 0 && index === 0, hasDimmedBox }))
     .join('\n        ')}\n      </div>`;
 
 // Указатель — вся коллекция одной страницей. Постраничность была и снята:
@@ -534,7 +627,7 @@ export function collectionPage({ items, topics = [], origin }) {
     // сетка — сама себе содержание, а прятать заголовок классом ради
     // строчки в аудите значит держать текст, который никто не прочтёт.
     body: `
-      ${grid(items, EAGER_CARDS, inviteCard())}
+      ${grid(items, EAGER_CARDS, inviteCard(), { hasDimmedBox: false })}
       ${topicRow(topics)}
     `
   });
@@ -583,6 +676,12 @@ export function topicPage({ topic, items, origin }) {
     image: items.length ? `${origin}${offered(items[0]).url}` : undefined,
     imageWidth: items.length ? offered(items[0]).width : undefined,
     imageHeight: items.length ? offered(items[0]).height : undefined,
+    // Галочка «Dimmed» и есть весь скрипт этой страницы. Подключён он
+    // безусловно, а показана галочка — только если переключать есть что:
+    // скрипт на странице без единого `data-scan-…` просто ничего не находит,
+    // а условие на подключение завело бы второе место, где сказано то же самое.
+    script: '/dimmed.js',
+    preload: '/dimmed.js',
     // Числа в абзац приходят замером тех же работ, что стоят под ним
     // (`measure` в `collections.js`), а не строкой: вписанное руками число
     // разъезжается со списком молча — и разъехавшееся число в тексте,
@@ -591,6 +690,7 @@ export function topicPage({ topic, items, origin }) {
       <div class="topic">
         <h1 class="topic__title">${escape(topic.heading)}</h1>
         <p class="topic__note">${escape(topic.note(measure(items)))}</p>
+        ${items.some(item => item.scan) ? dimmedBox('        ') : ''}
       </div>
       ${grid(items, EAGER_CARDS)}
       <p class="topic__back"><a href="/">All ${SITE_NAME} wallpapers →</a></p>
@@ -777,21 +877,15 @@ const beforeFrame = item => `
 // прочтёт подряд три одинаковых абзаца, а поиск по картинкам не поймёт, чем
 // файлы отличаются, кроме адреса. Отличаются же они ровно кадром, и про кадр
 // в описании и сказано.
-// Одна плитка списка файлов: мелкая копия и подпись, если ей есть что сказать.
-// Общая у кадров и у версий, потому что предлагаются они одинаково.
+// Одна плитка ряда кадров: мелкая копия и подпись, если ей есть что сказать.
 //
-// ПОДПИСАН РЯД КАДРОВ, А РЯД ВЕРСИЙ — НЕТ, и размеры в пикселях убраны отовсюду
-// (23.08.2026). Кадры отвечают на вопрос «какой формы», а форма на полке в 96 px
+// РЯД ПОДПИСАН, а размеры в пикселях убраны отовсюду (23.08.2026).
+// Кадры отвечают на вопрос «какой формы», а форма на полке в 96 px
 // как раз и не читается: 9:16 и 9:19.5 стоят почти одинаковыми полосками, и
 // выбирают между ними не глазом, а числом — тем самым, которое человек знает
 // про свой экран. «Uncropped» стоит там же и по той же причине: это ответ
 // на тот же вопрос, только словом, потому что у целой работы своей пропорции
 // нет — она у каждой своя.
-//
-// Версии отвечают на вопрос «какого света», и на него плитка отвечает сама:
-// приглушённая рядом с обычной видна без подписи. Имя обработки при этом
-// не пропало, а осталось в `alt` — его читают экранный диктор и поиск
-// по картинкам, то есть те, кому смотреть нечем.
 //
 // ПЛИТКА ОТКРЫВАЕТ ФАЙЛ, А НЕ КЛАДЁТ ЕГО В ЗАГРУЗКИ. Проём — 96 px, и по такой
 // копии не видно ни кадра, ни обработки: `download` заставлял решать вслепую и
@@ -800,68 +894,12 @@ const beforeFrame = item => `
 // можно в один жест, и уже зная, что сохраняешь. Кнопка Download наверху
 // остаётся кнопкой: она отдаёт файл, который посетитель уже видит в проёме.
 const fileTile = row => `<li class="alternates__file">
-                <a href="${escape(row.file.url)}">
-                  <span class="alternates__shot"><img src="${escape(row.file.url)}"${shownWith(row.file.copies, scaled(96))} alt="${escape(row.alt)}" width="${row.file.width}" height="${row.file.height}" loading="lazy" /></span>${
+                <a href="${escape(row.file.url)}"${scanData({ href: row.scan?.url })}>
+                  <span class="alternates__shot"><img src="${escape(row.file.url)}"${shownWith(row.file.copies, scaled(96))}${scanShot(row.file, row.scan)} alt="${escape(row.alt)}" width="${row.file.width}" height="${row.file.height}" loading="lazy" /></span>${
                     row.label ? `\n                  <span class="alternates__label">${escape(row.label)}</span>` : ''
                   }
                 </a>
               </li>`;
-
-// Как обработка называется вслух. Внутренние имена — `ceil`, `snap`, `niobe` —
-// это имена настроек, по которым их выбирали, и посетителю они не говорят
-// ничего: имя должно называть РЕЗУЛЬТАТ, а не файл настроек. Ключи те же, что
-// штампует генератор в манифест, — иначе версия выпадет из ряда: имени нет,
-// значит, и сказать в `alt`, чем этот файл отличается, нечем.
-const BASE_TREATMENT_NAMES = {
-  none: 'As scanned',
-  bal: 'Colour balanced',
-  snap: 'Muted',
-  'dim80-desat-whole': 'Muted, stronger',
-  ceil: 'Dimmed',
-  niobe: 'Dimmed, soft highlights'
-};
-
-// У каждой обработки есть двойник с виньеткой — `snap-vig` и так далее, —
-// и имя ему даётся тем же способом, каким генератор даёт правило: приставкой
-// к исходному. Писать шесть вторых имён руками значило бы обещать, что
-// «Muted» и «Muted, darkened corners» разойдутся по смыслу; они не разойдутся,
-// углы гаснут поверх той же обработки.
-const TREATMENT_NAMES = Object.fromEntries(
-  Object.entries(BASE_TREATMENT_NAMES).flatMap(([id, name]) => [
-    [id, name],
-    [`${id}-vig`, `${name}, darkened corners`]
-  ])
-);
-
-// Та же картина в других обработках — 22.08.2026, «if several are picked then i
-// want all the versions».
-//
-// ОТДЕЛЬНЫМ РЯДОМ ОТ КАДРОВ, И ЭТО НЕ ОФОРМЛЕНИЕ. Кадр отвечает на вопрос
-// «какой формы», версия — «какого света»; сложенные в один ряд, они читались бы
-// как один список из шести равноправных файлов, и посетителю пришлось бы
-// догадываться, что «16:9» и «Dimmed» — ответы на разные вопросы.
-//
-// Предлагается телефонный кадр версии, а не её плита: по кнопке Download
-// страница отдаёт именно телефонный кадр, и версия обязана давать то же самое,
-// иначе «та же картинка, только темнее» окажется неправдой по форме.
-const versions = item => {
-  const { name } = titleParts(item);
-  const rows = (item.versions || [])
-    .map(version => {
-      const file = version.crops?.tall || version;
-      const label = TREATMENT_NAMES[version.treatment];
-      return label && { file, alt: `${name}, ${label.toLowerCase()}` };
-    })
-    .filter(Boolean);
-  if (!rows.length) return '';
-  return `
-          <div class="alternates">
-            <h2 class="alternates__heading">Other versions</h2>
-            <ul class="alternates__row">
-              ${rows.map(fileTile).join('\n              ')}
-            </ul>
-          </div>`;
-};
 
 // Слово «desktop» стоит здесь и больше нигде. В заголовке работы его нет
 // намеренно: `offered` отдаёт телефонный кадр, и страница, обещавшая рабочий
@@ -874,7 +912,7 @@ const versions = item => {
 // описание пина, и в его словаре обои называются так. В `<title>` при этом
 // стоит «wallpaper» — слово выдачи. Одно и то же не сказано дважды, но обоих
 // слов у работы по одному.
-const alternates = item => {
+const alternates = (item, switchable) => {
   const { name } = titleParts(item);
   const widePlate = item.width > item.height;
   const rows = [
@@ -897,7 +935,19 @@ const alternates = item => {
       label: '16:9',
       alt: `${name}, cropped to 16:9, desktop background`
     }
-  ].filter(row => row.file);
+  ]
+    .filter(row => row.file)
+    // Ряд идёт за галочкой, как и всё остальное на странице: снятая, она
+    // меняет и то, что плитка показывает, и то, куда она ведёт. Иначе кадры
+    // остались бы приглушёнными посреди страницы, ставшей сканом, — то есть
+    // говорили бы про работу не то, что тут же рядом видно.
+    //
+    // Но спрашивает ряд не себя, а страницу (`switchable` — есть ли скан
+    // у кадра проёма, он же условие галочки). Решай каждая плитка сама, и
+    // страница, на которой галочки нет, всё равно переключила бы ряд —
+    // пришедшему с темы со снятой галочкой, — то есть переключилась бы
+    // наполовину.
+    .map(row => ({ ...row, scan: switchable ? scanOf(item, row.file) : null }));
   // Одна работа без единого кадра — это работа, у которой в проёме и так
   // стоит плита. Предлагать её же второй раз незачем.
   if (rows.length === 1 && !item.crops?.tall) return '';
@@ -917,6 +967,13 @@ export function workPage({ item, others, topics = [], origin }) {
   // размер, вес, тип, разметка, превью, — относится к нему же: посетитель
   // получает по кнопке именно этот файл. Плита названа отдельно и ниже.
   const file = offered(item);
+  // Тот же кадр у скана — всё, что ниже переключается галочкой, переключается
+  // на него, и он же решает, быть ли галочке. Спрашивается именно кадр проёма,
+  // а не `item.scan`: скан, у которого этого кадра почему-либо нет, оставил бы
+  // галочку, которая проём не меняет, — а это уже поломка, а не отсутствие
+  // возможности. `null` — правило `none`, работа нарисована нами или генератор
+  // до файла не дошёл; на странице тогда ни атрибутов, ни галочки.
+  const scanFile = scanOf(item, file);
   const size = formatDims(file.width, file.height);
   // «4K» стоит в заголовке вкладки и в описании, но не на самой странице.
   // Для поиска `3840` и `4k` — разные строки: работа, у которой сказан только
@@ -1025,6 +1082,18 @@ export function workPage({ item, others, topics = [], origin }) {
   const pinned =
     ` data-pin-media="${origin}${escape(file.url)}" data-pin-url="${origin}/w/${escape(item.slug)}"` +
     ` data-pin-description="${escape(pinDescription)}"`;
+  // Всё, что у проёма переключает галочка, — одним набором, потому что метка
+  // `data-scan` у элемента должна стоять ровно одна: два вызова подряд написали
+  // бы её дважды, и вторая ушла бы в мусор разбора.
+  //
+  // Двойное `data-` в имени — не описка: за `data-scan-` по соглашению стоит имя
+  // сменяемого атрибута, а сменяется здесь `data-pin-media`. Расширение
+  // Pinterest сохраняет мимо кнопки и читает именно его — значит, оно обязано
+  // называть тот файл, который в эту минуту на странице виден.
+  const scanPicture = scanData({
+    ...scanPair(file, scanFile),
+    'data-pin-media': scanFile && `${origin}${scanFile.url}`
+  });
   // Отправка в Pinterest — контурной кнопкой рядом с Download, а не значком
   // с логотипом. Страница работы набрана музейной этикеткой, и красный кружок
   // в ней читается рекламой; `btn--ghost` — та же форма и тот же шрифт, что
@@ -1039,11 +1108,15 @@ export function workPage({ item, others, topics = [], origin }) {
   // `media` и `description` проставлены нарочно: без них Pinterest выбирает
   // кадр сам и берёт не тот — на пин уходит целая картина вместо кропа,
   // который страница и предлагает.
-  const savePin =
+  //
+  // Адрес собирается из файла, а не пишется один раз: за галочкой идёт и он —
+  // пин, сохранённый при снятой галочке, обязан нести тот файл, который в эту
+  // минуту на странице и виден.
+  const pinTo = picture =>
     'https://www.pinterest.com/pin/create/button/' +
     `?url=${encodeURIComponent(`${origin}/w/${item.slug}`)}` +
-    `&amp;media=${encodeURIComponent(`${origin}${file.url}`)}` +
-    `&amp;description=${encodeURIComponent(pinDescription)}`;
+    `&media=${encodeURIComponent(`${origin}${picture.url}`)}` +
+    `&description=${encodeURIComponent(pinDescription)}`;
   // Под чертой — только то, что утверждается об этой работе: из чего она
   // сделана, кем и на каких условиях отдаётся. Предложение сделать своё
   // стояло сперва здесь и читалось как ещё одно такое утверждение, потом
@@ -1077,11 +1150,15 @@ export function workPage({ item, others, topics = [], origin }) {
     // значило бы не сказать точно ни об одном.
     ld: imageObject(item, file, origin),
     script: '/work.js',
+    // Галочку переключает `dimmed.js`, а приезжает он импортом из `work.js` —
+    // то есть был бы найден только после того, как тот придёт целиком. Здесь
+    // он назван шапкой и едет рядом с ним, а не за ним.
+    preload: '/dimmed.js',
     body: `
       <div class="plate">
         <figure class="record record--plate">
           <div ${frame} id="work-frame">
-            <img id="work-picture" src="${escape(file.url)}"${shownPlate} alt="${escape(item.alt)}" width="${file.width}" height="${file.height}" fetchpriority="high"${pinned} />
+            <img id="work-picture" src="${escape(file.url)}"${shownPlate}${scanPicture} alt="${escape(item.alt)}" width="${file.width}" height="${file.height}" fetchpriority="high"${pinned} />
             ${comparable ? beforeFrame(item) : ''}
           </div>
         </figure>
@@ -1089,14 +1166,14 @@ export function workPage({ item, others, topics = [], origin }) {
           <div class="caption">
             <h1 class="caption__title">${escape(named ? name : item.ref)}</h1>
             <div class="actions">
-              <a class="btn" href="${escape(file.url)}" download="${escape(file.filename)}">Download</a>
-              <a class="btn btn--ghost btn--pin" href="${savePin}" target="_blank" rel="noopener">Pinterest</a>
+              <a class="btn" href="${escape(file.url)}"${scanData({ href: scanFile?.url, download: scanFile?.filename })} download="${escape(file.filename)}">Download</a>
+              <a class="btn btn--ghost btn--pin" href="${escape(pinTo(file))}"${scanData({ href: scanFile && pinTo(scanFile) })} target="_blank" rel="noopener">Pinterest</a>
             </div>
+            ${scanFile ? dimmedBox('            ') : ''}
           </div>
           ${terms ? `<div class="terms">${terms}</div>` : ''}
           ${inTopics(topics)}
-          ${alternates(item)}
-          ${versions(item)}
+          ${alternates(item, Boolean(scanFile))}
         </div>
       </div>
       ${others.length ? `<section class="adjacent"><h2 class="heading">More in the collection</h2>${grid(others)}</section>` : ''}
@@ -1224,10 +1301,10 @@ export function intakePage({ origin, runtime, runtimeBytes }) {
                а сама картинка: любая из шести пересчитывает проём сразу же.
                Оговорка осталась одна и ровно там, где показать нечего.
 
-               Слово «Dim» — то же, каким страница работы называет ceil
-               в «Other versions» (TREATMENT_NAMES): одна обработка должна
-               называться одним словом, иначе посетитель, увидевший «Dimmed»
-               под картиной, не узнает её в галочке.
+               Слово «Dim» — то же, каким витрина называет свой обычный вид
+               в галочке «Dimmed»: приёмка считает на чужой картинке ровно то
+               правило dim, которым сделана вся коллекция, и второе слово
+               обещало бы вторую обработку.
 
                «A phone», а не «my phone»: экран посетителя нигде не
                спрашивается — ни screen, ни devicePixelRatio, ни медиа-запроса,
@@ -1577,6 +1654,14 @@ export function sitemap({ items, topics = [], origin }) {
       .filter(Boolean)
       .sort()
       .at(-1);
+  // Файлы, которые у страницы работы ВИДНЫ: кадр в проёме (он же плитка
+  // указателя), кадры ряда и целая плита. Сколько кадров в ряду — решает
+  // `HIDDEN_KINDS` в gallery.js: спрятанного кадра у работы нет вовсе, и
+  // спросить его здесь не у чего, поэтому число тут и не названо. Выражение
+  // одно и для приглушённого файла, и для скана — спрашивается у обоих одно
+  // и то же, а разойдись они, карта звала бы обход к файлу, которого
+  // на странице нет.
+  const shownFiles = entry => [offered(entry), tile(entry), entry.crops?.phone, entry.crops?.wide, entry];
   // `images` — файл, который у страницы показан. Google берёт из карты именно
   // файлы, а не выводит их из страницы, так что не названный здесь остаётся
   // ненайденным до тех пор, пока обход не дойдёт до самой страницы.
@@ -1600,28 +1685,16 @@ export function sitemap({ items, topics = [], origin }) {
     // четыре к тому же стоят на ней настоящими картинками: изображение,
     // объявленное только картой, без страницы вокруг почти не ранжируется.
     //
-    // Плюс тот кадр каждой другой версии, который показан в ряду «Other
-    // versions» (`versions`). Не плита версии и не все её кадры: карта называет
-    // то, что на странице ВИДНО, иначе она обещает обходу файлы, вокруг которых
-    // страницы нет. Кадр этот назван здесь тем же выражением, что и там: стояла
-    // тут своя копия, `crops.phone`, и в день, когда ряд переехал на `crops.tall`,
-    // карта осталась звать обход к файлу, которого больше нет ни на одной
-    // странице, — а показанный кадр в ней не назвала.
+    // Плюс те же самые файлы скана. Скан стоит на той же странице — его
+    // показывает снятая галочка «Dimmed», — и правило карты от этого не
+    // меняется: она называет то, что на странице ВИДНО, иначе обещает обходу
+    // файлы, вокруг которых страницы нет.
     ...items.map(item =>
       url(`${origin}/w/${item.slug}`, {
         lastmod: item.added,
         images: [
           ...new Set(
-            [
-              offered(item),
-              tile(item),
-              item.crops?.phone,
-              item.crops?.wide,
-              item,
-              ...(item.versions || []).map(version => version.crops?.tall || version)
-            ]
-              .filter(Boolean)
-              .map(file => file.url)
+            [...shownFiles(item), ...(item.scan ? shownFiles(item.scan) : [])].filter(Boolean).map(file => file.url)
           )
         ].map(address => `${origin}${address}`)
       })

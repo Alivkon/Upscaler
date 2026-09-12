@@ -3,14 +3,10 @@
 // и это не осторожность, а определение работы приёмки: она возвращает
 // принесённое крупнее, а не переделанным под вкус сайта.
 //
-// Обработка — `ceil`, и до 22.08.2026 здесь стояла другая. Сменили её не из
-// вкуса: прежняя перестала быть тем, что показывает витрина. `dim80-desat-whole`
-// выпущены все работы, которые никто не судил, но 21.08 Charlie отсмотрел по
-// шесть версий каждой из 79 и не отметил её ни у одной; после перевески 22.08
-// она осталась у 7 работ из 76 на витрине — и у 191 из 254 снятых. Галочка
-// обещала «как в коллекции», а давала обработку в основном тех работ, которые
-// с витрины сняли. `ceil` собрала 22 отметки, больше любой другой, и стоит
-// сейчас у 19 работ. Разбор: `research/2026-08-21-treatment-per-work.md`.
+// Обработка — `dim`, умолчание витрины с 12.09.2026: работа без поля
+// `treatment` выходит именно им, и галочка обязана обещать то, что показывает
+// коллекция. `ceil` — то же правило плюс потолок яркости — остался у 11 работ,
+// которым он пошёл; вид одиннадцати работ галочка предлагать не может.
 //
 // Само правило и его числа — в `scripts/research/ceilings.mjs`; оттуда же их
 // читает браузер приёмки (`public/treat-local.js`). Числа лежат там, а не
@@ -27,15 +23,15 @@
 // плита отдаётся сама по себе и обязана быть обработанной целиком. Здесь
 // отдаётся ровно один файл, и мерить его по себе же вернее.
 //
-// Настройки не просто текущие, а выбранные руками: 21.08.2026 Charlie отметил
-// `ceil` у «Rocky, Wooded Landscape with a Dell and Weir» (vl-0240) — той самой
-// работы, которую он 19.08 назвал нравящейся под прежним правилом. Числа живут
-// в `scripts/research/ceilings.mjs` и меняются сразу в обеих половинах; эта
+// Настройки не просто текущие, а выбранные руками: правило отобрано на двух
+// слепых кругах 12.09.2026, где плитки шли без подписей
+// (`research/2026-09-12-one-dim-rule.md`). Числа живут в
+// `scripts/research/ceilings.mjs` и меняются сразу в обеих половинах; эта
 // запись говорит, что менять их — значит менять картинку, которую человек
 // выбрал, а не подкрутить параметр.
 import sharp from 'sharp';
 import { phoneWindow } from './public/frame.js';
-import { treatCeil } from './scripts/research/ceilings.mjs';
+import { treat } from './scripts/research/ceilings.mjs';
 
 // Телефонный кадр. 9:16 — не пропорция конкретного телефона, а самая широкая
 // из ходовых, и выбрана она именно за это.
@@ -73,8 +69,12 @@ export { phoneWindow };
 // формата на выходе означала бы, что галочка «потемнее» заодно пережала файл.
 const formatOf = format => (format === 'png' ? 'png' : format === 'webp' ? 'webp' : 'jpeg');
 
-export async function finish(buffer, { treat = false, crop = false } = {}) {
-  if (!treat && !crop) return buffer;
+// Галочка приходит под именем `treat`, а внутри зовётся `dim`: снаружи это
+// «обработать», внутри — единственная обработка, которая есть, правило `dim`.
+// Два разных `treat` в одном файле — функция правила и галочка — читались бы
+// как одно.
+export async function finish(buffer, { treat: dim = false, crop = false } = {}) {
+  if (!dim && !crop) return buffer;
   const source = sharp(buffer, { limitInputPixels: false });
   const { width, height, format, hasAlpha } = await source.metadata();
   if (!width || !height) return buffer;
@@ -84,10 +84,10 @@ export async function finish(buffer, { treat = false, crop = false } = {}) {
     const next = sharp(buffer, { limitInputPixels: false });
     return window ? next.extract(window) : next;
   };
-  if (!treat) return framed().toFormat(out).toBuffer();
+  if (!dim) return framed().toFormat(out).toBuffer();
 
   const { data, info } = await framed().removeAlpha().raw().toBuffer({ resolveWithObject: true });
-  const { pixels } = treatCeil(data, info.width, info.height);
+  const { pixels } = treat(data, info.width, info.height);
   let treated = sharp(pixels, { raw: { width: info.width, height: info.height, channels: 3 } });
   // Прозрачность возвращается на место. Обработка идёт по трём каналам —
   // приглушать нечего там, где пикселя нет, — а `removeAlpha` не прячет

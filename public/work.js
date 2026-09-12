@@ -4,6 +4,11 @@
 // работа видна, характеристики на месте, файл скачивается.
 
 import { openLightbox } from './lightbox.js';
+// Галочка «Dimmed» стоит и здесь, а `layout` подключает странице один скрипт
+// (pages.js). Импортом, а не вторым тегом: модуль исполняется один раз и делает
+// своё сам, доставать из него нечего. Импорты при этом выполняются до тела
+// модуля — поэтому всё, что читается ниже из `src`, уже переключено.
+import './dimmed.js';
 
 const frame = document.querySelector('#work-frame');
 const picture = document.querySelector('#work-picture');

@@ -865,19 +865,9 @@ body.is-dragging .record--plate {
   margin-top: 20rem;
   padding-top: 16rem;
 }
-/* Заголовок есть только у второго ряда — «ещё версии». Первый ряд подписи не
-   просит: кадры узнаются формой, а обработки на полке в 96 px друг от друга
-   почти не отличаются, и без слова над ними ряд читается как повтор. */
-.alternates__heading {
-  margin: 0 0 12rem;
-  font-size: 11rem;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--fg-dim);
-  font-weight: 500;
-}
-/* Переносится, а не уезжает за край: версий у работы бывает до четырёх, и
-   вчетвером они шире колонки. */
+/* Переносится, а не уезжает за край: на узкой колонке ряд плиток шире её.
+   Сколько их — зависит от того, какие кадры показаны (`HIDDEN_KINDS`
+   в gallery.js), и правило переноса поэтому числа не называет. */
 .alternates__row {
   display: flex;
   flex-wrap: wrap;
@@ -911,9 +901,9 @@ body.is-dragging .record--plate {
   max-width: 120rem;
   outline: 1px solid var(--card-edge);
 }
-/* Подписан ряд кадров, а ряд версий — нет, поэтому подсветка ссылки живёт на
-   самой картинке: у плиток без подписи подчёркивать было бы нечего, а ссылка,
-   никак не отвечающая на наведение, читается как неподвижная иллюстрация. */
+/* Подсветка ссылки живёт на самой картинке, а не на подписи: целятся в плитку,
+   подпись под ней только называет кадр, а ссылка, никак не отвечающая
+   на наведение, читается как неподвижная иллюстрация. */
 .alternates__label {
   display: block;
   margin-top: 6rem;
@@ -1033,27 +1023,32 @@ body.is-dragging .record--plate {
   display: grid;
   place-items: center;
 }
-.options input {
+/* Правила галочки написаны на строку (`.options__row`), а не на столбик
+   настроек (`.options`): строка есть у каждой галочки сайта, а столбик —
+   только у приёмки. Написанные на столбик, они потребовали бы двойника
+   на каждую галочку вне его — и двойник, забытый у пятого правила,
+   разошёлся бы с остальными четырьмя молча. */
+.options__row input {
   position: absolute;
   opacity: 0;
   width: 0;
   height: 0;
 }
-.options input:checked + .options__box {
+.options__row input:checked + .options__box {
   background: var(--fg);
   border-color: var(--fg);
 }
-.options input:checked + .options__box::after {
+.options__row input:checked + .options__box::after {
   content: '';
   width: 7rem;
   height: 7rem;
   background: var(--ground);
 }
-.options input:focus-visible + .options__box {
+.options__row input:focus-visible + .options__box {
   outline: 2px solid var(--fg);
   outline-offset: 2px;
 }
-.options input:disabled + .options__box {
+.options__row input:disabled + .options__box {
   opacity: 0.55;
 }
 .options__text {
@@ -1065,6 +1060,21 @@ body.is-dragging .record--plate {
   margin-top: 3rem;
   font-size: 11rem;
   color: var(--fg-dim);
+}
+
+/* ── галочка «Dimmed» ──────────────────────────────────────
+   Та же строка, что в настройках приёмки (`.options__row`), и набрана она
+   тем же квадратом нарочно: галочка на сайте одна вещь, и второй её вид
+   разошёлся бы с первым молча — ровно так, как об этом сказано выше.
+   Своих правил у квадрата здесь поэтому нет ни одного: те, что выше,
+   написаны на строку и подхватывают эту строку сами.
+   Своего у неё один отступ: в приёмке строки стоят списком, где
+   расстояние между ними задаёт сетка, а здесь строка одна — под абзацем
+   темы или под кнопками страницы работы. Черты над собой она не получает:
+   черта в этой колонке открывает раздел, а галочка относится к тому, что
+   стоит НАД ней. */
+.dimmed {
+  margin-top: 14rem;
 }
 
 /* ── лайтбокс ─────────────────────────────────────────────── */

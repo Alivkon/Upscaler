@@ -1,6 +1,6 @@
 import sharp from 'sharp';
 import { monochrome } from './monochrome-filter.mjs';
-import { treatCeil } from './ceilings.mjs';
+import { treat } from './ceilings.mjs';
 import { writeFileSync } from 'fs';
 
 const B = 'https://colbase.nich.go.jp/colbaseapi/v2';
@@ -47,8 +47,7 @@ async function transform(url) {
   warms.sort((a, b) => a - b);
   const warm = warms[warms.length >> 1];
 
-  // apply ceil treatment
-  const { pixels } = treatCeil(data, info.width, info.height);
+  const { pixels } = treat(data, info.width, info.height);
 
   // convert to grayscale
   const grey = new Uint8Array(pixels.length);

@@ -1,0 +1,744 @@
+{
+ "round": "dim_blind2_2026-09-12",
+ "question": "site tile vs ceil rule without brightness ceiling, blind, three answers",
+ "works": [
+  {
+   "ref": "vl-0026",
+   "now": "none",
+   "winner": "site",
+   "luma": 199,
+   "chroma": 37,
+   "colour": 0.7,
+   "bright": 0.368
+  },
+  {
+   "ref": "vl-0027",
+   "now": "none",
+   "winner": "site",
+   "luma": 175,
+   "chroma": 42,
+   "colour": 0.94,
+   "bright": 0.441
+  },
+  {
+   "ref": "vl-0028",
+   "now": "none",
+   "winner": "site",
+   "luma": 199,
+   "chroma": 40,
+   "colour": 1,
+   "bright": 0.356
+  },
+  {
+   "ref": "vl-0030",
+   "now": "ceil",
+   "winner": "site",
+   "luma": 97,
+   "chroma": 5,
+   "colour": 0.76,
+   "bright": 0.697
+  },
+  {
+   "ref": "vl-0032",
+   "now": "none",
+   "winner": "ceil",
+   "luma": 178,
+   "chroma": 73,
+   "colour": 0.7,
+   "bright": 0.408
+  },
+  {
+   "ref": "vl-0042",
+   "now": "none",
+   "winner": "ceil",
+   "luma": 119,
+   "chroma": 26,
+   "colour": 1,
+   "bright": 0.574
+  },
+  {
+   "ref": "vl-0043",
+   "now": "ceil",
+   "winner": "same",
+   "luma": 77,
+   "chroma": 24,
+   "colour": 1,
+   "bright": 0.8
+  },
+  {
+   "ref": "vl-0045",
+   "now": "dim80-desat-whole",
+   "winner": "ceil",
+   "luma": 124,
+   "chroma": 30,
+   "colour": 1,
+   "bright": 0.557
+  },
+  {
+   "ref": "vl-0046",
+   "now": "bal",
+   "winner": "same",
+   "luma": 83,
+   "chroma": 21,
+   "colour": 1,
+   "bright": 0.763
+  },
+  {
+   "ref": "vl-0047",
+   "now": "bal",
+   "winner": "ceil",
+   "luma": 99,
+   "chroma": 41,
+   "colour": 0.828,
+   "bright": 0.705
+  },
+  {
+   "ref": "vl-0051",
+   "now": "bal",
+   "winner": "ceil",
+   "luma": 130,
+   "chroma": 22,
+   "colour": 1,
+   "bright": 0.487
+  },
+  {
+   "ref": "vl-0057",
+   "now": "snap",
+   "winner": "site",
+   "luma": 131,
+   "chroma": 26,
+   "colour": 1,
+   "bright": 0.512
+  },
+  {
+   "ref": "vl-0063",
+   "now": "bal",
+   "winner": "site",
+   "luma": 98,
+   "chroma": 15,
+   "colour": 1,
+   "bright": 0.678
+  },
+  {
+   "ref": "vl-0064",
+   "now": "ceil",
+   "winner": "site",
+   "luma": 100,
+   "chroma": 15,
+   "colour": 1,
+   "bright": 0.654
+  },
+  {
+   "ref": "vl-0065",
+   "now": "none",
+   "winner": "ceil",
+   "luma": 88,
+   "chroma": 21,
+   "colour": 0.931,
+   "bright": 0.711
+  },
+  {
+   "ref": "vl-0066",
+   "now": "dim80-desat-whole",
+   "winner": "ceil",
+   "luma": 133,
+   "chroma": 46,
+   "colour": 0.759,
+   "bright": 0.505
+  },
+  {
+   "ref": "vl-0067",
+   "now": "ceil",
+   "winner": "same",
+   "luma": 91,
+   "chroma": 20,
+   "colour": 1,
+   "bright": 0.716
+  },
+  {
+   "ref": "vl-0068",
+   "now": "none",
+   "winner": "same",
+   "luma": 187,
+   "chroma": 37,
+   "colour": 1,
+   "bright": 0.364
+  },
+  {
+   "ref": "vl-0069",
+   "now": "none",
+   "winner": "ceil",
+   "luma": 116,
+   "chroma": 59,
+   "colour": 0.729,
+   "bright": 0.613
+  },
+  {
+   "ref": "vl-0083",
+   "now": "snap",
+   "winner": "same",
+   "luma": 160,
+   "chroma": 30,
+   "colour": 1,
+   "bright": 0.422
+  },
+  {
+   "ref": "vl-0084",
+   "now": "ceil",
+   "winner": "site",
+   "luma": 137,
+   "chroma": 8,
+   "colour": 1,
+   "bright": 0.493
+  },
+  {
+   "ref": "vl-0086",
+   "now": "ceil",
+   "winner": "ceil",
+   "luma": 74,
+   "chroma": 35,
+   "colour": 0.73,
+   "bright": 0.8
+  },
+  {
+   "ref": "vl-0151",
+   "now": "bal",
+   "winner": "same",
+   "luma": 171,
+   "chroma": 61,
+   "colour": 1,
+   "bright": 0.412
+  },
+  {
+   "ref": "vl-0157",
+   "now": "none",
+   "winner": "site",
+   "luma": 150,
+   "chroma": 50,
+   "colour": 1,
+   "bright": 0.455
+  },
+  {
+   "ref": "vl-0174",
+   "now": "snap",
+   "winner": "ceil",
+   "luma": 90,
+   "chroma": 31,
+   "colour": 1,
+   "bright": 0.762
+  },
+  {
+   "ref": "vl-0179",
+   "now": "ceil",
+   "winner": "same",
+   "luma": 78,
+   "chroma": 16,
+   "colour": 0.45,
+   "bright": 0.8
+  },
+  {
+   "ref": "vl-0219",
+   "now": "none",
+   "winner": "site",
+   "luma": 91,
+   "chroma": 31,
+   "colour": 1,
+   "bright": 0.79
+  },
+  {
+   "ref": "vl-0226",
+   "now": "ceil",
+   "winner": "site",
+   "luma": 59,
+   "chroma": 39,
+   "colour": 0.759,
+   "bright": 0.8
+  },
+  {
+   "ref": "vl-0230",
+   "now": "ceil",
+   "winner": "ceil",
+   "luma": 114,
+   "chroma": 15,
+   "colour": 0.701,
+   "bright": 0.585
+  },
+  {
+   "ref": "vl-0236",
+   "now": "none",
+   "winner": "same",
+   "luma": 139,
+   "chroma": 16,
+   "colour": 1,
+   "bright": 0.481
+  },
+  {
+   "ref": "vl-0240",
+   "now": "ceil",
+   "winner": "same",
+   "luma": 101,
+   "chroma": 23,
+   "colour": 1,
+   "bright": 0.691
+  },
+  {
+   "ref": "vl-0252",
+   "now": "ceil",
+   "winner": "site",
+   "luma": 59,
+   "chroma": 35,
+   "colour": 0.645,
+   "bright": 0.8
+  },
+  {
+   "ref": "vl-0256",
+   "now": "ceil",
+   "winner": "same",
+   "luma": 114,
+   "chroma": 19,
+   "colour": 1,
+   "bright": 0.557
+  },
+  {
+   "ref": "vl-0259",
+   "now": "none",
+   "winner": "same",
+   "luma": 131,
+   "chroma": 12,
+   "colour": 1,
+   "bright": 0.494
+  },
+  {
+   "ref": "vl-0265",
+   "now": "ceil",
+   "winner": "ceil",
+   "luma": 123,
+   "chroma": 37,
+   "colour": 0.728,
+   "bright": 0.533
+  },
+  {
+   "ref": "vl-0275",
+   "now": "ceil",
+   "winner": "same",
+   "luma": 57,
+   "chroma": 27,
+   "colour": 0.846,
+   "bright": 0.8
+  },
+  {
+   "ref": "vl-0279",
+   "now": "ceil",
+   "winner": "ceil",
+   "luma": 85,
+   "chroma": 44,
+   "colour": 0.56,
+   "bright": 0.761
+  },
+  {
+   "ref": "vl-0280",
+   "now": "ceil",
+   "winner": "site",
+   "luma": 116,
+   "chroma": 47,
+   "colour": 0.869,
+   "bright": 0.606
+  },
+  {
+   "ref": "vl-0281",
+   "now": "ceil",
+   "winner": "same",
+   "luma": 99,
+   "chroma": 25,
+   "colour": 0.855,
+   "bright": 0.694
+  },
+  {
+   "ref": "vl-0297",
+   "now": "snap",
+   "winner": "ceil",
+   "luma": 132,
+   "chroma": 41,
+   "colour": 0.701,
+   "bright": 0.513
+  },
+  {
+   "ref": "vl-0298",
+   "now": "ceil",
+   "winner": "ceil",
+   "luma": 113,
+   "chroma": 39,
+   "colour": 1,
+   "bright": 0.592
+  },
+  {
+   "ref": "vl-0299",
+   "now": "none",
+   "winner": "ceil",
+   "luma": 99,
+   "chroma": 41,
+   "colour": 0.766,
+   "bright": 0.686
+  },
+  {
+   "ref": "vl-0301",
+   "now": "none",
+   "winner": "ceil",
+   "luma": 100,
+   "chroma": 32,
+   "colour": 0.819,
+   "bright": 0.739
+  },
+  {
+   "ref": "vl-0318",
+   "now": "none",
+   "winner": "site",
+   "luma": 89,
+   "chroma": 20,
+   "colour": 0.829,
+   "bright": 0.742
+  },
+  {
+   "ref": "vl-0319",
+   "now": "bal",
+   "winner": "same",
+   "luma": 109,
+   "chroma": 45,
+   "colour": 1,
+   "bright": 0.671
+  },
+  {
+   "ref": "vl-0336",
+   "now": "dim80-desat-whole",
+   "winner": "site",
+   "luma": 143,
+   "chroma": 24,
+   "colour": 1,
+   "bright": 0.47
+  },
+  {
+   "ref": "vl-0343",
+   "now": "ceil",
+   "winner": "site",
+   "luma": 70,
+   "chroma": 44,
+   "colour": 0.583,
+   "bright": 0.8
+  },
+  {
+   "ref": "vl-0350",
+   "now": "bal",
+   "winner": "ceil",
+   "luma": 130,
+   "chroma": 23,
+   "colour": 1,
+   "bright": 0.488
+  },
+  {
+   "ref": "vl-0354",
+   "now": "bal",
+   "winner": "same",
+   "luma": 110,
+   "chroma": 21,
+   "colour": 1,
+   "bright": 0.578
+  },
+  {
+   "ref": "vl-0357",
+   "now": "snap",
+   "winner": "site",
+   "luma": 138,
+   "chroma": 23,
+   "colour": 1,
+   "bright": 0.487
+  },
+  {
+   "ref": "vl-0358",
+   "now": "snap",
+   "winner": "ceil",
+   "luma": 120,
+   "chroma": 29,
+   "colour": 1,
+   "bright": 0.553
+  },
+  {
+   "ref": "vl-0359",
+   "now": "none",
+   "winner": "same",
+   "luma": 187,
+   "chroma": 51,
+   "colour": 1,
+   "bright": 0.38
+  },
+  {
+   "ref": "vl-0360",
+   "now": "snap",
+   "winner": "site",
+   "luma": 168,
+   "chroma": 56,
+   "colour": 1,
+   "bright": 0.441
+  },
+  {
+   "ref": "vl-0361",
+   "now": "ceil",
+   "winner": "ceil",
+   "luma": 156,
+   "chroma": 41,
+   "colour": 1,
+   "bright": 0.453
+  },
+  {
+   "ref": "vl-0362",
+   "now": "snap",
+   "winner": "ceil",
+   "luma": 160,
+   "chroma": 42,
+   "colour": 1,
+   "bright": 0.412
+  },
+  {
+   "ref": "vl-0364",
+   "now": "snap",
+   "winner": "site",
+   "luma": 156,
+   "chroma": 33,
+   "colour": 0.601,
+   "bright": 0.429
+  },
+  {
+   "ref": "vl-0365",
+   "now": "dim80-desat-whole",
+   "winner": "same",
+   "luma": 140,
+   "chroma": 28,
+   "colour": 1,
+   "bright": 0.49
+  },
+  {
+   "ref": "vl-0366",
+   "now": "bal",
+   "winner": "site",
+   "luma": 221,
+   "chroma": 33,
+   "colour": 1,
+   "bright": 0.293
+  },
+  {
+   "ref": "vl-0367",
+   "now": "none",
+   "winner": "site",
+   "luma": 189,
+   "chroma": 49,
+   "colour": 1,
+   "bright": 0.374
+  },
+  {
+   "ref": "vl-0368",
+   "now": "snap",
+   "winner": "same",
+   "luma": 211,
+   "chroma": 10,
+   "colour": 0.45,
+   "bright": 0.309
+  },
+  {
+   "ref": "vl-0370",
+   "now": "dim80-desat-whole",
+   "winner": "same",
+   "luma": 165,
+   "chroma": 38,
+   "colour": 0.695,
+   "bright": 0.432
+  },
+  {
+   "ref": "vl-0371",
+   "now": "dim80-desat-whole",
+   "winner": "site",
+   "luma": 121,
+   "chroma": 14,
+   "colour": 1,
+   "bright": 0.561
+  },
+  {
+   "ref": "vl-0372",
+   "now": "none",
+   "winner": "site",
+   "luma": 100,
+   "chroma": 28,
+   "colour": 1,
+   "bright": 0.641
+  },
+  {
+   "ref": "vl-0374",
+   "now": "snap-vig",
+   "winner": "same",
+   "luma": 110,
+   "chroma": 18,
+   "colour": 1,
+   "bright": 0.583
+  },
+  {
+   "ref": "vl-0375",
+   "now": "snap-vig",
+   "winner": "ceil",
+   "luma": 129,
+   "chroma": 23,
+   "colour": 1,
+   "bright": 0.473
+  },
+  {
+   "ref": "vl-0376",
+   "now": "snap-vig",
+   "winner": "ceil",
+   "luma": 146,
+   "chroma": 35,
+   "colour": 0.991,
+   "bright": 0.446
+  },
+  {
+   "ref": "vl-0377",
+   "now": "ceil-vig",
+   "winner": "site",
+   "luma": 72,
+   "chroma": 19,
+   "colour": 1,
+   "bright": 0.8
+  },
+  {
+   "ref": "vl-0379",
+   "now": "ceil-vig",
+   "winner": "site",
+   "luma": 123,
+   "chroma": 23,
+   "colour": 1,
+   "bright": 0.532
+  },
+  {
+   "ref": "vl-0381",
+   "now": "snap-vig",
+   "winner": "site",
+   "luma": 99,
+   "chroma": 41,
+   "colour": 0.658,
+   "bright": 0.67
+  },
+  {
+   "ref": "vl-0384",
+   "now": "snap",
+   "winner": "ceil",
+   "luma": 134,
+   "chroma": 23,
+   "colour": 0.728,
+   "bright": 0.485
+  },
+  {
+   "ref": "vl-0386",
+   "now": "snap-vig",
+   "winner": "site",
+   "luma": 96,
+   "chroma": 26,
+   "colour": 1,
+   "bright": 0.683
+  },
+  {
+   "ref": "vl-0387",
+   "now": "ceil",
+   "winner": "same",
+   "luma": 110,
+   "chroma": 22,
+   "colour": 1,
+   "bright": 0.606
+  },
+  {
+   "ref": "vl-0388",
+   "now": "dim80-desat-whole",
+   "winner": "site",
+   "luma": 174,
+   "chroma": 22,
+   "colour": 0.885,
+   "bright": 0.372
+  },
+  {
+   "ref": "vl-0389",
+   "now": "bal",
+   "winner": "site",
+   "luma": 175,
+   "chroma": 40,
+   "colour": 1,
+   "bright": 0.408
+  },
+  {
+   "ref": "vl-0390",
+   "now": "dim80-desat-whole",
+   "winner": "ceil",
+   "luma": 185,
+   "chroma": 43,
+   "colour": 0.896,
+   "bright": 0.398
+  },
+  {
+   "ref": "vl-0391",
+   "now": "none",
+   "winner": "site",
+   "luma": 202,
+   "chroma": 117,
+   "colour": 0.678,
+   "bright": 0.385
+  },
+  {
+   "ref": "vl-0392",
+   "now": "none-vig",
+   "winner": "same",
+   "luma": 128,
+   "chroma": 100,
+   "colour": 0.423,
+   "bright": 0.552
+  },
+  {
+   "ref": "vl-0393",
+   "now": "bal",
+   "winner": "same",
+   "luma": 93,
+   "chroma": 12,
+   "colour": 1,
+   "bright": 0.744
+  },
+  {
+   "ref": "vl-0394",
+   "now": "snap",
+   "winner": "same",
+   "luma": 104,
+   "chroma": 60,
+   "colour": 0.652,
+   "bright": 0.702
+  },
+  {
+   "ref": "vl-0396",
+   "now": "bal",
+   "winner": "same",
+   "luma": 212,
+   "chroma": 29,
+   "colour": 0.987,
+   "bright": 0.311
+  },
+  {
+   "ref": "vl-0397",
+   "now": "ceil-vig",
+   "winner": "site",
+   "luma": 57,
+   "chroma": 32,
+   "colour": 1,
+   "bright": 0.8
+  },
+  {
+   "ref": "vl-0398",
+   "now": "none-vig",
+   "winner": "same",
+   "luma": 160,
+   "chroma": 27,
+   "colour": 0.569,
+   "bright": 0.425
+  }
+ ]
+}

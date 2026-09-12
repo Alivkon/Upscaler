@@ -6,12 +6,15 @@
 // временем разъедутся молча, а разойтись эти два ответа не должны: галочка
 // на сервере и галочка в браузере — одна и та же галочка.
 //
-// Само правило — `ceil`, и весь его порядок (баланс, потолки, покраска) лежит
-// в `treatCeil`, а не переписан здесь: шаги — часть правила, и вторая их запись
-// разъехалась бы с первой. Здесь остаётся только кадр, и он первым — пестрота,
-// увод и потолки считаются тогда по тому, что увидят; работа, у которой синее
-// небо ушло за край, синей больше не является.
-import { treatCeil } from '/rules/ceilings.mjs';
+// Само правило — `dim`, умолчание витрины с 12.09.2026, и весь его порядок
+// (баланс, потолок цвета, покраска) лежит в `treat`, а не переписан здесь:
+// шаги — часть правила, и вторая их запись разъехалась бы с первой. Правило
+// берётся умолчанием довода, а не называется отсюда: назови его здесь — и
+// сервер с браузером стали бы двумя местами, где выбирают галочке картинку.
+// Здесь остаётся только кадр, и он первым — пестрота, увод и потолок
+// считаются тогда по тому, что увидят; работа, у которой синее небо ушло
+// за край, синей больше не является.
+import { treat } from '/rules/ceilings.mjs';
 
 import { phoneWindow } from './frame.js';
 
@@ -100,18 +103,20 @@ function vignetted(canvas) {
 // синей больше не является. Виньетка последней: она гасит углы готовой
 // картинки, и посчитанное по ней приглушение сочло бы кадр темнее, чем он есть.
 export function finishLocally(canvas, options = {}) {
-  const { treat = false, crop = false, blur = false, vignette = false } = options;
-  if (!treat && !crop && !blur && !vignette) return canvas;
+  // Галочка приходит под именем `treat`, а внутри зовётся `dim` — как правило,
+  // которое она считает; одно имя на две вещи в одном файле читалось бы как одна.
+  const { treat: dim = false, crop = false, blur = false, vignette = false } = options;
+  if (!dim && !crop && !blur && !vignette) return canvas;
   // Копия даже без кадра: дальше холст правится на месте, а пришедший сюда
   // принадлежит вызвавшему — превью считает по нему заново на каждую галочку.
   let framed = cropped(canvas, crop ? phoneWindow(canvas.width, canvas.height) : whole(canvas));
-  if (treat) framed = dimmed(framed);
+  if (dim) framed = dimmed(framed);
   if (blur) framed = blurred(framed);
   if (vignette) framed = vignetted(framed);
   return framed;
 }
 
-// Приглушение — правило `ceil` целиком, вместе с балансом, потолками
+// Приглушение — правило `dim` целиком, вместе с балансом, потолком цвета
 // и покраской; шаги здесь не повторены, они часть правила.
 function dimmed(framed) {
   const ctx = framed.getContext('2d');
@@ -126,7 +131,7 @@ function dimmed(framed) {
     rgb[j + 1] = image.data[i + 1];
     rgb[j + 2] = image.data[i + 2];
   }
-  const { pixels } = treatCeil(rgb, framed.width, framed.height);
+  const { pixels } = treat(rgb, framed.width, framed.height);
   for (let i = 0, j = 0; i < image.data.length; i += 4, j += 3) {
     image.data[i] = pixels[j];
     image.data[i + 1] = pixels[j + 1];
