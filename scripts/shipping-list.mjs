@@ -24,15 +24,21 @@ import { loadWorks } from '../works.js';
 const IMAGES_DIR = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'images');
 const MANIFEST_DIR = path.join(IMAGES_DIR, 'manifest');
 
-// Запись манифеста описывает дерево: сама плита, её уменьшенные копии, кадры
-// под каждое устройство со своими копиями и версии обработки. Все они —
-// отдельные файлы, и на странице встречается любой из них.
+// Запись манифеста описывает дерево: сама плита, её уменьшенные копии и кадры
+// под каждое устройство со своими копиями. Все они — отдельные файлы, и на
+// странице встречается любой из них.
+//
+// Скан — та же работа, не тронутая приглушением, — устроен точно так же и
+// потому собирается тем же обходом, а не своей веткой рядом. Разойдись такая
+// ветка с этой, и галочка «Dimmed» на боевой машине переводила бы страницу
+// на файл, которого там нет: 294 работы из 306 несут скан, и у каждого свои
+// копии и свои три кадра — почти половина списка.
 function collect(node, into) {
   if (!node) return;
   if (node.file) into.add(node.file);
   for (const copy of node.copies || []) if (copy.file) into.add(copy.file);
   for (const crop of Object.values(node.crops || {})) collect(crop, into);
-  for (const version of node.versions || []) collect(version, into);
+  collect(node.scan, into);
 }
 
 const manifests = new Map();
