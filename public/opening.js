@@ -98,6 +98,34 @@ export async function receive(file) {
   return brought;
 }
 
+// Забыть принесённое и вернуть проём в тот вид, в каком он приходит
+// с сервера. Нужно это одному месту — «Do another» у готовой работы. Кнопка
+// эта стоит вплотную к Download и открывала диалог выбора файла сразу: один
+// щелчок мимо стирал готовую работу и подменял страницу системным окном.
+// Теперь она возвращает на приёмку, где файл приносят тремя способами —
+// выбором, перетаскиванием и Ctrl-V, — и ни один из них не случается сам.
+//
+// Три атрибута возвращаются те же, что снимает `show`; повторены они и в
+// разметке (`pages.js`), потому что оттуда проём и приходит.
+export function clear() {
+  // Превью, которое досчитается после, показывать уже некуда.
+  previewToken++;
+  forget(sourceUrl);
+  forget(previewUrl);
+  forget(resultUrl);
+  sourceUrl = previewUrl = resultUrl = null;
+  brought?.bitmap.close();
+  brought = null;
+  els.picture.hidden = true;
+  // `removeAttribute`, а не `src = ''`: пустой адрес браузер считает адресом
+  // самой страницы и идёт за ней второй раз.
+  els.picture.removeAttribute('src');
+  els.frame.classList.remove('has-work');
+  els.frame.setAttribute('role', 'button');
+  els.frame.setAttribute('tabindex', '0');
+  els.frame.setAttribute('aria-label', 'Choose a picture');
+}
+
 // Показывает в проёме то, что сейчас нажато. Без галочек — исходник как есть,
 // без пересчёта: показать вместо него пережатую копию значило бы соврать о том,
 // что делает страница, когда она не делает ничего.
