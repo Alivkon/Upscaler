@@ -15,9 +15,11 @@ const PLATES = path.join(ROOT, 'images/plates');
 const MANIFEST_DIR = path.join(ROOT, 'images/manifest');
 const PHONE_SHEET = path.join(ROOT, 'research/to-crop-positions.md');
 
-// Только те кадры 16:9, которые витрина показывает: `DESKTOP_GATE` в `gallery.js`
-// прячет всё, что мельче. Мерка повторена, а не импортирована, потому что этот
-// лист — черновик, а не сайт, и падать от чужого рефактора ему незачем.
+// Только те кадры 16:9, которых хватает на экран. Витрина их с 12.09.2026
+// не показывает вовсе (`HIDDEN_KINDS` в `gallery.js`), и лист остаётся
+// черновиком к возврату: позиция ставится заранее, кадр режется всё равно.
+// Мерка своя, не импортированная: лист — черновик, а не сайт, и падать
+// от чужого рефактора ему незачем.
 const DESKTOP_GATE = { width: 1920, height: 1080 };
 
 // Пропорции проёмов — те же, что режет `wallpaper-gen/treatment.mjs`.
@@ -86,7 +88,7 @@ function largestPlate(slug, plateFiles) {
 // Листы:
 //   (по умолчанию)   вся витрина, проём телефонный
 //   --unseen         только те, о ком в `to-crop-positions.md` нет строки
-//   --desktop        только те, чей кадр 16:9 витрина показывает
+//   --desktop        только те, чей кадр 16:9 берёт 1920 × 1080
 //   --only=vl-0001,… перечисление
 //
 // Размеры плиты берутся ИЗ МАНИФЕСТА, а не из поля `file` каталога. Каталог
@@ -200,7 +202,7 @@ const IMAGES_JSON = JSON.stringify(images);
 // Заголовок и проём по умолчанию — от листа. Десктопный открывается на 16:9:
 // открывать его на телефонном значило бы спрашивать не про то, что показано.
 const PAGE = desktop
-  ? { title: 'Desktop Positioner', crop: 'wide', note: 'gallery works whose 16:9 frame passes ' + DESKTOP_GATE.width + '×' + DESKTOP_GATE.height }
+  ? { title: 'Desktop Positioner', crop: 'wide', note: 'gallery works whose 16:9 frame clears ' + DESKTOP_GATE.width + '×' + DESKTOP_GATE.height + ' — not published right now' }
   : unseen
     ? { title: 'Crop Positioner — unseen', crop: 'phone', note: 'gallery works with no row in to-crop-positions.md yet' }
     : { title: 'Crop Positioner', crop: 'phone', note: 'drag image to pan · click to record' };

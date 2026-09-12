@@ -1,7 +1,8 @@
 # Crop positions (desktop frame)
 
-Offset in plate pixels for the **16:9 desktop crop window** — the frame `gallery.js`
-publishes when it passes `DESKTOP_GATE` (1920 × 1080). Recorded in
+Offset in plate pixels for the **16:9 desktop crop window**. The frame is still cut,
+but `gallery.js` has not published it since 12.09.2026 (`HIDDEN_KINDS`); positions are
+recorded ahead of the return, for those clearing 1920 × 1080. Recorded in
 `research/crop-positioner-desktop.html` (`node scripts/research/crop-positioner.mjs --desktop`).
 
 Same coordinates as `to-crop-positions.md`: plate pixels after `trim`, the window's
