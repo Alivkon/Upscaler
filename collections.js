@@ -54,6 +54,16 @@
 // ставились руками, а поставлены они у 31 из 53. Обе фразы стояли в абзаце,
 // написанном ровно затем, чтобы его процитировали дословно.
 //
+// **Абзац — этикетка у картины, а не витрина магазина (12.09).** Стояло
+// «with the dark academia vibe» и «no account and no watermark». Второе было
+// взято у wallpapers.com — ту фразу дословно повторили два ответа ассистента,
+// — и это язык склада, а не собрания; «free, no account» и так стоит
+// в `title`. Первое хеджировало анахронизм: картина 1630 года — не «dark
+// academia», а выбранная под него. Теперь «chosen for dark academia» —
+// это правда об отборе (ручной лист, `research/dark-academia-picks.json`).
+// Что даёт и что отнимает снятая фраза при цитировании, не померено: сайт
+// в ответах ассистентов не появлялся ни разу, терять нечего.
+//
 // **Слово «background» стоит в тексте нарочно.** На Pinterest ищут им, а не
 // словом «wallpaper». «Your background», а не «a background»: там, где текст
 // обращается к читателю, безличный артикль звучит инструкцией.
@@ -113,7 +123,7 @@ export const COLLECTIONS = [
       'way of painting that continued after Western oil reached Meiji Japan. By Yokoyama Taikan, ' +
       'Kobayashi Kokei and Yamamoto Shunkyo, from the Tokyo National Museum and other public ' +
       `collections. Each is a phone wallpaper, ${full} at 2160 × 3840 or larger, free to ` +
-      'download and set as your background, no account and no watermark.',
+      'download and set as your background, no account.',
     // Отбор здесь не глазами, а по технике, и это единственная тема, где так
     // можно. «Нихонга» — не период и не манера: это минеральная краска и тушь
     // по шёлку в отличие от привезённого масла, и музей пишет технику в поле
@@ -174,8 +184,7 @@ export const COLLECTIONS = [
       `${count} landscape paintings with the weather in them: a thunderstorm coming on, Vesuvius ` +
       'at midnight, rain over the mountains, a ruin above a dark sea. Painted between 1660 and 1893, ' +
       `mostly from the Cleveland Museum of Art. Each is a phone wallpaper at 9:16, ${full} of them ` +
-      'at 2160 × 3840 or larger, free to download and set as your background, ' +
-      'with no account and no watermark.',
+      'at 2160 × 3840 or larger, free to download and set as your background, no account.',
     // Работ мало и это нарочно: пейзажей в коллекции 79, но по-настоящему
     // сумрачных среди них четырнадцать, а страница из светлых пейзажей под
     // словом «moody» — обещание, которого сетка не выполняет. Счёт странице
@@ -213,11 +222,11 @@ export const COLLECTIONS = [
     description:
       'Dark academia phone wallpaper from museum oil paintings — ruins, storms, forest gloom, still life. Up to 2160 × 3840, free, no account.',
     note: ({ count, full }) =>
-      `${count} museum paintings with the dark academia vibe: ruins and antiquity, dark still ` +
+      `${count} museum paintings chosen for dark academia: ruins and antiquity, dark still ` +
       'life, storms and night. Painted between 1630 and 1909, from the Cleveland Museum of Art, ' +
       'the SMK in Copenhagen and other public collections. Each is a phone wallpaper at 9:16, ' +
       `${full} of them at 2160 × 3840 or larger, free to download and set as your background, ` +
-      'with no account and no watermark.',
+      'no account.',
     refs: [
       'vl-0052',
       'vl-0175',

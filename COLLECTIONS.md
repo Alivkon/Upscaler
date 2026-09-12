@@ -100,16 +100,20 @@ desktop wallpapers…`), и для него он верен: там ищут и�
 То, ради чего страница и делается: **единственный текст, который цитируют
 дословно.**
 
-    43 museum paintings with the dark academia vibe: ruins and antiquity,
+    43 museum paintings chosen for dark academia: ruins and antiquity,
     dark still life, storms and night. Painted between 1630 and 1909, from the
     Cleveland Museum of Art, the SMK in Copenhagen and other public collections.
     Each is a phone wallpaper at 9:16, 24 of them at 2160 × 3840 or larger,
-    free to download and set as your background, with no account and no
-    watermark.
+    free to download and set as your background, no account.
 
 Порядок: счёт → характер подборки → происхождение → размер → условия.
 50–60 слов, короткие повествовательные предложения. Не украшать: цитируется
 простая фраза с числами и именами собственными.
+
+**Регистр — этикетка у картины, а не витрина склада.** «No watermark» и
+«vibe» сняты 12.09: первое — оборот wallpapers.com, второе хеджировало
+анахронизм (картина 1630 года не «dark academia», а выбрана под него).
+Условия и так стоят в `title`; в абзаце хватает «free … no account».
 
 **Ни одного числа, вписанного руками.** Все они считаются из тех же работ,
 что стоят под абзацем, — `measure()` в `collections.js`. Список правится,
