@@ -9,6 +9,12 @@ Posts **one** work per platform per invocation — this is a slow, one-a-day
 drip, not a bulk upload. Never post more than one per platform in a single run
 unless Charlie explicitly asks for more.
 
+**It already runs on a schedule:** crontab fires `cron.sh` (next to this
+file) at 03:07 Paris time, Monday to Friday — US evening, when Tumblr's feed is
+busiest. Output goes to `.social-post.log` in the repo root. So before a manual
+run, check `social-posts.json` for an entry dated today. `DRY_RUN=1 cron.sh`
+picks the next works without posting.
+
 ## 0. Refresh the Tumblr-sized copies
 
 Another session may have rebaked plates since last time, so regenerate before
