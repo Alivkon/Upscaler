@@ -665,10 +665,14 @@ const inTopics = topics =>
 // нужен, потому что подменять его есть чем и нечем плохим: `h1` несёт те же
 // слова, что `title`, и подмена нам ничего не портит.
 //
-// Абзац стоит НАД сеткой, а не под ней. Цитируют то, что ассистент прочитал
+// Этикетка (`note`) стоит НАД сеткой: цитируют то, что ассистент прочитал
 // первым, и увидеть текст ниже сотни карточек он может, а поставить его первым
-// в ответ — нет. Это же и человеку: он листает вниз, а не вверх.
+// в ответ — нет. Это же и человеку: он листает вниз, а не вверх. Условия
+// (`terms`) — ПОД сеткой, перед ссылкой на указатель, и почему так —
+// в `collections.js` (13.09). Абзац необязателен: тема без него просто
+// кончается сеткой.
 export function topicPage({ topic, items, origin }) {
+  const measured = measure(items);
   return layout({
     current: 'collection',
     title: topic.title,
@@ -692,10 +696,11 @@ export function topicPage({ topic, items, origin }) {
     body: `
       <div class="topic">
         <h1 class="topic__title">${escape(topic.heading)}</h1>
-        <p class="topic__note">${escape(topic.note(measure(items)))}</p>
+        <p class="topic__note">${escape(topic.note(measured))}</p>
         ${items.some(item => item.scan) ? dimmedBox('        ') : ''}
       </div>
       ${grid(items, EAGER_CARDS)}
+      ${topic.terms ? `<p class="topic__terms">${escape(topic.terms(measured))}</p>` : ''}
       <p class="topic__back"><a href="/">All ${SITE_NAME} wallpapers →</a></p>
     `
   });

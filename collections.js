@@ -64,6 +64,30 @@
 // Что даёт и что отнимает снятая фраза при цитировании, не померено: сайт
 // в ответах ассистентов не появлялся ни разу, терять нечего.
 //
+// **Условия — под сеткой, этикетка — над ней (13.09).** Абзац был один и
+// кончался фразой про формат, размер и «free to download … no account».
+// Это не этикетка, а условия выдачи, и над картинами они читались как
+// витрина магазина: первое, что видел пришедший, — что бесплатно и без
+// регистрации, а не что за картины. Теперь это поле `terms`, и стоит оно
+// после сетки, перед ссылкой на указатель: человек читает его, досмотрев
+// картинки, — там, где у музейной этикетки стоят условия. Для цитирования
+// оно на странице по-прежнему: замер 24.08 видел абзац над сеткой, но
+// положение он не выделял, цитировалась простая фраза с числами и условиями,
+// а сайт в ответах ассистентов до 12.09 не появлялся вовсе — терять нечего.
+// Первый переход с chatgpt.com пришёл 13.09 именно на dark academia, ещё
+// с единым абзацем; сравнить после разделения будет с чем.
+//
+// Счёт в `terms` повторён нарочно: ассистент, отвечающий «где взять
+// бесплатно», возьмёт этот абзац один, и без «all 43» в нём число осталось
+// бы в другом. Оба числа — по-прежнему замером, как и в `note`.
+//
+// Набран абзац тем же приглушённым цветом, что `note`, и на кегль меньше —
+// и это предел. Google рендерит страницу и «скрытым» считает текст, которого
+// человек не видит: display none, нулевой кегль, вынесенный за экран, цвета
+// фона. Читаемый серый абзац — не это; но `--fg-dim` на `--ground` даёт
+// контраст около 4,6 : 1, то есть темнее уже нельзя. Курсива нет: у Sometype
+// Mono загружены только веса 400–500, наклон браузер синтезировал бы сам.
+//
 // **Слово «background» стоит в тексте нарочно.** На Pinterest ищут им, а не
 // словом «wallpaper». «Your background», а не «a background»: там, где текст
 // обращается к читателю, безличный артикль звучит инструкцией.
@@ -71,6 +95,8 @@
 // **«Wallpaper» — в абзаце, а не только в заголовке.** Абзац переписывался
 // дважды, и в первый раз слово из него выпало вместе с неправдой про размер:
 // осталось «cut to 9:16 for a phone screen», где нужного слова нет вовсе.
+// После разделения 13.09 слово держит в `note` оборот «chosen as … phone
+// wallpapers» — правда об отборе, без «cut to 9:16».
 //
 // **Про кадр в абзаце не говорится.** Стояло «cut to 9:16», и это отвечало
 // на вопрос, которого читатель не задавал: кадрирована работа или она такая
@@ -118,12 +144,14 @@ export const COLLECTIONS = [
     heading: 'Nihonga collection',
     description:
       'Nihonga phone wallpaper from Japanese museum paintings: mineral pigment and ink on silk, Meiji and Taishō. Up to 2160 × 3840, free, no account.',
-    note: ({ count, full }) =>
-      `${count} nihonga paintings. Nihonga means mineral pigment and ink on silk, the Japanese ` +
-      'way of painting that continued after Western oil reached Meiji Japan. By Yokoyama Taikan, ' +
-      'Kobayashi Kokei and Yamamoto Shunkyo, from the Tokyo National Museum and other public ' +
-      `collections. Each is a phone wallpaper, ${full} at 2160 × 3840 or larger, free to ` +
-      'download and set as your background, no account.',
+    note: ({ count }) =>
+      `${count} nihonga paintings, chosen as phone wallpapers. Nihonga means mineral pigment and ` +
+      'ink on silk, the Japanese way of painting that continued after Western oil reached Meiji ' +
+      'Japan. By Yokoyama Taikan, Kobayashi Kokei and Yamamoto Shunkyo, from the Tokyo National ' +
+      'Museum and other public collections.',
+    terms: ({ count, full }) =>
+      `All ${count} are phone wallpapers, ${full} of them at 2160 × 3840 or larger. Free to ` +
+      'download and set as your background, no account needed.',
     // Отбор здесь не глазами, а по технике, и это единственная тема, где так
     // можно. «Нихонга» — не период и не манера: это минеральная краска и тушь
     // по шёлку в отличие от привезённого масла, и музей пишет технику в поле
@@ -180,11 +208,13 @@ export const COLLECTIONS = [
     heading: 'Moody landscape collection',
     description:
       'Moody landscape phone wallpaper from museum painting — storms, gloom and dark weather. Up to 2160 × 3840, free, no account.',
-    note: ({ count, full }) =>
-      `${count} landscape paintings with the weather in them: a thunderstorm coming on, Vesuvius ` +
-      'at midnight, rain over the mountains, a ruin above a dark sea. Painted between 1660 and 1893, ' +
-      `mostly from the Cleveland Museum of Art. Each is a phone wallpaper at 9:16, ${full} of them ` +
-      'at 2160 × 3840 or larger, free to download and set as your background, no account.',
+    note: ({ count }) =>
+      `${count} landscape paintings with the weather in them, chosen as phone wallpapers: ` +
+      'a thunderstorm coming on, Vesuvius at midnight, rain over the mountains, a ruin above a dark ' +
+      'sea. Painted between 1660 and 1893, mostly from the Cleveland Museum of Art.',
+    terms: ({ count, full }) =>
+      `All ${count} are phone wallpapers at 9:16, ${full} of them at 2160 × 3840 or larger. Free to ` +
+      'download and set as your background, no account needed.',
     // Работ мало и это нарочно: пейзажей в коллекции 79, но по-настоящему
     // сумрачных среди них четырнадцать, а страница из светлых пейзажей под
     // словом «moody» — обещание, которого сетка не выполняет. Счёт странице
@@ -221,12 +251,13 @@ export const COLLECTIONS = [
     // стоит после, читатель не увидит.
     description:
       'Dark academia phone wallpaper from museum oil paintings — ruins, storms, forest gloom, still life. Up to 2160 × 3840, free, no account.',
-    note: ({ count, full }) =>
-      `${count} museum paintings chosen for dark academia: ruins and antiquity, dark still ` +
-      'life, storms and night. Painted between 1630 and 1909, from the Cleveland Museum of Art, ' +
-      'the SMK in Copenhagen and other public collections. Each is a phone wallpaper at 9:16, ' +
-      `${full} of them at 2160 × 3840 or larger, free to download and set as your background, ` +
-      'no account.',
+    note: ({ count }) =>
+      `${count} museum paintings chosen as dark academia phone wallpapers: ruins and antiquity, ` +
+      'dark still life, storms and night. Painted between 1630 and 1909, from the Cleveland Museum ' +
+      'of Art, the SMK in Copenhagen and other public collections.',
+    terms: ({ count, full }) =>
+      `All ${count} are phone wallpapers at 9:16, ${full} of them at 2160 × 3840 or larger. Free to ` +
+      'download and set as your background, no account needed.',
     refs: [
       'vl-0052',
       'vl-0175',
