@@ -32,7 +32,9 @@ clamp to the plate edge. Works with several variants have only `v1` applied.
 | vl-0057 | left 1214px   |         | ✓       |
 | vl-0060 | left 0px      | v1      | ✓       |
 | vl-0060 | left 1816px   | v2      |         |
-| vl-0063 | center        |         |         |
+| vl-0063 | center        | v1      |         |
+| vl-0063 | left 3000px   | v2      |         |
+| vl-0063 | left 3885px   | v3      |         |
 | vl-0064 | center        |         |         |
 | vl-0065 | center        |         |         |
 | vl-0066 | center        |         |         |
