@@ -103,8 +103,13 @@ Still Life», «Interiør. Kunstigt lys», «Bondegården Åse i Telemarken». �
 
 - `scripts/research/clock-band.mjs` — мера и список. Экспортирует `clockBand()`
   и `measureGallery()`, запущенный напрямую печатает обе таблицы с автором.
+- `scripts/research/clock-sheet.mjs` — лист: вся витрина с наложенными часами,
+  по образцу `treat-sheet.mjs` (один самодостаточный файл, `--only`, `--out`).
+  Разделы: прошедшие тёмные, прошедшие светлые, остальные — ближайшие к порогу
+  первыми, с указанием, чем не прошла каждая. Смотреть надо весь список, а не
+  прошедших: иначе не видно, кого отсечка теряет зря.
 - `pages.js` — `cardName` и `cardCreator` стали экспортируемыми, больше ничего.
 - Разовые скрипты разбора не коммитятся, как и прочие точечные меры:
   `.clockempty.mjs` (первый заход), `.clocksheet.mjs` и `.clocktiles.mjs`
-  (лист с часами), `.clockundim.mjs` (проверка двенадцати `none`),
-  `.clocklist.mjs` → `.clocklist.html` (голый лист всех двадцати четырёх).
+  (первые листы с часами, вытеснены `clock-sheet.mjs`), `.clockundim.mjs`
+  (проверка двенадцати `none`).

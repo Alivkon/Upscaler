@@ -41,7 +41,7 @@ const X1 = 0.82;
 // Пестрота рядов 1–4 — домашний экран. Потолок 44 — из восьми эталонов Charlie,
 // его держит «Vase of Flowers»; проверяется заодно, чтобы список не предлагал
 // работу, годную только под часы.
-const ICONS_MAX = 44;
+export const ICONS_MAX = 44;
 export const FLAT_MAX = 8;
 
 const pct = (sorted, q) => sorted[Math.round(q * (sorted.length - 1))];
