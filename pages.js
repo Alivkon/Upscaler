@@ -454,9 +454,12 @@ const titleParts = item => {
 // поэтому здесь элемент выводится всегда.
 // `unknown` пропускается по той же причине, по какой его пропускает байлайн
 // страницы работы: «Unknown» — не имя, а шум.
-const cardName = item => titleParts(item).name;
+// Экспортируются, потому что их спрашивают не только карточки: подписи листов
+// разбора должны называть работу ровно так, как названа она на витрине,
+// иначе лист говорит об одной работе, а глаз ищет другую.
+export const cardName = item => titleParts(item).name;
 
-const cardCreator = item => {
+export const cardCreator = item => {
   const { creator, creatorKind } = item.provenance || {};
   return creator && creatorKind !== 'unknown' ? creator : '';
 };

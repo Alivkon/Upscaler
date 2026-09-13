@@ -29,13 +29,14 @@
 | vl-0052 | Memento Mori, "To This Favour" | William Michael Harnett, 1879 | 19.4:1 | 6.5 |
 | vl-0373 | Fisherman's Cottage | Harald Oscar Sohlberg, 1906 | 19.2:1 | 7.6 |
 | vl-0087 | Gooseberries on a Table | Adriaen Coorte, 1701 | 17.4:1 | 4.1 |
-| vl-0142 | Welcoming Descent of Amida with Twenty-Five Bodhisattvas | неизвестный, Япония, период Намбокутё, сер. 1300-х | 16.9:1 | 5.9 |
-| vl-0177 | Pragt-stilleben | Pieter de Ring, 1630–1660 | 16.8:1 | 3.6 |
-| vl-0175 | Interiør. Kunstigt lys | Vilhelm Hammershøi, 1909 | 16.7:1 | 4.0 |
+| vl-0142 | Welcoming Descent of Amida | неизвестен, сер. 1300-х | 16.9:1 | 5.9 |
+| vl-0177 | Sumptuous Still Life | Pieter de Ring, 1630–1660 | 16.8:1 | 3.6 |
+| vl-0175 | Interior. Artificial Light | Vilhelm Hammershøi, 1909 | 16.7:1 | 4 |
 | vl-0324 | The Destruction of the Children of Niobe | Richard Wilson, 1760 | 15.8:1 | 7.1 |
-| vl-0164 | Kasuga Shrine Mandala | неизвестный, Япония, период Камакура, нач. 1300-х | 15.4:1 | 6.9 |
-| vl-0179 | Bondegården Åse i Telemarken, Norge | Halfdan Egedius, 1893 | 13.6:1 | 7.8 |
-| vl-0393 | Braving the Cold, Our Troops Bivouac at Yingkou | Kobayashi Kiyochika, 1895 | 11.7:1 | 6.0 |
+| vl-0164 | Kasuga Shrine Mandala | неизвестен, нач. 1300-х | 15.4:1 | 6.9 |
+| vl-0179 | The Åse Farm in Telemark | Halfdan Egedius, 1893 | 13.6:1 | 7.8 |
+| vl-0393 | Bivouac at Yingkou | Kobayashi Kiyochika, 1895 | 11.7:1 | 6 |
+
 
 Четырнадцать светлых. Полоса так же пуста — небо, дымка, вода, — но светла:
 белое читается, и всё же это серое по серому. Три последних идут почти вплотную
@@ -50,13 +51,14 @@
 | vl-0382 | Landscape, Site of Greece | Jean-Victor Bertin, 1812 | 5.7:1 | 4.6 |
 | vl-0265 | The Summer (Landscape with couple) | Caspar David Friedrich, 1807 | 5.6:1 | 7.8 |
 | vl-0297 | Sunlight and Shadow: The Newbury Marshes | Martin Johnson Heade, 1871 | 5.3:1 | 5.3 |
-| vl-0259 | Forstudie til "Solregn. Gentofte Sø" | Vilhelm Hammershøi, 1903 | 5.0:1 | 6.4 |
-| vl-0365 | The Hall of Amida Buddha | Kobayashi Kokei, 1915 | 4.8:1 | 5.5 |
-| vl-0066 | Lion on the Watch | Jean-Léon Gérôme, ок. 1885 | 4.8:1 | 3.6 |
-| vl-0358 | An October Day in the White Mountains | John Frederick Kensett, 1854 | 4.3:1 | 5.0 |
-| vl-0359 | Carp | Aizawa Bunseki, период Мэйдзи | 3.6:1 | 6.9 |
-| vl-0068 | Tiger in Wind | Maruyama Ōkyo, 1800-е | 3.5:1 | 6.0 |
+| vl-0259 | Forstudie til "Solregn. Gentofte Sø" | Vilhelm Hammershøi, 1903 | 5:1 | 6.4 |
+| vl-0365 | The Hall of Amida Buddha | Kobayashi Kokei (1883-1957), 1915 | 4.8:1 | 5.5 |
+| vl-0066 | Lion on the Watch | Jean-Léon Gérôme, c. 1885 | 4.8:1 | 3.6 |
+| vl-0358 | An October Day in the White Mountains | John Frederick Kensett, 1854 | 4.3:1 | 5 |
+| vl-0359 | Carp | Aizawa Bunseki, Meiji period, 19th century | 3.6:1 | 6.9 |
+| vl-0068 | Tiger in Wind | Maruyama Ōkyo, 1800s | 3.5:1 | 6 |
 | vl-0376 | Gebirgssee | Arnold Böcklin, 1846 | 3.4:1 | 7.2 |
+
 
 Лев — лучшая пустота во всей витрине (3.6), и при этом контраст 4.8:1. Две меры
 независимы, и это видно именно на нём: идеально пустое небо — светлое небо.
@@ -82,10 +84,27 @@
 приглушённый кадр там, где в имени `-none-`. Иначе меряется файл, которого
 не будет. Все двенадцать таких работ по яркости и так не проходят (149–238).
 
+## Названия — те же, что на витрине
+
+Первый заход брал название из `provenance.work`, то есть у музея, и у части
+работ оно оказалось на языке оригинала: «Pragt-stilleben» вместо «Sumptuous
+Still Life», «Interiør. Kunstigt lys», «Bondegården Åse i Telemarken». Лист,
+называющий работу не тем именем, под которым она стоит на сайте, заставляет
+искать её дважды.
+
+Поэтому `pages.js` теперь отдаёт наружу `cardName` и `cardCreator` — ровно то,
+что печатает карточка витрины, — и список зовёт их. Своего правила разбора
+заголовка у разборных листов нет и быть не должно: разъехались бы.
+
+Автор у двух работ пуст, и это не пропуск: при `creatorKind: "unknown"` витрина
+держит строку пустой намеренно.
+
 ## Файлы
 
 - `scripts/research/clock-band.mjs` — мера и список. Экспортирует `clockBand()`
   и `measureGallery()`, запущенный напрямую печатает обе таблицы с автором.
+- `pages.js` — `cardName` и `cardCreator` стали экспортируемыми, больше ничего.
 - Разовые скрипты разбора не коммитятся, как и прочие точечные меры:
   `.clockempty.mjs` (первый заход), `.clocksheet.mjs` и `.clocktiles.mjs`
-  (лист с часами), `.clockundim.mjs` (проверка двенадцати `none`).
+  (лист с часами), `.clockundim.mjs` (проверка двенадцати `none`),
+  `.clocklist.mjs` → `.clocklist.html` (голый лист всех двадцати четырёх).

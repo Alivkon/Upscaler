@@ -27,6 +27,7 @@ import path from 'node:path';
 import sharp from 'sharp';
 import { busyness } from './busyness.mjs';
 import { luma, THRESHOLD, contrastWithWhite } from './dimming.mjs';
+import { cardName, cardCreator } from '../../pages.js';
 
 const ROOT = new URL('../../', import.meta.url).pathname;
 
@@ -95,13 +96,18 @@ export async function measureGallery() {
       .removeAlpha()
       .raw()
       .toBuffer({ resolveWithObject: true });
-    const p = work.provenance ?? {};
     rows.push({
       ref: work.ref,
       slug: work.slug,
-      work: p.work ?? work.title,
-      creator: p.creator ?? '—',
-      date: p.date ?? '',
+      // Название и автор берутся оттуда же, откуда их берёт карточка витрины.
+      // Музейное `provenance.work` тут не годится: у части работ оно на языке
+      // оригинала («Pragt-stilleben», «Interiør. Kunstigt lys»), и лист называл
+      // бы работу не тем именем, под которым она стоит на сайте. Автор бывает
+      // пустым, и это не пропуск: у работы с `creatorKind: "unknown"` витрина
+      // держит строку пустой намеренно — «Unknown» не имя, а шум.
+      work: cardName(work),
+      creator: cardCreator(work),
+      date: work.provenance?.date ?? '',
       file: path.basename(file),
       ...clockBand(data, info.width, info.height)
     });
@@ -112,9 +118,10 @@ export async function measureGallery() {
 if (import.meta.url === `file://${process.argv[1]}`) {
   const rows = await measureGallery();
   const empty = rows.filter(r => r.empty).sort((a, b) => a.lum - b.lum);
+  const by = r => [r.creator, r.date].filter(Boolean).join(', ');
   const line = r =>
     `  ${String(r.contrast).padStart(5)}:1  ${String(r.flat).padStart(4)}  ${r.ref}  ` +
-    `${r.work} — ${r.creator}${r.date ? `, ${r.date}` : ''}`;
+    `${r.work}${by(r) ? ` — ${by(r)}` : ''}`;
   console.log(`витрина: ${rows.length} видимых работ`);
   console.log(`полоса часов пуста у ${empty.length} (яркость ≤ ${THRESHOLD}, размах ≤ ${FLAT_MAX}, иконки ≤ ${ICONS_MAX})\n`);
   const dark = empty.filter(r => r.contrast >= 10);
