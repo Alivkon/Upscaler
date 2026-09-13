@@ -21,10 +21,12 @@ RUN yarn install --frozen-lockfile --production=true && yarn cache clean
 COPY catalogue ./catalogue
 COPY public ./public
 COPY scripts ./scripts
-COPY collections.js gallery.js http-error.js limits.js pages.js server.js treatment.js upscaler.js works.js ./
+COPY collections.js gallery.js http-error.js journal.js limits.js pages.js server.js treatment.js upscaler.js works.js ./
 
-# Не root: процессу нужно только читать код и писать в `images/`, который
-# приходит томом снаружи.
+# Не root: процессу нужно только читать код и писать в `images/` и `log/`,
+# которые приходят томами снаружи. Каталоги на машине должны принадлежать
+# этому же 1001:1001, иначе запись отваливается по правам — их заводит
+# `scripts/deploy.sh`.
 USER 1001:1001
 
 EXPOSE 3000

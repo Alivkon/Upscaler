@@ -45,6 +45,11 @@ rsync -a --info=progress2 --files-from=/tmp/tessarum-shipping-list.txt \
   images/ "$HOST:$DIR/images/"
 
 echo "==> пересборка"
+# Каталог журнала заводится здесь, а не docker'ом: том, которого нет на машине,
+# docker создаёт от root, а процесс в контейнере — 1001, и запись отваливается
+# по правам молча (ошибка уходит в `console.error`, сайт при этом жив, а журнал
+# пуст). `chown` идемпотентен и на уже заведённом каталоге ничего не меняет.
+ssh "$HOST" "mkdir -p $DIR/log && chown 1001:1001 $DIR/log"
 ssh "$HOST" "cd $DIR && docker compose --project-directory $DIR up -d --build"
 
 echo "==> проверка"
