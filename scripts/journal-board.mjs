@@ -84,12 +84,59 @@ for (const visit of people) {
 const noRef = coldEntries.filter(entry => entry.ref === '-').length;
 const alone = coldEntries.filter(entry => entry.pages === 1).length;
 
+// Перезапуск сервера посреди дня виден по составу столбцов. Соль `visit`
+// живёт в памяти процесса (`journal.js`) и не переживает перезапуск: тот же
+// посетитель после него получает другой хэш и считается вторым заходом.
+// Промолчать об этом нельзя — число заходов в такой день завышено, и завышено
+// невидимо. Признак косвенный (столбец добавляют не каждый перезапуск), зато
+// не требует ничего, кроме самого журнала, и в день выкладки срабатывает.
+function mixed(day) {
+  const file = path.join(DIRECTORY, `${day}.tsv`);
+  const text = fs.readFileSync(file, 'utf8');
+  const shapes = new Set(
+    text
+      .split('\n')
+      .filter(Boolean)
+      .map(line => line.split('\t').length)
+  );
+  return shapes.size > 1;
+}
+
 const rank = (counts, limit = 8) => [...counts.entries()].sort((a, b) => b[1] - a[1]).slice(0, limit);
 function tally(values) {
   const counts = new Map();
   for (const value of values) counts.set(value, (counts.get(value) || 0) + 1);
   return counts;
 }
+
+// Restore — платный маршрут, и потолков у него три (`RULES` в `limits.js`):
+// пять в час с браузера, десять в сутки с адреса, пятьдесят в сутки на всех.
+// Всплеск из одной ссылки упирается в последний, и после него каждый пришедший
+// получает 429, а витрина при этом выглядит живой — узнать об отказах можно
+// только отсюда. Считаются все запросы, а не только люди: потолок тратит
+// любой, кто дошёл. Какой из трёх потолков сработал, журнал не пишет —
+// у строки есть код ответа, а не правило, которое его дало.
+const upscales = records.filter(record => record.kind === 'api' && record.path.startsWith('/api/upscale'));
+const refused = upscales.filter(record => record.status === 429).length;
+const OUTCOMES = { 200: 'сделано', 429: 'отказ по потолку', 503: 'выключено', 400: 'не тот файл' };
+const outcomes = rank(tally(upscales.map(record => OUTCOMES[record.status] ?? `код ${record.status}`)));
+
+const misses = rank(tally(records.filter(record => record.kind === 'miss').map(record => record.path)));
+
+// Отдано — по всем строкам, потому что канал тратят и машины. Число это нижняя
+// граница, и граница известной природы: оборванная загрузка строки не оставляет
+// вовсе — `res.on('finish')` в `journal.js` на оборванном ответе не срабатывает.
+// Проверено 13.09.2026: файл в 15 МБ, отданный целиком, записан, а тот же файл,
+// оборванный на 102 КБ, — нет.
+const sent = list => list.reduce((sum, record) => sum + (Number(record.bytes) || 0), 0);
+const size = bytes =>
+  bytes >= 1024 ** 3 ? `${(bytes / 1024 ** 3).toFixed(2)} ГБ` : `${(bytes / 1024 ** 2).toFixed(1)} МБ`;
+const traffic = [
+  ['всего', size(sent(records))],
+  ['картинки', size(sent(records.filter(record => record.kind === 'image')))],
+  ['страницы', size(sent(records.filter(record => record.kind === 'page')))],
+  ['из всего — машинам', size(sent(records.filter(record => !humanKeys.has(record.key))))]
+];
 
 // Часы последнего дня, в местном времени того, кто смотрит: журнал пишется
 // в UTC, а вопрос «когда пошёл народ» задаётся про свои часы на стене.
@@ -144,6 +191,7 @@ const page = `<!doctype html>
   body { font: 15px/1.5 system-ui, sans-serif; max-width: 46rem; margin: 0 auto; padding: 2rem 1rem 4rem; color: #1a1a1a; }
   h1 { font-size: 1.1rem; font-weight: 600; margin: 0; }
   h1 span { font-weight: 400; color: #777; }
+  .fresh { font-size: .8rem; color: #777; margin: .25rem 0 0; }
   h2 { font-size: .8rem; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: #777; margin: 2rem 0 .5rem; }
   .row { display: flex; flex-wrap: wrap; gap: 1.5rem; margin-top: 1.25rem; }
   .n { min-width: 6rem; }
@@ -159,9 +207,11 @@ const page = `<!doctype html>
   td { border-top: 1px solid #eee; padding: .35rem 0; vertical-align: top; }
   td:last-child { text-align: right; color: #555; white-space: nowrap; padding-left: 1rem; }
   section p, footer { font-size: .8rem; color: #999; margin: .5rem 0 0; }
+  .warn { font-size: .8rem; color: #8a6d3b; background: #fcf8e3; border: 1px solid #f3e6c4; padding: .5rem .7rem; margin-top: 1rem; }
   footer { margin-top: 2.5rem; border-top: 1px solid #eee; padding-top: .75rem; }
 </style>
 <h1>Журнал <span>${safe(window)}</span></h1>
+<p class="fresh">Снимок на ${safe(new Date().toLocaleString('ru-RU', { dateStyle: 'short', timeStyle: 'short' }))} — сама страница не обновляется. Свежие числа: <code>yarn stats</code> в терминале.</p>
 
 <div class="row">
   ${number(people.length, 'заходов людей', `машин ${visits.length - people.length}`)}
@@ -170,9 +220,34 @@ const page = `<!doctype html>
   ${number(takes.length, 'унесли файлов', `ушли с первой же ${alone} из ${coldEntries.length}`)}
 </div>
 
+${
+  mixed(last)
+    ? '<p class="warn">В этот день менялся состав столбцов журнала — сервер перезапускали. ' +
+      'Соль <code>visit</code> перезапуск не переживает, поэтому посетитель, заходивший до и после, ' +
+      'посчитан здесь дважды: заходов не больше, чем показано, а меньше.</p>'
+    : ''
+}
+
+${
+  refused
+    ? `<p class="warn">Restore отказал по потолку ${refused} раз — посетители упёрлись в лимит. ` +
+      'Какой из трёх потолков, журнал не пишет; числа — <code>RULES</code> в <code>limits.js</code>.</p>'
+    : ''
+}
+
 <h2>Заходы по часам, ${safe(last)} (местное время)</h2>
 <div class="clock">${clock}</div>
 
+${table(
+  'Из каких стран',
+  // Страна берётся у захода, а не у строки: заход — это один посетитель,
+  // и считать его столько раз, сколько он попросил картинок, значит мерить
+  // не людей, а страницы. Прочерк назван словами: у строк, записанных до
+  // появления столбца, страны нет и быть не может, и в таблице это должно
+  // читаться как «нечем ответить», а не как маленькая страна.
+  rank(tally(people.map(visit => (visit.lines[0].country === '-' ? 'не определилась' : visit.lines[0].country)))),
+  'Считается из адреса в памяти запроса; сам адрес в журнал не попадает.'
+)}
 ${table(
   'Откуда пришли',
   rank(tally(pages.filter(record => foreign(record.ref)).map(record => record.ref))),
@@ -180,12 +255,22 @@ ${table(
 )}
 ${table('Что смотрели', rank(tally(pages.map(record => record.path))))}
 ${table('Что унесли', rank(tally(takes.map(nameOf))))}
+${table(
+  'Restore — /api/upscale',
+  outcomes,
+  'Все запросы, не только люди. Потолок на всех — 50 в сутки, и счётчик сервера обнуляется при перезапуске.'
+)}
 ${table('Чем смотрели', rank(tally(people.map(visit => deviceOf(visit.lines[0].ua)))))}
+${table(
+  'Чего не нашли (404)',
+  misses,
+  'Все запросы. Пробы вроде /wp-login.php — машины; опечатка в ссылке из комментария похожа на путь работы.'
+)}
+${table('Отдано', traffic, 'Нижняя граница: оборванная загрузка строки в журнале не оставляет.')}
 
 <footer>
   Строк ${records.length}, из них у людей ${human.length}. Боты отброшены правилом из
   <code>journal-read.mjs</code>; проверять его — <code>journal-rollup.mjs --sample 10</code>.
-  Собрано ${safe(new Date().toISOString().slice(0, 16).replace('T', ' '))} UTC — страница не обновляется сама.
 </footer>
 </html>
 `;
@@ -193,7 +278,9 @@ ${table('Чем смотрели', rank(tally(people.map(visit => deviceOf(visit
 fs.mkdirSync(path.dirname(OUT), { recursive: true });
 fs.writeFileSync(OUT, page);
 console.log(`доска: ${OUT}`);
-console.log(`  люди ${people.length}, страниц ${pages.length}, с Reddit ${fromReddit.length}, унесли ${takes.length}`);
+console.log(
+  `  люди ${people.length}, страниц ${pages.length}, с Reddit ${fromReddit.length}, унесли ${takes.length}, отказов Restore ${refused}`
+);
 
 if (flag('open')) {
   try {

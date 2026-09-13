@@ -153,8 +153,8 @@ await request({ path: '/w/%E0%A4%A', status: 404, headers: { 'user-agent': CHROM
 // 9. Подтверждение краулера привязано к паре «адрес и имя», а не к одному
 // адресу. Адреса переходят из рук в руки, и один и тот же адрес приходит
 // с разными словами о себе; вывод, сделанный про одно имя, не должен
-// достаться другому. Столбец `bot` — единственное место, где записан вывод,
-// а не сырое поле: переспросить его через месяц уже нельзя.
+// достаться другому. `bot` — один из двух столбцов, где записан вывод, а не
+// сырое поле (второй — `country`): переспросить его через месяц уже нельзя.
 //
 // DNS здесь подменён, а не спрошен: настоящий ответ зависит от того, чей
 // адрес сегодня чей, и проверка, которая ходит в сеть, однажды покраснеет
@@ -250,10 +250,16 @@ Object.assign(dns, real);
 // а новый столбец дописан перед ним. Прежний разбор отбрасывал короткую строку
 // целиком — первый же новый столбец стёр бы из всех сводок все прошлые дни,
 // молча и без единой ошибки на экране. Журнал заново не собрать.
+//
+// Форм теперь три, и проверяются все три, а не последняя: 12 столбцов писал
+// сервер до 13.09, 13 — между выкладкой формата́ми и выкладкой странами, 14 —
+// сегодняшний. Один файл дня содержит две формы сразу, если сервер перезапускали
+// посреди суток; 13.09.2026 так и вышло, и это не редкий случай, а обычный день
+// выкладки. Сдвиг на единицу здесь означал бы, что в столбце страны лежит
+// заголовок браузера, — и заметить это по самим числам нельзя.
 {
   const OLD = await fs.mkdtemp(path.join(os.tmpdir(), 'journal-old-'));
   const ua = 'Mozilla/5.0 (старый день)';
-  const before = COLUMNS.filter(column => column !== 'formats');
   const values = {
     time: '2026-09-01T10:00:00Z',
     visit: 'abcd1234',
@@ -266,16 +272,60 @@ Object.assign(dns, real);
     ref: '-',
     lang: 'en',
     bot: '-',
+    formats: 'avif,webp',
+    country: 'DE',
     ua
   };
-  await fs.writeFile(path.join(OLD, '2026-09-01.tsv'), before.map(column => values[column]).join('\t') + '\n');
+  // Каждая форма — свой день, чтобы записи не слились в один заход и порядок
+  // чтения был предсказуем.
+  const shapes = [
+    ['2026-09-01', ['formats', 'country'], 12],
+    ['2026-09-02', ['country'], 13],
+    ['2026-09-03', [], 14]
+  ];
+  for (const [day, missing, width] of shapes) {
+    const columns = COLUMNS.filter(column => !missing.includes(column));
+    if (columns.length !== width) complain(`форма ${day}: столбцов ${columns.length}, а не ${width}`);
+    await fs.writeFile(path.join(OLD, `${day}.tsv`), columns.map(column => values[column]).join('\t') + '\n');
+  }
   const { readDays } = await import('./journal-read.mjs');
   const { records } = await readDays(OLD, 7);
-  if (records.length !== 1) complain(`короткая строка прочитана как ${records.length} записей`);
-  if (records[0]?.ua !== ua) complain(`заголовок браузера прочитан как ${records[0]?.ua}`);
-  if (records[0]?.formats !== '-') complain(`у старой строки в форматах ${records[0]?.formats}, а не прочерк`);
-  if (records[0]?.bot !== '-' || records[0]?.lang !== 'en') complain('столбцы перед новым сдвинулись');
+  if (records.length !== shapes.length) complain(`строк прочитано ${records.length}, а не ${shapes.length}`);
+  for (const [at, [day, missing]] of shapes.entries()) {
+    const record = records[at];
+    if (!record) continue;
+    // `ua` последний в любой форме — на этом держится весь разбор.
+    if (record.ua !== ua) complain(`${day}: заголовок браузера прочитан как ${record.ua}`);
+    // Ведущие столбцы лежат по порядку от начала и сдвинуться не могут.
+    if (record.bot !== '-' || record.lang !== 'en' || record.path !== '/')
+      complain(`${day}: столбцы перед новыми сдвинулись`);
+    // Чего в форме не было — прочерк, отличимый от значения.
+    for (const column of missing)
+      if (record[column] !== '-') complain(`${day}: у отсутствовавшего столбца ${column} значение ${record[column]}`);
+    for (const column of ['formats', 'country'])
+      if (!missing.includes(column) && record[column] !== values[column])
+        complain(`${day}: столбец ${column} прочитан как ${record[column]}`);
+  }
   await fs.rm(OLD, { recursive: true, force: true });
+}
+
+// 14. Страна считается из адреса — и адрес при этом в файл не попадает.
+// Столбец заводится ради вопроса «откуда пришли», на который ни `lang`,
+// ни реферер не отвечают; но заводится он на том же условии, что и весь
+// журнал, и условие проверяется здесь, а не подразумевается.
+//
+// Частный адрес обязан дать прочерк, а не страну: с `127.0.0.1` ходит
+// healthcheck контейнера каждые тридцать секунд (`docker-compose.yml`),
+// и страна у него была бы выдумкой, которая в сводке весит как настоящий заход.
+{
+  const BERLIN = '80.153.1.1';
+  await request({ path: '/', ip: BERLIN, headers: { 'user-agent': CHROME } });
+  await request({ path: '/', ip: '127.0.0.1', headers: { 'user-agent': CHROME } });
+  const all = await lines(16);
+  if (all[14]?.country !== 'DE') complain(`страна немецкого адреса записана как ${all[14]?.country}`);
+  if (all[15]?.country !== '-') complain(`у частного адреса страна ${all[15]?.country}, а не прочерк`);
+  const text = await fs.readFile(path.join(DIRECTORY, `${new Date().toISOString().slice(0, 10)}.tsv`), 'utf8');
+  if (text.includes(BERLIN)) complain(`адрес ${BERLIN} попал в журнал вместе со страной`);
 }
 
 await fs.rm(DIRECTORY, { recursive: true, force: true });
@@ -285,4 +335,4 @@ if (problems.length) {
   for (const problem of problems) console.error(`  ${problem}`);
   process.exit(1);
 }
-console.log('журнал запросов: тринадцать проверок пройдены');
+console.log('журнал запросов: четырнадцать проверок пройдены');
