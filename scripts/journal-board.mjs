@@ -11,11 +11,13 @@
 // вопросов и печатается в терминал, где длина ничего не стоит. Здесь вопрос
 // один, и цена другая — всё, что не помещается на экран за один взгляд,
 // мешает. Правила чтения журнала общие и лежат в `journal-read.mjs`.
+import 'dotenv/config';
 import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { deviceOf, foreign, imageIndex, readDays, visitsOf } from './journal-read.mjs';
+import { TYPES, searchReport } from './search-console.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, '..');
@@ -40,6 +42,24 @@ if (PULL) {
   fs.mkdirSync(DIRECTORY, { recursive: true });
   console.log(`журнал с боевой машины → ${path.relative(ROOT, DIRECTORY)}`);
   execFileSync('rsync', ['-az', SOURCE, `${DIRECTORY}/`], { stdio: 'inherit' });
+}
+
+// Снимок Search Console лежит рядом с журналом и берётся тем же `--pull`.
+// Не ответил Google — доска собирается с прошлым снимком: у него своя дата
+// на странице, и выдать старое за свежее он не может.
+const GOOGLE = path.join(DIRECTORY, 'search-console.json');
+if (PULL) {
+  const keyFile = process.env.GOOGLE_SERVICE_ACCOUNT;
+  if (!keyFile) {
+    console.log('Search Console пропущена: в .env нет GOOGLE_SERVICE_ACCOUNT (как завести — .env.example)');
+  } else {
+    try {
+      fs.writeFileSync(GOOGLE, JSON.stringify(await searchReport(keyFile), null, 2));
+      console.log(`Search Console → ${path.relative(ROOT, GOOGLE)}`);
+    } catch (error) {
+      console.error(`Search Console не получена, на доске прошлый снимок: ${error.message}`);
+    }
+  }
 }
 
 // ── счёт ───────────────────────────────────────────────────────
@@ -182,6 +202,67 @@ const clock = hours
 const nameOf = record => byUrl.get(record.path)?.slug ?? path.basename(record.path);
 const window = days.length === 1 ? days[0] : `${days[0]} … ${days.at(-1)}`;
 
+// Google — отдельной частью под журналом и со своими датами. Сутки у Search
+// Console отстают на три дня, у журнала — нет, так что одно слово «неделя»
+// у них значит разные дни: числа стоят рядом, но не складываются и не делятся
+// друг на друга.
+let google = null;
+try {
+  google = JSON.parse(fs.readFileSync(GOOGLE, 'utf8'));
+} catch {
+  // Снимка нет — ключ не заведён или доска собрана без `--pull`. Часть Google
+  // тогда говорит об этом сама, а не исчезает молча.
+}
+
+const SEARCH = { image: 'в картинках', web: 'в вебе' };
+const at = row => (row?.impressions ? row.position.toFixed(1) : '—');
+const seen = row => `${row.impressions} пок. · ${row.clicks} пер. · поз. ${at(row)}`;
+const byShows = rows =>
+  [...rows]
+    .sort((a, b) => b.impressions - a.impressions)
+    .slice(0, 8)
+    .map(row => [row.keys[0], seen(row)]);
+
+function googlePart() {
+  if (!google) {
+    return (
+      '<h1 class="part">Google</h1><p class="fresh">Снимка Search Console нет. ' +
+      'Нужен ключ сервисного аккаунта в <code>GOOGLE_SERVICE_ACCOUNT</code>, как завести — <code>.env.example</code>; ' +
+      'берётся он при <code>yarn stats</code>.</p>'
+    );
+  }
+  const { from, to } = google.window;
+  const totals = TYPES.map(type => {
+    const total = google[type].total;
+    return number(
+      total?.impressions ?? 0,
+      `показов ${SEARCH[type]}`,
+      `переходов ${total?.clicks ?? 0}, позиция ${at(total)}`
+    );
+  }).join('');
+  // Дни без показов Google не присылает вовсе, поэтому ряд дат строится
+  // из окна, а не из ответа: пропавший день должен читаться нулём.
+  const dates = [];
+  for (let day = new Date(from); day <= new Date(to); day.setUTCDate(day.getUTCDate() + 1)) {
+    dates.push(day.toISOString().slice(0, 10));
+  }
+  const shows = (type, date) => google[type].byDay.find(row => row.keys[0] === date)?.impressions ?? 0;
+  const perDay = dates.map(date => [date, TYPES.map(type => `${SEARCH[type]} ${shows(type, date)}`).join(' · ')]);
+  const pathOf = rows => byShows(rows).map(([url, value]) => [new URL(url).pathname, value]);
+  return `<h1 class="part">Google <span>${safe(from)} … ${safe(to)}</span></h1>
+<p class="fresh">Search Console, снимок на ${safe(new Date(google.fetched).toLocaleString('ru-RU', { dateStyle: 'short', timeStyle: 'short' }))}. Сутки Google отстают на три дня, поэтому окно здесь своё, а не как у журнала выше. Позиция — средняя строка выдачи, 1 — первая.</p>
+<div class="row">${totals}</div>
+${table('Показы по дням', perDay)}
+${TYPES.map(
+  type =>
+    table(
+      `Запросы ${SEARCH[type]}`,
+      byShows(google[type].byQuery),
+      'Редкие запросы Google не называет, поэтому здесь показов меньше, чем в итоге.'
+    ) + table(`Страницы ${SEARCH[type]}`, pathOf(google[type].byPage))
+).join('\n')}`;
+}
+
 const page = `<!doctype html>
 <html lang="ru">
 <meta charset="utf-8">
@@ -191,6 +272,7 @@ const page = `<!doctype html>
   body { font: 15px/1.5 system-ui, sans-serif; max-width: 46rem; margin: 0 auto; padding: 2rem 1rem 4rem; color: #1a1a1a; }
   h1 { font-size: 1.1rem; font-weight: 600; margin: 0; }
   h1 span { font-weight: 400; color: #777; }
+  h1.part { margin-top: 3rem; padding-top: 1.5rem; border-top: 2px solid #1a1a1a; }
   .fresh { font-size: .8rem; color: #777; margin: .25rem 0 0; }
   h2 { font-size: .8rem; font-weight: 600; text-transform: uppercase; letter-spacing: .06em; color: #777; margin: 2rem 0 .5rem; }
   .row { display: flex; flex-wrap: wrap; gap: 1.5rem; margin-top: 1.25rem; }
@@ -267,6 +349,8 @@ ${table(
   'Все запросы. Пробы вроде /wp-login.php — машины; опечатка в ссылке из комментария похожа на путь работы.'
 )}
 ${table('Отдано', traffic, 'Нижняя граница: оборванная загрузка строки в журнале не оставляет.')}
+
+${googlePart()}
 
 <footer>
   Строк ${records.length}, из них у людей ${human.length}. Боты отброшены правилом из
