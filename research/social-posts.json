@@ -1,0 +1,31 @@
+{
+  "tumblr": [
+    {
+      "ref": "vl-0083",
+      "slug": "egypt-and-nubia-volume-i-english-print-iphone-wallpaper",
+      "postedAt": "2026-09-12",
+      "note": "posted before this tracker existed, at full plate size and landscape crop (the plate, not crops.phone) — do not repeat that mistake; leave as-is, do not repost"
+    },
+    {
+      "ref": "vl-0063",
+      "slug": "landscape-near-paris-landscape-desktop-wallpaper",
+      "postedAt": "2026-09-13",
+      "file": "images/for-tumblr/vl-0063-landscape-near-paris-landscape-desktop-wallpaper.jpg",
+      "tags": ["painting", "art", "landscape painting", "dark academia", "art history", "phone wallpaper", "georges michel", "romanticism"]
+    }
+  ],
+  "pinterest": [
+    {
+      "note": "predates this tracker — the grtnwdrknss/oninfrared account's Created tab already held several tessarum pins (at least vl-0067 'An Aqueduct Near a Fortress', a Hammershøi interior, a Kawanabe Fuji piece, a waterfall painting) mixed in with unrelated personal pins, made with the old title style ('…, 4K · WxH') and the old pin-field description ('…, no sign-up.'). Not fully catalogued by ref — check the live Created tab at https://www.pinterest.com/oninfrared/ before assuming a work is unposted.",
+      "board": "Art"
+    },
+    {
+      "ref": "vl-0063",
+      "slug": "landscape-near-paris-landscape-desktop-wallpaper",
+      "postedAt": "2026-09-13",
+      "board": "Art",
+      "title": "Landscape Near Paris, Georges Michel — dark academia phone wallpaper",
+      "file": "images/crops/landscape-near-paris-landscape-desktop-wallpaper-dim-phone-1772x3840.jpg"
+    }
+  ]
+}
