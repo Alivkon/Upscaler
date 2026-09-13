@@ -139,7 +139,11 @@ const { byUrl, total } = await imageIndex();
 const visits = visitsOf(records);
 const people = visits.filter(visit => !visit.bot);
 const bots = visits.filter(visit => visit.bot);
-const human = records.filter(record => people.some(visit => visit.key === record.key));
+// Множество, а не поиск по списку на каждую строку: заходов тысячи, строк
+// десятки тысяч, и на месяце это перебор в миллиарды сравнений — сводка
+// выглядела бы зависшей.
+const humanKeys = new Set(people.map(visit => visit.key));
+const human = records.filter(record => humanKeys.has(record.key));
 
 console.log(`Журнал: ${days[0]} … ${days.at(-1)} (${days.length} дн.), строк ${records.length}`);
 
@@ -260,10 +264,19 @@ for (const [name, folder] of [
 
 if (SAMPLE > 0) {
   console.log(`\n── ${SAMPLE} заходов для ручной разметки ──`);
-  const picked = visits
-    .slice()
-    .sort(() => Math.random() - 0.5)
-    .slice(0, SAMPLE);
+  // Тасуется по Фишеру — Йетсу, а не `sort(() => Math.random() - 0.5)`.
+  // Тот сравнитель непоследователен, и перемешиванием не является: почти все
+  // элементы остаются близко к своим местам. Список идёт в порядке файла,
+  // от старого дня к новому, — то есть в размеченный рукой образец попадали
+  // бы в основном самые ранние заходы окна. От этого образца зависят точность
+  // и полнота правила «бот или человек», а перекос в нём по самим числам
+  // не виден.
+  const picked = visits.slice();
+  for (let at = picked.length - 1; at > 0; at -= 1) {
+    const swap = Math.floor(Math.random() * (at + 1));
+    [picked[at], picked[swap]] = [picked[swap], picked[at]];
+  }
+  picked.length = Math.min(SAMPLE, picked.length);
   for (const visit of picked) {
     const first = visit.lines[0];
     console.log(`\n${visit.key} — правило говорит «${visit.bot ? visit.why : 'человек'}», строк ${visit.lines.length}`);
