@@ -1,0 +1,19 @@
+{
+  "_": "Работы, которые Charlie назвал сам и велел добыть при следующем обходе. На витрину не ставить, пока не пройдут обычный путь из ADDING.md: мастер, обработка, кадр, каталог. Взятое отсюда удалять.",
+  "works": [
+    {
+      "added": "2026-09-13",
+      "creator": "Louis Daguerre",
+      "work": "The Ruins of Holyrood Chapel",
+      "date": "1824",
+      "medium": "oil on canvas, 211 × 256.3 cm",
+      "credit": "Walker Art Gallery, National Museums Liverpool",
+      "license": "public-domain",
+      "master": "https://upload.wikimedia.org/wikipedia/commons/b/be/Louis_Daguerre_-_The_Ruins_of_Holyrood_Chapel_-_Google_Art_Project.jpg",
+      "page": "https://commons.wikimedia.org/wiki/File:Louis_Daguerre_-_The_Ruins_of_Holyrood_Chapel_-_Google_Art_Project.jpg",
+      "museum": "https://www.liverpoolmuseums.org.uk/artifact/ruins-of-holyrood-chapel",
+      "full": "3482×2844",
+      "note": "Не CC0: съёмка Google Art Project, музей сам не выпускал — public domain, как у остальных GAP-файлов. Лунная руина, тёмная: до выбора обработки прогнать mood.mjs."
+    }
+  ]
+}
