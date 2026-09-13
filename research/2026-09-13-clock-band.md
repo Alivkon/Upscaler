@@ -5,71 +5,132 @@
 отвечало на половину — «тонут ли часы», яркость под цифрами против порога 145.
 Но читаться белое может и поверх ветки.
 
-## Вторая мера — пустота
+## Первая мера была неправа
 
-Расстояние между 10-м и 90-м процентилями яркости внутри самой полосы цифр.
-Небо, тень и стена дают единицы, ветка поперёк — десятки. По витрине медиана
-24.7, нижняя четверть кончается на 8.8.
+Первый заход считал пустоту размахом по всей полосе — расстоянием между 10-м
+и 90-м процентилями яркости, — и отсекал по 8, нижней четверти витрины. Charlie
+посмотрел лист и сказал, что многие отвергнутые пусты: «Mount Washington»
+отвергалась с 8.8, имея под цифрами чистое небо.
 
-Отсечка `≤ 8` **выбрана, а не найдена**. Обрыва в числах нет, список растёт
-плавно: ≤ 8 даёт 24 работы, ≤ 12 — 29, ≤ 20 — 42. Восьмёрка взята потому, что
-это нижняя четверть и дальше глазом уже видно, что через полосу что-то идёт.
-Порог 145 — наоборот, не наш: он из `dimming.mjs`, где означает 3.15:1.
+Причина не в числе, а в мере. Полоса шириной в две трети кадра накрывает целое
+небо, а у неба есть склон: от горизонта к зениту яркость плавно едет, и размах
+выходит большой там, где глазом пусто. Проверка на шести работах: у «Sumptuous
+Still Life», которая проходила, наклон по горизонтали 9.7 — БОЛЬШЕ, чем
+у отвергнутой «Mount Washington» (9.3). Мера мерила не то.
+
+## Вторая мера — местный разброс
+
+Тот же довод, что в `busyness.mjs`: важно не «сколько всего в полосе», а
+«прыгает ли яркость на клочке размером с цифру». Полоса режется окнами 16×16
+с шагом 8, в каждом — расстояние между 10-м и 90-м процентилями, число работы —
+90-й процентиль по окнам.
+
+Не медиана: ствол через цифры занимает четверть окон, и медиана его проглатывает
+(«Bamboo in Four Seasons» — медиана 9.0, на уровне прошедших). Не максимум: одно
+окно ловит соринку и врёт, как `worst` у соседней меры («Gooseberries» — максимум
+53.5 при том, что цифры лежат на ровной темноте).
+
+Шестнадцать пикселей — не произвольно. Цифры набраны кеглем 0.235 ширины кадра,
+на копии в 200 px это 47 px высоты; 16 px — просвет внутри цифры, тот клочок,
+на фоне которого глаз читает штрих.
+
+## Метки и счёт
+
+Отсечка выбрана по меткам, а не по квантилю. Помечено 25 работ по листам
+с наложенными часами: **пусто** — цифры лежат на небе, стене или ровной темноте;
+**занято** — через них идёт ствол, карниз, ветка.
+
+- пусто (22): vl-0052, vl-0373, vl-0087, vl-0142, vl-0177, vl-0175, vl-0324,
+  vl-0164, vl-0179, vl-0393, vl-0066, vl-0045, vl-0362, vl-0047, vl-0355,
+  vl-0392, vl-0240, vl-0397, vl-0387, vl-0256, vl-0363, vl-0043;
+- занято (3): vl-0176 (чертополох и бабочка), vl-0219 (стволы бамбука),
+  vl-0060 (карниз руины).
+
+| мера | пусто до | занято от | |
+|---|---|---|---|
+| размах по всей полосе | 17.4 | 15.2 | перекрытие 2.2 |
+| местный разброс, медиана | 8.6 | 8.0 | перекрытие 0.6 |
+| **местный разброс, 90-й процентиль** | **17.7** | **20.0** | **разделяет** |
+| местный разброс, максимум | 53.5 | 23.6 | перекрытие 29.9 |
+| доля краёв | 10.9 | 5.6 | перекрытие 5.4 |
+
+Разделяет только 90-й процентиль. Отсечка **18** — самая тесная, при которой
+не теряется ни одна из 22: при 17 теряются две, при 20 проходит одна занятая.
+Полнота 22/22, точность 3/3 — но отрицательных меток всего три, и это тонкая
+опора; расширять её стоит на первом же спорном случае.
 
 Домашний экран проверяется заодно (пестрота рядов 1–4 ≤ 44) и здесь не стоит
 ничего: среди работ с пустой полосой нет ни одной, что отсеялась бы только
 по нему.
 
-## Двадцать четыре работы, и они делятся надвое
+## Сорок работ, и они делятся надвое
 
-Десять тёмных. Часы не просто читаются — лежат в черноте.
+Пятнадцать тёмных. Часы не просто читаются — лежат в черноте.
 
 | ref | работа | автор | контраст | размах |
 |---|---|---|---|---|
-| vl-0052 | Memento Mori, "To This Favour" | William Michael Harnett, 1879 | 19.4:1 | 6.5 |
-| vl-0373 | Fisherman's Cottage | Harald Oscar Sohlberg, 1906 | 19.2:1 | 7.6 |
+| vl-0052 | Memento Mori, "To This Favour" | William Michael Harnett, 1879 | 19.4:1 | 6.9 |
+| vl-0373 | Fisherman's Cottage | Harald Oscar Sohlberg, 1906 | 19.2:1 | 17.7 |
 | vl-0087 | Gooseberries on a Table | Adriaen Coorte, 1701 | 17.4:1 | 4.1 |
-| vl-0142 | Welcoming Descent of Amida | неизвестен, сер. 1300-х | 16.9:1 | 5.9 |
-| vl-0177 | Sumptuous Still Life | Pieter de Ring, 1630–1660 | 16.8:1 | 3.6 |
-| vl-0175 | Interior. Artificial Light | Vilhelm Hammershøi, 1909 | 16.7:1 | 4 |
-| vl-0324 | The Destruction of the Children of Niobe | Richard Wilson, 1760 | 15.8:1 | 7.1 |
-| vl-0164 | Kasuga Shrine Mandala | неизвестен, нач. 1300-х | 15.4:1 | 6.9 |
-| vl-0179 | The Åse Farm in Telemark | Halfdan Egedius, 1893 | 13.6:1 | 7.8 |
+| vl-0037 | Silver Wine Jug, Ham, and Fruit | Abraham van Beyeren, c. 1660–66 | 17.1:1 | 17.3 |
+| vl-0142 | Welcoming Descent of Amida | mid-1300s | 16.9:1 | 6 |
+| vl-0177 | Sumptuous Still Life | Pieter de Ring, 1630–1660 | 16.8:1 | 4.1 |
+| vl-0175 | Interior. Artificial Light | Vilhelm Hammershøi, 1909 | 16.7:1 | 3 |
+| vl-0324 | The Destruction of the Children of Niobe | Richard Wilson, 1760 | 15.8:1 | 10.1 |
+| vl-0355 | Mount Vesuvius at Midnight | Albert Bierstadt, 1868 | 15.5:1 | 12.3 |
+| vl-0053 | In the Woods | George Inness, 1866 | 15.5:1 | 17.6 |
+| vl-0164 | Kasuga Shrine Mandala | early 1300s | 15.4:1 | 9.5 |
+| vl-0397 | Alpes japonaises | Yamamoto Shunkyo, 20th century | 13.8:1 | 17.1 |
+| vl-0179 | The Åse Farm in Telemark | Halfdan Egedius, 1893 | 13.6:1 | 8 |
 | vl-0393 | Bivouac at Yingkou | Kobayashi Kiyochika, 1895 | 11.7:1 | 6 |
+| vl-0043 | Storm in the Mountains | Frederic Edwin Church, 1847 | 10.5:1 | 15.9 |
 
 
-Четырнадцать светлых. Полоса так же пуста — небо, дымка, вода, — но светла:
-белое читается, и всё же это серое по серому. Три последних идут почти вплотную
+
+Двадцать пять светлых. Полоса так же пуста — небо, дымка, вода, — но светла:
+белое читается, и всё же это серое по серому. Последние идут почти вплотную
 к порогу 3.15:1.
 
 | ref | работа | автор | контраст | размах |
 |---|---|---|---|---|
-| vl-0280 | Italian Landscape: The Abbey and the Monks | Jean-Victor Bertin | 7.4:1 | 7.2 |
-| vl-0319 | Dover | Richard Wilson, 1746 | 6.6:1 | 5.9 |
-| vl-0067 | An Aqueduct Near a Fortress | Jean-Victor Bertin, 1807 | 5.8:1 | 5.7 |
-| vl-0064 | The Waterfalls at Tivoli | Claude-Joseph Vernet, 1737 | 5.8:1 | 7.3 |
-| vl-0382 | Landscape, Site of Greece | Jean-Victor Bertin, 1812 | 5.7:1 | 4.6 |
-| vl-0265 | The Summer (Landscape with couple) | Caspar David Friedrich, 1807 | 5.6:1 | 7.8 |
-| vl-0297 | Sunlight and Shadow: The Newbury Marshes | Martin Johnson Heade, 1871 | 5.3:1 | 5.3 |
-| vl-0259 | Forstudie til "Solregn. Gentofte Sø" | Vilhelm Hammershøi, 1903 | 5:1 | 6.4 |
-| vl-0365 | The Hall of Amida Buddha | Kobayashi Kokei (1883-1957), 1915 | 4.8:1 | 5.5 |
-| vl-0066 | Lion on the Watch | Jean-Léon Gérôme, c. 1885 | 4.8:1 | 3.6 |
-| vl-0358 | An October Day in the White Mountains | John Frederick Kensett, 1854 | 4.3:1 | 5 |
-| vl-0359 | Carp | Aizawa Bunseki, Meiji period, 19th century | 3.6:1 | 6.9 |
-| vl-0068 | Tiger in Wind | Maruyama Ōkyo, 1800s | 3.5:1 | 6 |
-| vl-0376 | Gebirgssee | Arnold Böcklin, 1846 | 3.4:1 | 7.2 |
+| vl-0280 | Italian Landscape: The Abbey and the Monks | Jean-Victor Bertin | 7.4:1 | 5.8 |
+| vl-0319 | Dover | Richard Wilson, 1746 | 6.6:1 | 6.1 |
+| vl-0363 | Seascape | Kaji Tameya (?-1894), 1883 | 6.6:1 | 14.3 |
+| vl-0256 | Interior with the Old Stove, Albertines Lyst | Vilhelm Hammershøi | 6.3:1 | 13.4 |
+| vl-0386 | Meleager and Atalanta | Richard Wilson, circa 1770 | 6.1:1 | 13.9 |
+| vl-0067 | An Aqueduct Near a Fortress | Jean-Victor Bertin, 1807 | 5.8:1 | 3.1 |
+| vl-0064 | The Waterfalls at Tivoli | Claude-Joseph Vernet, 1737 | 5.8:1 | 6.1 |
+| vl-0382 | Landscape, Site of Greece | Jean-Victor Bertin, 1812 | 5.7:1 | 3.6 |
+| vl-0265 | The Summer (Landscape with couple) | Caspar David Friedrich, 1807 | 5.6:1 | 6.8 |
+| vl-0240 | Rocky, Wooded Landscape with a Dell and Weir | Thomas Gainsborough, c. 1782–1783 | 5.4:1 | 11.9 |
+| vl-0297 | Sunlight and Shadow: The Newbury Marshes | Martin Johnson Heade, 1871 | 5.3:1 | 5.5 |
+| vl-0384 | Landscape, From Lejre | Vilhelm Hammershøi, 1905 | 5.2:1 | 17.6 |
+| vl-0259 | Forstudie til "Solregn. Gentofte Sø" | Vilhelm Hammershøi, 1903 | 5:1 | 5.4 |
+| vl-0387 | From the Old Christiansborg | Vilhelm Hammershøi, 1892 | 4.9:1 | 13.9 |
+| vl-0365 | The Hall of Amida Buddha | Kobayashi Kokei (1883-1957), 1915 | 4.8:1 | 3 |
+| vl-0066 | Lion on the Watch | Jean-Léon Gérôme, c. 1885 | 4.8:1 | 3.7 |
+| vl-0047 | Durham, Connecticut | George Inness, 1858 | 4.6:1 | 8 |
+| vl-0392 | Crow in flight | неизвестен | 4.6:1 | 10.2 |
+| vl-0045 | Mount Washington, New Hampshire | Jasper F. Cropsey, 1870 | 4.4:1 | 5.4 |
+| vl-0358 | An October Day in the White Mountains | John Frederick Kensett, 1854 | 4.3:1 | 3.6 |
+| vl-0359 | Carp | Aizawa Bunseki, Meiji period, 19th century | 3.6:1 | 8.3 |
+| vl-0362 | Torpedoes | Hashimoto Gaho (1835-1908), Meiji period, 19th century | 3.6:1 | 8.8 |
+| vl-0390 | Mountain Village after Storm | Yokoyama Taikan, 1912 | 3.6:1 | 13.4 |
+| vl-0068 | Tiger in Wind | Maruyama Ōkyo, 1800s | 3.5:1 | 14.6 |
+| vl-0376 | Gebirgssee | Arnold Böcklin, 1846 | 3.4:1 | 3.3 |
 
 
-Лев — лучшая пустота во всей витрине (3.6), и при этом контраст 4.8:1. Две меры
-независимы, и это видно именно на нём: идеально пустое небо — светлое небо.
+
+Лев — одна из самых пустых работ витрины (3.7) и при этом контраст 4.8:1. Две
+меры независимы, и это видно именно на нём: идеально пустое небо — светлое небо.
 
 ## Что проверено глазом
 
-Все десять тёмных и шесть светлых просмотрены с наложенными часами 9:41 —
-лист рисуется из тех же файлов, что меряются. Числа сошлись с глазом везде;
-ближе всего к промаху vl-0393, где цифры почти касаются шлема всадника,
-и vl-0142, где за ними стоит нимб Будды. Оба держат, потому что фон там
-хоть и занят, но плоский, — то есть меряется ровно то, что нужно.
+Тридцать одна из сорока просмотрена с наложенными часами 9:41 — лист рисуется
+из тех же файлов, что меряются. Ближе всего к промаху vl-0393, где цифры почти
+касаются шлема всадника, и vl-0142, где за ними стоит нимб Будды. Оба держат,
+потому что фон там хоть и занят, но плоский, — то есть меряется ровно то,
+что нужно.
 
 ## Поправка к предыдущей записке
 
@@ -101,8 +162,8 @@ Still Life», «Interiør. Kunstigt lys», «Bondegården Åse i Telemarken». �
 
 ## Файлы
 
-- `scripts/research/clock-band.mjs` — мера и список. Экспортирует `clockBand()`
-  и `measureGallery()`, запущенный напрямую печатает обе таблицы с автором.
+- `scripts/research/clock-band.mjs` — мера и список. Экспортирует `clockBand()`,
+  `emptiness()` и `measureGallery()`, запущенный напрямую печатает обе таблицы.
 - `scripts/research/clock-sheet.mjs` — лист: вся витрина с наложенными часами,
   по образцу `treat-sheet.mjs` (один самодостаточный файл, `--only`, `--out`).
   Разделы: прошедшие тёмные, прошедшие светлые, остальные — ближайшие к порогу
@@ -112,4 +173,5 @@ Still Life», «Interiør. Kunstigt lys», «Bondegården Åse i Telemarken». �
 - Разовые скрипты разбора не коммитятся, как и прочие точечные меры:
   `.clockempty.mjs` (первый заход), `.clocksheet.mjs` и `.clocktiles.mjs`
   (первые листы с часами, вытеснены `clock-sheet.mjs`), `.clockundim.mjs`
-  (проверка двенадцати `none`).
+  (проверка двенадцати `none`), `.bandprobe.mjs` и `.bandcal.mjs` (сравнение
+  пяти мер на метках), `.bandsheet.mjs` (листы, по которым метки ставились).

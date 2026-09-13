@@ -8,14 +8,32 @@
 //
 // Правило оттуда отвечало на половину вопроса: «тонут ли часы» — яркость под
 // цифрами против порога 145. Но читаться можно и поверх ветки. Вторая половина
-// — пустота: расстояние между 10-м и 90-м процентилями яркости внутри самой
-// полосы. Небо, тень и стена дают единицы, ветка поперёк — десятки.
+// — пустота, и как её мерить, выяснилось не сразу.
 //
-// Пустота — отсечка выбранная, а не найденная: обрыва в числах нет, список
-// растёт плавно (≤ 8 даёт 24 работы, ≤ 12 — 29, ≤ 20 — 42). Восьмёрка взята
-// потому, что это нижняя четверть витрины и дальше глазом уже видно, что через
-// полосу что-то идёт. Порог 145 — наоборот, не наш: он из `dimming.mjs`, где
-// означает 3.15:1 для белого.
+// ПЕРВЫЙ ЗАХОД МЕРЯЛ РАЗМАХ ПО ВСЕЙ ПОЛОСЕ — расстояние между 10-м и 90-м
+// процентилями яркости, — и был неправ. Полоса шириной в две трети кадра
+// накрывает целое небо, а у неба есть склон: от горизонта к зениту яркость
+// плавно едет, и размах выходит большой там, где глазом пусто. «Mount
+// Washington» отвергалась с 8.8 при отсечке 8, имея под цифрами чистое небо.
+//
+// Мера поэтому местная, и это тот же довод, что в `busyness.mjs`: важно не
+// «сколько всего в полосе», а «прыгает ли яркость на клочке размером с цифру».
+// Полоса режется окнами 16×16 с шагом 8, в каждом берётся расстояние между
+// 10-м и 90-м процентилями, и число работы — 90-й процентиль по окнам.
+// Не медиана: ствол через цифры занимает четверть окон, и медиана его
+// проглатывает. Не максимум: одно окно ловит соринку и врёт (та же причина,
+// по которой `busyness.mjs` не режет по своему `worst`).
+//
+// Шестнадцать пикселей — не произвольно. Цифры набраны кеглем 0.235 ширины
+// кадра, на копии в 200 px это 47 px высоты; 16 px — просвет внутри цифры,
+// тот клочок, на фоне которого глаз читает штрих.
+//
+// Отсечка 18 ВЫБРАНА ПО МЕТКАМ, а не по квантилю витрины: 22 работы, у которых
+// цифры лежат на небе, стене или ровной темноте, против 3, через которые идёт
+// ствол, карниз или ветка. Метки и счёт — в research/2026-09-13-clock-band.md.
+// Две кучи эта мера разделяет (пусто до 17.7, занято от 20.0), а размах по всей
+// полосе — нет, он их перекрывает. Порог 145 — наоборот, не наш: он из
+// `dimming.mjs`, где означает 3.15:1 для белого.
 //
 // Меряется то, что поедет на телефон, — `crops.phone` из манифеста, как он
 // есть. Подставлять приглушённый кадр там, где в манифесте `-none-`, нельзя:
@@ -42,7 +60,11 @@ const X1 = 0.82;
 // его держит «Vase of Flowers»; проверяется заодно, чтобы список не предлагал
 // работу, годную только под часы.
 export const ICONS_MAX = 44;
-export const FLAT_MAX = 8;
+export const FLAT_MAX = 18;
+
+// Окно местной меры и шаг между окнами, в пикселях копии шириной 200.
+const WIN = 16;
+const STEP = 8;
 
 const pct = (sorted, q) => sorted[Math.round(q * (sorted.length - 1))];
 const med = a => {
@@ -51,32 +73,57 @@ const med = a => {
   return (s[m - 1] + s[m]) / 2;
 };
 
-// Яркость и пустота одной полосы. Ширина 200 px — то же условие измерения, что
-// у соседних мер: пестрота по яркости зависит от размера, и на полном кадре
-// числа оказываются на другой шкале.
-export function strip(data, width, height, [y0, y1]) {
+// Ширина 200 px — то же условие измерения, что у соседних мер: разброс яркости
+// зависит от размера, и на полном кадре числа оказываются на другой шкале.
+const box = (width, height, [y0, y1]) => [
+  Math.round(width * X0),
+  Math.round(height * y0),
+  Math.round(width * X1),
+  Math.round(height * y1)
+];
+const at = (data, width, x, y) => {
+  const i = (y * width + x) * 3;
+  return luma(data[i], data[i + 1], data[i + 2]);
+};
+
+// Яркость под белым текстом: 90-й процентиль по всей полосе. Здесь мера
+// намеренно общая — тонет текст от светлого фона, где бы тот ни был.
+export function strip(data, width, height, band) {
+  const [x0, y0, x1, y1] = box(width, height, band);
   const vals = [];
-  for (let y = Math.round(height * y0); y < Math.round(height * y1); y++)
-    for (let x = Math.round(width * X0); x < Math.round(width * X1); x++) {
-      const i = (y * width + x) * 3;
-      vals.push(luma(data[i], data[i + 1], data[i + 2]));
-    }
+  for (let y = y0; y < y1; y++) for (let x = x0; x < x1; x++) vals.push(at(data, width, x, y));
   vals.sort((a, b) => a - b);
-  return { lum: Number(pct(vals, 0.9).toFixed(1)), flat: Number((pct(vals, 0.9) - pct(vals, 0.1)).toFixed(1)) };
+  return Number(pct(vals, 0.9).toFixed(1));
+}
+
+// Пустота полосы: 90-й процентиль местного разброса по окнам.
+export function emptiness(data, width, height, band) {
+  const [x0, y0, x1, y1] = box(width, height, band);
+  const spreads = [];
+  for (let y = y0; y + WIN <= y1; y += STEP)
+    for (let x = x0; x + WIN <= x1; x += STEP) {
+      const vals = [];
+      for (let j = y; j < y + WIN; j++) for (let i = x; i < x + WIN; i++) vals.push(at(data, width, i, j));
+      vals.sort((a, b) => a - b);
+      spreads.push(pct(vals, 0.9) - pct(vals, 0.1));
+    }
+  spreads.sort((a, b) => a - b);
+  return Number(pct(spreads, 0.9).toFixed(1));
 }
 
 // Полная мера работы по уже прочитанным пикселям кадра шириной 200 px.
 export function clockBand(data, width, height) {
-  const time = strip(data, width, height, TIME);
-  const date = strip(data, width, height, DATE);
+  const lum = strip(data, width, height, TIME);
+  const dateLum = strip(data, width, height, DATE);
+  const flat = emptiness(data, width, height, TIME);
   const icons = Number(med(busyness(data, width, height).cells.slice(4, 20)).toFixed(1));
   return {
-    lum: time.lum,
-    flat: time.flat,
-    dateLum: date.lum,
+    lum,
+    flat,
+    dateLum,
     icons,
-    contrast: Number(contrastWithWhite(time.lum).toFixed(1)),
-    empty: time.lum <= THRESHOLD && date.lum <= THRESHOLD && time.flat <= FLAT_MAX && icons <= ICONS_MAX
+    contrast: Number(contrastWithWhite(lum).toFixed(1)),
+    empty: lum <= THRESHOLD && dateLum <= THRESHOLD && flat <= FLAT_MAX && icons <= ICONS_MAX
   };
 }
 
