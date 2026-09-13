@@ -1,16 +1,15 @@
 // Сводка по журналу запросов. Журнал пишет признаки (`journal.js`), выводы
 // делаются здесь — и потому переделываются на тех же данных, сколько угодно раз.
+// Чтение, заходы и привязка файлов к работам живут в `journal-read.mjs`.
 //
 //   node scripts/journal-rollup.mjs [--days 7] [--dir log] [--sample 10]
 //
 // `--sample` печатает случайные заходы целиком, чтобы разметить их рукой:
 // правило «бот или человек» — это правило «да/нет», и без ручных ярлыков
 // его точность и полнота неизвестны, а от него зависит каждое число выше.
-import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { COLUMNS } from '../journal.js';
-import { galleryItems } from '../gallery.js';
+import { deviceOf, foreign, imageIndex, readDays, visitsOf } from './journal-read.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, '..');
@@ -23,88 +22,6 @@ const option = (name, fallback) => {
 const DAYS = Number(option('days', 7));
 const DIRECTORY = path.resolve(ROOT, option('dir', process.env.LOG_DIR || 'log'));
 const SAMPLE = Number(option('sample', 0));
-
-// ── чтение ─────────────────────────────────────────────────────
-
-async function readDays() {
-  let names;
-  try {
-    names = (await fs.readdir(DIRECTORY)).filter(name => name.endsWith('.tsv')).sort();
-  } catch {
-    console.error(`журнала нет: ${DIRECTORY}`);
-    process.exit(1);
-  }
-  const wanted = names.slice(-DAYS);
-  const records = [];
-  for (const name of wanted) {
-    const text = await fs.readFile(path.join(DIRECTORY, name), 'utf8');
-    for (const line of text.split('\n')) {
-      if (!line) continue;
-      const parts = line.split('\t');
-      if (parts.length < COLUMNS.length) continue;
-      const record = Object.fromEntries(COLUMNS.map((column, at) => [column, parts[at]]));
-      // Хвост заголовка браузера мог содержать табуляцию — собираем обратно.
-      if (parts.length > COLUMNS.length) record.ua = parts.slice(COLUMNS.length - 1).join(' ');
-      record.day = name.slice(0, 10);
-      record.key = `${record.day}/${record.visit}`;
-      record.ms = Number(record.ms);
-      record.status = Number(record.status);
-      records.push(record);
-    }
-  }
-  return { records, days: wanted.map(name => name.slice(0, 10)) };
-}
-
-// ── что за файл спросили ───────────────────────────────────────
-
-// Адрес картинки → работа, кадр и место на указателе. Считается из той же
-// `galleryItems()`, из которой собирается сама витрина: второй список имён
-// файлов разошёлся бы с первым молча (AGENTS.md).
-async function imageIndex() {
-  const shown = (await galleryItems()).filter(item => !item.hidden);
-  const byUrl = new Map();
-  shown.forEach((item, position) => {
-    const put = (url, frame, full) => byUrl.set(decodeURI(url), { slug: item.slug, frame, full, position });
-    put(item.url, 'plate', true);
-    for (const copy of item.copies) put(copy.url, 'plate', false);
-    for (const [frame, cut] of Object.entries(item.crops || {})) {
-      if (!cut) continue;
-      put(cut.url, frame, true);
-      for (const copy of cut.copies || []) put(copy.url, frame, false);
-    }
-    if (item.scan) put(item.scan.url, 'scan', true);
-  });
-  return { byUrl, total: shown.length };
-}
-
-// ── кто приходил ───────────────────────────────────────────────
-
-// Заход — это все строки одного `visit` за день. Правило грубое и заведомо
-// неточное; его и проверяют `--sample` и ручные ярлыки.
-//
-// Три признака, по убыванию надёжности. Назвался краулером — краулер, и спорить
-// не о чем. Забрал страницу и не забрал к ней ни файла — не браузер: браузер
-// просит `styles.css` и карточки в ту же секунду, а качалка берёт разметку
-// и уходит. Не прислал языка вовсе — признак слабый, сам по себе не судит.
-function classify(lines) {
-  const declared = lines.map(line => line.bot).find(bot => bot && bot !== '-' && bot !== 'noua');
-  const pages = lines.filter(line => line.kind === 'page').length;
-  const props = lines.filter(line => line.kind === 'asset' || line.kind === 'image').length;
-  const noua = lines.some(line => line.bot === 'noua');
-  if (declared) return { bot: true, why: declared.split(':')[0], fake: declared.endsWith(':fake') };
-  if (noua) return { bot: true, why: 'без заголовка' };
-  if (pages > 0 && props === 0) return { bot: true, why: 'молча' };
-  return { bot: false, why: 'человек' };
-}
-
-function visitsOf(records) {
-  const groups = new Map();
-  for (const record of records) {
-    if (!groups.has(record.key)) groups.set(record.key, []);
-    groups.get(record.key).push(record);
-  }
-  return [...groups].map(([key, lines]) => ({ key, lines, ...classify(lines) }));
-}
 
 // ── печать ─────────────────────────────────────────────────────
 
@@ -130,12 +47,12 @@ const percentile = (numbers, share) =>
 
 // ── сводка ─────────────────────────────────────────────────────
 
-const { records, days } = await readDays();
+const { records, days } = await readDays(DIRECTORY, DAYS);
 if (!records.length) {
   console.log(`журнал пуст: ${DIRECTORY}`);
   process.exit(0);
 }
-const { byUrl, total } = await imageIndex();
+const { byUrl, total, slugs } = await imageIndex();
 const visits = visitsOf(records);
 const people = visits.filter(visit => !visit.bot);
 const bots = visits.filter(visit => visit.bot);
@@ -157,22 +74,37 @@ table(rank(tally(bots.map(visit => visit.why))), 'Машины: кто (захо
 const fakes = bots.filter(visit => visit.fake);
 if (fakes.length) console.log(`  из них не подтвердились обратным DNS: ${fakes.length}`);
 
+// Заход — одно устройство, поэтому берётся первая строка захода, а не все.
+table(rank(tally(people.map(visit => deviceOf(visit.lines[0].ua)))), 'Чем смотрели (заходов)');
+
 table(
   rank(tally(human.filter(record => record.kind === 'page' && record.status < 400).map(record => record.path))),
   'Что смотрели (страниц)'
 );
 
-// Свой реферер — это переход внутри сайта, и он отвечает на другой вопрос,
-// чем «откуда пришли». Поэтому разделены.
-const outside = human.filter(
-  record =>
-    record.kind === 'page' &&
-    record.ref !== '-' &&
-    !record.ref.startsWith('tessarum') &&
-    !record.ref.startsWith('127.0.0.1') &&
-    !record.ref.startsWith('localhost')
-);
+const outside = human.filter(record => record.kind === 'page' && foreign(record.ref));
 table(rank(tally(outside.map(record => record.ref.split('/')[0]))), 'Откуда пришли (переходов)');
+
+// ── с чего начинали и ушли ли сразу ────────────────────────────
+
+// Страницы наглухо не кэшируются: `res.send` ставит ETag (`server.js`, `html`),
+// и повторный показ приходит на сервер как 304. Значит, в заходе видны все
+// страницы, а не только первая, и «ушёл с первой же» — измерение, а не догадка.
+// Заходы без страницы вовсе сюда не идут: это прямая ссылка на файл, у неё
+// ни входа, ни ухода нет.
+const entries = [];
+for (const visit of people) {
+  // Порядок строк в заходе — порядок записи, то есть времени: журнал пишется
+  // дописыванием в файл дня, и первая страница захода лежит первой.
+  const pages = visit.lines.filter(line => line.kind === 'page' && line.status < 400);
+  if (pages.length) entries.push({ first: pages[0].path, pages: pages.length });
+}
+if (entries.length) {
+  const alone = entries.filter(entry => entry.pages === 1).length;
+  const share = Math.round((100 * alone) / entries.length);
+  console.log(`\nВход: ${entries.length} заходов со страницей, ушли с первой же ${alone} (${share} %)`);
+  table(rank(tally(entries.map(entry => entry.first))), 'С чего начинали (заходов)');
+}
 
 // ── глубина по указателю ───────────────────────────────────────
 
@@ -240,7 +172,83 @@ const shows = human.filter(
 console.log(`\nУнесли ${takes.length} файлов; открыли во весь экран ${shows.length}`);
 table(rank(tally(takes.map(record => byUrl.get(record.path)?.frame ?? 'не из витрины'))), 'Что уносили: кадр');
 table(rank(tally(takes.map(record => byUrl.get(record.path)?.slug ?? record.path))), 'Что уносили: работа');
+table(rank(tally(takes.map(record => deviceOf(record.ua)))), 'Что уносили: устройство');
 table(rank(tally(takes.map(record => record.dest))), 'Чем брали (Sec-Fetch-Dest)');
+
+// ── путь работы: показали, разглядывали, унесли ─────────────────
+
+// Три числа на работу, каждое из своего рода строк: страница — `page`,
+// разглядывание — мастер-файл, пришедший картинкой (лайтбокс), унос — тот же
+// файл, пришедший не картинкой (кнопка). Работа, которую смотрят и не уносят,
+// — это тот отбор, которого не даёт ни один слепой круг: здесь выбирают
+// посторонние и ногами. Числа будут крошечными месяцами; смотреть на них
+// стоит рядом, а не каждое по себе.
+const funnel = new Map();
+const bump = (slug, column) => {
+  if (!slug) return;
+  if (!funnel.has(slug)) funnel.set(slug, { views: 0, shows: 0, takes: 0 });
+  funnel.get(slug)[column]++;
+};
+for (const record of human) {
+  if (record.kind === 'page' && record.status < 400 && record.path.startsWith('/w/'))
+    bump(record.path.slice(3), 'views');
+}
+for (const record of shows) bump(byUrl.get(record.path)?.slug, 'shows');
+for (const record of takes) bump(byUrl.get(record.path)?.slug, 'takes');
+
+const walked = [...funnel].sort((a, b) => b[1].views - a[1].views || b[1].takes - a[1].takes).slice(0, 10);
+table(
+  walked.map(([slug, counts]) => [slug, `${counts.views} → ${counts.shows} → ${counts.takes}`]),
+  'Путь работы: страница → во весь экран → унесли'
+);
+
+// ── какие форматы картинок просят ──────────────────────────────
+
+// Доля AVIF решает, платит ли за себя перекладывание кадров: берут почти все —
+// экономия на каждом заходе; берёт половина — придётся держать два набора
+// файлов, и тогда дешевле не трогать.
+//
+// Прочерк значит два разных «нет»: либо день записан до появления столбца,
+// либо браузер современных форматов не назвал вовсе. Разделить их нечем,
+// поэтому они считаются отдельной строкой, а не растворяются в процентах.
+const pictures = human.filter(record => record.kind === 'image');
+const named = pictures.filter(record => record.formats !== '-');
+table(rank(tally(named.map(record => record.formats))), `Форматы, которые просят (из ${pictures.length} запросов)`);
+if (pictures.length > named.length)
+  console.log(`  без столбца или без современных форматов: ${pictures.length - named.length}`);
+
+// ── наши картинки на чужих страницах ───────────────────────────
+
+// У картинки реферер — это страница, в которую она вставлена. Чужой реферер
+// значит, что файл показывают не у нас: для витрины, которой нужно, чтобы её
+// находили, это канал, а не только кража. Считаются все, а не только люди:
+// вставляют и роботы.
+const embeds = records.filter(record => record.kind === 'image' && foreign(record.ref));
+table(rank(tally(embeds.map(record => record.ref))), 'Наши картинки на чужих страницах (запросов)');
+
+// ── что обошли краулеры ────────────────────────────────────────
+
+// Search Console отвечает на это медленно и не целиком, а журнал — точно:
+// какие страницы работ краулер действительно забирал. Считается по имени из
+// столбца `bot`, подтверждённым и нет одинаково: кто ходил — это имя, а подлог
+// стоит отдельной строкой выше.
+const crawl = new Map();
+for (const visit of bots) {
+  for (const line of visit.lines) {
+    if (line.kind !== 'page' || line.status >= 400 || !line.path.startsWith('/w/')) continue;
+    if (!crawl.has(visit.why)) crawl.set(visit.why, new Set());
+    crawl.get(visit.why).add(line.path.slice(3));
+  }
+}
+table(
+  [...crawl]
+    .map(([name, seen]) => [name, seen.size])
+    .sort((a, b) => b[1] - a[1])
+    .map(([name, size]) => [name, `${size} из ${slugs.length}`]),
+  `Страниц работ обошли (витрина — ${slugs.length})`
+);
+const untouched = slugs.filter(slug => ![...crawl.values()].some(seen => seen.has(slug)));
+if (untouched.length) console.log(`  не забирал никто: ${untouched.length}, первая — ${untouched[0]}`);
 
 // ── чего не нашли и сколько ждали ──────────────────────────────
 

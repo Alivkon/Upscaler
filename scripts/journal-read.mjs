@@ -1,0 +1,137 @@
+// Журнал из файлов — в записи, заходы и работы витрины. Отсюда берёт данные
+// сводка (`journal-rollup.mjs`), и разделены они по шву: здесь знают устройство
+// журнала — сколько в строке столбцов, что такое заход, какой файл какой работе
+// принадлежит; там знают, о чём спрашивают, и печатают ответ. Вместе это
+// перевалило за ориентир в 400 строк (AGENTS.md), и резать пришлось именно
+// здесь: вопросы к журналу будут прибывать, а правила чтения — те же.
+import fs from 'node:fs/promises';
+import path from 'node:path';
+import { COLUMNS } from '../journal.js';
+import { galleryItems } from '../gallery.js';
+
+// Реферер с чужого сайта. Свой — это переход внутри витрины, и он отвечает
+// на другой вопрос, чем «откуда пришли»; прочерк — что реферера не было вовсе.
+export const foreign = ref =>
+  ref !== '-' && !ref.startsWith('tessarum') && !ref.startsWith('127.0.0.1') && !ref.startsWith('localhost');
+
+// ── чтение ─────────────────────────────────────────────────────
+
+// Строка из файла в запись. Читается не «по числу столбцов», и это не
+// придирка: прежний разбор отбрасывал строку, в которой полей меньше, чем
+// в нынешних `COLUMNS`, — то есть первый же новый столбец молча стёр бы из
+// всех сводок все дни, записанные до него. Журнал — единственное, что нельзя
+// собрать заново, и терять его из-за собственной правки нельзя.
+//
+// Держится на двух правилах. `ua` всегда последний — и делить строку по
+// табуляции безопасно, потому что `field()` в `journal.js` вырезает табуляцию
+// из каждого значения, так что внутрь поля она не попадает. Новый столбец
+// дописывается перед `ua`, и тогда у старой, короткой строки ведущие поля
+// ложатся по порядку от начала, а те, которых в файле ещё не было, становятся
+// прочерком — отличимым от значения.
+function recordOf(parts) {
+  const record = {};
+  const head = COLUMNS.slice(0, -1);
+  head.forEach((column, at) => (record[column] = at < parts.length - 1 ? parts[at] : '-'));
+  record.ua = parts.at(-1);
+  return record;
+}
+
+export async function readDays(DIRECTORY, DAYS) {
+  let names;
+  try {
+    names = (await fs.readdir(DIRECTORY)).filter(name => name.endsWith('.tsv')).sort();
+  } catch {
+    console.error(`журнала нет: ${DIRECTORY}`);
+    process.exit(1);
+  }
+  const wanted = names.slice(-DAYS);
+  const records = [];
+  for (const name of wanted) {
+    const text = await fs.readFile(path.join(DIRECTORY, name), 'utf8');
+    for (const line of text.split('\n')) {
+      if (!line) continue;
+      const parts = line.split('\t');
+      if (parts.length < 3) continue;
+      const record = recordOf(parts);
+      record.day = name.slice(0, 10);
+      record.key = `${record.day}/${record.visit}`;
+      record.ms = Number(record.ms);
+      record.status = Number(record.status);
+      records.push(record);
+    }
+  }
+  return { records, days: wanted.map(name => name.slice(0, 10)) };
+}
+
+// ── что за файл спросили ───────────────────────────────────────
+
+// Адрес картинки → работа, кадр и место на указателе. Считается из той же
+// `galleryItems()`, из которой собирается сама витрина: второй список имён
+// файлов разошёлся бы с первым молча (AGENTS.md).
+export async function imageIndex() {
+  const shown = (await galleryItems()).filter(item => !item.hidden);
+  const byUrl = new Map();
+  shown.forEach((item, position) => {
+    const put = (url, frame, full) => byUrl.set(decodeURI(url), { slug: item.slug, frame, full, position });
+    put(item.url, 'plate', true);
+    for (const copy of item.copies) put(copy.url, 'plate', false);
+    for (const [frame, cut] of Object.entries(item.crops || {})) {
+      if (!cut) continue;
+      put(cut.url, frame, true);
+      for (const copy of cut.copies || []) put(copy.url, frame, false);
+    }
+    if (item.scan) put(item.scan.url, 'scan', true);
+  });
+  // `slugs` — показанные работы в порядке витрины: по нему считается, что
+  // из них обошли краулеры, а что не видел ни один.
+  return { byUrl, total: shown.length, slugs: shown.map(item => item.slug) };
+}
+
+// ── кто приходил ───────────────────────────────────────────────
+
+// Заход — это все строки одного `visit` за день. Правило грубое и заведомо
+// неточное; его и проверяют `--sample` и ручные ярлыки.
+//
+// Три признака, по убыванию надёжности. Назвался краулером — краулер, и спорить
+// не о чем. Забрал страницу и не забрал к ней ни файла — не браузер: браузер
+// просит `styles.css` и карточки в ту же секунду, а качалка берёт разметку
+// и уходит. Не прислал языка вовсе — признак слабый, сам по себе не судит.
+function classify(lines) {
+  const declared = lines.map(line => line.bot).find(bot => bot && bot !== '-' && bot !== 'noua');
+  const pages = lines.filter(line => line.kind === 'page').length;
+  const props = lines.filter(line => line.kind === 'asset' || line.kind === 'image').length;
+  const noua = lines.some(line => line.bot === 'noua');
+  if (declared) return { bot: true, why: declared.split(':')[0], fake: declared.endsWith(':fake') };
+  if (noua) return { bot: true, why: 'без заголовка' };
+  if (pages > 0 && props === 0) return { bot: true, why: 'молча' };
+  return { bot: false, why: 'человек' };
+}
+
+export function visitsOf(records) {
+  const groups = new Map();
+  for (const record of records) {
+    if (!groups.has(record.key)) groups.set(record.key, []);
+    groups.get(record.key).push(record);
+  }
+  return [...groups].map(([key, lines]) => ({ key, lines, ...classify(lines) }));
+}
+
+// Вид устройства. Взять его больше негде: адрес посетителя в журнал не
+// попадает, Client Hints мы не просим, и остаётся заголовок браузера — то есть
+// слово браузера о себе. Оно бывает ложью: iPad в режиме «полной версии»
+// называется Macintosh и уходит в настольные. Это недосчёт планшетов,
+// а не переучёт телефонов, и знать о нём достаточно.
+//
+// Телефоны разделены по семье не ради полноты списка, а потому что кнопка
+// Download на них ведёт себя по-разному: у Safari на iOS `<a download>`
+// исторически не сохраняет файл, а открывает его. Если уносят только с
+// Android, смотреть надо туда, а не в витрину.
+//
+// Cloudflare эту же разбивку показывает — но только по тем, у кого сработал
+// маяк, то есть без всех, кто с блокировщиком. Здесь считаются все.
+export function deviceOf(ua) {
+  if (/iPhone|iPod/i.test(ua)) return 'телефон iOS';
+  if (/iPad|Tablet|Android(?!.*Mobile)/i.test(ua)) return 'планшет';
+  if (/Android|Mobile/i.test(ua)) return 'телефон';
+  return 'настольный';
+}

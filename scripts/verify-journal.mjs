@@ -227,6 +227,57 @@ await request({
 }
 Object.assign(dns, real);
 
+// 12. Форматы картинок берутся из `Accept` и пишутся коротко. Столбец заведён
+// ради одного решения — платит ли за себя перекладывание кадров в AVIF, —
+// и если он молчит на запросе картинки, решение будет принято по пустому месту.
+// У документа в `Accept` картинок нет, и там обязан стоять прочерк: иначе
+// доля AVIF считалась бы от всех запросов подряд.
+{
+  await request({
+    path: '/images/crops/a-dim-phone-240x520.jpg',
+    headers: { 'user-agent': CHROME, accept: 'image/avif,image/webp,image/apng,*/*;q=0.8' },
+    type: 'image/jpeg'
+  });
+  await request({ path: '/', headers: { 'user-agent': CHROME, accept: 'text/html,application/xhtml+xml' } });
+  const all = await lines(14);
+  if (all[12].formats !== 'avif,webp') complain(`форматы картинки записаны как ${all[12].formats}`);
+  if (all[13].formats !== '-') complain(`у документа в форматах ${all[13].formats}, а не прочерк`);
+}
+
+// 13. Строка, записанная до появления столбца, читается сводкой и сегодня.
+// Проверка стоит здесь, у журнала, хотя читает её `journal-read.mjs`: обещание
+// общее у писателя с читателем, и держится оно на том, что `ua` последний,
+// а новый столбец дописан перед ним. Прежний разбор отбрасывал короткую строку
+// целиком — первый же новый столбец стёр бы из всех сводок все прошлые дни,
+// молча и без единой ошибки на экране. Журнал заново не собрать.
+{
+  const OLD = await fs.mkdtemp(path.join(os.tmpdir(), 'journal-old-'));
+  const ua = 'Mozilla/5.0 (старый день)';
+  const before = COLUMNS.filter(column => column !== 'formats');
+  const values = {
+    time: '2026-09-01T10:00:00Z',
+    visit: 'abcd1234',
+    kind: 'page',
+    status: '200',
+    ms: '1.0',
+    bytes: '123',
+    dest: 'document',
+    path: '/',
+    ref: '-',
+    lang: 'en',
+    bot: '-',
+    ua
+  };
+  await fs.writeFile(path.join(OLD, '2026-09-01.tsv'), before.map(column => values[column]).join('\t') + '\n');
+  const { readDays } = await import('./journal-read.mjs');
+  const { records } = await readDays(OLD, 7);
+  if (records.length !== 1) complain(`короткая строка прочитана как ${records.length} записей`);
+  if (records[0]?.ua !== ua) complain(`заголовок браузера прочитан как ${records[0]?.ua}`);
+  if (records[0]?.formats !== '-') complain(`у старой строки в форматах ${records[0]?.formats}, а не прочерк`);
+  if (records[0]?.bot !== '-' || records[0]?.lang !== 'en') complain('столбцы перед новым сдвинулись');
+  await fs.rm(OLD, { recursive: true, force: true });
+}
+
 await fs.rm(DIRECTORY, { recursive: true, force: true });
 
 if (problems.length) {
@@ -234,4 +285,4 @@ if (problems.length) {
   for (const problem of problems) console.error(`  ${problem}`);
   process.exit(1);
 }
-console.log('журнал запросов: одиннадцать проверок пройдены');
+console.log('журнал запросов: тринадцать проверок пройдены');
