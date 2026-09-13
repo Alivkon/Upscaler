@@ -10,6 +10,7 @@
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';
+import dns from 'node:dns/promises';
 import { EventEmitter } from 'node:events';
 import { COLUMNS, journal } from '../journal.js';
 
@@ -28,16 +29,24 @@ async function request({
   headers = {},
   status = 200,
   type = 'text/html',
+  body = 'ok',
   after = null
 }) {
   const lower = Object.fromEntries(Object.entries(headers).map(([name, value]) => [name.toLowerCase(), value]));
   const req = { path: asked, ip, get: name => lower[name.toLowerCase()] };
+  // `write` и `end` подделке нужны настоящие: вес ответа журнал считает по
+  // ним, а не по заголовку, и ответ без этих двух методов мерил бы не то,
+  // что происходит на сайте.
   const res = Object.assign(new EventEmitter(), {
     statusCode: status,
-    getHeader: name => (name.toLowerCase() === 'content-type' ? type : undefined)
+    getHeader: name => (name.toLowerCase() === 'content-type' ? type : undefined),
+    write: () => true,
+    end: () => true
   });
   await new Promise(done => write(req, res, done));
   if (after) req.path = after;
+  res.write(body);
+  res.end();
   res.emit('finish');
 }
 
@@ -141,6 +150,83 @@ await request({ path: '/w/%E0%A4%A', status: 404, headers: { 'user-agent': CHROM
   if (all.length !== 8) complain('запрос с битым адресом не записался');
 }
 
+// 9. Подтверждение краулера привязано к паре «адрес и имя», а не к одному
+// адресу. Адреса переходят из рук в руки, и один и тот же адрес приходит
+// с разными словами о себе; вывод, сделанный про одно имя, не должен
+// достаться другому. Столбец `bot` — единственное место, где записан вывод,
+// а не сырое поле: переспросить его через месяц уже нельзя.
+//
+// DNS здесь подменён, а не спрошен: настоящий ответ зависит от того, чей
+// адрес сегодня чей, и проверка, которая ходит в сеть, однажды покраснеет
+// не потому, что сломался код. Подменяется объект `node:dns/promises` —
+// тот же самый, что импортирует `journal.js`.
+const BING = '198.51.100.44';
+const HOST = 'msnbot-198-51-100-44.search.msn.com';
+const real = { reverse: dns.reverse, resolve: dns.resolve, resolve6: dns.resolve6 };
+dns.reverse = async address => (address === BING ? [HOST] : real.reverse(address));
+dns.resolve = async host => (host === HOST ? [BING] : real.resolve(host));
+
+// Сначала бинг — он подтверждается: имя узла ведёт обратно на тот же адрес.
+await request({
+  path: '/',
+  ip: BING,
+  headers: { 'user-agent': 'Mozilla/5.0 (compatible; bingbot/2.0; +http://www.bing.com/bingbot.htm)' }
+});
+// Строка бинга дожидается записи до второго запроса, и это не аккуратность,
+// а условие проверки: кэш заполняется в конце ответа, и два запроса, пущенные
+// разом, оба сходят в DNS сами — подмены вывода тогда не случится и на
+// сломанном коде. Краулер так и ходит: запрос за запросом.
+{
+  const all = await lines(9);
+  if (all[8].bot !== 'bingbot:ok') complain(`подтверждённый бинг записан как ${all[8].bot}`);
+}
+// Затем гугл с того же адреса — и он подтвердиться не может: имя узла
+// бинговское, гугловскому образцу оно не отвечает.
+await request({
+  path: '/',
+  ip: BING,
+  headers: { 'user-agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)' }
+});
+{
+  const all = await lines(10);
+  if (all[9].bot !== 'googlebot:fake') complain(`гугл с чужого подтверждения записан как ${all[9].bot}`);
+}
+
+// 10. Вес ответа записан, и записан в байтах. Столбец берётся из того, что
+// ушло в сокет, а не из `content-length`: перед журналом стоит `compression`,
+// и на сжатой странице этого заголовка уже нет — прочерк стоял у каждой
+// страницы, то есть у всего, ради чего столбец заводили.
+//
+// Тело нарочно кириллическое: в utf-8 это два байта на знак, и проверка
+// отличает вес от длины строки.
+{
+  const body = 'страница';
+  await request({ path: '/license', headers: { 'user-agent': CHROME }, body });
+  const all = await lines(11);
+  const expected = String(Buffer.byteLength(body));
+  if (all[10].bytes !== expected) complain(`вес ответа ${all[10].bytes}, а не ${expected}`);
+}
+
+// 11. Краулер по IPv6 подтверждается. Имя узла у него обычно несёт обе записи,
+// A и AAAA; спрашивать A с откатом на AAAA «когда A пуст» — значит для такого
+// имени не спросить шестёрку никогда и записать настоящий обход как подлог.
+// Вывод при этом получается не пустой, а обратный правде.
+{
+  const SIX = '2001:db8::42';
+  const HOST6 = 'crawl-2001-db8--42.googlebot.com';
+  dns.reverse = async address => (address === SIX ? [HOST6] : real.reverse(address));
+  dns.resolve = async host => (host === HOST6 ? ['203.0.113.200'] : real.resolve(host));
+  dns.resolve6 = async host => (host === HOST6 ? [SIX] : real.resolve6(host));
+  await request({
+    path: '/',
+    ip: SIX,
+    headers: { 'user-agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)' }
+  });
+  const all = await lines(12);
+  if (all[11].bot !== 'googlebot:ok') complain(`гугл по IPv6 записан как ${all[11].bot}`);
+}
+Object.assign(dns, real);
+
 await fs.rm(DIRECTORY, { recursive: true, force: true });
 
 if (problems.length) {
@@ -148,4 +234,4 @@ if (problems.length) {
   for (const problem of problems) console.error(`  ${problem}`);
   process.exit(1);
 }
-console.log('журнал запросов: восемь проверок пройдены');
+console.log('журнал запросов: одиннадцать проверок пройдены');

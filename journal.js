@@ -84,7 +84,7 @@ const CRAWLERS = [
   [/bot|crawler|spider|scraper|curl|wget|python-requests|node-fetch|httpx|axios|go-http-client/i, 'bot', null]
 ];
 
-// Подтверждённое имя узла кэшируется на адрес: краулер приходит сотнями
+// Подтверждение кэшируется на пару «адрес и имя»: краулер приходит сотнями
 // запросов подряд, и спрашивать DNS на каждый — это сотни лишних ожиданий
 // ради одного и того же ответа. Потолок — чтобы обход с тысячи адресов
 // не съел память.
@@ -94,18 +94,27 @@ const VERDICT_LIMIT = 2000;
 // Обратный DNS с прямым подтверждением — так проверять велит и сам Google.
 // Обратной записи верить нельзя: её ставит владелец адреса, то есть кто угодно.
 // Подтверждение в том, что найденное имя ведёт обратно на тот же адрес.
-async function confirm(ip, hostPattern) {
+async function confirm(ip, name, hostPattern) {
   if (!ip) return 'unchecked';
-  const known = verdicts.get(ip);
+  // В ключе и адрес, и имя, потому что проверяется не адрес, а их пара.
+  // С ключом из одного адреса подтверждённый гуглов узел, назвавшийся
+  // в следующем запросе бингом, ушёл бы в журнал как `bingbot:ok` — вывод,
+  // которого никто не делал, в столбце, который потом не переспросишь:
+  // адрес к тому времени уже чужой, а строка осталась.
+  const key = `${ip} ${name}`;
+  const known = verdicts.get(key);
   if (known) return known;
   let verdict = 'fake';
   try {
     const names = await dns.reverse(ip);
-    const name = names.find(candidate => hostPattern.test(candidate));
-    if (name) {
-      const back = await dns.resolve(name).catch(() => []);
-      const back6 = back.length ? back : await dns.resolve6(name).catch(() => []);
-      verdict = back6.includes(ip) ? 'ok' : 'fake';
+    const host = names.find(candidate => hostPattern.test(candidate));
+    if (host) {
+      // Спрашиваются обе семьи адресов, а не A с откатом на AAAA. Краулер,
+      // пришедший по IPv6, чаще всего живёт на имени, у которого есть и A:
+      // откат тогда не срабатывает, шестёрка не спрашивается вовсе, и
+      // настоящий гугл уходит в журнал как `fake` — вывод наизнанку.
+      const [back, back6] = await Promise.all([dns.resolve(host).catch(() => []), dns.resolve6(host).catch(() => [])]);
+      verdict = [...back, ...back6].includes(ip) ? 'ok' : 'fake';
     }
   } catch {
     // Адреса без обратной записи — обычное дело у притворяющихся, но бывает
@@ -114,7 +123,7 @@ async function confirm(ip, hostPattern) {
     verdict = 'nodns';
   }
   if (verdicts.size >= VERDICT_LIMIT) verdicts.clear();
-  verdicts.set(ip, verdict);
+  verdicts.set(key, verdict);
   return verdict;
 }
 
@@ -123,7 +132,7 @@ async function botOf(ua, ip) {
   for (const [pattern, name, hostPattern] of CRAWLERS) {
     if (!pattern.test(ua)) continue;
     if (!hostPattern) return name;
-    return `${name}:${await confirm(ip, hostPattern)}`;
+    return `${name}:${await confirm(ip, name, hostPattern)}`;
   }
   return '-';
 }
@@ -218,6 +227,31 @@ export function journal(directory) {
       // Битый процент в адресе — сам по себе признак, и терять из-за него
       // строку незачем.
     }
+    // Вес ответа считается здесь, а не читается из `content-length`: заголовок
+    // на сжатом ответе снимает сам `compression`, и в столбце у каждой
+    // страницы стоял прочерк — число было только у картинок, которые
+    // не сжимаются. Столбец выглядел измерением, которого нет.
+    //
+    // Считается то, что ушло в сокет, то есть уже сжатое: это и есть вес,
+    // который заплатил посетитель. Держится это на порядке в `server.js`:
+    // журнал поставлен выше `compression`, и потому его обёртка вызывается
+    // последней — после упаковки, а не до неё.
+    let weight = 0;
+    const count = (chunk, encoding) => {
+      if (chunk) weight += Buffer.byteLength(chunk, typeof encoding === 'string' ? encoding : undefined);
+    };
+    const wrote = res.write;
+    const ended = res.end;
+    res.write = function (chunk, encoding, callback) {
+      count(chunk, encoding);
+      return wrote.call(this, chunk, encoding, callback);
+    };
+    // `res.end(callback)` — законная форма вызова, и в ней первым идёт не тело.
+    res.end = function (chunk, encoding, callback) {
+      if (typeof chunk !== 'function') count(chunk, encoding);
+      return ended.call(this, chunk, encoding, callback);
+    };
+
     res.on('finish', async () => {
       try {
         const ua = req.get('user-agent');
@@ -228,7 +262,7 @@ export function journal(directory) {
           kindOf(asked, res),
           res.statusCode,
           (Number(process.hrtime.bigint() - started) / 1e6).toFixed(1),
-          res.getHeader('content-length') ?? '-',
+          weight,
           req.get('sec-fetch-dest') ?? 'none',
           decoded,
           refOf(req.get('referer')),
