@@ -28,6 +28,10 @@
 // в одном файле: base64 распухает на треть, и открывать его лучше с диска,
 // а не слать почтой.
 //
+// На листе кнопки: у каждой работы выбирают одну из трёх плиток, а поле внизу
+// собирает те, что расходятся с нынешним `treatment`, строками для копирования.
+// Новые картины — через `--only`: им не нужно быть живыми на сайте.
+//
 //   node scripts/research/treat-sheet.mjs --only vl-0291,vl-0084,vl-0366
 //   node scripts/research/treat-sheet.mjs                    # все живые работы
 //   node scripts/research/treat-sheet.mjs --out /tmp/s.html  # куда положить лист
@@ -70,17 +74,22 @@ const OUT = out ? path.resolve(out) : path.join(R, '.treat-sheet.html');
 
 const works = new Map(JSON.parse(fs.readFileSync(`${G}/museum-works.json`)).map(w => [w.ref, w]));
 const order = JSON.parse(fs.readFileSync(`${R}/catalogue/order.json`));
-const live = order
-  .map(ref => {
-    try {
-      return JSON.parse(fs.readFileSync(`${R}/catalogue/${ref}.json`));
-    } catch {
-      return null;
-    }
-  })
-  .filter(c => c && !c.hidden && works.has(c.ref));
-const chosen = only.size ? live.filter(c => only.has(c.ref)) : live;
-for (const ref of only) if (!chosen.some(c => c.ref === ref)) console.log(`  ${ref}: не живая работа или нет в museum-works.json`);
+const card = ref => {
+  try {
+    return JSON.parse(fs.readFileSync(`${R}/catalogue/${ref}.json`));
+  } catch {
+    return null;
+  }
+};
+const live = order.map(card).filter(c => c && !c.hidden && works.has(c.ref));
+// С `--only` работа не обязана быть живой: лист нужен и новой картине, у которой
+// ещё нет страницы или карточка стоит `hidden`, — правило выбирают до выхода,
+// пока файл ещё не опубликован и его имя можно менять. Нужна только запись
+// в `museum-works.json` и мастер; без карточки плитку подпишет `name`.
+const chosen = only.size
+  ? [...only].filter(ref => works.has(ref)).map(ref => card(ref) || { ref, title: works.get(ref).name })
+  : live;
+for (const ref of only) if (!works.has(ref)) console.log(`  ${ref}: нет в museum-works.json`);
 
 const sourceOf = w => (w.upscaled ? `${G}/upscaled/${w.ref}.jpg` : `${G}/sources/${w.ref}.jpg`);
 
@@ -231,15 +240,19 @@ console.log(`${rows.length} работ · ${(rows.reduce((a, r) => a + r.bytes, 
 // ------------------------------------------------------------------- лист
 const esc = s => String(s ?? '').replace(/[&<>"]/g, ch => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[ch]);
 
+// Плитка `scan` — это значение `none` поля: кнопка называет то, что попадёт
+// в `museum-works.json`, а подпись над плиткой — то, что на ней нарисовано.
+const valueOf = label => (label === 'scan' ? 'none' : label);
+
 const sheet = rows
   .map(
-    r => `<section>
-  <h2>${esc(r.ref)} · ${esc(r.title)}<span>${esc(r.artist)}</span><b>${esc(r.now)}</b></h2>
+    r => `<section data-ref="${esc(r.ref)}" data-now="${esc(r.now)}">
+  <h2>${esc(r.ref)} · ${esc(r.title)}<span>${esc(r.artist)}</span><b>now ${esc(r.now)}</b></h2>
   <div class="three">
 ${r.tiles
   .map(
-    t => `    <figure><img src="data:image/jpeg;base64,${t.data}" alt="" decoding="async" loading="lazy">
-      <figcaption>${t.label}${t.note ? `<i>${t.note}</i>` : ''}</figcaption></figure>`
+    t => `    <figure data-v="${valueOf(t.label)}"><img src="data:image/jpeg;base64,${t.data}" alt="" decoding="async" loading="lazy">
+      <figcaption><button type="button">${valueOf(t.label)}</button>${t.note ? `<i>${t.note}</i>` : ''}</figcaption></figure>`
   )
   .join('\n')}
   </div>
@@ -274,10 +287,70 @@ fs.writeFileSync(
   figcaption { padding-top: 5px; color: var(--fg-dim); font-size: 12px;
     font-variant-numeric: tabular-nums }
   figcaption i { display: block; font-style: normal; opacity: .75 }
+  figure { cursor: pointer }
+  figure img { outline: 2px solid transparent; outline-offset: 2px }
+  figure.on img { outline-color: var(--accent) }
+  figcaption button { font: 600 13px system-ui, sans-serif; color: var(--fg); background: #211e1a;
+    border: 1px solid var(--line); border-radius: 8px; padding: 6px 14px; margin-bottom: 4px; cursor: pointer }
+  figure.on figcaption button { background: var(--accent); border-color: var(--accent); color: #0c0b0a }
+  section.moved h2 b { color: #0c0b0a; background: var(--accent); border-color: var(--accent) }
+  #out { position: sticky; bottom: 0; margin: 0 -14px -40px; padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
+    background: #161412; border-top: 1px solid var(--line); display: grid; grid-template-columns: 1fr auto; gap: 8px }
+  #out textarea { grid-row: 1 / 3; min-height: 64px; resize: vertical; background: #0c0b0a; color: var(--fg);
+    border: 1px solid var(--line); border-radius: 8px; padding: 8px; font: 12px/1.4 ui-monospace, monospace }
+  #out button { font: 600 13px system-ui, sans-serif; border-radius: 8px; padding: 8px 14px; cursor: pointer;
+    background: var(--accent); border: 0; color: #0c0b0a }
+  #out span { color: var(--fg-dim); font-size: 12px; text-align: center }
 </style>
 
-<h1>Scan · dim · ceil <span>— ${rows.length} works</span></h1>
+<h1>Scan · dim · ceil <span>— ${rows.length} works · tap a tile or its button to pick</span></h1>
 ${sheet}
+<div id="out">
+  <textarea id="res" readonly placeholder="Picks that differ from the current treatment appear here"></textarea>
+  <button type="button" id="copy">Copy</button>
+  <span id="n">0 changed</span>
+</div>
+<script>
+  // Выбор держится в localStorage: лист на 117 работ за один присест не проходят,
+  // и перезагрузка не должна стирать уже отмеченное.
+  const KEY = 'treat-sheet-picks';
+  let picks = {};
+  try { picks = JSON.parse(localStorage.getItem(KEY)) || {}; } catch {}
+  const sections = [...document.querySelectorAll('section[data-ref]')];
+
+  function draw() {
+    const lines = [];
+    for (const s of sections) {
+      const v = picks[s.dataset.ref] || s.dataset.now;
+      for (const f of s.querySelectorAll('figure')) f.classList.toggle('on', f.dataset.v === v);
+      const moved = v !== s.dataset.now;
+      s.classList.toggle('moved', moved);
+      if (moved) lines.push(s.dataset.ref + ': ' + v + '  (was ' + s.dataset.now + ')');
+    }
+    document.getElementById('res').value = lines.join('\\n');
+    document.getElementById('n').textContent = lines.length + ' changed';
+    try { localStorage.setItem(KEY, JSON.stringify(picks)); } catch {}
+  }
+
+  document.addEventListener('click', e => {
+    const f = e.target.closest('figure[data-v]');
+    if (!f) return;
+    const s = f.closest('section');
+    if (f.dataset.v === s.dataset.now) delete picks[s.dataset.ref];
+    else picks[s.dataset.ref] = f.dataset.v;
+    draw();
+  });
+
+  document.getElementById('copy').addEventListener('click', async e => {
+    const ta = document.getElementById('res');
+    try { await navigator.clipboard.writeText(ta.value); }
+    catch { ta.select(); document.execCommand('copy'); }
+    e.target.textContent = 'Copied';
+    setTimeout(() => (e.target.textContent = 'Copy'), 1200);
+  });
+
+  draw();
+</script>
 `
 );
 console.log(OUT.startsWith(R + path.sep) ? path.relative(R, OUT) : OUT);
