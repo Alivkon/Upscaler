@@ -9,12 +9,14 @@ import sharp from 'sharp';
 import { IMAGES_DIR, ADJACENT, ensureImageDirectories, galleryItems, isImage } from './gallery.js';
 import { HttpError } from './http-error.js';
 import { journal } from './journal.js';
-import { upscaleAllowance } from './limits.js';
+import { mailingAllowance, upscaleAllowance } from './limits.js';
+import { subscribers } from './mailing.js';
 import {
   collectionPage,
   errorPage,
   intakePage,
   licensePage,
+  mailingListPage,
   missingPage,
   robots,
   sitemap,
@@ -321,6 +323,43 @@ app.get('/restore', (_req, res) =>
 );
 
 app.get('/license', (_req, res) => html(res, 200, licensePage({ origin: SITE_ORIGIN })));
+
+app.get('/mailing-list', (_req, res) => html(res, 200, mailingListPage({ origin: SITE_ORIGIN })));
+
+// Адреса лежат в своём каталоге, а не в `log/`: журнал обещает, что личного
+// в нём нет, и дописать туда почту значило бы отменить это обещание задним
+// числом (mailing.js). Каталог задаётся снаружи — на боевой машине это том,
+// переживающий пересборку (DEPLOYMENT.md).
+const mailingList = subscribers(path.resolve(__dirname, process.env.MAIL_DIR || 'mail'));
+
+// Разбор тела стоит на самом маршруте, а не приложением целиком: кроме этой
+// формы, `application/x-www-form-urlencoded` на сайте не шлёт никто, а разбор
+// тела у каждого запроса — это лишняя работа на каждой картинке. Потолок
+// в 2 КБ при трёх коротких полях означает, что тело длиннее прислано не формой.
+app.post('/mailing-list', express.urlencoded({ extended: false, limit: '2kb' }), async (req, res, next) => {
+  try {
+    // Ответ на подписку не кэшируется ничем и нигде: это единственная
+    // страница сайта, содержание которой зависит от того, кто её попросил.
+    res.setHeader('Cache-Control', 'no-store');
+    const page = (status, extra) => html(res, status, mailingListPage({ origin: SITE_ORIGIN, ...extra }));
+    // Ловушка сработала — это робот. Отвечаем ему тем же, чем человеку:
+    // отказ научил бы его, что поле трогать не надо, и следующий заход прошёл
+    // бы насквозь. Адрес при этом никуда не записан.
+    if (req.body.website) return page(200, { state: 'saved' });
+    const allowance = mailingAllowance(req);
+    if (allowance.refusal) {
+      res.setHeader('Retry-After', String(allowance.retryAfter));
+      return page(429, { state: 'busy', refusal: allowance.refusal, address: req.body.email || '' });
+    }
+    const outcome = await mailingList.add(req.body.email, req.body.from);
+    // Неверный адрес возвращается в поле: заставлять набирать его заново
+    // из-за опечатки в одной букве — наказание не по вине.
+    if (outcome === 'invalid') return page(400, { state: 'invalid', address: req.body.email || '' });
+    page(200, { state: outcome });
+  } catch (error) {
+    next(error);
+  }
+});
 
 app.get('/robots.txt', (_req, res) => res.type('text/plain').send(robots({ origin: SITE_ORIGIN })));
 

@@ -142,9 +142,14 @@ function layout({
   current,
   noindex = false
 }) {
+  // Пункт помечается своим именем, а не «всё, кроме приёмки»: страниц в шапке
+  // стало три, и `current !== 'restore'` подсветил бы «Collection» на списке
+  // рассылки. Имя есть у каждой страницы — их семь, и ни одна не зовёт
+  // `layout` без `current`.
   const nav = [
-    ['/', 'Collection', current !== 'restore'],
-    ['/restore', 'Make your own', current === 'restore']
+    ['/', 'Collection', current === 'collection'],
+    ['/restore', 'Make your own', current === 'restore'],
+    ['/mailing-list', 'Mailing list', current === 'mailing-list']
   ];
   return `<!doctype html>
 <html lang="en">
@@ -601,8 +606,67 @@ const topicRow = topics =>
   topics.length
     ? `<nav class="topics" aria-label="Collections">${topics
         .map(topic => `<a href="/collection/${escape(topic.slug)}">${escape(topic.heading)}</a>`)
-        .join('\n        ')}</nav>`
+        .join('\n          ')}</nav>`
     : '';
+
+// Рассылка под сеткой — строкой ввода, а не ссылкой: предметов в ней три,
+// имя, поле и действие, и все три стоят в одну строку.
+//
+// Первое из трёх — само предложение, целиком и своими словами. Через это
+// место прошли три решения подряд: обещание второй строкой строчными (снято —
+// читалось четвёртой подписью), потом имя «Mailing list» ссылкой на страницу
+// (снято — строка объясняла себя чужой страницей, то есть не объясняла),
+// и теперь фраза на месте имени. Она же и метка поля: щелчок по ней ставит
+// курсор, и второго, скрытого имени для диктора заводить не нужно.
+//
+// Ссылки на страницу в строке поэтому нет вовсе. Она была нужна, пока слова
+// «Mailing list» сами по себе ничего не обещали; фраза обещает, и вести
+// читателя за объяснением больше некуда. На страницу по-прежнему ведёт шапка.
+//
+// Действие названо словом, а не стрелкой: стрелка в 11-м кегле приглушённым
+// цветом на тёмном просто не видна, и «Subscribe» — то же слово и тот же
+// `.link`, что на самой странице рассылки.
+//
+// У пустого поля есть подсказка, и она курсивом — тем же синтетическим
+// курсивом, каким на витрине набраны имена авторов (`.caption__by`).
+// Пустая строка без единого слова не читается полем вовсе: на тёмном от неё
+// видна только волосяная линия.
+//
+// Обе формы — настоящие `<form method="post">`, и метод здесь не мелочь.
+// GET унёс бы почтовый адрес в строку запроса, а строку запроса пишет журнал
+// (столбец `path` в journal.js) — то есть на сайте, который не хранит личного,
+// адрес оказался бы в файле, к рассылке не имеющем отношения. POST кладёт его
+// в тело, которого журнал не видит.
+//
+// Скрытое поле `from` говорит, какая из двух форм сработала. Оно про место,
+// а не про человека, и стоит того, чтобы знать это по данным, а не по догадке.
+//
+// ЛОВУШКА. Открытый POST, дописывающий строку на диск, собирает роботов сам
+// собой, а капчу на эту страницу ставить не за что — она не продаёт и не
+// пускает никуда. Пустое поле, спрятанное от глаза и от диктора, стоит трёх
+// строк и отсеивает тех, кто заполняет всё подряд; остальных держит счётчик
+// по адресу (`mailingAllowance` в limits.js). Имя `website` выбрано затем,
+// чтобы робот принял его за настоящее.
+const trap = name => `<p class="trap" aria-hidden="true">
+            <label for="${name}-website">Leave this empty</label>
+            <input id="${name}-website" type="text" name="website" tabindex="-1" autocomplete="off" />
+          </p>`;
+
+const mailingForm = `<form class="tail__mail" method="post" action="/mailing-list">
+          <label for="tail-email">Email me when new work arrives</label>
+          <input class="tail__field" id="tail-email" type="email" name="email" autocomplete="email" spellcheck="false" placeholder="your email" required />
+          ${trap('tail')}
+          <input type="hidden" name="from" value="collection" />
+          <button class="link tail__send" type="submit">Subscribe</button>
+        </form>`;
+
+// Строка под сеткой указателя: оглавление слева, рассылка справа.
+//
+// Рассылка стоит РЯДОМ с `nav`, а не внутри него. Список рассылки — не раздел
+// коллекции, и диктор, читающий `nav` с подписью «Collections», объявил бы
+// его ещё одной темой. Пустое место между ними и есть разделитель: строка
+// самая тихая на странице, и черта или точка сделали бы из неё панель.
+const tailRow = topics => `<div class="tail">${topicRow(topics)}${mailingForm}</div>`;
 
 export function collectionPage({ items, topics = [], origin }) {
   return layout({
@@ -631,7 +695,7 @@ export function collectionPage({ items, topics = [], origin }) {
     // строчки в аудите значит держать текст, который никто не прочтёт.
     body: `
       ${grid(items, EAGER_CARDS, inviteCard(), { hasDimmedBox: false })}
-      ${topicRow(topics)}
+      ${tailRow(topics)}
     `
   });
 }
@@ -701,7 +765,14 @@ export function topicPage({ topic, items, origin }) {
       </div>
       ${grid(items, EAGER_CARDS)}
       ${topic.terms ? `<p class="topic__terms">${escape(topic.terms(measured))}</p>` : ''}
-      <p class="topic__back"><a href="/">All ${SITE_NAME} wallpapers →</a></p>
+      <!-- Та же пара, что под сеткой указателя: выход слева, рассылка справа.
+           Тема — самая частая входная страница (36 заходов из 67 за 13–16.09
+           пришли на /collection/nihonga), и не назвать рассылку здесь значило
+           бы не назвать её большинству пришедших. -->
+      <p class="topic__back">
+        <a href="/">All ${SITE_NAME} wallpapers →</a>
+        <a class="topic__mail" href="/mailing-list">Mailing list</a>
+      </p>
     `
   });
 }
@@ -1597,6 +1668,83 @@ export function licensePage({ origin }) {
   });
 }
 
+// Список рассылки. Ссылок на него две — в шапке и под сеткой, — и обе названы
+// одними словами; сама страница нужна ровно затем, чтобы этих слов хватило.
+//
+// СРОК НЕ НАЗВАН НИ РАЗУ, и это не забывчивость. Коллекция пополняется, когда
+// попадается работа, которая того стоит, а «раз в месяц» на странице — это
+// расписание, которое некому исполнять: первый же пропущенный месяц делает
+// страницу неправдой. Поэтому сказан повод, а не срок.
+//
+// Отвечает та же страница и на GET, и на POST: `state` — то, чем кончилась
+// отправка. Отдельного адреса «спасибо» нет и не будет — вторая страница с
+// одним словом обошлась бы в лишний адрес в выдаче и в лишний переход; а
+// редирект обратно сюда потерял бы ровно то единственное, ради чего ответ
+// и нужен, — слова о том, что адрес принят.
+//
+// Плата названа: обновление страницы после отправки браузер предложит послать
+// форму заново. Второй раз тот же адрес в файл не ляжет (`mailing.js`), так
+// что цена этой простоты — предупреждение браузера, а не вторая подписка.
+export function mailingListPage({ origin, state = 'ask', address = '', refusal = '' }) {
+  // Строка под формой — единственное, что на этой странице бывает лишним,
+  // поэтому её нет, пока ничего не случилось. «Уже есть» отвечается спокойно
+  // и без извинений: человек сделал всё правильно, просто во второй раз.
+  const notices = {
+    saved: 'Added. You will hear when new work goes up.',
+    known: 'That address is already on the list.',
+    invalid: 'That does not look like an email address.',
+    // Отказ счётчика приходит готовым текстом и с настоящим сроком
+    // (`mailingAllowance` в limits.js): «через час» здесь было бы числом,
+    // взятым с потолка, а ворота называют то, что сами и посчитали.
+    busy: refusal
+  };
+  const note = notices[state] ? `<p class="notice">${escape(notices[state])}</p>` : '';
+  // Принятый адрес форма больше не показывает: поле под словами «адрес
+  // принят» звало бы оставить второй.
+  const form =
+    state === 'saved'
+      ? ''
+      : `<form class="subscribe" method="post" action="/mailing-list">
+        <label class="visually-hidden" for="subscribe-email">Email address</label>
+        <input
+          class="subscribe__field"
+          id="subscribe-email"
+          type="email"
+          name="email"
+          value="${escape(address)}"
+          autocomplete="email"
+          spellcheck="false"
+          placeholder="your email"
+          required
+        />
+        ${trap('subscribe')}
+        <input type="hidden" name="from" value="page" />
+        <button class="link" type="submit">Subscribe</button>
+      </form>`;
+  return layout({
+    current: 'mailing-list',
+    title: `Mailing list, ${SITE_NAME}`,
+    description: 'Leave an address to hear when new work goes up in the collection. No spam.',
+    canonical: `${origin}/mailing-list`,
+    // Вся страница — заголовок и поле. Объяснение стоит ЗАГОЛОВКОМ, и это
+    // единственный способ не иметь на странице ни одной лишней строки: место
+    // под заголовок на ней есть в любом случае, а фраза, поставленная под ним
+    // отдельным абзацем, была бы тем же самым, сказанным дважды.
+    //
+    // Абзацев тут побывало три (нет расписания; в письме только работы; как
+    // отписаться), потом один. Все они отвечали на вопросы, которых сюда никто
+    // не приносил: пришли оставить адрес, а не читать условия.
+    //
+    // Имя двери от этого не меняется: в шапке, в строке под сеткой и во вкладке
+    // по-прежнему «Mailing list». Заголовок объясняет, а называет — имя.
+    body: `
+      <h1 class="heading">Email when new work arrives</h1>
+      ${form}
+      ${note}
+    `
+  });
+}
+
 // Единственная страница без канонического адреса: см. комментарий у `layout`.
 // `origin` ей поэтому больше не нужен — своего адреса она не называет.
 export function missingPage() {
@@ -1716,7 +1864,8 @@ export function sitemap({ items, topics = [], origin }) {
     // страницах как содержимое; на теме он стоит карточкой, ведущей к работе.
     ...topics.map(topic => url(`${origin}/collection/${topic.slug}`, { lastmod: latestOf(topic.items) })),
     url(`${origin}/restore`),
-    url(`${origin}/license`)
+    url(`${origin}/license`),
+    url(`${origin}/mailing-list`)
   ];
   return `<?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">

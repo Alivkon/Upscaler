@@ -32,7 +32,7 @@ echo "==> код"
 # модель не обновляет, а передеплой модели не требует трогать сайт.
 rsync -a --delete --info=stats1 \
   Dockerfile docker-compose.yml .dockerignore package.json yarn.lock DEPLOYMENT.md \
-  collections.js gallery.js http-error.js journal.js limits.js pages.js server.js treatment.js upscaler.js works.js \
+  collections.js gallery.js http-error.js journal.js limits.js mailing.js pages.js server.js treatment.js upscaler.js works.js \
   catalogue public scripts \
   "$HOST:$DIR/"
 
@@ -49,7 +49,10 @@ echo "==> пересборка"
 # docker создаёт от root, а процесс в контейнере — 1001, и запись отваливается
 # по правам молча (ошибка уходит в `console.error`, сайт при этом жив, а журнал
 # пуст). `chown` идемпотентен и на уже заведённом каталоге ничего не меняет.
-ssh "$HOST" "mkdir -p $DIR/log && chown 1001:1001 $DIR/log"
+# Каталог рассылки — тем же порядком и по той же причине. Адреса лежат
+# отдельно от журнала нарочно (mailing.js): журнал обещает, что личного в нём
+# нет, и почта в нём это обещание отменила бы.
+ssh "$HOST" "mkdir -p $DIR/log $DIR/mail && chown 1001:1001 $DIR/log $DIR/mail"
 ssh "$HOST" "cd $DIR && docker compose --project-directory $DIR up -d --build"
 
 echo "==> проверка"

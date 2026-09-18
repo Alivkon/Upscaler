@@ -7,8 +7,8 @@
     "start": "node scripts/start.mjs",
     "dev": "node scripts/start.mjs --watch",
     "stats": "node scripts/journal-board.mjs --pull --open",
-    "format": "prettier --write server.js collections.js gallery.js http-error.js journal.js limits.js pages.js upscaler.js works.js treatment.js scripts public",
-    "verify": "node --check server.js && node --check collections.js && node --check gallery.js && node --check http-error.js && node --check journal.js && node --check limits.js && node --check pages.js && node --check upscaler.js && node --check works.js && node --check treatment.js && node scripts/verify-catalogue.mjs && node scripts/verify-journal.mjs && node scripts/verify-limits.mjs && node scripts/verify-tone.mjs && prettier --check server.js collections.js gallery.js http-error.js journal.js limits.js pages.js upscaler.js works.js treatment.js scripts public",
+    "format": "prettier --write server.js collections.js gallery.js http-error.js journal.js limits.js mailing.js pages.js upscaler.js works.js treatment.js scripts public",
+    "verify": "node --check server.js && node --check collections.js && node --check gallery.js && node --check http-error.js && node --check journal.js && node --check limits.js && node --check mailing.js && node --check pages.js && node --check upscaler.js && node --check works.js && node --check treatment.js && node scripts/verify-catalogue.mjs && node scripts/verify-journal.mjs && node scripts/verify-limits.mjs && node scripts/verify-mailing.mjs && node scripts/verify-tone.mjs && prettier --check server.js collections.js gallery.js http-error.js journal.js limits.js mailing.js pages.js upscaler.js works.js treatment.js scripts public",
     "test": "yarn run verify"
   },
   "dependencies": {
