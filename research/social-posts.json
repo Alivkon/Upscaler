@@ -12,6 +12,41 @@
       "postedAt": "2026-09-13",
       "file": "images/for-tumblr/vl-0063-landscape-near-paris-landscape-desktop-wallpaper.jpg",
       "tags": ["painting", "art", "landscape painting", "dark academia", "art history", "phone wallpaper", "georges michel", "romanticism"]
+    },
+    {
+      "ref": "vl-0216",
+      "slug": "apple-blossoms-still-life-iphone-wallpaper",
+      "postedAt": "2026-09-14",
+      "file": "images/for-tumblr/vl-0216-apple-blossoms-still-life-iphone-wallpaper.jpg",
+      "tags": ["painting", "art", "art history", "phone wallpaper", "still life", "floral", "martin johnson heade"]
+    },
+    {
+      "ref": "vl-0291",
+      "slug": "rocky-mountain-sheep-bierstadt-iphone-wallpaper",
+      "postedAt": "2026-09-15",
+      "file": "images/for-tumblr/vl-0291-rocky-mountain-sheep-bierstadt-iphone-wallpaper.jpg",
+      "tags": ["painting", "art", "art history", "phone wallpaper", "mountains", "storm", "albert bierstadt bighorn sheep"]
+    },
+    {
+      "ref": "vl-0164",
+      "slug": "kasuga-shrine-mandala-architectural-iphone-wallpaper",
+      "postedAt": "2026-09-16",
+      "file": "images/for-tumblr/vl-0164-kasuga-shrine-mandala-architectural-iphone-wallpaper.jpg",
+      "tags": ["painting", "art", "art history", "phone wallpaper", "dark academia", "japanese art", "kasuga mandala"]
+    },
+    {
+      "ref": "vl-0219",
+      "slug": "bamboo-in-four-seasons-autumn-iphone-wallpaper",
+      "postedAt": "2026-09-17",
+      "file": "images/for-tumblr/vl-0219-bamboo-in-four-seasons-autumn-iphone-wallpaper.jpg",
+      "tags": ["painting", "art", "art history", "phone wallpaper", "chinese art", "minimalist", "ink bamboo painting"]
+    },
+    {
+      "ref": "vl-0371",
+      "slug": "maple-viewing-wang-yin-iphone-wallpaper",
+      "postedAt": "2026-09-18",
+      "file": "images/for-tumblr/vl-0371-maple-viewing-wang-yin-iphone-wallpaper.jpg",
+      "tags": ["painting", "art", "art history", "phone wallpaper", "chinese art", "landscape painting", "wang yin"]
     }
   ],
   "pinterest": [
@@ -26,6 +61,46 @@
       "board": "Art",
       "title": "Landscape Near Paris, Georges Michel — dark academia phone wallpaper",
       "file": "images/crops/landscape-near-paris-landscape-desktop-wallpaper-dim-phone-1772x3840.jpg"
+    },
+    {
+      "ref": "vl-0216",
+      "slug": "apple-blossoms-still-life-iphone-wallpaper",
+      "postedAt": "2026-09-14",
+      "board": "Art",
+      "title": "Apple Blossoms, Martin Johnson Heade, dark academia phone wallpaper",
+      "file": "images/crops/apple-blossoms-still-life-iphone-wallpaper-dim-phone-2066x4477.jpg"
+    },
+    {
+      "ref": "vl-0291",
+      "slug": "rocky-mountain-sheep-bierstadt-iphone-wallpaper",
+      "postedAt": "2026-09-15",
+      "board": "Art",
+      "title": "Rocky Mountain Sheep, Albert Bierstadt, dark academia phone wallpaper",
+      "file": "images/crops/rocky-mountain-sheep-bierstadt-iphone-wallpaper-dim-phone-1477x3200.jpg"
+    },
+    {
+      "ref": "vl-0164",
+      "slug": "kasuga-shrine-mandala-architectural-iphone-wallpaper",
+      "postedAt": "2026-09-16",
+      "board": "Art",
+      "title": "Kasuga Shrine Mandala, early 1300s Japanese painting, dark academia phone wallpaper",
+      "file": "images/crops/kasuga-shrine-mandala-architectural-iphone-wallpaper-ceil-phone-2864x6205.jpg"
+    },
+    {
+      "ref": "vl-0219",
+      "slug": "bamboo-in-four-seasons-autumn-iphone-wallpaper",
+      "postedAt": "2026-09-17",
+      "board": "Art",
+      "title": "Bamboo in Four Seasons: Autumn, Yuan dynasty Chinese ink painting, dark academia phone wallpaper",
+      "file": "images/crops/bamboo-in-four-seasons-autumn-iphone-wallpaper-ceil-phone-2308x5000.jpg"
+    },
+    {
+      "ref": "vl-0371",
+      "slug": "maple-viewing-wang-yin-iphone-wallpaper",
+      "postedAt": "2026-09-18",
+      "board": "Art",
+      "title": "Maple Viewing, Wang Yin, dark academia phone wallpaper",
+      "file": "images/crops/maple-viewing-wang-yin-iphone-wallpaper-ceil-phone-836x1811.jpg"
     }
   ]
 }
