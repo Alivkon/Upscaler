@@ -19,7 +19,7 @@ fi
 
 {
   echo "=== $(date '+%F %T')${DRY_RUN:+ (dry run)}"
-  timeout 45m /home/charlie/.local/bin/claude -p "$PROMPT" --chrome \
+  timeout 45m /home/charlie/.local/bin/claude -p "$PROMPT" --chrome --model sonnet \
     --allowedTools=Read,Edit,Write,Glob,Grep,"Bash(node:*)","Bash(cp:*)","Bash(mkdir:*)","Bash(ls:*)",mcp__claude-in-chrome \
     < /dev/null
   echo
