@@ -1,0 +1,7 @@
+Charlie's own theme picks, 2026-09-20, made by eye on .theme-sheet-all.html (158 live works). These override every machine tag.
+cottagecore: vl-0026 vl-0028 vl-0032 vl-0027 vl-0376 vl-0236 vl-0375 vl-0297 vl-0265 vl-0298 vl-0280 vl-0319 vl-0064 vl-0240 vl-0047 vl-0299 vl-0063 vl-0281 vl-0065 vl-0308 vl-0301 vl-0038 vl-0086 vl-0440 vl-0353 vl-0053
+light-academia: vl-0083 vl-0476 vl-0364 vl-0375 vl-0064 vl-0381 vl-0240 vl-0463 vl-0065 vl-0067 vl-0318 vl-0279 vl-0253 vl-0036 vl-0382 vl-0038 vl-0349 vl-0216 vl-0353
+fall: vl-0358 vl-0045 vl-0174
+winter: vl-0393
+ruins: vl-0399 vl-0060 vl-0460 vl-0226
+moonlight: vl-0399 vl-0472 vl-0407 vl-0226

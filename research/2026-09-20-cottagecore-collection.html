@@ -1,0 +1,146 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Четвёртая тема: cottagecore</title>
+<style>
+body{max-width:46em;margin:2em auto;padding:0 1em;font:16px/1.55 Georgia,serif}
+pre{background:#f4f4f4;padding:.8em;overflow-x:auto;font:13px/1.4 monospace;white-space:pre-wrap}
+code{background:#f4f4f4;padding:0 .2em;font:13px monospace}
+table{border-collapse:collapse;font:14px/1.4 Georgia,serif}
+th,td{border:1px solid #ddd;padding:.3em .5em;text-align:left}
+</style>
+
+<h1>Четвёртая тема: cottagecore</h1>
+
+<p>20 сентября 2026
+
+<h2>Цель</h2>
+
+<p>Поставить четвёртую тематическую страницу одной записью в <code>COLLECTIONS</code> (<code>collections.js</code>), как сделаны три прежние: маршрут, ряд ссылок под сеткой указателя, строка «More … phone wallpapers» на странице работы, карта сайта и проверка <code>yarn verify</code> появляются из неё сами.
+
+<p>Заодно закрыть <code>ancient-ruins</code> — черновую пятую запись, не дожившую до коммита.
+
+<h2>Решения</h2>
+
+<p><strong>Слово — <code>cottagecore</code>, адрес <code>/collection/cottagecore</code>.</strong> По замеру спроса (<code>research/2026-09-20-collection-demand.md</code>) это самая сильная из новых тем: у wallpapers.com 600+ работ против 300+ у dark academia, то есть категория больше той, что уже привела сюда посетителей из ChatGPT. Доказательство косвенное — чисел по запросам не публикует ни один бесплатный источник, — но косвенное одинаково для всех тем, и по нему эта первая.
+
+<p><strong>Состав — отбор Charlie глазами, и только он.</strong> Он прошёл по всем 158 живым работам на <code>.theme-sheet-all.html</code> и отметил 26 (<code>research/2026-09-20-theme-picks-charlie.txt</code>). Машинный тег по тексту каталога в состав не входит вовсе, и не случайно: он ошибался крупно. По light academia текстовый отбор нашёл 4 cottagecore там, где Charlie на тех же плитках увидел в основном cottagecore; по руинам из двенадцати текстовых работ руинами оказалась одна. Каталог называет vl-0047 «dark moody American painting», а на кадре овцы на лугу и мальчик в траве.
+
+<p><strong><code>ancient-ruins</code> снята целиком.</strong> Черновая запись на 12 работ набиралась по тексту записей; отбор Charlie оставил под этим словом четыре — vl-0399, vl-0060, vl-0460, vl-0226. Четыре на тему мало, и решение не выкладывать принял он. Запись удалена из <code>collections.js</code> без закомментированного остатка: закоммичена она не была, и хранить её в виде мёртвого кода незачем. Разбор дописан отдельным разделом в <code>research/2026-09-20-ancient-ruins-collection.md</code> и его html-близнеце; сами файлы оставлены — это исторические записи.
+
+<p><strong>Light academia отложена.</strong> У неё 19 отметок, они сохранены в том же <code>research/2026-09-20-theme-picks-charlie.txt</code>; Charlie счёл подборку слишком тонкой и страницу делать не велел. Спрос по замеру у слова есть, но слабее, чем у cottagecore («некоторый» против «сильного»). Слово не отвергнуто: записи хватит, чтобы собрать тему позже.
+
+<p><strong>Абзац написан по картинкам.</strong> Открыты телефонные кадры всех 26 работ (<code>images/crops</code>, разрешение — тем же путём, что у <code>.themesheet-all.mjs</code>: манифест → скан или плита → <code>crops.phone</code>). Перечисление в абзаце — по весу увиденного, а не по словам каталога:
+
+<ul>
+<li>пастбища со скотом — 5 работ: vl-0047 (овцы и мальчик в траве), vl-0375 (овцы и козы под дубами), vl-0308 (коровы и козы в броде), vl-0301 (отдыхающие под деревом, корова), vl-0376 (мальчик с козами над озером);
+<li>птицы и цветы вблизи — 5: vl-0026, vl-0027 (гнездо среди шиповника), vl-0028, vl-0032 (цветок банана с бабочкой), vl-0440 (одуванчики, маргаритки, божья коровка);
+<li>зелёные берега и опушки — самая большая группа: vl-0281, vl-0353, vl-0265, vl-0064, vl-0240, vl-0086, vl-0053, vl-0297 и другие;
+<li>мельница одна, vl-0299, и в абзаце она в единственном числе.
+</ul>
+
+<p>Постройки при этом есть ещё у двух работ (vl-0038 — фахверковая церковь, vl-0280 — аббатство на склоне), но «cottage» из них не выходит, и в абзац они не попали.
+
+<p><strong>«Chosen as», а не «paintings of».</strong> У vl-0063 и vl-0236 нет ни овец, ни цветов: это открытая равнина под тяжёлым небом. Утверждение о каждой работе было бы неправдой, утверждение об отборе правдиво. Тот же оборот стоит у dark academia.
+
+<p><strong>Числа замером, не руками.</strong> <code>count</code> и <code>full</code> приходят из <code>measure</code> по тем же работам, которые показывает сетка. Годы — крайние из <code>provenance.date</code> тех же 26 refs: 1640 (vl-0065, «early 1640s») и 1871 (vl-0297). У vl-0280, vl-0281 и vl-0440 даты в записи нет вовсе, и оборот «painted between» это выдерживает: он называет промежуток, а не утверждает, что дата известна у каждой.
+
+<p><strong>Музей назван один.</strong> Кливленд стоит в <code>credit</code> у 10 работ из 26; следом University of Pittsburgh с тремя одюбоновскими листами одной книги, а у остальных в <code>credit</code> — Wikimedia Commons, то есть источник файла, а не держатель. Второе имя пришлось бы брать наугад.
+
+<p><strong>Тире в видимом тексте нет ни одного</strong>, вопросительных форм и рекламных слов тоже. В <code>title</code> вместо тире двоеточие — образец <code>nihonga</code>.
+
+<h2>Двадцать шесть работ</h2>
+
+<p>Проверено против <code>galleryItems()</code> — тем же путём, каким работы попадают на страницу: ни одна не <code>hidden</code>, у всех есть файл и телефонный кадр. Разошедшихся нет, все 26 живые.
+
+<table>
+<tr><th>ref<th>работа<th>автор<th>год<th>музей
+<tr><td>vl-0026<td>The Birds of America, plate 118<td>John James Audubon<td>1827–1838<td>University of Pittsburgh
+<tr><td>vl-0028<td>The Birds of America, plate 138<td>John James Audubon<td>1827–1838<td>University of Pittsburgh
+<tr><td>vl-0032<td>Metamorphosis insectorum Surinamensium<td>Maria Sibylla Merian<td>1705<td>—
+<tr><td>vl-0027<td>The Birds of America, plate 137<td>John James Audubon<td>1827–1838<td>University of Pittsburgh
+<tr><td>vl-0376<td>Gebirgssee<td>Arnold Böcklin<td>1846<td>Wikimedia Commons
+<tr><td>vl-0236<td>Villerville Seen from Le Ratier<td>Charles François Daubigny<td>1855<td>Cleveland
+<tr><td>vl-0375<td>Jacob with Laban and his Daughters<td>Claude Lorrain<td>1676<td>Wikimedia Commons
+<tr><td>vl-0297<td>Sunlight and Shadow: The Newbury Marshes<td>Martin Johnson Heade<td>1871<td>Wikimedia Commons
+<tr><td>vl-0265<td>The Summer (Landscape with couple)<td>Caspar David Friedrich<td>1807<td>Wikimedia Commons
+<tr><td>vl-0298<td>Rocky Landscape with Two Men on a Horse<td>George Morland<td>1791<td>Wikimedia Commons
+<tr><td>vl-0280<td>Italian Landscape: The Abbey and the Monks<td>Jean-Victor Bertin<td>нет<td>Wikimedia Commons
+<tr><td>vl-0319<td>Dover<td>Richard Wilson<td>1746<td>Wikimedia Commons
+<tr><td>vl-0064<td>The Waterfalls at Tivoli<td>Claude-Joseph Vernet<td>1737<td>Cleveland
+<tr><td>vl-0240<td>Rocky, Wooded Landscape with a Dell and Weir<td>Thomas Gainsborough<td>c. 1782–1783<td>Cleveland
+<tr><td>vl-0047<td>Durham, Connecticut<td>George Inness<td>1858<td>Cleveland
+<tr><td>vl-0299<td>The Old Water Mill<td>George Morland<td>1790<td>Wikimedia Commons
+<tr><td>vl-0063<td>Landscape Near Paris<td>Georges Michel<td>c. 1840<td>Cleveland
+<tr><td>vl-0281<td>River Landscape<td>Jean-Victor Bertin<td>нет<td>Wikimedia Commons
+<tr><td>vl-0065<td>Rest on the Flight into Egypt<td>Claude Lorrain<td>early 1640s<td>Cleveland
+<tr><td>vl-0308<td>Landscape with the Voyage of Jacob<td>Claude Lorrain<td>1677<td>Wikimedia Commons
+<tr><td>vl-0301<td>Landscape with a Column and Figure<td>Claude Lorrain<td>1650<td>Wikimedia Commons
+<tr><td>vl-0038<td>Landscape with a Church by a Torrent<td>Jacob van Ruisdael<td>c. 1670<td>Cleveland
+<tr><td>vl-0086<td>Landscape with Hunters<td>Jan Wijnants<td>c. 1660–80<td>Cleveland
+<tr><td>vl-0440<td>Still Life with Dandelion<td>Otto Didrik Ottesen<td>нет<td>Wikimedia Commons
+<tr><td>vl-0353<td>A Forest with Apollo and Daphne<td>Jean-Victor Bertin<td>1810<td>Cleveland
+<tr><td>vl-0053<td>In the Woods<td>George Inness<td>1866<td>Cleveland
+</table>
+
+<p>Пересечения: с dark academia — vl-0064, vl-0240, vl-0280, vl-0298, vl-0308, vl-0319, vl-0353, vl-0375, vl-0038; с moody landscape — vl-0063, vl-0064, vl-0086, vl-0240, vl-0308, vl-0353. Допустимо и записано у самих тем: тема отвечает на другой запрос, а картинка ранжируется страницей работы, которой ни одна тема не владеет.
+
+<h2>Изменённые файлы</h2>
+
+<ul>
+<li><code>collections.js</code> — снята запись <code>ancient-ruins</code>, добавлена <code>cottagecore</code>;
+<li><code>research/2026-09-20-ancient-ruins-collection.md</code> и <code>.html</code> — дописан раздел о том, что страница закрыта в тот же день;
+<li><code>research/2026-09-20-cottagecore-collection.md</code> и <code>.html</code> — эта запись.
+</ul>
+
+<h2>Проверки</h2>
+
+<p><code>yarn verify</code>, код 0:
+
+<pre>каталог: 410 записей, 410 адресов, порядок задан
+темы: nihonga — 16, moody-landscape — 14, dark-academia — 43, cottagecore — 26
+журнал запросов: четырнадцать проверок пройдены
+счётчик вызовов: восемь проверок пройдены
+список рассылки: 20 проверок пройдены
+All matched files use Prettier code style!</pre>
+
+<p>Сервер на запасном порту 3195, <code>/collection/cottagecore</code> — 200:
+
+<pre>&lt;title&gt;Cottagecore phone wallpapers: free, no account&lt;/title&gt;
+&lt;meta name=&quot;description&quot; content=&quot;Cottagecore phone wallpaper from museum paintings: sheep in meadows, wildflowers, green river banks, a water mill. Up to 2160 × 3840, free, no account.&quot;&gt;
+&lt;h1 class=&quot;topic__title&quot;&gt;Cottagecore collection&lt;/h1&gt;
+&lt;p class=&quot;topic__note&quot;&gt;26 museum paintings chosen as cottagecore phone wallpapers: sheep grazing in meadows, birds and wildflowers drawn close up, green river banks and a thatched water mill. Painted between 1640 and 1871, from the Cleveland Museum of Art and other public collections.&lt;/p&gt;
+&lt;p class=&quot;topic__terms&quot;&gt;All 26 are phone wallpapers at 9:16, 14 of them at 2160 × 3840 or larger. Free to download and set as your background, no account needed.&lt;/p&gt;
+плиток в сетке: 26</pre>
+
+<p>Длина <code>description</code> — 151 знак, укладывается в обрезку около 155.
+
+<p>Снятые адреса отвечают 404:
+
+<pre>/collection/ancient-ruins   404
+/collection/light-academia  404</pre>
+
+<p>Ряд тем на указателе — четыре ссылки, и те же четыре в карте сайта:
+
+<pre>/collection/cottagecore
+/collection/dark-academia
+/collection/moody-landscape
+/collection/nihonga</pre>
+
+<p>Три прежние темы на месте, счёт не изменился:
+
+<pre>nihonga: 200, работ 16
+moody-landscape: 200, работ 14
+dark-academia: 200, работ 43</pre>
+
+<p>Строка на странице работы (<code>/w/durham-connecticut-american-painting-desktop-wallpaper</code>): «More cottagecore phone wallpapers →».
+
+<p>Тире в видимом тексте темы (<code>title</code>, <code>heading</code>, <code>term</code>, <code>description</code>, <code>note</code>, <code>terms</code>): 0. Вопросительных знаков: 0.
+
+<h2>Ограничения</h2>
+
+<ul>
+<li>Спрос померен косвенно: размером категории у складов, а не числом запросов. Прямых чисел не даёт ни один бесплатный источник, и это то же ограничение, под которым выходили три прежние темы.
+<li>Слово «cottagecore» — анахронизм для картины 1640 года, и абзац это учитывает оборотом «chosen as»: он говорит об отборе, а не о работах.
+<li>Абзац написан по телефонным кадрам, то есть по вырезкам; целую плиту кадр не всегда представляет полностью.
+<li>Не закоммичено и не выложено: у Charlie незавершённая работа в <code>pages.js</code>, <code>gallery.js</code>, <code>public/dimmed.js</code> и <code>scripts/shipping-list.mjs</code>, выкладка на боевую машину до её окончания не идёт.
+</ul>

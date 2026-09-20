@@ -1,0 +1,144 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Четвёртая тема: ancient ruins</title>
+<style>
+body{max-width:46em;margin:2em auto;padding:0 1em;font:16px/1.55 Georgia,serif}
+pre{background:#f4f4f4;padding:.8em;overflow-x:auto;font:13px/1.4 monospace;white-space:pre-wrap}
+code{background:#f4f4f4;padding:0 .2em;font:13px monospace}
+table{border-collapse:collapse;font:14px/1.4 Georgia,serif}
+th,td{border:1px solid #ddd;padding:.3em .5em;text-align:left}
+</style>
+<h1>Четвёртая тема: ancient ruins</h1>
+
+<p>20 сентября 2026
+
+<h2>Цель</h2>
+
+<p>Добавить четвёртую тематическую страницу — античные руины — тем же способом, каким сделаны три прежние: одна запись в <code>COLLECTIONS</code> (<code>collections.js</code>), всё остальное (маршрут, ряд ссылок под сеткой указателя, строка на странице работы, карта сайта, проверка <code>yarn verify</code>) появляется из неё само.
+
+<h2>Решения</h2>
+
+<p><strong>Слово — <code>ancient ruins</code>, адрес <code>/collection/ancient-ruins</code>.</strong> Спрос померен косвенно (<code>research/2026-09-20-collection-demand.md</code>): у WallpaperAccess две почти равные страницы, «Ancient Ruins» на 44 и «Roman Ruins» на 43; прямых чисел по запросам не даёт ни один источник. Взято более широкое из двух, потому что половина подборки — не Рим: воображённый город Коула, храм Уилсона, аркадская копия. Слово обязано отвечать за все двенадцать работ.
+
+<p>Слабость спроса не довод против: по COLLECTIONS.md выбирают не по свободе выдачи, а по честности слова, и страница на 7 обоев уже стояла в выдаче выше склада на 288. Отдельно в пользу темы то, что на складах под этим словом лежит почти сплошь фотография настоящих руин — живопись там другое предложение, а не двухсотый повтор.
+
+<p><strong>Пересечение с dark academia — восемь работ из двенадцати.</strong> Решение Charlie: это допустимо. Тот же довод записан у <code>moody-landscape</code>, вышедшей с одиннадцатью общими из четырнадцати: тема отвечает на другой запрос, общие картинки ранжируются страницей работы, которой тема не владеет.
+
+<p><strong>Двенадцать работ, страница длиннее десяти тоже допустима</strong> — решение Charlie.
+
+<p><strong>Тире в видимом тексте нет ни одного.</strong> У <code>dark-academia</code> и <code>moody-landscape</code> оно стоит в <code>title</code>, но правка 24.08 у <code>nihonga</code> уже заменила его двоеточием; взят этот образец. Вопросительных форм и рекламных слов в тексте нет.
+
+<h2>Двенадцать работ</h2>
+
+<p>Список из <code>research/2026-09-20-collection-candidates.md</code>, раздел 3: семь «sure» и пять «maybe», все двенадцать. Проверено против <code>galleryItems()</code>: ни одна не <code>hidden</code>, у всех есть файлы и кадр 9:16 (<code>crops.phone</code>/<code>crops.tall</code>).
+
+<table>
+<tr><th>ref<th>работа<th>автор<th>год<th>музей<th>кадр 9:16
+<tr><td>vl-0036<td>Interior of the Pantheon, Rome<td>Giovanni Paolo Panini<td>1747<td>Cleveland<td>1913 × 3400
+<tr><td>vl-0060<td>Ruins of an Ancient City<td>John Martin<td>c. 1810–20<td>Cleveland<td>2160 × 3840
+<tr><td>vl-0064<td>The Waterfalls at Tivoli<td>Claude-Joseph Vernet<td>1737<td>Cleveland<td>2152 × 3825
+<tr><td>vl-0067<td>An Aqueduct Near a Fortress<td>Jean-Victor Bertin<td>1807<td>Cleveland<td>2160 × 3840
+<tr><td>vl-0226<td>Ruin by the Sea<td>Arnold Böcklin<td>1881<td>Cleveland<td>2940 × 5227
+<tr><td>vl-0261<td>Roman Landscape<td>Arnold Böcklin<td>1852<td>Wikimedia Commons<td>2104 × 3740
+<tr><td>vl-0301<td>Landscape with a Column and Figure<td>Claude Lorrain<td>1650<td>Wikimedia Commons<td>2160 × 3840
+<tr><td>vl-0336<td>View of Tivoli: the Cascatelle…<td>Richard Wilson<td>1752<td>Wikimedia Commons<td>2027 × 3603
+<tr><td>vl-0386<td>Meleager and Atalanta<td>Richard Wilson<td>c. 1770<td>Wikimedia Commons<td>2160 × 3840
+<tr><td>vl-0460<td>The Course of Empire: Destruction<td>Thomas Cole<td>1836<td>New-York Historical Society<td>2139 × 3802
+<tr><td>vl-0463<td>The Architect's Dream<td>Thomas Cole<td>1840<td>Toledo<td>2160 × 3840
+<tr><td>vl-0464<td>Dream of Arcadia (копия)<td>после Thomas Cole<td>c. 1863<td>Indianapolis<td>2003 × 3560
+</table>
+
+<p>«Maybe» — пять: vl-0226, vl-0386, vl-0460, vl-0463, vl-0464. У них руина выведена из соседних слов записи, а не названа прямо.
+
+<p>Порядок в списке — по возрастанию <code>ref</code>, чтобы править его руками. На саму страницу он не влияет: развеска берётся из <code>catalogue/order.json</code>, как и на указателе.
+
+<h2>Текст</h2>
+
+<p>Числа в абзацах не вписаны, а посчитаны <code>measure()</code> по тем же работам, что стоят под ними, — 12 и 6.
+
+<ul>
+<li><code>title</code> — <code>Ancient ruins phone wallpapers: free, no account</code>
+<li><code>heading</code> — <code>Ancient ruins collection</code>
+<li><code>description</code> (138 знаков, под порогом обрезки в 155) — «Ancient ruins phone wallpaper from museum paintings: the Pantheon, Tivoli, temples and fallen cities. Up to 2160 × 3840, free, no account.»
+<li><code>note</code> — «12 museum paintings chosen as ancient ruins phone wallpapers: the Pantheon and a Roman aqueduct, temples and broken columns, the waterfalls at Tivoli, whole cities left in ruin. Painted between 1650 and 1881, from the Cleveland Museum of Art and other public collections.»
+<li><code>terms</code> — как у трёх прежних тем, слово в слово.
+</ul>
+
+<p>Что чем проверено:
+
+<ul>
+<li><strong>«chosen as», а не «paintings of»</strong> — у vl-0261 руины нет вовсе, это римский пейзаж с грозой. Утверждение о каждой работе было бы неправдой, утверждение об отборе правдиво. Тот же приём, что у dark academia с 12.09.
+<li><strong>Перечисление по весу</strong> (правило COLLECTIONS.md про «dim rooms»): храмы и колонны — четыре работы, разрушенные города — три, Тиволи — две, акведук один, и он поэтому в единственном числе.
+<li><strong>1650 и 1881</strong> — самая ранняя (vl-0301) и самая поздняя (vl-0226) даты из двенадцати записей.
+<li><strong>Назван один музей, а не два.</strong> Кливленд держит пять работ из двенадцати; у Толидо, Индианаполиса и Нью-Йоркского исторического по одной, четыре работы пришли с Wikimedia Commons, а это не музей. Второе имя пришлось бы выбирать из равных, то есть наугад.
+<li><strong>Имён художников нет</strong> по той же причине: Уилсон, Коул и Бёклин стоят по две работы каждый.
+<li><strong>Первая фраза стоит отдельным ответом</strong> на «где взять картину с римскими руинами как обои на телефон»: счёт, чем это является, что на картинах.
+</ul>
+
+<h2>Файлы</h2>
+
+<p><code>collections.js</code> — одна новая запись в <code>COLLECTIONS</code>, больше ничего. <code>pages.js</code>, <code>server.js</code>, <code>gallery.js</code> не тронуты: страница, ссылка в ряду тем, строка на странице работы и запись в карте сайта появляются из записи сами.
+
+<h2>Проверки</h2>
+
+<p><code>yarn verify</code> — код 0:
+
+<pre>каталог: 410 записей, 410 адресов, порядок задан
+темы: nihonga — 16, moody-landscape — 14, dark-academia — 43, ancient-ruins — 12
+журнал запросов: четырнадцать проверок пройдены
+счётчик вызовов: восемь проверок пройдены
+список рассылки: 20 проверок пройдены
+уход тона по каналам, уровней: у модели  -5.95  -2.98  -3.98 | после пересадки  -0.05   0.04   0.01
+пересадка тона: тон вернулся, профиль на месте
+Checking formatting...
+All matched files use Prettier code style!</pre>
+
+<p>Сервер на <code>PORT=3196</code>, проверено <code>curl</code>ом:
+
+<pre>status /collection/ancient-ruins: 200
+&lt;title&gt;Ancient ruins phone wallpapers: free, no account&lt;/title&gt;
+&lt;meta name="description" content="Ancient ruins phone wallpaper from museum paintings: the Pantheon, Tivoli, temples and fallen cities. Up to 2160 × 3840, free, no account."
+&lt;h1 class="topic__title"&gt;Ancient ruins collection&lt;/h1&gt;
+&lt;p class="topic__note"&gt;12 museum paintings chosen as ancient ruins phone wallpapers: the Pantheon and a Roman aqueduct, temples and broken columns, the waterfalls at Tivoli, whole cities left in ruin. Painted between 1650 and 1881, from the Cleveland Museum of Art and other public collections.&lt;/p&gt;
+&lt;p class="topic__terms"&gt;All 12 are phone wallpapers at 9:16, 6 of them at 2160 × 3840 or larger. Free to download and set as your background, no account needed.&lt;/p&gt;
+ссылок на работы: 12</pre>
+
+<p>Ряд тем под сеткой указателя:
+
+<pre>&lt;a href="/collection/nihonga"&gt;Nihonga collection&lt;/a&gt;
+&lt;a href="/collection/moody-landscape"&gt;Moody landscape collection&lt;/a&gt;
+&lt;a href="/collection/dark-academia"&gt;Dark academia collection&lt;/a&gt;
+&lt;a href="/collection/ancient-ruins"&gt;Ancient ruins collection&lt;/a&gt;</pre>
+
+<p>Карта сайта:
+
+<pre>&lt;loc&gt;…/collection/nihonga&lt;/loc&gt;
+&lt;loc&gt;…/collection/moody-landscape&lt;/loc&gt;
+&lt;loc&gt;…/collection/dark-academia&lt;/loc&gt;
+&lt;loc&gt;…/collection/ancient-ruins&lt;/loc&gt;</pre>
+
+<p>Три прежние темы на месте и не изменились:
+
+<pre>nihonga: 200, работ 16
+moody-landscape: 200, работ 14
+dark-academia: 200, работ 43</pre>
+
+<p>Строка на странице работы (<code>/w/cole-architect-s-dream-…</code>): «More ancient ruins phone wallpapers →».
+
+<p>Тире в видимом тексте темы: <code>grep -c "—"</code> по строкам <code>title</code>, <code>heading</code>, <code>term</code>, <code>description</code>, <code>note</code>, <code>terms</code> — 0.
+
+<h2>Ограничения</h2>
+
+<ul>
+<li>Пять работ из двенадцати отмечены по тексту записи, а не глазами: лист с галочками Charlie смотрит отдельно. Снятое снимается прямо из <code>refs</code> в <code>collections.js</code>, числа в абзацах пересчитаются сами.
+<li>Спрос слаб и померен косвенно — наличием страницы у складов, не числом запросов. Прямых чисел не даёт ни один бесплатный источник.
+<li>Не закоммичено и не выложено.
+</ul>
+
+<h2>Закрыто в тот же день, 20 сентября 2026</h2>
+
+<p>Страница снята и запись <code>ancient-ruins</code> убрана из <code>collections.js</code> целиком, не закомментирована: она никогда не была закоммичена, и история в git её не хранит.
+
+<p>Причина — тот самый лист с галочками, который назван выше в «Ограничениях». Charlie прошёл по всем 158 живым работам глазами (<code>.theme-sheet-all.html</code>, результат — <code>research/2026-09-20-theme-picks-charlie.txt</code>) и оставил под словом «руины» четыре работы: <strong>vl-0399, vl-0060, vl-0460, vl-0226</strong>. Из двенадцати, набранных здесь по тексту записей, его отбор подтвердил три (vl-0060, vl-0460, vl-0226) и добавил одну (vl-0399); остальные девять руинами не оказались. Это ровно та ошибка, о которой предупреждал раздел «Ограничения»: пять работ были отмечены по соседним словам в записи, а на деле промахнулся и текстовый отбор целиком.
+
+<p>Четыре работы на тему — мало, и решение не выкладывать страницу принял Charlie. Слово при этом не отвергнуто: если руин в коллекции станет больше, запись собирается заново по этому же файлу.
