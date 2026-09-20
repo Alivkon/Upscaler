@@ -1,0 +1,72 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>GEO copy: пять фраз пущены в код</title>
+<style>
+body{max-width:46em;margin:2em auto;padding:0 1em;font:16px/1.55 Georgia,serif}
+pre{background:#f4f4f4;padding:.8em;overflow-x:auto;font:13px/1.4 monospace;white-space:pre-wrap}
+code{background:#f4f4f4;padding:0 .2em;font:13px monospace}
+</style>
+<h1>GEO copy: пять фраз пущены в код</h1>
+
+<p>20 сентября 2026
+
+<h2>Цель</h2>
+
+<p>Заявка <code>research/2026-09-20-geo-copy-draft.md</code> описала пять мест, где цитируемое предложение отвечает на то, что спрашивают у ChatGPT и похожих ассистентов. Черновик текста не трогал; Charlie одобрил пять формулировок, и эта запись — про их установку в код.
+
+<p>Жёсткое правило заявки: ни одного тире (—) в новой копии. Только запятые, точки, двоеточия.
+
+<h2>Пять строк</h2>
+
+<ol>
+<li><strong><code>DESCRIPTION</code></strong> (<code>pages.js</code>, главная и обходные страницы через <code>layout</code>): «Real museum paintings and engravings, not AI-generated, as free phone wallpapers at 2160 × 3840. Each comes cropped for the screen and in a dimmed version so icons stay readable. No sign-up, no watermark. Make your own from a picture of your own, up to 4× bigger.» «No watermark» уже используется в <code>collections.js</code> и <code>COLLECTIONS.md</code> как подтверждённое утверждение; «engravings» и «2160 × 3840» были в прежнем тексте.
+
+<li><strong>Подпись у галочки «Dimmed»</strong> (<code>dimmedBox()</code>): «Dimmed is the painting made darker and less colourful, so your icons and clock stay easy to read. Switch it off for the plain scan.» Не отдельным абзацем и не новым CSS-классом — вторая строка внутри <code>.options__text</code>, тем же <code>.options__fine</code>, что уже несёт «no preview» у «Increase size» в приёмке. <code>:has(.options__fine)</code> уже переключает выравнивание квадрата с середины на верх, второе правило писать не пришлось. Работы с <code>treatment: none</code> галочки не получают, и подписи у них поэтому тоже нет — проверено на <code>aivazovsky-the-ninth-wave-desktop-wallpaper</code>.
+
+<li><strong><code>/license</code>, первый абзац</strong>: «These are scans of real paintings and drawings held by museums, not AI-generated images; cropping and darkening them for a phone screen is ordinary image processing, done by fixed rules, not by a generator.» Заявленное «done the same way on every file» смягчено: по AGENTS.md у поля <code>treatment</code> три значения (<code>dim</code>, <code>ceil</code>, <code>none</code>), и «тем же способом» для всех файлов неверно. «Done by fixed rules, not by a generator» верно при любом из трёх правил.
+
+<li><strong><code>/license</code>, перед «Works from open collections»</strong>: «Using a painting from this collection as your wallpaper is free and needs no permission. Most are public domain or CC0, and the few under CC BY ask for credit only if you share the image.» Формулировка встала как одобрена: не противоречит секции <code>#cc-by</code> — та же страница просит credit «when you take» файл, и требование срабатывает практически при публикации, а не при личном использовании.
+
+<li><strong><code>workPage()</code>, meta description</strong>: шаблон «<code>&lt;Title&gt; by &lt;Artist&gt; (&lt;year&gt;), a free &lt;w&gt; × &lt;h&gt; phone wallpaper from &lt;credit&gt;.</code>» встал перед прежним текстом (<code>item.alt</code>, размер, тип файла, вес, «Free download, no sign-up.» — всё осталось, новая фраза говорит первой). Поля считаны по <code>catalogue/*.json</code> (411 записей, без <code>order.json</code>):
+<ul>
+<li><code>item.provenance</code> отсутствует у 60 записей (свои работы) — фразы у них нет вовсе, как нет и байлайна на странице;
+<li>creator помечен <code>unknown</code> у 77 из 351 записей с provenance — «by …» опускается;
+<li><code>date</code> отсутствует у 29 — скобки с годом опускаются;
+<li><code>credit</code> отсутствует у 3 — «from …» опускается.
+</ul>
+Других отсутствующих полей в данных не нашлось, других веток поэтому не заводилось.
+</ol>
+
+<h2>Файлы</h2>
+
+<p><code>pages.js</code> — все пять правок. Новый CSS не понадобился: <code>.options__fine</code> в <code>public/styles.css</code> уже существовал для того же назначения.
+
+<h2>Проверки</h2>
+
+<p><code>yarn verify</code> — код 0:
+
+<pre>каталог: 410 записей, 410 адресов, порядок задан
+темы: nihonga — 16, moody-landscape — 14, dark-academia — 43
+журнал запросов: четырнадцать проверок пройдены
+счётчик вызовов: восемь проверок пройдены
+список рассылки: 20 проверок пройдены
+уход тона по каналам, уровней: у модели  -5.95  -2.98  -3.98 | после пересадки  -0.05   0.04   0.01
+пересадка тона: тон вернулся, профиль на месте
+Checking formatting...
+All matched files use Prettier code style!</pre>
+
+<p>Сервер поднят на <code>PORT=3198</code> (боевой на 3000 не тронут), проверено <code>curl</code>ом:
+
+<ul>
+<li><code>/</code> — новая <code>DESCRIPTION</code> в <code>&lt;meta name="description"&gt;</code>, подтверждено.
+<li><code>/license</code> — оба новых абзаца на месте.
+<li><code>/collection/dark-academia</code> — 200.
+<li>три страницы работы: <code>a-forest-with-apollo-and-daphne-bertin-iphone-wallpaper</code> (обычная, все поля есть — description начинается «A Forest with Apollo and Daphne by Jean-Victor Bertin (1810), a free 2160 × 3840 phone wallpaper from Cleveland Museum of Art, 1975.77.», подпись у «Dimmed» есть), <code>aivazovsky-the-ninth-wave-desktop-wallpaper</code> (<code>treatment: none</code> — без чекбокса и без подписи), <code>after-kalf-still-life-nautilus-iphone-wallpaper</code> (creator <code>unknown</code> — description без «by»); отдельно проверен пропуск года на <code>crow-in-flight-on-gold-iphone-wallpaper</code>.
+<li><code>grep</code> по добавленным строкам на «—» — ни одного вхождения в английской копии; тире остались только в русских комментариях рядом (правило — про копию для посетителя).
+</ul>
+
+<h2>Ограничения</h2>
+
+<p>Скриншот на 360 px через chrome-инструменты не снимался: <code>curl</code> и разбор CSS (<code>.options__fine</code>, <code>:has()</code>) показали, что вёрстка уже несёт этот случай — вторую строку в лейбле, — и отдельный визуальный прогон решено пропустить.
+
+<p>Пункт 4 (<code>/license</code>, легальность) не сверялся построчно юристом — формула одобрена Charlie заранее, только проверена на непротиворечие остальному тексту страницы.

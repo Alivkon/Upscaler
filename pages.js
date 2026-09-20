@@ -21,11 +21,14 @@ import { formatBytes, formatDims, formatType } from './public/record.js';
 import { MIN_SOURCE } from './public/upscale-local.js';
 
 const SITE_NAME = 'Tessarum';
-// Сказано про оба вида работ: описание страницы попадает в выдачу,
-// а «4k desktop wallpaper» спрашивают отдельно от «phone wallpaper».
+// Сказано про работы коллекции и про телефон: описание страницы попадает
+// в выдачу. Главное предложение — первым: ассистенты цитируют его как есть,
+// а не всю строку. Третьей фразы — «сделай своё» — здесь больше нет: Bing
+// Webmaster Tools считал строку слишком длинной, и обрезана она с конца,
+// потому что приёмка у описания и так не первое дело.
 const DESCRIPTION =
-  'Phone wallpapers at 2160 × 3840 from paintings and engravings in open collections. ' +
-  'Free to download, no sign-up. Make your own wallpaper from a picture of your own, up to 4× bigger.';
+  'Real museum paintings and engravings, not AI-generated, as free phone wallpapers at 2160 × 3840. ' +
+  'Each comes cropped for the screen and in a dimmed version so icons stay readable.';
 
 // Единственное место, где текст становится разметкой. Имена присланных файлов
 // попадают на страницу, а они приходят снаружи.
@@ -408,10 +411,19 @@ const scanShot = (file, scan) => scanData(scanPair(file, scan));
 // Отступ приходит доводом: вставляют галочку в двух местах разной глубины —
 // под абзацем темы и под кнопками работы, — и один зашитый отступ был бы
 // верным ровно в одном из них.
+// Подпись — тем же `.options__fine`, что уже несёт «no preview» у «Increase
+// size» в приёмке: строка второй строкой внутри `.options__text`, своих
+// правил не заводит и подтягивает `:has(.options__fine)`, который ставит
+// квадрат по верху, а не по середине двух строк.
 const dimmedBox = pad => `<label class="options__row dimmed">
 ${pad}  <input type="checkbox" id="dimmed" checked />
 ${pad}  <span class="options__box" aria-hidden="true"></span>
-${pad}  <span class="options__text">Dimmed</span>
+${pad}  <span class="options__text"
+${pad}    >Dimmed<span class="options__fine"
+${pad}      >Dimmed is the painting made darker and less colourful, so your icons and
+${pad}      clock stay easy to read. Switch it off for the plain scan.</span
+${pad}    ></span
+${pad}  >
 ${pad}</label>`;
 
 // Заголовок в каталоге разрезается на имя работы и хвост для выдачи: «In the
@@ -1211,6 +1223,17 @@ export function workPage({ item, others, topics = [], origin }) {
       ? `<p class="terms__line">${restored}${comparable ? '<span class="terms__hint">Click for full size, hold to compare</span>' : ''}</p>`
       : ''
   }${provenance(item, name)}`;
+  // Предложение для ассистентов, которые цитируют meta description целиком, —
+  // разобрано в research/2026-09-20-geo-copy-draft.md, п.5. У своих работ
+  // (`item.provenance` нет — их шестьдесят) сказать «by» и «from» нечем,
+  // и предложения нет вовсе, как и сейчас у них нет байлайна. Автор и год
+  // опускаются так же, как их опускает `bylineFor` и `provenance()` выше:
+  // семьдесят семь работ с автором «unknown» и двадцать девять без даты.
+  const { creator, creatorKind, date, credit } = item.provenance || {};
+  const byArtist = creator && creatorKind !== 'unknown' ? ` by ${creator}` : '';
+  const withYear = date ? ` (${date})` : '';
+  const fromCredit = credit ? ` from ${credit}` : '';
+  const geoLine = item.provenance ? `${name}${byArtist}${withYear}, a free ${size} phone wallpaper${fromCredit}. ` : '';
   return layout({
     current: 'collection',
     // Снятая с витрины работа отвечает как прежде, но выпадает из выдачи.
@@ -1218,7 +1241,7 @@ export function workPage({ item, others, topics = [], origin }) {
     // из коллекции не уходили, и обрывать обход на них незачем.
     noindex: item.hidden,
     title: `${headline}, ${gauge}`,
-    description: `${item.alt}. ${gauge}, ${formatType(file.url)}, ${formatBytes(file.bytes)}.${restored ? ` ${restored}.` : ''} Free download, no sign-up.`,
+    description: `${geoLine}${item.alt}. ${gauge}, ${formatType(file.url)}, ${formatBytes(file.bytes)}.${restored ? ` ${restored}.` : ''} Free download, no sign-up.`,
     canonical: `${origin}/w/${item.slug}`,
     image: `${origin}${file.url}`,
     imageWidth: file.width,
@@ -1556,12 +1579,22 @@ export function licensePage({ origin }) {
     body: `
       <h1 class="heading">Licensing</h1>
       <div class="prose">
+        <p>
+          These are scans of real paintings and drawings held by museums, not AI-generated images;
+          cropping and darkening them for a phone screen is ordinary image processing, done by fixed
+          rules, not by a generator.
+        </p>
         <p class="prose__lead">
           Nearly everything in this collection comes from an open collection and is not ours to
           license at all — <a href="#public-domain">those are free of us entirely</a>. A few
           photographs are <a href="#cc-by">CC BY</a> and ask for credit. Works drawn by us carry
           <a href="#tessarum">terms of our own</a>, and there are none of those on the shelf today.
           The tool that enlarges your own picture <a href="#model">runs on borrowed work too</a>.
+        </p>
+        <p>
+          Using a painting from this collection as your wallpaper is free and needs no permission.
+          Most are public domain or CC0, and the few under CC BY ask for credit only if you share
+          the image.
         </p>
 
         <h2 id="public-domain">Works from open collections</h2>
