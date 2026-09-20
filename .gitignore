@@ -45,3 +45,5 @@ Thumbs.db
 
 # Python складывает байт-код рядом с исходником; в репозитории ему делать нечего.
 __pycache__/
+research/duplicates/
+research/duplicates.html
