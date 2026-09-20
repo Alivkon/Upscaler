@@ -1225,14 +1225,26 @@ export function workPage({ item, others, topics = [], origin }) {
   }${provenance(item, name)}`;
   // Предложение для ассистентов, которые цитируют meta description целиком, —
   // разобрано в research/2026-09-20-geo-copy-draft.md, п.5. У своих работ
-  // (`item.provenance` нет — их шестьдесят) сказать «by» и «from» нечем,
+  // (`item.provenance` нет — их пятьдесят девять) сказать «by» и «from» нечем,
   // и предложения нет вовсе, как и сейчас у них нет байлайна. Автор и год
   // опускаются так же, как их опускает `bylineFor` и `provenance()` выше:
   // семьдесят семь работ с автором «unknown» и двадцать девять без даты.
+  //
+  // «from …» называет держателя работы, а `credit` не всегда называет его:
+  // разбор от 20.09.2026 (research/2026-09-20-geo-copy.md) нашёл среди живых
+  // (не `hidden`) записей 53 с голым «Wikimedia Commons» — это витрина, на
+  // которой лежит скан, а не тот, кто держит сам оригинал, — и одну
+  // «Photograph by Sailko, CC BY 3.0, via Wikimedia Commons», подпись
+  // фотографа. Оба случая дают бессмысленную фразу («from Wikimedia
+  // Commons», «from Photograph by …»). Отдельного поля для держателя
+  // в записи нет — все ключи `provenance` проверены, других не нашлось, —
+  // и матчинг по этим двум формам `credit`, единственный и явный, остаётся
+  // меньшим злом, чем ложное «from».
   const { creator, creatorKind, date, credit } = item.provenance || {};
   const byArtist = creator && creatorKind !== 'unknown' ? ` by ${creator}` : '';
   const withYear = date ? ` (${date})` : '';
-  const fromCredit = credit ? ` from ${credit}` : '';
+  const holder = credit && credit !== 'Wikimedia Commons' && !/^photograph by/i.test(credit) ? credit : '';
+  const fromCredit = holder ? ` from ${holder}` : '';
   const geoLine = item.provenance ? `${name}${byArtist}${withYear}, a free ${size} phone wallpaper${fromCredit}. ` : '';
   return layout({
     current: 'collection',

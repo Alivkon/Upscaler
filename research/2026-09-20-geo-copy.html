@@ -70,3 +70,46 @@ All matched files use Prettier code style!</pre>
 <p>Скриншот на 360 px через chrome-инструменты не снимался: <code>curl</code> и разбор CSS (<code>.options__fine</code>, <code>:has()</code>) показали, что вёрстка уже несёт этот случай — вторую строку в лейбле, — и отдельный визуальный прогон решено пропустить.
 
 <p>Пункт 4 (<code>/license</code>, легальность) не сверялся построчно юристом — формула одобрена Charlie заранее, только проверена на непротиворечие остальному тексту страницы.
+
+<h2>Правка от того же дня: «from …» врал на части записей</h2>
+
+<p>Пункт 5 выше проверил только отсутствие <code>credit</code>, а не то, что в нём написано. Оказалось: <code>credit</code> — не всегда держатель работы. У vl-0392 (ворона на золоте) он — <code>Photograph by Sailko, CC BY 3.0, via Wikimedia Commons</code>, подпись фотографа, и фраза выходила «a free … phone wallpaper from Photograph by Sailko, CC BY 3.0, via Wikimedia Commons» — бессмыслица.
+
+<h3>Перепись <code>credit</code> по всем 410 записям (без <code>order.json</code>)</h3>
+
+<p>Группировка по форме строки, счёт отдельно по живым (не <code>hidden</code>) записям — скрытые в счёт не идут:
+
+<table border="1" cellpadding="4" style="border-collapse:collapse">
+<tr><th>форма</th><th>всего</th><th>живых</th></tr>
+<tr><td>музей + инвентарный номер («Cleveland Museum of Art, 1960.80» и т.п.)</td><td>182</td><td>большинство</td></tr>
+<tr><td>голое «Wikimedia Commons» (без музея — просто витрина)</td><td>122</td><td>53</td></tr>
+<tr><td>название музея без номера («Tokyo National Museum» и т.п.)</td><td>25</td><td>25</td></tr>
+<tr><td>поля нет вовсе</td><td>3</td><td>2</td></tr>
+<tr><td>«Photograph by …» (подпись фотографа)</td><td>1</td><td>1</td></tr>
+</table>
+
+<p>Полей, которые называли бы держателя отдельно от <code>credit</code> (<code>source</code>, <code>institution</code>, <code>holder</code>, <code>museum</code>), в <code>provenance</code> нет — проверены все встречающиеся ключи: <code>creator</code>, <code>date</code>, <code>work</code>, <code>credit</code>, <code>page</code>, <code>creatorKind</code>. Полевого решения поэтому нет.
+
+<p>Из 351 живой записи с <code>provenance</code> под старым кодом (<code>credit ? \` from ${credit}\` : ''</code>) фраза «from …» врала в 54 случаях: 53 «Wikimedia Commons» и 1 «Photograph by …». Остальные, даже длинные («Musée Fabre, Montpellier, 2017.27.1», «Adachi Museum of Art, via Google Art Project and Wikimedia Commons»), называют держателя честно и не тронуты.
+
+<h3>Правило</h3>
+
+<p><code>pages.js</code>, <code>workPage()</code>: <code>credit</code> идёт во фразу, только если это не голое «Wikimedia Commons» и не начинается с «Photograph by» (без учёта регистра). Оба случая — не название держателя, а название витрины или подпись фотографа; фраза без «from …» при этом читается нормально сама по себе — «Crow in flight, a free 2552 × 4536 phone wallpaper.» Комментарий над <code>geoLine</code> переписан: было устаревшее «шестьдесят» записей без <code>provenance</code> (пересчёт сегодня даёт 59), добавлен разбор новой ветки.
+
+<p>Матчинг по строке — не поле, и это ровно тот случай, для которого AGENTS.md просит объяснить: полевого способа нет, а правило одно и явное, а не набор случайных слов.
+
+<h3>Проверка</h3>
+
+<p><code>yarn verify</code> — код 0 (та же строка каталога: 410 записей). Сервер поднят на <code>PORT=3197</code> (не боевой), <code>curl /w/&lt;slug&gt;</code>, meta description:
+
+<ul>
+<li><code>crow-in-flight-on-gold-iphone-wallpaper</code> (<code>credit</code> = «Photograph by Sailko…») — «Crow in flight, a free 2552 × 4536 phone wallpaper. …» — «from …» ушло;
+<li><code>vase-of-flowers-huysum-iphone-wallpaper</code> и <code>flowers-in-an-urn-huysum-iphone-wallpaper</code> (<code>credit</code> = голое «Wikimedia Commons») — обе фразы кончаются на «phone wallpaper.» без «from …»;
+<li><code>silver-wine-jug-ham-and-fruit-dark-still-life-iphone-wallpaper</code> и <code>view-of-lake-pepin-minnesota-river-landscape-desktop-wallpaper</code> (<code>credit</code> = «Cleveland Museum of Art, …») — «from Cleveland Museum of Art, 1960.80.» и «from Cleveland Museum of Art, 1947.198.» остались на месте.
+</ul>
+
+<p>Сервер остановлен после проверки, порт 3000 не трогали.
+
+<h3>Файлы</h3>
+
+<p><code>pages.js</code> — комментарий и три строки (<code>holder</code>, <code>fromCredit</code>, <code>geoLine</code>) в <code>workPage()</code>; <code>gallery.js</code> и два незакоммиченных абзаца в <code>pages.js</code> (<code>intakePage</code>) не тронуты — они не по этой задаче.
