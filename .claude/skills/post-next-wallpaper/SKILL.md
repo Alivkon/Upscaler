@@ -26,14 +26,16 @@ cd /home/charlie/repos/Upscaler && node scripts/for-tumblr.mjs
 
 This (re)writes `images/for-tumblr/<ref>-<slug>.jpg` (900px wide, aspect
 preserved) for every **non-hidden** catalogue work, using each work's
-`crops.phone` file — the *edited* `dim`/`ceil`/`none` version, never the
-`scan` alternate — plus `images/for-tumblr/index.json` (title, alt, tags,
-provenance, tessarum URL per ref). It's deliberately undersized: big enough
-to look sharp on a Tumblr dash card, short of what any modern phone needs as
-an actual wallpaper, so a viewer who wants the real file has to click through
-to the work page. Pinterest posts use the full-size `crops.phone` file
-instead (see §3) — Pinterest isn't trying to under-serve resolution the way
-Tumblr is.
+**untreated** file — `scan.crops.phone` when the work has a scan (i.e.
+`treatment` is `dim` or `ceil`), falling back to `crops.phone` for
+`treatment: "none"`, which has no separate scan — plus
+`images/for-tumblr/index.json` (title, alt, tags, provenance, tessarum URL
+per ref). It's deliberately undersized: big enough to look sharp on a Tumblr
+dash card, short of what any modern phone needs as an actual wallpaper, so a
+viewer who wants the real file has to click through to the work page.
+Pinterest posts use the full-size, **treated** `crops.phone` file instead
+(see §4) — Tumblr always shows the undimmed original, Pinterest keeps
+matching what the gallery ships.
 
 ## 1. Read what's already posted
 
@@ -70,6 +72,9 @@ the whole gallery. Only skip a work if it's clearly unusable (e.g. missing
 file).
 
 ## 3. Tumblr
+
+Tumblr always gets the **non-dimmed** file (§0) — don't substitute the
+gallery's treated version even if it looks closer to what's live on the site.
 
 1. Open `https://www.tumblr.com/new/photo` in Chrome (logged-in session,
    blog `tessarum-blog` is the default target — confirm the composer header

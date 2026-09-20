@@ -2,8 +2,10 @@
 // enough to look good in a feed, short of an actual phone wallpaper so a
 // viewer who wants the real resolution has to click through to the work page.
 //
-// Uses the edited file (`crops.phone`, the `dim`/`ceil`/`none` main version),
-// never `scan` — the untreated alternate is not what ships on the gallery.
+// Uses the untreated file (`scan.crops.phone` when a scan exists, i.e. the
+// work has `treatment` `dim` or `ceil`; falls back to `crops.phone` for
+// `treatment: "none"`, which has no separate scan because there's nothing to
+// differ) — Tumblr always gets the undimmed version, unlike the gallery.
 //
 // Запуск: node scripts/for-tumblr.mjs
 import fs from 'node:fs/promises';
@@ -42,7 +44,7 @@ for (const ref of order) {
     continue;
   }
   const entry = manifest.get(ref);
-  const phone = entry?.crops?.phone;
+  const phone = entry?.scan?.crops?.phone || entry?.crops?.phone;
   if (!phone) {
     skippedNoFile++;
     continue;
