@@ -162,10 +162,10 @@ clamp to the plate edge. Works with several variants have only `v1` applied.
 | vl-0399 | left 1601px   |         | ✓       |
 | vl-0407 | left 1095px   |         | ✓       |
 | vl-0408 | left 1152px   |         | ✓       |
-| vl-0412 | left 492px    | v1      | ✓       |
 | vl-0412 | left 2250px   | v2      |         |
-| vl-0417 | left 3348px   | v1      | ✓       |
-| vl-0417 | left 1565px   | v2      |         |
+| vl-0412 | left 362px    | v3      | ✓       |
+| vl-0417 | left 3348px   | v1      |         |
+| vl-0417 | left 1565px   | v2      | ✓       |
 | vl-0418 | left 1158px   |         | ✓       |
 | vl-0419 | left 700px    |         | ✓       |
 | vl-0420 | left 415px    |         | ✓       |
@@ -192,8 +192,8 @@ clamp to the plate edge. Works with several variants have only `v1` applied.
 | vl-0455 | left 812px    |         | ✓       |
 | vl-0456 | left 1057px   |         | ✓       |
 | vl-0457 | left 320px    |         | ✓       |
-| vl-0460 | left 0px      | v1      | ✓       |
-| vl-0460 | left 3584px   | v2      |         |
+| vl-0460 | left 3571px   | v2      | ✓       |
+| vl-0460 | left 0px      | v3      |         |
 | vl-0461 | left 3210px   | v1      | ✓       |
 | vl-0461 | left 1016px   | v2      |         |
 | vl-0463 | left 0px      | v1      | ✓       |
@@ -202,14 +202,13 @@ clamp to the plate edge. Works with several variants have only `v1` applied.
 | vl-0464 | left 2184px   | v2      |         |
 | vl-0465 | left 1759px   |         | ✓       |
 | vl-0466 | left 0px      | v1      | ✓       |
-| vl-0466 | left 1283px   | v2      |         |
 | vl-0466 | left 2394px   | v3      |         |
-| vl-0467 | left 1209px   | v1      | ✓       |
 | vl-0467 | left 2913px   | v2      |         |
+| vl-0467 | left 594px    | v3      | ✓       |
 | vl-0468 | left 1888px   |         | ✓       |
 | vl-0472 | left 430px    |         | ✓       |
-| vl-0473 | left 2765px   | v1      | ✓       |
-| vl-0473 | left 1706px   | v2      |         |
+| vl-0473 | left 2765px   | v1      |         |
+| vl-0473 | left 1706px   | v2      | ✓       |
 | vl-0474 | left 794px    |         | ✓       |
 | vl-0475 | left 2767px   | v1      | ✓       |
 | vl-0475 | left 4275px   | v2      |         |
