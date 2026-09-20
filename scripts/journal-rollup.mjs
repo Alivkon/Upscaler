@@ -171,6 +171,10 @@ const shows = human.filter(
 );
 console.log(`\nУнесли ${takes.length} файлов; открыли во весь экран ${shows.length}`);
 table(rank(tally(takes.map(record => byUrl.get(record.path)?.frame ?? 'не из витрины'))), 'Что уносили: кадр');
+// Кадр и версия — два вопроса, и таблицы поэтому две. Стояли они в одной,
+// пока от второй версии индексировался один адрес: строки `scan` и `dim`
+// были там про плиту, а про кадры второй версии не было ничего.
+table(rank(tally(takes.map(record => byUrl.get(record.path)?.version ?? 'не из витрины'))), 'Что уносили: версия');
 table(rank(tally(takes.map(record => byUrl.get(record.path)?.slug ?? record.path))), 'Что уносили: работа');
 table(rank(tally(takes.map(record => deviceOf(record.ua)))), 'Что уносили: устройство');
 table(rank(tally(takes.map(record => record.dest))), 'Чем брали (Sec-Fetch-Dest)');

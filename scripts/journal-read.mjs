@@ -68,19 +68,35 @@ export async function readDays(DIRECTORY, DAYS) {
 // Адрес картинки → работа, кадр и место на указателе. Считается из той же
 // `galleryItems()`, из которой собирается сама витрина: второй список имён
 // файлов разошёлся бы с первым молча (AGENTS.md).
+// У работы ДВЕ ВЕРСИИ, и обе устроены одинаково: плита, её копии, кадры,
+// копии кадров (`versionOf` в gallery.js). Поэтому обход один и зовётся
+// дважды. Раньше от второй версии индексировался один верхнеуровневый адрес
+// плиты, а её копии и кадры — нет: 2197 адресов из 2366 не опознавались,
+// и строки журнала о них не приписывались ни к какой работе.
+//
+// `frame` отвечает «какой кадр», `version` — «какая из двух»: вопросы разные,
+// и одно поле на оба отвечало бы половиной правды. Какая версия перед нами,
+// говорит имя поля, а не измерение файла: `scan` у работы заполнен тогда,
+// когда страница отдаёт приглушённое, `dimmed` — когда страница отдаёт скан
+// (gallery.js).
 export async function imageIndex() {
   const shown = (await galleryItems()).filter(item => !item.hidden);
   const byUrl = new Map();
   shown.forEach((item, position) => {
-    const put = (url, frame, full) => byUrl.set(decodeURI(url), { slug: item.slug, frame, full, position });
-    put(item.url, 'plate', true);
-    for (const copy of item.copies) put(copy.url, 'plate', false);
-    for (const [frame, cut] of Object.entries(item.crops || {})) {
-      if (!cut) continue;
-      put(cut.url, frame, true);
-      for (const copy of cut.copies || []) put(copy.url, frame, false);
-    }
-    if (item.scan) put(item.scan.url, 'scan', true);
+    const put = (url, frame, full, version) =>
+      byUrl.set(decodeURI(url), { slug: item.slug, frame, full, version, position });
+    const walk = (entry, version) => {
+      put(entry.url, 'plate', true, version);
+      for (const copy of entry.copies || []) put(copy.url, 'plate', false, version);
+      for (const [frame, cut] of Object.entries(entry.crops || {})) {
+        if (!cut) continue;
+        put(cut.url, frame, true, version);
+        for (const copy of cut.copies || []) put(copy.url, frame, false, version);
+      }
+    };
+    walk(item, item.scan ? 'dim' : 'scan');
+    if (item.scan) walk(item.scan, 'scan');
+    if (item.dimmed) walk(item.dimmed, 'dim');
   });
   // `slugs` — показанные работы в порядке витрины: по нему считается, что
   // из них обошли краулеры, а что не видел ни один.
@@ -92,17 +108,31 @@ export async function imageIndex() {
 // Заход — это все строки одного `visit` за день. Правило грубое и заведомо
 // неточное; его и проверяют `--sample` и ручные ярлыки.
 //
-// Три признака, по убыванию надёжности. Назвался краулером — краулер, и спорить
-// не о чем. Забрал страницу и не забрал к ней ни файла — не браузер: браузер
-// просит `styles.css` и карточки в ту же секунду, а качалка берёт разметку
-// и уходит. Не прислал языка вовсе — признак слабый, сам по себе не судит.
+// Четыре признака, по убыванию надёжности. Назвался краулером — краулер,
+// и спорить не о чем. Не взял ни одной удачной страницы и ни одного файла —
+// стучался, а не смотрел. Забрал страницу и не забрал к ней ни файла — не
+// браузер: браузер просит `styles.css` и карточки в ту же секунду, а качалка
+// берёт разметку и уходит. Не прислал языка вовсе — признак слабый, сам по
+// себе не судит.
+//
+// «Одни 404» появился позже остальных и закрывает дыру в правиле «молча»:
+// оно считает только строки `page`, а сканер дырок в WordPress до страницы
+// не доходит — стучится в `/wp-admin/install.php` и получает `miss`. Строк
+// `page` у него ноль, признак не срабатывает, и в сводке он оказывался
+// человеком: за неделю таких набиралось 64 из 188. Цена правила известна
+// и мала: человек, у которого первым запросом ушёл `/favicon.ico` и который
+// тут же закрыл вкладку, тоже попадёт в машины.
 function classify(lines) {
   const declared = lines.map(line => line.bot).find(bot => bot && bot !== '-' && bot !== 'noua');
   const pages = lines.filter(line => line.kind === 'page').length;
   const props = lines.filter(line => line.kind === 'asset' || line.kind === 'image').length;
   const noua = lines.some(line => line.bot === 'noua');
+  const got = lines.some(
+    line => (line.kind === 'page' && line.status < 400) || line.kind === 'asset' || line.kind === 'image'
+  );
   if (declared) return { bot: true, why: declared.split(':')[0], fake: declared.endsWith(':fake') };
   if (noua) return { bot: true, why: 'без заголовка' };
+  if (!got) return { bot: true, why: 'одни 404' };
   if (pages > 0 && props === 0) return { bot: true, why: 'молча' };
   return { bot: false, why: 'человек' };
 }
