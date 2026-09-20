@@ -1,0 +1,181 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>IndexNow</title>
+<style>
+body{max-width:46em;margin:2em auto;padding:0 1em;font:16px/1.55 Georgia,serif}
+pre{background:#f4f4f4;padding:.8em;overflow-x:auto;font:13px/1.4 monospace;white-space:pre-wrap}
+code{background:#f4f4f4;padding:0 .2em;font:13px monospace}
+table{border-collapse:collapse}td,th{padding:.3em .6em;text-align:left}
+</style>
+<h1>IndexNow: сказать Bing&#x27;у самим, потому что сам он не приходит</h1>
+
+<h2>Цель</h2>
+
+<p>Bing не читает карту сайта. Измерено по <code>log/prod/*.tsv</code> за 13–20.09.2026:
+
+<table border="1">
+<tr><th>краулер<th>что взял
+<tr><td>Bingbot<td><code>/robots.txt</code> ×2, <code>/</code> ×2 — и всё
+<tr><td>OpenAI (GPTBot, OAI-SearchBot)<td>176 картинок, <code>robots.txt</code>, <code>sitemap.xml</code>, <code>/</code> — ни одной внутренней страницы
+<tr><td>ChatGPT-User<td><code>/</code> ×19 из девяти стран, больше ничего
+</table>
+
+<p>Ни одного <code>/w/…</code> и ни одного <code>/collection/…</code>. Карта сайта при этом цела: <code><a href="https://tessarum.com/sitemap.xml">https://tessarum.com/sitemap.xml</a></code> — 117 работ, 3 темы, <code>/</code>, <code>/license</code>, <code>/restore</code>, <code>/mailing-list</code>. Поиск ChatGPT опирается на индекс Bing, то есть помощник сейчас может назвать только парадную дверь.
+
+<p>IndexNow — проталкивание, которое Bing принимает: POST на <code><a href="https://api.indexnow.org/indexnow">https://api.indexnow.org/indexnow</a></code> с <code>{host, key, keyLocation, urlList}</code>, до 10 000 адресов за раз, 200 или 202 — принято. Ключ должен лежать открытым текстом по <code>https://tessarum.com/&lt;ключ&gt;.txt</code>.
+
+<h2>Решения</h2>
+
+<p><strong>Список — из карты сайта, а не вторым вычислением.</strong> <code>announce</code> получает готовый XML и вынимает из него <code>&lt;loc&gt;</code>. Второй сбор того же списка разошёлся бы с картой на первой правке <code>sitemap()</code>, и разошёлся бы молча. <code>&lt;image:loc&gt;</code> в список не попадает: у него другой закрывающий тег, и выражение его не видит — проверено на настоящей карте (165 <code>&lt;loc&gt;</code>, 816 <code>&lt;image:loc&gt;</code>, вынуто 165).
+
+<p><strong>Отправка при старте сервера, а не скриптом в <code>deploy.sh</code>.</strong> Работа выходит на сайт ровно тогда, когда поднялся контейнер с приехавшими картинками; до этого момента адрес отвечает 404, и звать на него обход рано. Скрипт же считал бы список на машине разработчика, где и коллекция, и <code>SITE_ORIGIN</code> другие. Перезапуск без выкладки при этом не шлёт ничего — новых адресов нет.
+
+<p><strong>Память об отправленном — файл в своём каталоге и своём томе.</strong> Иначе каждый перезапуск слал бы все 120 адресов заново, а повторная отправка неизменившегося у IndexNow считается злоупотреблением. Каталог свой, не <code>log/</code>: журнал режется по суткам и подметается через полгода, а этот список нужен столько, сколько живёт сайт. Первый запуск шлёт всё — для Bing эти адреса новые все до одного.
+
+<p><strong>Ключ — в переменной окружения, хотя он не секрет.</strong> Он лежит открыто на самом сайте, и прятать его нечего. Переменная тут работает выключателем: нет <code>INDEXNOW_KEY</code> — нет ни отправки, ни маршрута <code>/&lt;ключ&gt;.txt</code>, ни файла состояния. На машине разработчика переменной нет, и рассказать Bing&#x27;у про <code>127.0.0.1</code> оттуда нельзя. Второй замок — <code>SITE_ORIGIN</code> обязан начинаться с <code>https://</code>: боевой <code>.env</code>, скопированный к себе, иначе сработал бы.
+
+<p><strong>Авария ничего не ломает.</strong> Отправка идёт после <code>listen</code>, её никто не ждёт, все беды ловятся внутри <code>indexnow.js</code> и кончаются строкой в логе. Файл при неудаче не трогается, и следующий старт пошлёт то же самое ещё раз.
+
+<h2>Изменения</h2>
+
+<ul>
+<li><code>indexnow.js</code> — новый файл, новый шов: кому и о каких адресах сайт
+ рассказывает сам. <code>configured()</code>, <code>key()</code>, <code>locations(xml)</code>, <code>announce()</code>.
+<li><code>server.js</code> — три точечные правки: импорт; карта сайта вынесена
+ в <code>sitemapXml()</code>, которую теперь спрашивают двое (маршрут и <code>announce</code>);
+ маршрут <code>/&lt;ключ&gt;.txt</code> при заданном ключе; вызов <code>announce</code> в обработчике
+ <code>listen</code>.
+<li><code>.env.example</code> — <code>INDEXNOW_KEY</code> и <code>INDEXNOW_DIR</code> с доводами.
+<li><code>docker-compose.yml</code> — том <code>./indexnow:/app/indexnow</code>.
+<li><code>scripts/deploy.sh</code> — <code>indexnow.js</code> в список кода, <code>indexnow/</code> в <code>mkdir</code>
+ и <code>chown 1001:1001</code>.
+<li><code>Dockerfile</code> — <code>indexnow.js</code> в <code>COPY</code>.
+<li><code>.gitignore</code> — <code>indexnow/</code>.
+<li><code>AGENTS.md</code> — строка в перечне швов.
+<li><code>DEPLOYMENT.md</code> — раздел «IndexNow», строка в таблице машины.
+</ul>
+
+<h2>Проверки</h2>
+
+<p>Настоящего вызова к <code>api.indexnow.org</code> не было ни одного. Вместо него — заглушка на <code>127.0.0.1</code> (<code>endpoint</code> — довод <code>announce</code>, шов для проверки).
+
+<pre>
+--- 1. первый запуск: полный список ---
+IndexNow: отправлено адресов — 3 из 3 новых.
+{
+  &quot;method&quot;: &quot;POST&quot;,
+  &quot;type&quot;: &quot;application/json; charset=utf-8&quot;,
+  &quot;body&quot;: {
+    &quot;host&quot;: &quot;tessarum.com&quot;,
+    &quot;key&quot;: &quot;abc123def456&quot;,
+    &quot;keyLocation&quot;: &quot;https://tessarum.com/abc123def456.txt&quot;,
+    &quot;urlList&quot;: [
+      &quot;https://tessarum.com/&quot;,
+      &quot;https://tessarum.com/w/one&quot;,
+      &quot;https://tessarum.com/license&quot;
+    ]
+  }
+}
+
+--- 2. второй запуск: то же самое ---
+запросов к заглушке: 0
+
+--- 3. добавился один адрес ---
+IndexNow: отправлено адресов — 1 из 1 новых.
+[&quot;https://tessarum.com/w/two&quot;]
+
+--- 4. файл состояния ---
+# time	url
+2026-09-20T10:33:46.555Z	https://tessarum.com/
+2026-09-20T10:33:46.555Z	https://tessarum.com/w/one
+2026-09-20T10:33:46.555Z	https://tessarum.com/license
+2026-09-20T10:33:46.560Z	https://tessarum.com/w/two
+
+--- 5. заглушка отвечает 500 ---
+IndexNow: 500 Internal Server Error
+запросов: 1
+IndexNow: отправлено адресов — 1 из 1 новых.
+после 500 адрес остался новым, повтор проходит: [&quot;https://tessarum.com/w/three&quot;]
+
+--- 6. соединения нет ---
+IndexNow: fetch failed
+процесс жив
+
+--- 7. ключа нет ---
+запросов: 0
+
+--- 8. местный origin при заданном ключе ---
+IndexNow: SITE_ORIGIN=http://127.0.0.1:3000 — не боевой адрес, отправки нет.
+запросов: 0
+</pre>
+
+<p>Настоящий сервер, <code>PORT=3199</code>, ключ задан, <code>SITE_ORIGIN</code> местный:
+
+<pre>
+=== лог старта ===
+Tessarum: http://0.0.0.0:3199
+IndexNow: SITE_ORIGIN=http://127.0.0.1:3199 — не боевой адрес, отправки нет.
+=== маршрут ключа ===
+HTTP/1.1 200 OK
+Content-Type: text/plain; charset=utf-8
+Content-Length: 22
+=== тело ===
+tessarum-demo-key-0001
+=== адресов в карте / из неё вынуто ===
+loc в карте: 165 | image:loc: 816 | вынуто: 165
+=== состояние (должно отсутствовать: origin местный) ===
+ls: cannot access &#x27;…/state2&#x27;: No such file or directory
+</pre>
+
+<p><code>yarn verify</code> — код 0.
+
+<h2>Чего мы не знаем и не делаем</h2>
+
+<ul>
+<li><strong>Проверено на заглушке, не на Bing.</strong> Что именно он ответит на первый
+ настоящий POST, увидит тот, кто включит.
+<li><strong>Удаления нет.</strong> Работа, снятая с витрины (<code>hidden</code>), из файла не
+ вычёркивается: IndexNow сообщает об изменении адреса, а не об исчезновении,
+ и снятый адрес продолжает отвечать.
+<li><strong>Изменение работы не отправляется.</strong> Шлётся только НОВЫЙ адрес.
+ Переписанная карточка у работы, чей адрес уже отправлен, второй раз
+ не уедет. Так и задумано: у опубликованной работы файл не меняется
+ (AGENTS.md), а карточка правится редко.
+<li><strong>Потолок 10 000 адресов на POST</strong> обрабатывается усечением: лишнее уедет
+ при следующем старте, потому что в файл попадает только отправленное.
+ Коллекция сейчас 165 адресов.
+<li><strong>Выкладки не было.</strong> Всё описанное — в репозитории; на боевой машине
+ переменной нет, и ни одного запроса к IndexNow сайт не сделал.
+</ul>
+
+<h2>Как включить</h2>
+
+<p>1. Придумать ключ — 8–128 знаков из букв, цифр и дефиса:
+
+<pre>node -e "console.log(require('crypto').randomUUID().replace(/-/g,''))"</pre>
+
+<p>2. Дописать его в <code>/opt/apps/upscaler/.env</code> на машине (файл в git не едет):
+
+<pre>ssh root@145.223.96.83
+echo "INDEXNOW_KEY=&lt;ключ&gt;" &gt;&gt; /opt/apps/upscaler/.env</pre>
+
+<p>3. Выложить: <code>./scripts/deploy.sh</code>. Он заведёт <code>indexnow/</code> с правами    <code>1001:1001</code> и пересоберёт контейнер.
+
+<p>4. Убедиться, что ключ отдаётся и список ушёл:
+
+<pre>curl https://tessarum.com/&lt;ключ&gt;.txt          # должен вернуть сам ключ
+ssh root@145.223.96.83 "docker logs upscaler 2&gt;&amp;1 | grep IndexNow"
+ssh root@145.223.96.83 "docker exec upscaler sh -c 'wc -l &lt; /app/indexnow/sent.tsv'"</pre>
+
+<p>В логе ожидается «IndexNow: отправлено адресов — 165 из 165 новых».
+
+<p>5. Посмотреть, принял ли Bing: bing.com/webmasters, ресурс <code>tessarum.com</code>,    раздел <strong>IndexNow</strong> — таблица отправок с временем, числом адресов    и статусом ключа. Обновляется не сразу; если ресурс в Webmaster Tools    ещё не заведён, его придётся добавить и подтвердить (быстрее всего    импортом из Google Search Console).
+
+<h2>Источники</h2>
+
+<ul>
+<li>IndexNow, протокол и ответы: <a href="https://www.indexnow.org/documentation">https://www.indexnow.org/documentation</a>
+<li>Bing о IndexNow: <a href="https://www.bing.com/indexnow">https://www.bing.com/indexnow</a>
+<li>Измерения: <code>log/prod/*.tsv</code>, 13–20.09.2026.
+</ul>
+

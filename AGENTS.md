@@ -116,6 +116,9 @@ REPLICATE_API_TOKEN в файл .env».
   и перевод чужого отказа в наш;
 - `service/upscale_modal.py` — то, что этот вызов зовёт. Едет не с сайтом,
   а отдельно: `modal deploy service/upscale_modal.py`;
+- `indexnow.js` — кому и о каких адресах сайт рассказывает сам: Google приходит
+  без приглашения, Bing нет, и список новых адресов уезжает ему при старте —
+  из той же карты сайта, что отдаётся по `/sitemap.xml`;
 - `http-error.js` — ошибка, текст которой предназначен посетителю; отдельно,
   потому что бросают её и `server.js`, и `upscaler.js`;
 - `server.js` — HTTP; зовёт оттуда `galleryItems`, `enlarge` и функции

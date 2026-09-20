@@ -32,7 +32,7 @@ echo "==> код"
 # модель не обновляет, а передеплой модели не требует трогать сайт.
 rsync -a --delete --info=stats1 \
   Dockerfile docker-compose.yml .dockerignore package.json yarn.lock DEPLOYMENT.md \
-  collections.js gallery.js http-error.js journal.js limits.js mailing.js pages.js server.js treatment.js upscaler.js works.js \
+  collections.js gallery.js http-error.js indexnow.js journal.js limits.js mailing.js pages.js server.js treatment.js upscaler.js works.js \
   catalogue public scripts \
   "$HOST:$DIR/"
 
@@ -52,7 +52,9 @@ echo "==> пересборка"
 # Каталог рассылки — тем же порядком и по той же причине. Адреса лежат
 # отдельно от журнала нарочно (mailing.js): журнал обещает, что личного в нём
 # нет, и почта в нём это обещание отменила бы.
-ssh "$HOST" "mkdir -p $DIR/log $DIR/mail && chown 1001:1001 $DIR/log $DIR/mail"
+# Каталог IndexNow — сюда же и по той же причине: список отправленных адресов
+# переживает пересборку, иначе Bing получал бы всю коллекцию при каждой выкладке.
+ssh "$HOST" "mkdir -p $DIR/log $DIR/mail $DIR/indexnow && chown 1001:1001 $DIR/log $DIR/mail $DIR/indexnow"
 ssh "$HOST" "cd $DIR && docker compose --project-directory $DIR up -d --build"
 
 echo "==> проверка"

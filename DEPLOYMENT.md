@@ -14,6 +14,7 @@
 | Коллекция | `/opt/apps/upscaler/images`, том в контейнер |
 | Журнал | `/opt/apps/upscaler/log`, том в контейнер |
 | Рассылка | `/opt/apps/upscaler/mail`, том в контейнер |
+| IndexNow | `/opt/apps/upscaler/indexnow`, том в контейнер |
 | Контейнер | `upscaler`, сеть `n8n_default`, внутренний порт 3000 |
 | Маршрут | `/opt/traefik-dynamic/upscaler.yml` |
 
@@ -111,6 +112,36 @@ docker exec upscaler node scripts/journal-rollup.mjs --days 7 --sample 10
 ssh root@145.223.96.83
 docker exec upscaler sh -c 'wc -l < /app/mail/subscribers.tsv'
 ```
+
+## IndexNow
+
+Google обходит сайт сам, Bing — нет: за 13–20.09.2026 в журнале у Bingbot
+только `/robots.txt` и `/`, карта сайта не прочитана ни разу. Поэтому сервер
+при старте сам шлёт Bing'у список новых адресов (`indexnow.js`).
+
+Включается одной переменной в `/opt/apps/upscaler/.env`:
+
+- `INDEXNOW_KEY` — 8–128 знаков из букв, цифр и дефиса. Не секрет: тот же ключ
+  сайт отдаёт открыто по `https://tessarum.com/<ключ>.txt`. Переменная здесь
+  работает выключателем — не задана, и не отправляется ничего.
+
+Что уже отправлено, лежит в `/opt/apps/upscaler/indexnow/sent.tsv`: время
+и адрес, строка на адрес. Том обязателен по той же причине, что у журнала —
+без него список умирает с пересборкой, и Bing получает всю коллекцию заново
+при каждой выкладке. Каталог заводит `deploy.sh`, права `1001:1001`.
+
+Первый запуск отправляет всю карту целиком — для Bing эти адреса новые все
+до одного. Дальше уезжают только те, которых в файле нет.
+
+```bash
+ssh root@145.223.96.83
+docker logs upscaler 2>&1 | grep IndexNow
+docker exec upscaler sh -c 'wc -l < /app/indexnow/sent.tsv'
+```
+
+Принял ли Bing — видно в Bing Webmaster Tools, раздел **IndexNow**
+(bing.com/webmasters, ресурс `tessarum.com`): там таблица отправок, время,
+число адресов и статус ключа. Обновляется она не сразу.
 
 ## Проверка
 

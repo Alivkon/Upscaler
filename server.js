@@ -8,6 +8,7 @@ import multer from 'multer';
 import sharp from 'sharp';
 import { IMAGES_DIR, ADJACENT, ensureImageDirectories, galleryItems, isImage } from './gallery.js';
 import { HttpError } from './http-error.js';
+import { announce, configured as indexNowReady, key as indexNowKey } from './indexnow.js';
 import { journal } from './journal.js';
 import { mailingAllowance, upscaleAllowance } from './limits.js';
 import { subscribers } from './mailing.js';
@@ -363,15 +364,30 @@ app.post('/mailing-list', express.urlencoded({ extended: false, limit: '2kb' }),
 
 app.get('/robots.txt', (_req, res) => res.type('text/plain').send(robots({ origin: SITE_ORIGIN })));
 
+// Карта собирается функцией, а не прямо в маршруте, потому что спрашивают её
+// двое: обход по `/sitemap.xml` и `indexnow.js` при старте. Список адресов
+// для Bing берётся из той же строки, что уходит в поиск, — иначе он был бы
+// вторым вычислением того же и разошёлся бы с картой молча.
+async function sitemapXml() {
+  const items = shown(await galleryItems());
+  const topics = COLLECTIONS.map(topic => ({ slug: topic.slug, items: worksOf(topic, items) }));
+  return sitemap({ items, topics, origin: SITE_ORIGIN });
+}
+
 app.get('/sitemap.xml', async (_req, res, next) => {
   try {
-    const items = shown(await galleryItems());
-    const topics = COLLECTIONS.map(topic => ({ slug: topic.slug, items: worksOf(topic, items) }));
-    res.type('application/xml').send(sitemap({ items, topics, origin: SITE_ORIGIN }));
+    res.type('application/xml').send(await sitemapXml());
   } catch (error) {
     next(error);
   }
 });
+
+// Подтверждение ключа IndexNow: Bing приходит за `/<ключ>.txt` и ждёт в нём
+// сам ключ. Маршрут заводится только когда ключ задан — без него отдавать
+// нечего, а адрес `/.txt` был бы ловушкой для 404.
+if (indexNowReady()) {
+  app.get(`/${indexNowKey()}.txt`, (_req, res) => res.type('text/plain').send(indexNowKey()));
+}
 
 // Снимок с телефона лежит в файле горизонтально, а рядом с ним стоит пометка
 // EXIF «повернуть». `metadata` отдаёт то, что лежит, а не то, что показывают,
@@ -609,4 +625,20 @@ if (!upscalerReady())
 
 const port = Number(process.env.PORT || 3000);
 const host = process.env.HOST || '0.0.0.0';
-app.listen(port, host, () => console.log(`Tessarum: http://${host}:${port}`));
+app.listen(port, host, () => {
+  console.log(`Tessarum: http://${host}:${port}`);
+  // После `listen`, и никто её не ждёт: рассказать Bing’у о новых адресах —
+  // не условие того, что сайт работает. Своих аварий наружу не выпускает
+  // (`indexnow.js`). Момент выбран стартом, а не выкладкой: работа выходит
+  // на сайт ровно тогда, когда поднялся контейнер с приехавшими картинками,
+  // а скрипт в `deploy.sh` считал бы список на машине разработчика, где
+  // и коллекция, и `SITE_ORIGIN` могут быть другими.
+  //
+  // Каталог задаётся снаружи, как у журнала и рассылки: на боевой машине это
+  // том, переживающий пересборку (DEPLOYMENT.md).
+  announce({
+    sitemapOf: sitemapXml,
+    origin: SITE_ORIGIN,
+    directory: path.resolve(__dirname, process.env.INDEXNOW_DIR || 'indexnow')
+  });
+});
