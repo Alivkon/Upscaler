@@ -255,40 +255,41 @@ async function cropsOf(entry) {
   return found;
 }
 
-// Та же картина, не тронутая приглушением. Генератор делает её вторым файлом
-// рядом с приглушённым и называет полем `scan`; страница отдаёт приглушённый —
-// его же видит поиск, — а галочка «Dimmed» переводит на этот всё, что страница
-// о файле утверждает и отдаёт.
+// Вторая версия той же картины — та, на которую переводит галочка «Dimmed»
+// всё, что страница о файле утверждает и отдаёт. Генератор делает её вторым
+// файлом рядом с главным и называет полем по тому, что она такое: `scan` —
+// нетронутый скан у работы, которая выходит приглушённой, `dimmed` —
+// приглушённый файл у работы с правилом `none`, которая выходит сканом.
+// Поэтому здесь один разбор на два поля: устроены они одинаково, а отличаются
+// только тем, в какую сторону работает галочка.
 //
-// СТРАНИЦА ОСТАЁТСЯ ОДНА. Скан — не отдельная работа: та же картина, тот же
-// художник, тот же музейный номер и тот же запрос в поиске. Разведи их по двум
-// адресам, и витрина начнёт соревноваться сама с собой за одну выдачу — ровно
-// то, чем уже плохи два Хаммерсхёя (vl-0258 и vl-0260).
+// СТРАНИЦА ОСТАЁТСЯ ОДНА. Вторая версия — не отдельная работа: та же картина,
+// тот же художник, тот же музейный номер и тот же запрос в поиске. Разведи их
+// по двум адресам, и витрина начнёт соревноваться сама с собой за одну
+// выдачу — ровно то, чем уже плохи два Хаммерсхёя (vl-0258 и vl-0260).
 //
-// `null` значит «переключать не на что», и случаев этому три: у работы правило
-// `none` — приглушённого файла нет вовсе, в проёме и так скан; работа
+// `null` значит «переключать не на что», и случаев этому два: работа
 // нарисована нами (`manifest/tessarum.json`), и обработку ей не выбирают;
-// генератор до файла ещё не дошёл. Страница обходится со всеми тремя
+// генератор до второго файла ещё не дошёл. Страница обходится с обоими
 // одинаково — не показывает галочки.
 //
-// Кадры у скана те же и берутся тем же `cropsOf`: спрятанный кадр
+// Кадры у второй версии те же и берутся тем же `cropsOf`: спрятанный кадр
 // (`HIDDEN_KINDS`) прячется и здесь, иначе галочка предлагала бы то, чего
 // на странице нет.
-async function scanOf(entry) {
-  const scan = entry?.scan;
-  if (!(await madeFile(scan))) return null;
+async function versionOf(node) {
+  if (!(await madeFile(node))) return null;
   const copies = [];
-  for (const copy of scan.copies || []) {
+  for (const copy of node.copies || []) {
     if (await madeFile(copy)) copies.push({ url: imageUrl(copy.file), width: copy.width, height: copy.height });
   }
   return {
-    url: imageUrl(scan.file),
-    filename: path.basename(scan.file),
-    width: scan.width,
-    height: scan.height,
-    bytes: scan.bytes,
+    url: imageUrl(node.file),
+    filename: path.basename(node.file),
+    width: node.width,
+    height: node.height,
+    bytes: node.bytes,
     copies,
-    crops: await cropsOf(scan)
+    crops: await cropsOf(node)
   };
 }
 
@@ -316,7 +317,7 @@ async function catalogueItems() {
   const made = new Map((await readManifest()).map(entry => [entry.ref, entry]));
   const items = [];
   for (const work of await loadWorks()) {
-    let file, width, height, bytes, copies, before, crops, scan;
+    let file, width, height, bytes, copies, before, crops, scan, dimmed;
     const plate = made.get(work.ref);
     if (await madeFile(plate)) {
       const beforeEntry = (await madeFile(plate.before)) && plate.before;
@@ -329,7 +330,8 @@ async function catalogueItems() {
       copies = plateCopies.map(copy => ({ url: imageUrl(copy.file), width: copy.width, height: copy.height }));
       before = beforeEntry ? imageUrl(beforeEntry.file) : null;
       crops = await cropsOf(plate);
-      scan = await scanOf(plate);
+      scan = await versionOf(plate.scan);
+      dimmed = await versionOf(plate.dimmed);
     } else if (typeof work.file === 'string') {
       const filePath = resolveEntryPath(work.file);
       const stat = filePath && (await fs.stat(filePath).catch(() => null));
@@ -346,6 +348,7 @@ async function catalogueItems() {
       before = null;
       crops = {};
       scan = null;
+      dimmed = null;
     } else {
       continue;
     }
@@ -385,10 +388,13 @@ async function catalogueItems() {
       // `undefined`: страница спрашивает у него кадр по имени, и работа,
       // до которой генератор ещё не дошёл, роняла бы `/w/<slug>` в 500.
       crops,
-      // Та же картина, не тронутая приглушением, — на неё галочка «Dimmed»
-      // и переводит страницу. `null` значит «переключать не на что», и тогда
-      // галочки на странице нет вовсе.
+      // Вторая версия работы, на которую переводит галочка «Dimmed». Полей
+      // два, и у работы заполнено ровно одно: `scan` — если страница отдаёт
+      // приглушённое, `dimmed` — если страница отдаёт скан (правило `none`).
+      // Оба `null` значат «переключать не на что», и тогда галочки на странице
+      // нет вовсе.
       scan,
+      dimmed,
       // День, когда работа вошла в коллекцию, — для `lastmod` в карте сайта.
       // Берётся из каталога, а не из `mtime` файла: рендер детерминирован,
       // но переписывает файл при каждом запуске.
@@ -439,11 +445,12 @@ async function uploadedItems() {
       // записи — страница спрашивает его у всех, не разбирая происхождения.
       hidden: false,
       // Кадров нет: их режет генератор из плиты, а присланный файл лежит таким,
-      // каким пришёл. Скана нет по той же причине: приглушение делают работе,
-      // а присланный файл не наш, чтобы его обрабатывать, — значит, и галочке
-      // «Dimmed» на такой странице переключать нечего.
+      // каким пришёл. Второй версии нет по той же причине: приглушение делают
+      // работе, а присланный файл не наш, чтобы его обрабатывать, — значит,
+      // и галочке «Dimmed» на такой странице переключать нечего.
       crops: {},
       scan: null,
+      dimmed: null,
       width,
       height,
       bytes: stat.size,

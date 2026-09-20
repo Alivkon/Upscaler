@@ -263,8 +263,9 @@ const scaled = base => `${Math.round(base * SCALE)}px`;
 // Копий бывает несколько, и тогда браузер выбирает по `sizes` сам. Одна
 // ступень обслуживает либо обычный экран, либо плотный, но не оба сразу:
 // карточка в 400 px просит 400 px при DPR 1 и 1200 px при DPR 3.
-// Список копий отдельно от атрибута: тот же список нужен второй раз — у скана,
-// в `data-scan-srcset`, — а собранный там заново он разошёлся бы с этим молча.
+// Список копий отдельно от атрибута: тот же список нужен второй раз — у второй
+// версии, в `data-other-srcset`, — а собранный там заново он разошёлся бы
+// с этим молча.
 const srcsetOf = copies => copies.map(copy => `${copy.url} ${copy.width}w`).join(', ');
 
 const shownWith = (copies, sizes) => (copies.length ? ` srcset="${escape(srcsetOf(copies))}" sizes="${sizes}"` : '');
@@ -342,66 +343,98 @@ const plateSizes = item => {
 const offered = item => item.crops?.tall || item;
 const tile = item => item.crops?.tall || item;
 
-// Тот же файл, не тронутый приглушением: на него галочка «Dimmed» и переводит
-// страницу. Спрашивают всегда «а что вместо вот этого файла», потому что файлов
-// у страницы несколько и у каждого своя роль — кадр в проёме, целая плита,
-// плитки ряда, — и отображение это живёт здесь одно на всех: заведи его дважды,
-// и в одном из мест галочка однажды подставит не тот кадр.
+// Вторая версия работы — та, на которую переводит галочка «Dimmed». Работа
+// несёт ровно одно из двух полей (`gallery.js`), и какое именно — это и есть
+// направление галочки: `scan` значит «страница отдаёт приглушённое, галочка
+// снимается на скан», `dimmed` — «страница отдаёт скан, галочка ставится
+// на приглушённое». Второе бывает у правила `none`.
+const otherOf = item => item.scan || item.dimmed || null;
+
+// Чем работа стоит на странице в эту минуту, одним словом. Оно же уезжает
+// в разметку (`data-shown`), и уезжает на КАЖДЫЙ переключаемый элемент, а не
+// на страницу: переключаемых мест на странице работы несколько — проём, две
+// кнопки, ряд кадров, — и слово, сказанное один раз на всю страницу, пришлось
+// бы держать в согласии с каждым из них.
 //
-// Отвечает помощник по имени кадра, а не по порядку: у скана кадры те же
-// и названы так же (`scan` в gallery.js). `null` — подставлять нечего, и тогда
-// у элемента нет ни атрибутов, ни галочки над ним.
-const scanOf = (item, file) => {
-  if (!item.scan) return null;
+// Спрашивается то же поле и в том же порядке, что у `otherOf`: работа несёт
+// ровно одно из двух (`gallery.js`), но проверять это некому — ни там, ни
+// в `scripts/verify-catalogue.mjs`. Разойдись эти две строки в порядке,
+// и у работы с обоими полями страница привезла бы приглушённое, а сказала бы
+// «scan»: галочка стояла бы неверно и переключала бы всё наоборот.
+const shownKind = item => (item.scan ? 'dim' : 'scan');
+
+// Тот же кадр у второй версии. Спрашивают всегда «а что вместо вот этого
+// файла», потому что файлов у страницы несколько и у каждого своя роль — кадр
+// в проёме, целая плита, плитки ряда, — и отображение это живёт здесь одно
+// на всех: заведи его дважды, и в одном из мест галочка однажды подставит
+// не тот кадр.
+//
+// Отвечает помощник по имени кадра, а не по порядку: у второй версии кадры те
+// же и названы так же (`versionOf` в gallery.js). `null` — подставлять нечего,
+// и тогда у элемента нет ни атрибутов, ни галочки над ним.
+const otherOfFile = (item, file) => {
+  const other = otherOf(item);
+  if (!other) return null;
   const kind = Object.keys(item.crops || {}).find(name => item.crops[name] === file);
-  return kind ? item.scan.crops?.[kind] || null : file === item ? item.scan : null;
+  return kind ? other.crops?.[kind] || null : file === item ? other : null;
 };
 
-// СОГЛАШЕНИЕ ОБ АТРИБУТАХ, И ОНО ОДНО НА ВСЮ СТРАНИЦУ: `data-scan-<атрибут>`
-// несёт значение `<атрибут>` у скана, а `public/dimmed.js` по галочке меняет
-// эти два значения местами — и тем же движением возвращает обратно. Поэтому
-// скрипт не держит списка имён: он читает с элемента то, что здесь написано,
-// и новое переключаемое место заводится одной строкой тут, а не двумя в двух
-// файлах.
+// СОГЛАШЕНИЕ ОБ АТРИБУТАХ, И ОНО ОДНО НА ВСЮ СТРАНИЦУ: `data-other-<атрибут>`
+// несёт значение `<атрибут>` у второй версии, а `public/dimmed.js` по галочке
+// меняет эти два значения местами — и тем же движением возвращает обратно.
+// Поэтому скрипт не держит списка имён: он читает с элемента то, что здесь
+// написано, и новое переключаемое место заводится одной строкой тут, а не
+// двумя в двух файлах.
 //
-// Голый `data-scan` рядом — метка, по которой скрипт эти элементы и находит:
-// селектора «атрибут, имя которого начинается на…» в CSS нет, а список имён
-// в `querySelectorAll` был бы тем самым вторым списком.
+// `data-shown` рядом — не просто метка, по которой скрипт эти элементы находит
+// (селектора «атрибут, имя которого начинается на…» в CSS нет, а список имён
+// в `querySelectorAll` был бы тем самым вторым списком). Он ещё и отвечает,
+// ЧТО ИМЕННО СЕЙЧАС В ЖИВЫХ АТРИБУТАХ, — а без этого ответа скрипт не знает,
+// надо ли этот элемент трогать: работа с правилом `none` привезена сканом,
+// соседняя — приглушённой, и «поменять местами всё» на второй такой странице
+// вернуло бы выбор посетителя обратно.
 //
-// Пустая строка — значение, а не пропуск: она означает «а у скана этого
-// атрибута нет», и переключение его снимет. Поэтому отсеивается только `null`
-// и `undefined` — «сказать нечего».
-const scanData = pairs => {
+// Пустая строка — значение, а не пропуск: она означает «а у второй версии
+// этого атрибута нет», и переключение его снимет. Поэтому отсеивается только
+// `null` и `undefined` — «сказать нечего».
+const otherData = (pairs, shown) => {
   const written = Object.entries(pairs)
     .filter(([, value]) => value != null)
-    .map(([name, value]) => ` data-scan-${name}="${escape(value)}"`)
+    .map(([name, value]) => ` data-other-${name}="${escape(value)}"`)
     .join('');
-  return written ? ` data-scan${written}` : '';
+  return written ? ` data-shown="${shown}"${written}` : '';
 };
 
 // Пара атрибутов картинки: чем подменить `src` и `srcset`. Считается в одном
 // месте на двух хозяев — карточку указателя и плитку ряда кадров; проём
 // страницы работы берёт ту же пару и добавляет к ней третий атрибут.
 //
-// Решает всё показанный файл, а не скан, и вот почему. Копий у каждого из
-// двух может не быть, и случая три. У показанного копии есть, у скана тоже —
-// подменяется список на список. У показанного есть, у скана нет — `srcset`
-// у скана пустая строка, и она его снимет: оставленный приглушённый список
-// пережил бы подмену `src` и перебил бы её, потому что копию браузер выбирает
-// по нему, а `src` берёт только тогда, когда выбирать не из чего. У показанного
-// копий нет — `srcset` не подменяется вовсе, даже если у скана он есть: рядом
-// с ним нет `sizes` (`shownWith` пишет их вместе), и подставленный список
-// браузер мерил бы по `100vw`, то есть просил бы самую большую копию.
-const scanPair = (file, scan) => {
-  if (!scan) return {};
-  return { src: scan.url, srcset: file.copies.length ? srcsetOf(scan.copies) : null };
+// Решает всё показанный файл, а не вторая версия, и вот почему. Копий у
+// каждого из двух может не быть, и случая три. У показанного копии есть,
+// у второй тоже — подменяется список на список. У показанного есть, у второй
+// нет — `srcset` у неё пустая строка, и она его снимет: оставленный прежний
+// список пережил бы подмену `src` и перебил бы её, потому что копию браузер
+// выбирает по нему, а `src` берёт только тогда, когда выбирать не из чего.
+// У показанного копий нет — `srcset` не подменяется вовсе, даже если у второй
+// он есть: рядом с ним нет `sizes` (`shownWith` пишет их вместе),
+// и подставленный список браузер мерил бы по `100vw`, то есть просил бы самую
+// большую копию.
+const otherPair = (file, other) => {
+  if (!other) return {};
+  return { src: other.url, srcset: file.copies.length ? srcsetOf(other.copies) : null };
 };
 
-const scanShot = (file, scan) => scanData(scanPair(file, scan));
+const otherShot = (file, other, shown) => otherData(otherPair(file, other), shown);
 
-// Галочка. С сервера всегда нажата — приглушённое и есть то, что видит поиск;
-// снятое состояние восстанавливает `public/dimmed.js` из `localStorage`, потому
-// что разметка одна на всех, а выбор у каждого свой.
+// Галочка. С сервера она стоит так, как собрана страница: нажата у работы,
+// которая выходит приглушённой, снята у работы с правилом `none` — та выходит
+// сканом, и нажатая галочка над сканом была бы подписью не к тому, что видно.
+// Выбор, сделанный посетителем руками, сильнее и приходит из `localStorage`
+// (`public/dimmed.js`): разметка одна на всех, а выбор у каждого свой.
+//
+// В сетке темы работы бывают собраны в разные стороны, и `on` там — «все ли
+// переключаемые собраны приглушёнными». Считает это сервер, а не скрипт: он
+// и так знает список работ, а скрипт пришлось бы учить пересчитывать страницу.
 //
 // Набрана она строкой настроек приёмки (`.options__row`), а не своим элементом:
 // галочка на сайте одна и та же вещь, и вторая её реализация разошлась бы
@@ -415,13 +448,13 @@ const scanShot = (file, scan) => scanData(scanPair(file, scan));
 // size» в приёмке: строка второй строкой внутри `.options__text`, своих
 // правил не заводит и подтягивает `:has(.options__fine)`, который ставит
 // квадрат по верху, а не по середине двух строк.
-const dimmedBox = pad => `<label class="options__row dimmed">
-${pad}  <input type="checkbox" id="dimmed" checked />
+const dimmedBox = (pad, on) => `<label class="options__row dimmed">
+${pad}  <input type="checkbox" id="dimmed"${on ? ' checked' : ''} />
 ${pad}  <span class="options__box" aria-hidden="true"></span>
 ${pad}  <span class="options__text"
 ${pad}    >Dimmed<span class="options__fine"
 ${pad}      >Dimmed is the painting made darker and less colourful, so your icons and
-${pad}      clock stay easy to read. Switch it off for the plain scan.</span
+${pad}      clock stay easy to read. Off is the plain museum scan.</span
 ${pad}    ></span
 ${pad}  >
 ${pad}</label>`;
@@ -487,7 +520,7 @@ export const cardCreator = item => {
 // `--ratio` проставлен здесь, а не по загрузке файла: размеры работы известны
 // из каталога, и проём принимает её пропорции ещё до того, как что-то
 // загрузилось. Иначе указатель прыгал бы по мере загрузки картинок.
-function card(item, { eager = false, priority = false, hasDimmedBox = true } = {}) {
+function card(item, { eager = false, priority = false } = {}) {
   // Показывается и отдаётся один файл. Раньше это были разные кадры — 9:16
   // в проёме, 9:19.5 по кнопке, — и подпись приходилось оговаривать: размер
   // под «Download» описывал не ту картинку, что видна. Теперь оговаривать
@@ -495,12 +528,12 @@ function card(item, { eager = false, priority = false, hasDimmedBox = true } = {
   // сегодняшнее, а вопросы разные — «чем показана» и «что отдаёт».
   const shownFile = tile(item);
   const file = offered(item);
-  // Второй файл называется только там, где есть чем его вызвать, — на странице
-  // с галочкой. На указателе её нет и `dimmed.js` не подключён (`collectionPage`),
-  // так что атрибуты, которых там никто не прочтёт, были бы обещанием
-  // переключения, которого на этой странице не бывает.
-  const scanShown = hasDimmedBox ? scanOf(item, shownFile) : null;
-  const scanOffered = hasDimmedBox ? scanOf(item, file) : null;
+  // О ВТОРОМ ФАЙЛЕ КАРТОЧКА НЕ ГОВОРИТ НИЧЕГО: ни одна сетка на сайте
+  // не переключается. Галочка «Dimmed» живёт только на странице работы, где
+  // работа одна и вопрос о ней имеет один ответ; сетка же — указатель, тема,
+  // соседи под работой — показывает то, что выбрано по каждой работе.
+  // Атрибуты, по которым никто не переключит, были бы обещанием переключения,
+  // которого в сетке не бывает.
   const ratio = `${shownFile.width} / ${shownFile.height}`;
   const loading = ` loading="${eager ? 'eager' : 'lazy'}"${priority ? ' fetchpriority="high"' : ''}`;
   // Сетка — `repeat(auto-fill, minmax(280rem, 1fr))`: карточка держится между
@@ -516,7 +549,7 @@ function card(item, { eager = false, priority = false, hasDimmedBox = true } = {
   // 1920 (677 КБ) там, где хватает 480 (43 КБ). 40vw — те же 145 px с небольшим
   // запасом: на экранах 360–430 px проём укладывается в них с обеих сторон,
   // а больший запас перекинул бы DPR 3 на ступень 960 без всякой пользы.
-  const shown = shownWith(shownFile.copies, `(max-width: 520px) 40vw, ${scaled(320)}`);
+  const sized = shownWith(shownFile.copies, `(max-width: 520px) 40vw, ${scaled(320)}`);
   const creator = cardCreator(item);
   // Номер встал на место слова «JPEG». Слово это не несло ничего: файлы
   // в коллекции все до одного JPEG, и строка, одинаковая на всех карточках,
@@ -525,14 +558,14 @@ function card(item, { eager = false, priority = false, hasDimmedBox = true } = {
   return `<figure class="item">
           <div class="record">
             <a class="record__image" href="/w/${escape(item.slug)}" style="--ratio: ${ratio}" tabindex="-1">
-              <img src="${escape(shownFile.url)}"${shown}${scanShot(shownFile, scanShown)} alt="${escape(item.alt)}" width="${shownFile.width}" height="${shownFile.height}"${loading} />
+              <img src="${escape(shownFile.url)}"${sized} alt="${escape(item.alt)}" width="${shownFile.width}" height="${shownFile.height}"${loading} />
             </a>
           </div>
           <figcaption class="caption">
             <h3 class="caption__title"><a href="/w/${escape(item.slug)}">${escape(cardName(item))}</a></h3>
             <p class="caption__by">${escape(creator)}</p>
             <p class="caption__spec">${specLine([formatDims(file.width, file.height), item.ref])}</p>
-            <a class="link" href="${escape(file.url)}"${scanData({ href: scanOffered?.url })} download>Download</a>
+            <a class="link" href="${escape(file.url)}" download>Download</a>
           </figcaption>
         </figure>`;
 }
@@ -590,12 +623,9 @@ const inviteCard = () => `<figure class="item item--invite">
 // `eager` — сколько первых карточек грузить сразу. По умолчанию ни одной:
 // сетка «ещё из коллекции» на странице работы стоит ниже сгиба, и торопить
 // её значит отнимать канал у самой работы.
-//
-// `hasDimmedBox` — есть ли на странице галочка. По умолчанию да: сетку без
-// галочки показывает один только указатель, и он же один это и говорит.
-const grid = (items, eager = 0, lead = '', { hasDimmedBox = true } = {}) =>
+const grid = (items, eager = 0, lead = '') =>
   `<div class="collection">\n        ${lead ? `${lead}\n        ` : ''}${items
-    .map((item, index) => card(item, { eager: index < eager, priority: eager > 0 && index === 0, hasDimmedBox }))
+    .map((item, index) => card(item, { eager: index < eager, priority: eager > 0 && index === 0 }))
     .join('\n        ')}\n      </div>`;
 
 // Указатель — вся коллекция одной страницей. Постраничность была и снята:
@@ -706,7 +736,7 @@ export function collectionPage({ items, topics = [], origin }) {
     // сетка — сама себе содержание, а прятать заголовок классом ради
     // строчки в аудите значит держать текст, который никто не прочтёт.
     body: `
-      ${grid(items, EAGER_CARDS, inviteCard(), { hasDimmedBox: false })}
+      ${grid(items, EAGER_CARDS, inviteCard())}
       ${tailRow(topics)}
     `
   });
@@ -749,6 +779,18 @@ const inTopics = topics =>
 // кончается сеткой.
 export function topicPage({ topic, items, origin }) {
   const measured = measure(items);
+  // ГАЛОЧКИ «DIMMED» ЗДЕСЬ НЕТ, И ЭТО РЕШЕНИЕ, А НЕ ПРОПУСК (20.09.2026).
+  // Сетка темы смешана всегда — правило (`treatment`) у каждой работы своё,
+  // и на этот день смешаны все четыре темы, — а у галочки два положения,
+  // то есть ни одного правдивого. Стояла она по большинству: на
+  // `dark-academia` 38 приглушённых против 5 сканов давали нажатую галочку
+  // над пятью светлыми карточками, и клик, которым посетитель это исправлял,
+  // галочку СНИМАЛ, делая светлыми все 43.
+  //
+  // Сетка теперь показывает то, что выбрано по каждой работе, — так же, как
+  // указатель, и по той же причине: выбор куратора и есть ответ страницы
+  // на вопрос «как эта работа выглядит». Спрашивают же о работе, а не о теме,
+  // и переключить её можно там, где она одна, — на странице работы.
   return layout({
     current: 'collection',
     title: topic.title,
@@ -759,12 +801,6 @@ export function topicPage({ topic, items, origin }) {
     image: items.length ? `${origin}${offered(items[0]).url}` : undefined,
     imageWidth: items.length ? offered(items[0]).width : undefined,
     imageHeight: items.length ? offered(items[0]).height : undefined,
-    // Галочка «Dimmed» и есть весь скрипт этой страницы. Подключён он
-    // безусловно, а показана галочка — только если переключать есть что:
-    // скрипт на странице без единого `data-scan-…` просто ничего не находит,
-    // а условие на подключение завело бы второе место, где сказано то же самое.
-    script: '/dimmed.js',
-    preload: '/dimmed.js',
     // Числа в абзац приходят замером тех же работ, что стоят под ним
     // (`measure` в `collections.js`), а не строкой: вписанное руками число
     // разъезжается со списком молча — и разъехавшееся число в тексте,
@@ -773,7 +809,6 @@ export function topicPage({ topic, items, origin }) {
       <div class="topic">
         <h1 class="topic__title">${escape(topic.heading)}</h1>
         <p class="topic__note">${escape(topic.note(measured))}</p>
-        ${items.some(item => item.scan) ? dimmedBox('        ') : ''}
       </div>
       ${grid(items, EAGER_CARDS)}
       ${topic.terms ? `<p class="topic__terms">${escape(topic.terms(measured))}</p>` : ''}
@@ -985,8 +1020,8 @@ const beforeFrame = item => `
 // можно в один жест, и уже зная, что сохраняешь. Кнопка Download наверху
 // остаётся кнопкой: она отдаёт файл, который посетитель уже видит в проёме.
 const fileTile = row => `<li class="alternates__file">
-                <a href="${escape(row.file.url)}"${scanData({ href: row.scan?.url })}>
-                  <span class="alternates__shot"><img src="${escape(row.file.url)}"${shownWith(row.file.copies, scaled(96))}${scanShot(row.file, row.scan)} alt="${escape(row.alt)}" width="${row.file.width}" height="${row.file.height}" loading="lazy" /></span>${
+                <a href="${escape(row.file.url)}"${otherData({ href: row.other?.url }, row.shown)}>
+                  <span class="alternates__shot"><img src="${escape(row.file.url)}"${shownWith(row.file.copies, scaled(96))}${otherShot(row.file, row.other, row.shown)} alt="${escape(row.alt)}" width="${row.file.width}" height="${row.file.height}" loading="lazy" /></span>${
                     row.label ? `\n                  <span class="alternates__label">${escape(row.label)}</span>` : ''
                   }
                 </a>
@@ -1033,12 +1068,12 @@ const alternates = (item, switchable) => {
     // остались бы приглушёнными посреди страницы, ставшей сканом, — то есть
     // говорили бы про работу не то, что тут же рядом видно.
     //
-    // Но спрашивает ряд не себя, а страницу (`switchable` — есть ли скан
-    // у кадра проёма, он же условие галочки). Решай каждая плитка сама, и
-    // страница, на которой галочки нет, всё равно переключила бы ряд —
+    // Но спрашивает ряд не себя, а страницу (`switchable` — есть ли вторая
+    // версия у кадра проёма, она же условие галочки). Решай каждая плитка сама,
+    // и страница, на которой галочки нет, всё равно переключила бы ряд —
     // пришедшему с темы со снятой галочкой, — то есть переключилась бы
     // наполовину.
-    .map(row => ({ ...row, scan: switchable ? scanOf(item, row.file) : null }));
+    .map(row => ({ ...row, other: switchable ? otherOfFile(item, row.file) : null, shown: shownKind(item) }));
   // Одна работа без единого кадра — это работа, у которой в проёме и так
   // стоит плита. Предлагать её же второй раз незачем.
   if (rows.length === 1 && !item.crops?.tall) return '';
@@ -1058,13 +1093,19 @@ export function workPage({ item, others, topics = [], origin }) {
   // размер, вес, тип, разметка, превью, — относится к нему же: посетитель
   // получает по кнопке именно этот файл. Плита названа отдельно и ниже.
   const file = offered(item);
-  // Тот же кадр у скана — всё, что ниже переключается галочкой, переключается
-  // на него, и он же решает, быть ли галочке. Спрашивается именно кадр проёма,
-  // а не `item.scan`: скан, у которого этого кадра почему-либо нет, оставил бы
-  // галочку, которая проём не меняет, — а это уже поломка, а не отсутствие
-  // возможности. `null` — правило `none`, работа нарисована нами или генератор
-  // до файла не дошёл; на странице тогда ни атрибутов, ни галочки.
-  const scanFile = scanOf(item, file);
+  // Тот же кадр у второй версии — всё, что ниже переключается галочкой,
+  // переключается на него, и он же решает, быть ли галочке. Спрашивается именно
+  // кадр проёма, а не работа целиком: вторая версия, у которой этого кадра
+  // почему-либо нет, оставила бы галочку, которая проём не меняет, — а это уже
+  // поломка, а не отсутствие возможности. `null` — работа нарисована нами или
+  // генератор до второго файла не дошёл; на странице тогда ни атрибутов,
+  // ни галочки.
+  //
+  // `shown` — в какую сторону галочка работает на этой странице: у правила
+  // `none` проём привезён сканом и галочка ставится, у остальных привезён
+  // приглушённым и галочка снимается.
+  const otherFile = otherOfFile(item, file);
+  const shown = shownKind(item);
   const size = formatDims(file.width, file.height);
   // «4K» стоит в заголовке вкладки и в описании, но не на самой странице.
   // Для поиска `3840` и `4k` — разные строки: работа, у которой сказан только
@@ -1174,17 +1215,20 @@ export function workPage({ item, others, topics = [], origin }) {
     ` data-pin-media="${origin}${escape(file.url)}" data-pin-url="${origin}/w/${escape(item.slug)}"` +
     ` data-pin-description="${escape(pinDescription)}"`;
   // Всё, что у проёма переключает галочка, — одним набором, потому что метка
-  // `data-scan` у элемента должна стоять ровно одна: два вызова подряд написали
-  // бы её дважды, и вторая ушла бы в мусор разбора.
+  // `data-shown` у элемента должна стоять ровно одна: два вызова подряд
+  // написали бы её дважды, и вторая ушла бы в мусор разбора.
   //
-  // Двойное `data-` в имени — не описка: за `data-scan-` по соглашению стоит имя
-  // сменяемого атрибута, а сменяется здесь `data-pin-media`. Расширение
+  // Двойное `data-` в имени — не описка: за `data-other-` по соглашению стоит
+  // имя сменяемого атрибута, а сменяется здесь `data-pin-media`. Расширение
   // Pinterest сохраняет мимо кнопки и читает именно его — значит, оно обязано
   // называть тот файл, который в эту минуту на странице виден.
-  const scanPicture = scanData({
-    ...scanPair(file, scanFile),
-    'data-pin-media': scanFile && `${origin}${scanFile.url}`
-  });
+  const otherPicture = otherData(
+    {
+      ...otherPair(file, otherFile),
+      'data-pin-media': otherFile && `${origin}${otherFile.url}`
+    },
+    shown
+  );
   // Отправка в Pinterest — контурной кнопкой рядом с Download, а не значком
   // с логотипом. Страница работы набрана музейной этикеткой, и красный кружок
   // в ней читается рекламой; `btn--ghost` — та же форма и тот же шрифт, что
@@ -1272,7 +1316,7 @@ export function workPage({ item, others, topics = [], origin }) {
       <div class="plate">
         <figure class="record record--plate">
           <div ${frame} id="work-frame">
-            <img id="work-picture" src="${escape(file.url)}"${shownPlate}${scanPicture} alt="${escape(item.alt)}" width="${file.width}" height="${file.height}" fetchpriority="high"${pinned} />
+            <img id="work-picture" src="${escape(file.url)}"${shownPlate}${otherPicture} alt="${escape(item.alt)}" width="${file.width}" height="${file.height}" fetchpriority="high"${pinned} />
             ${comparable ? beforeFrame(item) : ''}
           </div>
         </figure>
@@ -1280,14 +1324,14 @@ export function workPage({ item, others, topics = [], origin }) {
           <div class="caption">
             <h1 class="caption__title">${escape(named ? name : item.ref)}</h1>
             <div class="actions">
-              <a class="btn" href="${escape(file.url)}"${scanData({ href: scanFile?.url, download: scanFile?.filename })} download="${escape(file.filename)}">Download</a>
-              <a class="btn btn--ghost btn--pin" href="${escape(pinTo(file))}"${scanData({ href: scanFile && pinTo(scanFile) })} target="_blank" rel="noopener">Pinterest</a>
+              <a class="btn" href="${escape(file.url)}"${otherData({ href: otherFile?.url, download: otherFile?.filename }, shown)} download="${escape(file.filename)}">Download</a>
+              <a class="btn btn--ghost btn--pin" href="${escape(pinTo(file))}"${otherData({ href: otherFile && pinTo(otherFile) }, shown)} target="_blank" rel="noopener">Pinterest</a>
             </div>
-            ${scanFile ? dimmedBox('            ') : ''}
+            ${otherFile ? dimmedBox('            ', shown === 'dim') : ''}
           </div>
           ${terms ? `<div class="terms">${terms}</div>` : ''}
           ${inTopics(topics)}
-          ${alternates(item, Boolean(scanFile))}
+          ${alternates(item, Boolean(otherFile))}
         </div>
       </div>
       ${others.length ? `<section class="adjacent"><h2 class="heading">More in the collection</h2>${grid(others)}</section>` : ''}
@@ -1484,7 +1528,30 @@ export function intakePage({ origin, runtime, runtimeBytes }) {
 
                Начинается всё с беды, а не с описания: картинка, сохранённая
                из интернета, мала для экрана — это и есть повод, по которому
-               сюда приходят с Pinterest. Сказано «can be», а не «is»: каждая
+               сюда приходят с Pinterest. Сам Pinterest поэтому и назван
+               словом: спрашивают не «как увеличить картинку», а «где взять
+               картинку с Pinterest в размер экрана», и ответ на такой вопрос
+               ищется по названию места, откуда её взяли. Примером оно и читается,
+               а не единственным случаем: заголовок над абзацем говорит «any
+               picture», а второй абзац ничем не ограничен. Стояла здесь
+               оговорка «or anywhere else on the web» — и убрана: она
+               спотыкала фразу ровно там, где та должна идти, и страховала
+               от прочтения, которого страница не допускает. Ушло с ней
+               и слово «favourite»: любимость к размеру отношения не имеет,
+               а предложение — про пиксели.
+
+               Вопросом абзац не задан («Have a picture that's too small?»),
+               хотя так и просилось: на сайте нет ни одной строки, которая
+               спрашивает посетителя, — и, главное, машине из вопроса нечего
+               взять в ответ, а из утверждения с числами есть.
+
+               Числа поэтому и уцелели при сокращении: «достаточно большая
+               для обоев» — это и есть 2160 × 3840, и без них абзац перестаёт
+               отвечать на вопрос, ради которого написан. Убрано вместо них
+               лишнее слово: «too small to be a phone wallpaper» после
+               заголовка «Make any picture a phone wallpaper» повторяло его же,
+               а «current» ничего не добавляло к «any».
+               Сказано «can be», а не «is»: каждая
                из пяти галочек выключена, и обещать работу, которой без спроса
                не будет, эта строка не должна.
 
@@ -1516,9 +1583,8 @@ export function intakePage({ origin, runtime, runtimeBytes }) {
 
           <div class="intake-about" id="intake-about">
             <p>
-              A picture saved from the web is usually too small to be a phone wallpaper. Here it can
-              be enlarged to 2160 × 3840 and cropped to 9:16, which is more than any current iPhone
-              or Android screen needs.
+              Saved a picture from Pinterest but it&#39;s too small for a phone background? Enlarge it to
+              2160 × 3840 here.
             </p>
             <p>
               Dimming quiets a busy picture so icons and the clock stay readable over it; a gentle
@@ -1886,16 +1952,18 @@ export function sitemap({ items, topics = [], origin }) {
     // четыре к тому же стоят на ней настоящими картинками: изображение,
     // объявленное только картой, без страницы вокруг почти не ранжируется.
     //
-    // Плюс те же самые файлы скана. Скан стоит на той же странице — его
-    // показывает снятая галочка «Dimmed», — и правило карты от этого не
-    // меняется: она называет то, что на странице ВИДНО, иначе обещает обходу
+    // Плюс те же самые файлы второй версии. Она стоит на той же странице — её
+    // показывает другое положение галочки «Dimmed», — и правило карты от этого
+    // не меняется: она называет то, что на странице ВИДНО, иначе обещает обходу
     // файлы, вокруг которых страницы нет.
     ...items.map(item =>
       url(`${origin}/w/${item.slug}`, {
         lastmod: item.added,
         images: [
           ...new Set(
-            [...shownFiles(item), ...(item.scan ? shownFiles(item.scan) : [])].filter(Boolean).map(file => file.url)
+            [...shownFiles(item), ...(otherOf(item) ? shownFiles(otherOf(item)) : [])]
+              .filter(Boolean)
+              .map(file => file.url)
           )
         ].map(address => `${origin}${address}`)
       })
