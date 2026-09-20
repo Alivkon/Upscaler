@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 // Generates research/crop-positioner.html from the current catalogue.
-// Each card shows the full plate image (480px thumbnail) in a draggable
+// Each card shows the full plate image (see THUMB_AT) in a draggable
 // viewport matching the phone crop ratio, so you can pan to choose crop
 // position and click to record it.
 // Run: node scripts/research/crop-positioner.mjs
@@ -21,6 +21,14 @@ const PHONE_SHEET = path.join(ROOT, 'research/to-crop-positions.md');
 // Мерка своя, не импортированная: лист — черновик, а не сайт, и падать
 // от чужого рефактора ему незачем.
 const DESKTOP_GATE = { width: 1920, height: 1080 };
+
+// К какой ширине тянуться, выбирая копию плиты. Было 480 — ровно ширина
+// самого широкого проёма в CSS-пикселях, то есть 1:1 на настольном экране
+// и втрое мельче нужного на телефоне, где CSS-пиксель рисуется тремя.
+// Копии у плиты 240 / 480 / 960 / 1920; число названо ровно последним из них,
+// а не серединой между двумя: «ближайшая» при равном расстоянии берёт первую,
+// и 1440 молча выбирало бы 960.
+const THUMB_AT = 1920;
 
 // Пропорции проёмов — те же, что режет `wallpaper-gen/treatment.mjs`.
 const RATIOS = { phone: 9 / 19.5, tall: 9 / 16, wide: 16 / 9 };
@@ -126,7 +134,20 @@ const seen = new Set(
 
 const catalogueFiles = fs.readdirSync(CATALOGUE).filter(f => /^vl-\d+\.json$/.test(f));
 const entries = catalogueFiles.map(f => JSON.parse(fs.readFileSync(path.join(CATALOGUE, f), 'utf8')));
-const visible = entries.filter(e => {
+
+// --only разрешает ref, у которого ещё нет catalogue/vl-XXXX.json — тот же
+// патч, что получили `treat-sheet.mjs` и `crop-ruler.mjs`, и по той же причине:
+// кадр по пайплайну (`ADDING.md`) ставят ДО каталога, а требовать карточку
+// значит требовать публикации раньше решения. Заголовка у такой работы нет,
+// берём `name` из `museum-works.json`; плита и её копии всё равно из манифеста.
+const WORKS = path.resolve(ROOT, '../wallpaper-gen/museum-works.json');
+const worksList = fs.existsSync(WORKS) ? JSON.parse(fs.readFileSync(WORKS, 'utf8')) : [];
+const cataloguedRefs = new Set(entries.map(e => e.ref));
+const uncatalogued = onlyRefs
+  ? worksList.filter(w => onlyRefs.has(w.ref) && !cataloguedRefs.has(w.ref)).map(w => ({ ref: w.ref, title: w.name }))
+  : [];
+
+const visible = entries.concat(uncatalogued).filter(e => {
   if (e.hidden) return false;
   if (onlyRefs) return onlyRefs.has(e.ref);
   if (!desktop && !unseen) return true;
@@ -145,8 +166,8 @@ const images = visible.map(e => {
   // Без записи в манифесте остаётся старый способ: угадать по именам файлов.
   const steps = entry ? [entry, ...(entry.copies || [])].map(c => ({ file: c.file, w: c.width, h: c.height })) : null;
   const thumb = steps
-    ? steps.reduce((best, c) => (Math.abs(c.w - 480) < Math.abs(best.w - 480) ? c : best))
-    : findPlateThumb(e.slug, plateFiles, 480);
+    ? steps.reduce((best, c) => (Math.abs(c.w - THUMB_AT) < Math.abs(best.w - THUMB_AT) ? c : best))
+    : findPlateThumb(e.slug, plateFiles, THUMB_AT);
   if (!thumb) return null;
 
   const fullDims = entry

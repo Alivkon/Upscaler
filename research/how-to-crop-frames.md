@@ -36,6 +36,11 @@ node scripts/research/crop-ruler.mjs --only=vl-0352,vl-0356
 # writes research/crop-ruler-only.html
 ```
 
+`--only` refs don't need a `catalogue/vl-XXXX.json` entry — same as `treat-sheet.mjs`,
+they're read straight from `wallpaper-gen/museum-works.json` when there's no
+catalogue entry yet. That's the normal case for a freshly acquired batch: check
+frames before publishing, not after.
+
 ### Where to look first
 
 ```
