@@ -92,7 +92,9 @@ gallery's treated version even if it looks closer to what's live on the site.
    `https://` input appears (it renders anchored near the top of the image,
    which looks like it's the image's own link field, but it isn't: it's the
    text-link popup, just positioned oddly). Type the work's tessarum URL
-   (`https://tessarum.com/w/<slug>`) and press Return. Verify with
+   (`https://tessarum.com/w/<slug>?source=tumblr`) and press Return. The
+   `?source=` tag is how `yarn stats` counts visits from the Tumblr app,
+   which sends no referrer; don't drop it. Verify with
    `find`/`read_page` that the caption text is now an `<a>` with the right
    `href` before posting — don't trust the screenshot alone, the underline
    is easy to miss.
@@ -137,7 +139,9 @@ scratchpad for upload.
    in it. Never write "no sign-up" (the catalogue's own `pin` field says
    this — don't reuse that field's text verbatim here). Never mention
    resolution or "4K".
-5. **Link** — `https://tessarum.com/w/<slug>`.
+5. **Link** — `https://tessarum.com/w/<slug>?source=pinterest`. The tag is
+   how `yarn stats` counts visits from the Pinterest app, which sends no
+   referrer; don't drop it.
 6. **Board** — `Art` (the only board on this account so far). If Charlie has
    since made topic-specific boards (see `TODO.md`, the five-board plan),
    check the board picker and use the closer match instead.

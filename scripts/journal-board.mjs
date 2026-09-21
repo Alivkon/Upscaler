@@ -94,8 +94,10 @@ const takes = human.filter(
 // из приложения Reddit переход приходит без реферера вовсе, и такой заход
 // неотличим от набранного руками. Поэтому рядом с числом «с Reddit» на доске
 // всегда стоит число «без реферера» — вместе они и есть граница правды.
+// Ссылка с меткой `?source=reddit` узнаётся и без реферера: метку пишет
+// журнал (`sourceOf` в `journal.js`).
 const REDDIT = /(^|\.)reddit\.com|(^|\.)redd\.it/i;
-const fromReddit = people.filter(visit => visit.lines.some(line => REDDIT.test(line.ref)));
+const fromReddit = people.filter(visit => visit.lines.some(line => REDDIT.test(line.ref) || line.source === 'reddit'));
 const coldEntries = [];
 for (const visit of people) {
   const seen = visit.lines.filter(line => line.kind === 'page' && line.status < 400);
@@ -334,6 +336,13 @@ ${table(
   'Откуда пришли',
   rank(tally(pages.filter(record => foreign(record.ref)).map(record => record.ref))),
   'Чужой реферер у страницы. Переходы внутри витрины сюда не идут.'
+)}
+${table(
+  'По метке ссылки',
+  // Заход, а не строка: метка стоит только на первой странице, по которой
+  // пришли, и дальше по витрине не тянется.
+  rank(tally(people.map(visit => visit.lines.find(line => line.source !== '-')?.source).filter(Boolean))),
+  'Наши ссылки с ?source= — Reddit, Tumblr, Pinterest. Видна и тогда, когда приложение не прислало реферер.'
 )}
 ${table('Что смотрели', rank(tally(pages.map(record => record.path))))}
 ${table('Что унесли', rank(tally(takes.map(nameOf))))}

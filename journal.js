@@ -62,6 +62,7 @@ export const COLUMNS = [
   'bot',
   'formats',
   'country',
+  'source',
   'ua'
 ];
 
@@ -230,6 +231,16 @@ function refOf(value) {
   }
 }
 
+// Метка из нашей собственной ссылки: `?source=reddit`. Реферер её не
+// заменяет — приложение Reddit его не шлёт, и такой переход неотличим от
+// набранного руками. Остальной запрос не пишется по той же причине, что
+// и у `refOf`, а сама метка берётся, только если похожа на нашу: адрес
+// набирает кто угодно, и произвольный текст в журнал попадать не должен.
+function sourceOf(query) {
+  const value = query?.source;
+  return typeof value === 'string' && /^[a-z0-9-]{1,32}$/.test(value) ? value : '-';
+}
+
 // Вид запроса — четыре слова, и все четыре видны из ответа, а не угаданы.
 // Тоньше не режем: страница это или карточка указателя, решает сводка по
 // рефереру, и решать это здесь значило бы учить журнал устройству витрины.
@@ -343,6 +354,7 @@ export function journal(directory) {
           await botOf(ua, req.ip),
           formatsOf(req.get('accept')),
           countryOf(req.ip),
+          sourceOf(req.query),
           ua
         ];
         writer(day).write(line.map(field).join('\t') + '\n');

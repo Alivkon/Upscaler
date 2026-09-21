@@ -30,10 +30,11 @@ async function request({
   status = 200,
   type = 'text/html',
   body = 'ok',
-  after = null
+  after = null,
+  query = {}
 }) {
   const lower = Object.fromEntries(Object.entries(headers).map(([name, value]) => [name.toLowerCase(), value]));
-  const req = { path: asked, ip, get: name => lower[name.toLowerCase()] };
+  const req = { path: asked, query, ip, get: name => lower[name.toLowerCase()] };
   // `write` и `end` подделке нужны настоящие: вес ответа журнал считает по
   // ним, а не по заголовку, и ответ без этих двух методов мерил бы не то,
   // что происходит на сайте.
@@ -251,9 +252,9 @@ Object.assign(dns, real);
 // целиком — первый же новый столбец стёр бы из всех сводок все прошлые дни,
 // молча и без единой ошибки на экране. Журнал заново не собрать.
 //
-// Форм теперь три, и проверяются все три, а не последняя: 12 столбцов писал
+// Форм теперь четыре, и проверяются все, а не последняя: 12 столбцов писал
 // сервер до 13.09, 13 — между выкладкой формата́ми и выкладкой странами, 14 —
-// сегодняшний. Один файл дня содержит две формы сразу, если сервер перезапускали
+// до метки `source` (21.09), 15 — сегодняшний. Один файл дня содержит две формы сразу, если сервер перезапускали
 // посреди суток; 13.09.2026 так и вышло, и это не редкий случай, а обычный день
 // выкладки. Сдвиг на единицу здесь означал бы, что в столбце страны лежит
 // заголовок браузера, — и заметить это по самим числам нельзя.
@@ -274,14 +275,16 @@ Object.assign(dns, real);
     bot: '-',
     formats: 'avif,webp',
     country: 'DE',
+    source: 'reddit',
     ua
   };
   // Каждая форма — свой день, чтобы записи не слились в один заход и порядок
   // чтения был предсказуем.
   const shapes = [
-    ['2026-09-01', ['formats', 'country'], 12],
-    ['2026-09-02', ['country'], 13],
-    ['2026-09-03', [], 14]
+    ['2026-09-01', ['formats', 'country', 'source'], 12],
+    ['2026-09-02', ['country', 'source'], 13],
+    ['2026-09-03', ['source'], 14],
+    ['2026-09-04', [], 15]
   ];
   for (const [day, missing, width] of shapes) {
     const columns = COLUMNS.filter(column => !missing.includes(column));
@@ -302,7 +305,7 @@ Object.assign(dns, real);
     // Чего в форме не было — прочерк, отличимый от значения.
     for (const column of missing)
       if (record[column] !== '-') complain(`${day}: у отсутствовавшего столбца ${column} значение ${record[column]}`);
-    for (const column of ['formats', 'country'])
+    for (const column of ['formats', 'country', 'source'])
       if (!missing.includes(column) && record[column] !== values[column])
         complain(`${day}: столбец ${column} прочитан как ${record[column]}`);
   }
@@ -328,6 +331,18 @@ Object.assign(dns, real);
   if (text.includes(BERLIN)) complain(`адрес ${BERLIN} попал в журнал вместе со страной`);
 }
 
+// 15. Метка из нашей ссылки записана, чужой текст в адресе — нет. Метку
+// набирает кто угодно, и журнал берёт только то, что похоже на нашу.
+{
+  await request({ path: '/', query: { source: 'reddit' }, headers: { 'user-agent': CHROME } });
+  await request({ path: '/', query: { source: 'Hello there <b>' }, headers: { 'user-agent': CHROME } });
+  await request({ path: '/', query: { source: ['reddit', 'x'] }, headers: { 'user-agent': CHROME } });
+  const all = await lines(19);
+  if (all[16]?.source !== 'reddit') complain(`метка reddit записана как ${all[16]?.source}`);
+  if (all[17]?.source !== '-') complain(`чужой текст в метке записан: ${all[17]?.source}`);
+  if (all[18]?.source !== '-') complain(`метка-массив записана: ${all[18]?.source}`);
+}
+
 await fs.rm(DIRECTORY, { recursive: true, force: true });
 
 if (problems.length) {
@@ -335,4 +350,4 @@ if (problems.length) {
   for (const problem of problems) console.error(`  ${problem}`);
   process.exit(1);
 }
-console.log('журнал запросов: четырнадцать проверок пройдены');
+console.log('журнал запросов: пятнадцать проверок пройдены');
