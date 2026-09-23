@@ -141,7 +141,6 @@ export const COLLECTIONS = [
     // цитировать сейчас нечего — тег на wallpaperflare путает слово с
     // «nihongo», японским языком. Быть страницей, где и определение,
     // и сами файлы, — сильнее любого набора эпитетов.
-    term: 'nihonga',
     // Тире здесь нет ни в одной строке, и это правка по замечанию 24.08.
     // У прежних двух тем оно стоит в `title` и в абзаце; здесь вместо него
     // двоеточие и точка. Заодно снята фраза `kept up against Western oil`:
@@ -209,10 +208,107 @@ export const COLLECTIONS = [
     ]
   },
   {
+    slug: 'hudson-river-school',
+    kind: 'tradition',
+    name: 'Hudson River School',
+    // Состав выбран не глазами, а по истории искусства: художник и годы,
+    // не сюжет. Кто решал, почему по каждой работе и кого оставили за бортом
+    // (Rocky Mountain Sheep 1884, цветы Хеда) —
+    // research/hudson-river-school-collection-picks.json.
+    //
+    // Годы в абзаце — крайние даты этих двадцати, сверенные по каталогу:
+    // 1828 (Коул, два Эдема) и 1871 (Хед). Имена по весу: Коул 5 (и копия),
+    // Бирштадт 3, дальше по 2 у Кенсетта, Хазелтайна, Иннесса. Кливленд —
+    // 11 из 20; у двух держатель не назван («Wikimedia Commons»), поэтому
+    // «most», а не «from museum collections».
+    title: 'Hudson River School phone wallpapers: free, no account',
+    heading: 'Hudson River School collection',
+    description:
+      'Hudson River School phone wallpaper: Thomas Cole, Albert Bierstadt and other American landscape painters, 1828 to 1871. Free, no account.',
+    note: ({ count }) =>
+      `${count} paintings of the Hudson River School, the American landscape painters of the ` +
+      'nineteenth century, chosen as phone wallpapers. Painted between 1828 and 1871, by Thomas ' +
+      'Cole, Albert Bierstadt, John Frederick Kensett and others. Most are from the Cleveland ' +
+      'Museum of Art.',
+    terms: ({ count, full }) =>
+      `All ${count} are phone wallpapers, ${full} of them at 2160 × 3840 or larger. Free to ` +
+      'download and set as your background, no account needed.',
+    refs: [
+      'vl-0355',
+      'vl-0354',
+      'vl-0358',
+      'vl-0461',
+      'vl-0043',
+      'vl-0046',
+      'vl-0045',
+      'vl-0465',
+      'vl-0054',
+      'vl-0297',
+      'vl-0460',
+      'vl-0350',
+      'vl-0042',
+      'vl-0053',
+      'vl-0047',
+      'vl-0057',
+      'vl-0466',
+      'vl-0463',
+      'vl-0357',
+      'vl-0464'
+    ]
+  },
+  {
+    slug: 'dutch-golden-age',
+    kind: 'tradition',
+    name: 'Dutch Golden Age',
+    // Выбран по истории искусства, до 1700 года. Ван Хёйсум (род. 1682) сюда
+    // не входит, он живописец XVIII века; Корте 1701 — спорный, легче всего
+    // вернуть. Разбор — research/dutch-golden-age-collection-picks.json.
+    //
+    // Годов в абзаце нет нарочно: у трёх работ даты нет, у двух стоят годы
+    // жизни художника (vl-0176, vl-0177). Натюрмортов 17 из 20 (с двумя
+    // «лесными подстилками» Марсеуса), пейзажей два, церковь одна. Имена по
+    // весу: Кальф 11 (и копия), Марсеус 2, дальше по одной. Музеи тоже по весу:
+    // Кливленд 4, SMK 4, остальные по одной; у четырёх держатель не назван,
+    // поэтому «other collections», а не «museums».
+    title: 'Dutch Golden Age phone wallpapers: free, no account',
+    heading: 'Dutch Golden Age collection',
+    description:
+      'Dutch Golden Age painting as phone wallpaper: still life by Willem Kalf, landscapes and a church interior. Free, no account.',
+    note: ({ count }) =>
+      `${count} paintings from the Dutch Golden Age, the seventeenth century of painting in the ` +
+      'Dutch Republic, chosen as phone wallpapers. Mostly still life, by Willem Kalf, Otto Marseus ' +
+      'van Schrieck and others, from the Cleveland Museum of Art, the National Gallery of Denmark ' +
+      'and other collections.',
+    terms: ({ count, full }) =>
+      `All ${count} are phone wallpapers, ${full} of them at 2160 × 3840 or larger. Free to ` +
+      'download and set as your background, no account needed.',
+    refs: [
+      'vl-0086',
+      'vl-0038',
+      'vl-0485',
+      'vl-0445',
+      'vl-0428',
+      'vl-0349',
+      'vl-0037',
+      'vl-0176',
+      'vl-0454',
+      'vl-0420',
+      'vl-0421',
+      'vl-0437',
+      'vl-0423',
+      'vl-0177',
+      'vl-0429',
+      'vl-0442',
+      'vl-0419',
+      'vl-0385',
+      'vl-0439',
+      'vl-0447'
+    ]
+  },
+  {
     slug: 'moody-landscape',
     kind: 'mood',
     name: 'Moody landscape',
-    term: 'moody landscape',
     title: 'Moody landscape phone wallpapers — free, no account',
     heading: 'Moody landscape collection',
     description:
@@ -254,7 +350,6 @@ export const COLLECTIONS = [
     slug: 'dark-academia',
     kind: 'mood',
     name: 'Dark academia',
-    term: 'dark academia',
     title: 'Dark academia phone wallpapers — free, no account',
     heading: 'Dark academia collection',
     // Описание отвечает за строку под заголовком в выдаче. Оно короче `note`
@@ -333,7 +428,6 @@ export const COLLECTIONS = [
     // vl-0308, vl-0353 и ещё несколько) и препятствием не является: тот же
     // довод, что у moody landscape выше — тема отвечает на другой запрос,
     // а картинки ранжируются страницей работы, которой ни одна тема не владеет.
-    term: 'cottagecore',
     // Тире нет ни в одной строке, как у nihonga: в `title` и в абзаце
     // вместо него двоеточие и точка.
     title: 'Cottagecore phone wallpapers: free, no account',
