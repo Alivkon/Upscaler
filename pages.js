@@ -633,21 +633,27 @@ const grid = (items, eager = 0, lead = '') =>
 // с конца, всегда одни и те же десять, а остальное пряталось за «Next»,
 // куда не ходят. Длина страницы стоит разметки, а не байтов: всё, кроме
 // первых карточек, грузится лениво.
-// Ряд ссылок на темы под сеткой указателя.
+// Блок под сеткой указателя: строки с подписью, по строке на вид страниц
+// (`rows` в browse.js). Подписи нужны, потому что ссылок стало около двадцати,
+// и одной строкой без них это уже не оглавление, а облако тегов.
+// Разделителей между ссылками нет, как не было: строка самая тихая на странице.
 //
-// Тема — новый адрес, и прийти на него неоткуда: страницы работ на неё ссылаются
-// (`inTopics`), но сами лежат вглубь от указателя. Указатель — самая сильная
-// страница сайта, и ссылка отсюда — то немногое в ранжировании, что мы решаем
-// сами. Она же и человеку: коллекция в сто работ листается плохо, а «покажи
-// только сумрачные» — это то, чего от неё и хотят.
+// Указатель — самая сильная страница сайта, и ссылка отсюда — то немногое
+// в ранжировании, что мы решаем сами. Она же и человеку: коллекция в сто работ
+// листается плохо, а «покажи только сумрачные» — это то, чего от неё и хотят.
 //
 // Стоит под сеткой, а не над. Надстрочник над сеткой с указателя убран нарочно
-// (см. ниже), и ставить туда ряд ссылок значило бы вернуть его другими словами:
+// (см. ниже), и ставить туда оглавление значило бы вернуть его другими словами:
 // первым на странице должна стоять работа, а не оглавление.
-const topicRow = topics =>
-  topics.length
-    ? `<nav class="topics" aria-label="Collections">${topics
-        .map(topic => `<a href="/collection/${escape(topic.slug)}">${escape(topic.heading)}</a>`)
+const browseRows = rows =>
+  rows.length
+    ? `<nav class="browse" aria-label="Browse the collection">${rows
+        .map(
+          row =>
+            `<p class="browse__row"><span class="browse__label">${escape(row.label)}</span>${row.links
+              .map(link => `<a href="${escape(link.href)}">${escape(link.text)}</a>`)
+              .join('\n            ')}</p>`
+        )
         .join('\n          ')}</nav>`
     : '';
 
@@ -705,12 +711,13 @@ const mailingForm = `<form class="tail__mail" method="post" action="/mailing-lis
 // Строка под сеткой указателя: оглавление слева, рассылка справа.
 //
 // Рассылка стоит РЯДОМ с `nav`, а не внутри него. Список рассылки — не раздел
-// коллекции, и диктор, читающий `nav` с подписью «Collections», объявил бы
-// его ещё одной темой. Пустое место между ними и есть разделитель: строка
-// самая тихая на странице, и черта или точка сделали бы из неё панель.
-const tailRow = topics => `<div class="tail">${topicRow(topics)}${mailingForm}</div>`;
+// коллекции, и диктор, читающий `nav` с подписью «Browse the collection»,
+// объявил бы его ещё одним разделом. Пустое место между ними и есть
+// разделитель: строка самая тихая на странице, и черта или точка сделали бы
+// из неё панель.
+const tailRow = rows => `<div class="tail">${browseRows(rows)}${mailingForm}</div>`;
 
-export function collectionPage({ items, topics = [], origin }) {
+export function collectionPage({ items, rows = [], origin }) {
   return layout({
     current: 'collection',
     title: `${SITE_NAME}, classical paintings as phone and 4K wallpapers`,
@@ -737,28 +744,20 @@ export function collectionPage({ items, topics = [], origin }) {
     // строчки в аудите значит держать текст, который никто не прочтёт.
     body: `
       ${grid(items, EAGER_CARDS, inviteCard())}
-      ${tailRow(topics)}
+      ${tailRow(rows)}
     `
   });
 }
 
-// Ссылка со страницы работы в тему, где эта работа стоит.
-//
-// Ради обхода в первую очередь. Тема — новый адрес, и прийти на него поиску
-// неоткуда: из указателя ссылки нет (там сетка, а не текст), извне тем более.
-// Работ же в теме полсотни, и каждая ставит на неё ссылку — это единственное
-// в ранжировании, что мы решаем сами.
-//
-// Текст ссылки несёт слова темы, а не «см. также»: по тексту ссылки страницу
-// и понимают, и «here» ведёт ровно никуда. Слова берутся из `term`, а не из
-// `heading`: в ряду тем стоит имя раздела целиком («Moody landscape
-// collection»), а внутри фразы нужна одна форма определения —
-// «more moody landscape phone wallpapers».
-const inTopics = topics =>
-  topics.length
-    ? `<p class="in-topic">${topics
-        .map(topic => `<a href="/collection/${escape(topic.slug)}">More ${escape(topic.term)} phone wallpapers →</a>`)
-        .join('\n          ')}</p>`
+// Где ещё стоит работа: традиции, страны, настроения — одной строкой.
+// Было по строке «More … phone wallpapers →» на тему; у работы теперь бывает
+// три-четыре страницы, и четыре строки выходов под одной работой спорили бы
+// с кнопкой. Текст ссылки — имя страницы, слова запроса стоят у неё в `title`.
+const inPages = pages =>
+  pages.length
+    ? `<p class="in-topic">In ${pages
+        .map(page => `<a href="${escape(page.path)}">${escape(page.name)}</a>`)
+        .join(' · ')}</p>`
     : '';
 
 // Тематическая страница — часть коллекции, показанная отдельным адресом.
@@ -795,7 +794,7 @@ export function topicPage({ topic, items, origin }) {
     current: 'collection',
     title: topic.title,
     description: topic.description,
-    canonical: `${origin}/collection/${topic.slug}`,
+    canonical: `${origin}${topic.path}`,
     // Превью — первая работа темы её телефонным кадром, как и у указателя:
     // тема телефонная, и широкая плита в превью обещала бы не то.
     image: items.length ? `${origin}${offered(items[0]).url}` : undefined,
@@ -819,6 +818,34 @@ export function topicPage({ topic, items, origin }) {
       <p class="topic__back">
         <a href="/">All ${SITE_NAME} wallpapers →</a>
         <a class="topic__mail" href="/mailing-list">Mailing list</a>
+      </p>
+    `
+  });
+}
+
+// Указатель художников: все, кого можно назвать по имени, со счётом работ.
+// Ссылка — у тех, у кого есть страница (browse.js, `artistIndex`); остальные
+// стоят именем, как в указателе музея, где у художника может быть одна вещь.
+export function artistsPage({ entries, origin }) {
+  return layout({
+    current: 'collection',
+    title: `Artists in the ${SITE_NAME} collection`,
+    description: `${entries.length} artists whose work is in the collection as free phone wallpapers, no account.`,
+    canonical: `${origin}/artists`,
+    body: `
+      <div class="topic">
+        <h1 class="topic__title">Artists</h1>
+      </div>
+      <ul class="artists">
+        ${entries
+          .map(
+            entry =>
+              `<li>${entry.path ? `<a href="${escape(entry.path)}">${escape(entry.name)}</a>` : escape(entry.name)} <span class="artists__count">${entry.count}</span></li>`
+          )
+          .join('\n        ')}
+      </ul>
+      <p class="topic__back">
+        <a href="/">All ${SITE_NAME} wallpapers →</a>
       </p>
     `
   });
@@ -941,14 +968,16 @@ const imageObject = (item, file, origin) => ({
 // из 150. У остальных 38 в поле лежит не название, а том и лист — «The Birds
 // of America, plate 115», «Kunstformen der Natur, plate 92: Filicinae, Java», —
 // и вот это сказать нужно: заголовок называет птицу, а собрание хранит книгу.
-function provenance(item, name) {
+function provenance(item, name, artistPath) {
   if (!item.provenance) return '';
   const { creator, date, work, credit, page } = item.provenance;
-  const made = [creator, date].filter(Boolean).join(', ');
+  // Имя — ссылка, когда у художника есть страница; иначе текст, как было.
+  const who = artistPath ? `<a href="${escape(artistPath)}">${escape(creator)}</a>` : escape(creator);
+  const made = [who, date ? escape(date) : ''].filter(Boolean).join(', ');
   const held = [work === name ? '' : work, credit].filter(Boolean).join(' · ');
   const terms = item.license ? `${escape(item.license.name)} · ` : '';
   return `
-            <p class="terms__line">${escape(made)}</p>
+            <p class="terms__line">${made}</p>
             ${held ? `<p class="terms__note">${escape(held)}</p>` : ''}
             <p class="terms__note">${terms}<a href="${escape(page)}">Source file</a></p>`;
 }
@@ -1085,10 +1114,11 @@ const alternates = (item, switchable) => {
           </div>`;
 };
 
-// Темы, в которых работа стоит, приходят списком снаружи: страница работы
-// о составе тем не знает и знать не должна — состав живёт в `collections.js`,
-// и считает его `server.js` один раз на запрос.
-export function workPage({ item, others, topics = [], origin }) {
+// Страницы, на которых работа стоит, и страница её художника приходят
+// снаружи: страница работы о составе страниц не знает и знать не должна —
+// его решает `browse.js`, и считает `server.js` один раз на запрос. `artist` —
+// страница художника (с `path`), а не запись из `ARTISTS`: у записи адреса нет.
+export function workPage({ item, others, pages = [], artist = null, origin }) {
   // Проём показывает кадр 9:16, и всё, что страница о работе утверждает —
   // размер, вес, тип, разметка, превью, — относится к нему же: посетитель
   // получает по кнопке именно этот файл. Плита названа отдельно и ниже.
@@ -1209,7 +1239,7 @@ export function workPage({ item, others, topics = [], origin }) {
   // кнопки: расширением Pinterest сохраняют мимо неё, и без атрибута в пин
   // ушёл бы `alt`.
   //
-  // Соседние работы в «More in the collection» этих атрибутов не получают
+  // Соседние работы под ней («More in the collection», «More by …») их не получают
   // нарочно: пин с них указывал бы на эту страницу, а не на свою.
   const pinned =
     ` data-pin-media="${origin}${escape(file.url)}" data-pin-url="${origin}/w/${escape(item.slug)}"` +
@@ -1266,7 +1296,7 @@ export function workPage({ item, others, topics = [], origin }) {
     restored
       ? `<p class="terms__line">${restored}${comparable ? '<span class="terms__hint">Click for full size, hold to compare</span>' : ''}</p>`
       : ''
-  }${provenance(item, name)}`;
+  }${provenance(item, name, artist?.path)}`;
   // Предложение для ассистентов, которые цитируют meta description целиком, —
   // разобрано в research/2026-09-20-geo-copy-draft.md, п.5. У своих работ
   // (`item.provenance` нет — их пятьдесят девять) сказать «by» и «from» нечем,
@@ -1330,11 +1360,11 @@ export function workPage({ item, others, topics = [], origin }) {
             ${otherFile ? dimmedBox('            ', shown === 'dim') : ''}
           </div>
           ${terms ? `<div class="terms">${terms}</div>` : ''}
-          ${inTopics(topics)}
+          ${inPages(pages)}
           ${alternates(item, Boolean(otherFile))}
         </div>
       </div>
-      ${others.length ? `<section class="adjacent"><h2 class="heading">More in the collection</h2>${grid(others)}</section>` : ''}
+      ${others.length ? `<section class="adjacent"><h2 class="heading">${artist ? `More by ${escape(artist.name)}` : 'More in the collection'}</h2>${grid(others)}</section>` : ''}
     `
   });
 }
@@ -1912,7 +1942,7 @@ export function errorPage({ status, message }) {
 // адресов страниц называет изображения лишь косвенно. Изображения объявлены
 // у страницы работы (оба её кадра) и не продублированы у указателя: страница
 // работы и есть то место, куда мы хотим привести пришедшего из поиска.
-export function sitemap({ items, topics = [], origin }) {
+export function sitemap({ items, pages = [], origin }) {
   // Даты сравниваются как строки: и `2026-08-16`, и полный ISO начинаются
   // с года, месяца и дня, поэтому порядок совпадает с хронологическим.
   const latestOf = list =>
@@ -1968,14 +1998,16 @@ export function sitemap({ items, topics = [], origin }) {
         ].map(address => `${origin}${address}`)
       })
     ),
-    // Тематические страницы. `lastmod` у темы — день последнего пополнения
-    // самой темы, а не коллекции: тема меняется, когда в неё добавили работу,
-    // и объявлять её изменившейся от чужого пополнения значит звать обход зря.
+    // Страницы для обхода: темы, традиции, страны, художники. `lastmod`
+    // у страницы — день последнего пополнения её самой, а не коллекции:
+    // страница меняется, когда в неё добавили работу, и объявлять её
+    // изменившейся от чужого пополнения значит звать обход зря.
     //
     // Файлы здесь не перечислены. Все они уже названы у страниц работ, а
     // повторять их у темы — обещать обходу, что тот же файл стоит на двух
     // страницах как содержимое; на теме он стоит карточкой, ведущей к работе.
-    ...topics.map(topic => url(`${origin}/collection/${topic.slug}`, { lastmod: latestOf(topic.items) })),
+    ...pages.map(page => url(`${origin}${page.path}`, { lastmod: latestOf(page.items) })),
+    url(`${origin}/artists`, { lastmod: latestOf(items) }),
     url(`${origin}/restore`),
     url(`${origin}/license`),
     url(`${origin}/mailing-list`)

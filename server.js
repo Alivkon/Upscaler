@@ -13,6 +13,7 @@ import { journal } from './journal.js';
 import { mailingAllowance, upscaleAllowance } from './limits.js';
 import { subscribers } from './mailing.js';
 import {
+  artistsPage,
   collectionPage,
   errorPage,
   intakePage,
@@ -24,7 +25,7 @@ import {
   topicPage,
   workPage
 } from './pages.js';
-import { COLLECTIONS, collectionBySlug, worksOf } from './collections.js';
+import { artistIndex, artistPageOf, browse, everyPage, pageAt, pagesWith, rows } from './browse.js';
 import { finish, phoneWindow } from './treatment.js';
 import { serverLongestSide } from './public/frame.js';
 import { MODEL as MODEL_FILE, WEIGHED } from './public/model-files.js';
@@ -262,7 +263,8 @@ const sample = (items, count) => {
 
 async function showCollection(_req, res, next) {
   try {
-    html(res, 200, collectionPage({ items: shown(await galleryItems()), topics: COLLECTIONS, origin: SITE_ORIGIN }));
+    const visible = shown(await galleryItems());
+    html(res, 200, collectionPage({ items: visible, rows: rows(browse(visible)), origin: SITE_ORIGIN }));
   } catch (error) {
     next(error);
   }
@@ -274,7 +276,7 @@ app.get('/', showCollection);
 app.get('/page/:page', (_req, res) => res.redirect(301, '/'));
 
 // Тематическая страница — часть коллекции под своим адресом. Разбор и тексты
-// в `collections.js`; здесь только то, что адрес отвечает.
+// в `collections.js`, у стран — в `browse.js`; здесь только то, что адрес отвечает.
 //
 // Неизвестная тема падает в `next()`, а не в редирект на указатель: адрес
 // `/collection/<чего-то>` мы никому не давали, и отвечать на него 200-м
@@ -282,10 +284,32 @@ app.get('/page/:page', (_req, res) => res.redirect(301, '/'));
 // ровно то, за что выдача наказывает.
 app.get('/collection/:slug', async (req, res, next) => {
   try {
-    const topic = collectionBySlug(req.params.slug);
-    if (!topic) return next();
-    const items = worksOf(topic, shown(await galleryItems()));
-    html(res, 200, topicPage({ topic, items, origin: SITE_ORIGIN }));
+    const found = browse(shown(await galleryItems()));
+    const page = pageAt(found, `/collection/${req.params.slug}`);
+    if (!page) return next();
+    html(res, 200, topicPage({ topic: page, items: page.items, origin: SITE_ORIGIN }));
+  } catch (error) {
+    next(error);
+  }
+});
+
+// Художники: указатель и страница на каждого, у кого MIN_WORKS показанных
+// работ (browse.js). Неизвестное имя — в `next()`, по той же причине, что
+// и у тем: адреса, которого мы не давали, не существует.
+app.get('/artists', async (_req, res, next) => {
+  try {
+    const visible = shown(await galleryItems());
+    html(res, 200, artistsPage({ entries: artistIndex(browse(visible), visible), origin: SITE_ORIGIN }));
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.get('/artists/:slug', async (req, res, next) => {
+  try {
+    const page = pageAt(browse(shown(await galleryItems())), `/artists/${req.params.slug}`);
+    if (!page) return next();
+    html(res, 200, topicPage({ topic: page, items: page.items, origin: SITE_ORIGIN }));
   } catch (error) {
     next(error);
   }
@@ -305,15 +329,27 @@ app.get('/w/:slug', async (req, res, next) => {
     // показывалась никогда. Случайная выборка показывает её всю и заодно
     // раскладывает внутренние ссылки по всем работам, а не по десяти.
     const visible = shown(items);
-    const others = sample(
-      visible.filter(work => work !== item),
-      ADJACENT
-    );
-    // Темы, в которых работа стоит. Считаются по тем же показанным: скрытую
-    // работу тема не покажет, и звать со страницы скрытой работы в тему,
-    // которая её не содержит, значило бы обещать невыполнимое.
-    const topics = COLLECTIONS.filter(topic => worksOf(topic, visible).includes(item));
-    html(res, 200, workPage({ item, others, topics, origin: SITE_ORIGIN }));
+    // Где стоит работа — считается по показанным: скрытую работу страница
+    // не покажет, и звать с её страницы туда нельзя.
+    const found = browse(visible);
+    const artistPage = artistPageOf(found, item);
+    // Соседи: сначала другие работы того же художника, если у него есть
+    // страница, — подпись над сеткой тогда «More by …», и она должна быть
+    // правдой. Добор до ADJACENT — случайный, как было, и по той же причине.
+    const sameHand = artistPage
+      ? sample(
+          artistPage.items.filter(work => work !== item),
+          ADJACENT
+        )
+      : [];
+    const others = [
+      ...sameHand,
+      ...sample(
+        visible.filter(work => work !== item && !sameHand.includes(work)),
+        ADJACENT - sameHand.length
+      )
+    ];
+    html(res, 200, workPage({ item, others, pages: pagesWith(found, item), artist: artistPage, origin: SITE_ORIGIN }));
   } catch (error) {
     next(error);
   }
@@ -370,8 +406,7 @@ app.get('/robots.txt', (_req, res) => res.type('text/plain').send(robots({ origi
 // вторым вычислением того же и разошёлся бы с картой молча.
 async function sitemapXml() {
   const items = shown(await galleryItems());
-  const topics = COLLECTIONS.map(topic => ({ slug: topic.slug, items: worksOf(topic, items) }));
-  return sitemap({ items, topics, origin: SITE_ORIGIN });
+  return sitemap({ items, pages: everyPage(browse(items)), origin: SITE_ORIGIN });
 }
 
 app.get('/sitemap.xml', async (_req, res, next) => {

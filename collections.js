@@ -411,8 +411,6 @@ export const COLLECTIONS = [
   }
 ];
 
-export const collectionBySlug = slug => COLLECTIONS.find(topic => topic.slug === slug);
-
 // Работы темы в порядке указателя. Скрытые сюда не доходят: фильтр стоит
 // на выдаче (`server.js`, `shown`), и список приходит уже без них — работа,
 // снятая с витрины, не должна возвращаться на неё через тему.
