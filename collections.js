@@ -333,7 +333,7 @@ export const COLLECTIONS = [
     description:
       'Landscape painting as phone wallpaper: Jean-Victor Bertin, Richard Wilson, Claude Lorrain and the Hudson River School. Free, no account.',
     note: ({ count }) =>
-      `${count} landscapes, French, American, British and Japanese, ` +
+      `${count} French, American, British and Japanese landscapes, ` +
       'painted between the 1640s and the 1930s. By Jean-Victor Bertin, Richard Wilson, Claude ' +
       'Lorrain and others, from the Cleveland Museum of Art and other collections.',
     terms: ({ count, full }) =>
