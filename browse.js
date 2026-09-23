@@ -57,7 +57,7 @@ function countryPage(country, items) {
     title: `${adjective} painting phone wallpapers: free, no account`,
     heading: `${adjective} painting`,
     description: `${adjective} painting as phone wallpaper, from public museum collections: ${listed(names.slice(0, 2))}. Free, no account.`,
-    note: ({ count }) => `${count} ${adjective} works, chosen as phone wallpapers. By ${byNames(names)}.`,
+    note: ({ count }) => `${count} ${adjective} works, by ${byNames(names)}.`,
     terms,
     items
   };
@@ -75,7 +75,7 @@ function artistPage(artist, items) {
     title: `${artist.name} phone wallpapers: free, no account`,
     heading: artist.name,
     description: `${artist.label}. Free phone wallpapers from the ${artist.made}, no account.`,
-    note: ({ count }) => `${artist.label}. ${count} ${artist.made}, chosen as phone wallpapers.`,
+    note: ({ count }) => `${artist.label}. ${count} ${artist.made} in the collection.`,
     terms,
     items
   };

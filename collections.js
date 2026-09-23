@@ -95,8 +95,11 @@
 // **«Wallpaper» — в абзаце, а не только в заголовке.** Абзац переписывался
 // дважды, и в первый раз слово из него выпало вместе с неправдой про размер:
 // осталось «cut to 9:16 for a phone screen», где нужного слова нет вовсе.
-// После разделения 13.09 слово держит в `note` оборот «chosen as … phone
-// wallpapers» — правда об отборе, без «cut to 9:16».
+// После разделения 13.09 слово держал в `note` оборот «chosen as … phone
+// wallpapers». 23.09 он снят у всех тем, кроме dark academia и cottagecore
+// (там в нём слово запроса): Charlie заметил, что оборот обещает причину
+// выбора и не называет её. Слово теперь держит строка `terms` («All N are
+// phone wallpapers») прямо под сеткой, плюс `title` и `description`.
 //
 // **Про кадр в абзаце не говорится.** Стояло «cut to 9:16», и это отвечало
 // на вопрос, которого читатель не задавал: кадрирована работа или она такая
@@ -152,7 +155,7 @@ export const COLLECTIONS = [
     description:
       'Nihonga phone wallpaper from Japanese museum paintings: mineral pigment and ink on silk, Meiji and Taishō. Up to 2160 × 3840, free, no account.',
     note: ({ count }) =>
-      `${count} nihonga paintings, chosen as phone wallpapers. Nihonga means mineral pigment and ` +
+      `${count} nihonga paintings. Nihonga means mineral pigment and ` +
       'ink on silk, the Japanese way of painting that continued after Western oil reached Meiji ' +
       'Japan. By Yokoyama Taikan, Kobayashi Kokei and Yamamoto Shunkyo, from the Tokyo National ' +
       'Museum and other public collections.',
@@ -234,7 +237,7 @@ export const COLLECTIONS = [
       'Hudson River School phone wallpaper: Thomas Cole, Albert Bierstadt and other American landscape painters, 1828 to 1871. Free, no account.',
     note: ({ count }) =>
       `${count} paintings of the Hudson River School, the landscape painters of American ` +
-      'Romanticism, chosen as phone wallpapers. Painted between 1828 and 1871, by Thomas ' +
+      'Romanticism. Painted between 1828 and 1871, by Thomas ' +
       'Cole, Albert Bierstadt, John Frederick Kensett and others. Most are from the Cleveland ' +
       'Museum of Art.',
     terms: ({ count, full }) =>
@@ -283,7 +286,7 @@ export const COLLECTIONS = [
       'Dutch Golden Age painting as phone wallpaper: still life by Willem Kalf, landscapes and a church interior. Free, no account.',
     note: ({ count }) =>
       `${count} paintings from the Dutch Golden Age, the seventeenth century of painting in the ` +
-      'Dutch Republic, chosen as phone wallpapers. Mostly Dutch still life, by Willem Kalf, Otto Marseus ' +
+      'Dutch Republic. Mostly Dutch still life, by Willem Kalf, Otto Marseus ' +
       'van Schrieck and others, from the Cleveland Museum of Art, the National Gallery of Denmark ' +
       'and other collections.',
     terms: ({ count, full }) =>
@@ -330,7 +333,7 @@ export const COLLECTIONS = [
     description:
       'Landscape painting as phone wallpaper: Jean-Victor Bertin, Richard Wilson, Claude Lorrain and the Hudson River School. Free, no account.',
     note: ({ count }) =>
-      `${count} landscapes, chosen as phone wallpapers: French, American, British and Japanese, ` +
+      `${count} landscapes, French, American, British and Japanese, ` +
       'painted between the 1640s and the 1930s. By Jean-Victor Bertin, Richard Wilson, Claude ' +
       'Lorrain and others, from the Cleveland Museum of Art and other collections.',
     terms: ({ count, full }) =>
@@ -419,7 +422,7 @@ export const COLLECTIONS = [
     description:
       'Flower painting as phone wallpaper: Otto Didrik Ottesen, Jan van Huysum, John James Audubon and others. Free, no account.',
     note: ({ count }) =>
-      `${count} works with flowers as their subject, chosen as phone wallpapers. Mostly Danish ` +
+      `${count} works with flowers as their subject. Mostly Danish ` +
       "and Dutch, by Otto Didrik Ottesen and Jan van Huysum, with Audubon's birds among blossoms " +
       'and Japanese painting.',
     terms: ({ count, full }) =>
@@ -464,7 +467,7 @@ export const COLLECTIONS = [
     description:
       'Still life painting as phone wallpaper: Willem Kalf, Otto Didrik Ottesen, Jan van Huysum and others. Free, no account.',
     note: ({ count }) =>
-      `${count} still lifes, chosen as phone wallpapers. Mostly Dutch: silver, glass and fruit ` +
+      `${count} still lifes. Mostly Dutch: silver, glass and fruit ` +
       'by Willem Kalf, flowers by Jan van Huysum. With Danish flower and fruit pieces by Otto ' +
       'Didrik Ottesen and others.',
     terms: ({ count, full }) =>
@@ -522,7 +525,7 @@ export const COLLECTIONS = [
     description:
       'Ocean painting as phone wallpaper: storms at sea by Ivan Aivazovsky and Théodore Gudin, coasts and calm bays. Free, no account.',
     note: ({ count }) =>
-      `${count} seascapes, chosen as phone wallpapers: storms, waves and ships at sea, coasts ` +
+      `${count} seascapes: storms, waves and ships at sea, coasts ` +
       'and calm bays. By Ivan Aivazovsky, Théodore Gudin and others, from the Cleveland Museum ' +
       'of Art, the Tokyo National Museum and other collections.',
     terms: ({ count, full }) =>
@@ -561,7 +564,7 @@ export const COLLECTIONS = [
     description:
       'Moody landscape phone wallpaper from museum painting — storms, gloom and dark weather. Up to 2160 × 3840, free, no account.',
     note: ({ count }) =>
-      `${count} landscape paintings with the weather in them, chosen as phone wallpapers: ` +
+      `${count} landscape paintings with the weather in them: ` +
       'a thunderstorm coming on, Vesuvius at midnight, rain over the mountains, a ruin above a dark ' +
       'sea. Painted between 1660 and 1893, mostly from the Cleveland Museum of Art.',
     terms: ({ count, full }) =>
