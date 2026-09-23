@@ -1118,7 +1118,7 @@ const alternates = (item, switchable) => {
 // снаружи: страница работы о составе страниц не знает и знать не должна —
 // его решает `browse.js`, и считает `server.js` один раз на запрос. `artist` —
 // страница художника (с `path`), а не запись из `ARTISTS`: у записи адреса нет.
-export function workPage({ item, others, pages = [], artist = null, origin }) {
+export function workPage({ item, sameHand = [], others, pages = [], artist = null, origin }) {
   // Проём показывает кадр 9:16, и всё, что страница о работе утверждает —
   // размер, вес, тип, разметка, превью, — относится к нему же: посетитель
   // получает по кнопке именно этот файл. Плита названа отдельно и ниже.
@@ -1364,7 +1364,8 @@ export function workPage({ item, others, pages = [], artist = null, origin }) {
           ${alternates(item, Boolean(otherFile))}
         </div>
       </div>
-      ${others.length ? `<section class="adjacent"><h2 class="heading">${artist ? `More by ${escape(artist.name)}` : 'More in the collection'}</h2>${grid(others)}</section>` : ''}
+      ${sameHand.length ? `<section class="adjacent"><h2 class="heading">More by ${escape(artist.name)}</h2>${grid(sameHand)}</section>` : ''}
+      ${others.length ? `<section class="adjacent"><h2 class="heading">More in the collection</h2>${grid(others)}</section>` : ''}
     `
   });
 }

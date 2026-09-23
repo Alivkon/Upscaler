@@ -334,22 +334,24 @@ app.get('/w/:slug', async (req, res, next) => {
     const found = browse(visible);
     const artistPage = artistPageOf(found, item);
     // Соседи: сначала другие работы того же художника, если у него есть
-    // страница, — подпись над сеткой тогда «More by …», и она должна быть
-    // правдой. Добор до ADJACENT — случайный, как было, и по той же причине.
+    // страница, — под своей подписью «More by …», и в ней только его работы:
+    // подпись над чужими была бы неправдой. Добор до ADJACENT — случайный,
+    // как было, и по той же причине, под «More in the collection».
     const sameHand = artistPage
       ? sample(
           artistPage.items.filter(work => work !== item),
           ADJACENT
         )
       : [];
-    const others = [
-      ...sameHand,
-      ...sample(
-        visible.filter(work => work !== item && !sameHand.includes(work)),
-        ADJACENT - sameHand.length
-      )
-    ];
-    html(res, 200, workPage({ item, others, pages: pagesWith(found, item), artist: artistPage, origin: SITE_ORIGIN }));
+    const others = sample(
+      visible.filter(work => work !== item && !sameHand.includes(work)),
+      ADJACENT - sameHand.length
+    );
+    html(
+      res,
+      200,
+      workPage({ item, sameHand, others, pages: pagesWith(found, item), artist: artistPage, origin: SITE_ORIGIN })
+    );
   } catch (error) {
     next(error);
   }

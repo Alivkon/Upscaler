@@ -14,8 +14,9 @@
 // Taikan» и «Yokoyama Taikan (1868-1958)». Копии («After Thomas Cole
 // (unidentified copyist)») сюда нарочно не входят: это не его работа.
 //
-// `short` — подпись в строке художников под сеткой указателя, по ней же
-// строка упорядочена. `made` — чем названы работы в абзаце и описании:
+// `short` — подпись в строке художников под сеткой указателя. Строка идёт
+// в порядке записей, а записи — по фамилии, как в указателе музея: ван Хёйсум
+// под H, а не под V. `made` — чем названы работы в абзаце и описании:
 // у Одюбона гравюры, и «paintings» было бы неправдой.
 //
 // Этикетка: годы жизни, страна, род занятий, по описанию Wikidata (23.09.2026).
@@ -87,6 +88,15 @@ export const ARTISTS = [
     names: ['Vilhelm Hammershøi']
   },
   {
+    slug: 'jan-van-huysum',
+    name: 'Jan van Huysum',
+    short: 'van Huysum',
+    made: 'paintings',
+    label: 'Jan van Huysum (1682–1749), Dutch painter',
+    wikidata: 'Q527869',
+    names: ['Jan van Huysum']
+  },
+  {
     slug: 'willem-kalf',
     name: 'Willem Kalf',
     short: 'Kalf',
@@ -121,15 +131,6 @@ export const ARTISTS = [
     label: 'Yokoyama Taikan (1868–1958), Japanese painter',
     wikidata: 'Q2034441',
     names: ['Yokoyama Taikan', 'Yokoyama Taikan (1868-1958)']
-  },
-  {
-    slug: 'jan-van-huysum',
-    name: 'Jan van Huysum',
-    short: 'van Huysum',
-    made: 'paintings',
-    label: 'Jan van Huysum (1682–1749), Dutch painter',
-    wikidata: 'Q527869',
-    names: ['Jan van Huysum']
   },
   {
     slug: 'richard-wilson',

@@ -12,14 +12,15 @@ import { COLLECTIONS, worksOf } from './collections.js';
 // Страна называется на странице прилагательным, а не именем из `origin`.
 // Англия — British: пять из двенадцати работ у Уилсона, а он валлиец.
 // России здесь нет: все шесть её работ — Айвазовский, и её страница была бы
-// его страницей под другим именем.
+// его страницей под другим именем. Порядок — по прилагательному: так строка
+// стоит под сеткой указателя.
 export const COUNTRIES = [
   { origin: 'America', adjective: 'American' },
-  { origin: 'Denmark', adjective: 'Danish' },
   { origin: 'England', adjective: 'British' },
+  { origin: 'Denmark', adjective: 'Danish' },
+  { origin: 'Netherlands', adjective: 'Dutch' },
   { origin: 'France', adjective: 'French' },
-  { origin: 'Japan', adjective: 'Japanese' },
-  { origin: 'Netherlands', adjective: 'Dutch' }
+  { origin: 'Japan', adjective: 'Japanese' }
 ];
 
 // Анонимы и копии («Unknown (Japan)», «After Thomas Cole») в каталоге
