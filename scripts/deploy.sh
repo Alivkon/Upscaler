@@ -32,7 +32,7 @@ echo "==> код"
 # модель не обновляет, а передеплой модели не требует трогать сайт.
 rsync -a --delete --info=stats1 \
   Dockerfile docker-compose.yml .dockerignore package.json yarn.lock DEPLOYMENT.md \
-  collections.js gallery.js http-error.js indexnow.js journal.js limits.js mailing.js pages.js server.js treatment.js upscaler.js works.js \
+  artists.js browse.js collections.js gallery.js http-error.js indexnow.js journal.js limits.js mailing.js pages.js server.js treatment.js upscaler.js works.js \
   catalogue public scripts \
   "$HOST:$DIR/"
 
