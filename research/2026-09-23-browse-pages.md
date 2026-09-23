@@ -184,3 +184,81 @@ Artists      Aivazovsky · Audubon · … · Wilson · All artists
 - Google, spam policies: https://developers.google.com/search/docs/essentials/spam-policies
 - https://wallpapercave.com/renaissance-iphone-wallpapers,
   https://wallpapercave.com/renaissance-art-wallpapers
+
+## Реализация, шаг 1 и традиции (23.09.2026)
+
+Ветка `browse-pages`, не выложено.
+
+**Файлы.**
+
+- `artists.js` — 13 записей: имя, адрес, этикетка по Wikidata, все написания
+  из `provenance.creator`; `MIN_WORKS = 4`.
+- `browse.js` — какие страницы есть при данном наборе показанных работ:
+  темы и традиции из `collections.js`, страны (от 4 работ и больше одного
+  названного художника), художники (от 4 работ); строки блока под сеткой,
+  строка «In …», указатель `/artists`.
+- `scripts/verify-browse.mjs` в `yarn verify`: правила на выдуманных работах
+  и на настоящем каталоге. Падает, если незаписанный художник дорос до 4
+  работ, если у записанного появилось второе написание, если записанный
+  опустился ниже порога, если страна с 4 работами разных художников не
+  стоит в `COUNTRIES`, если `title` длиннее 65 знаков.
+- `pages.js`, `server.js`, `public/styles.css` — блок с подписями под сеткой,
+  `/artists`, `/artists/<имя>`, `/collection/<страна>-painting`, ссылка на
+  художника в подписи работы, «More by …» над его работами и «More in the
+  collection» над случайным добором, одна строка «In …», карта сайта.
+- `collections.js` — поля `kind` и `name`, две традиции, поле `term` снято
+  (его читала только старая строка «More … →»); `collectionBySlug` снят.
+
+**Отступления от плана.**
+
+- Добор соседей до десяти стоял под «More by X»: у Тайкана шесть чужих работ
+  шли как его. Разделено на две секции, своих не больше пяти из десяти:
+  у Кальфа одиннадцать работ, и без потолка его страницы ссылались бы только
+  друг на друга (работа Кальфа: 5 и 5).
+- Страница художника ищется по художнику, а не по составу: скрытая работа
+  тоже ссылается на автора.
+- Страны и художники в строках — по алфавиту подписи (British перед Danish,
+  ван Хёйсум под H), а не по имени из каталога.
+- Абзацы традиций сверены с каталогом: у Hudson River School годы 1828–1871
+  по всем двадцати датам; у Dutch Golden Age годов нет (три без даты, две с
+  годами жизни). «From public museum collections» снято у обеих: у шести работ
+  держатель не назван.
+
+**Проверки** (настоящий вывод, локальный сервер).
+
+```
+обход: художников 13, стран 6, тем и традиций 6
+темы: nihonga — 16, hudson-river-school — 20, dutch-golden-age — 20, moody-landscape — 14, dark-academia — 43, cottagecore — 26
+
+200 /  200 /artists  200 /artists/thomas-cole  200 /artists/yokoyama-taikan
+200 /collection/dutch-painting  200 /collection/japanese-painting
+200 /collection/british-painting  200 /collection/nihonga
+404 /collection/russian-painting  404 /artists/claude-monet
+200 /artists/albert-bierstadt
+200 /collection/hudson-river-school items=20
+200 /collection/dutch-golden-age items=20
+
+/artists/yokoyama-taikan: карточек 5
+<title>Thomas Cole phone wallpapers: free, no account
+карта сайта: 188 <loc> (166 + 6 стран + 13 художников + /artists + 2 традиции)
+работа Тайкана: More by Yokoyama Taikan — 4 карточки, More in the collection — 6
+работа Кальфа: In Dutch Golden Age · Dutch painting
+```
+
+Глазами (Chrome, 1440 px и рамка 390 px): блок под сеткой читается
+оглавлением, на узком экране подпись встаёт над строкой, горизонтальной
+прокрутки нет (ширина страницы 375 в рамке 390); ссылка на художника в подписи
+того же вида, что «Source file».
+
+**Ограничения.**
+
+- Абзац страны и художника короче правила COLLECTIONS.md (около двадцати слов):
+  годы и музеи не вычисляются, пока в каталоге годы жизни вместо дат
+  (vl-0176, vl-0177, vl-0178) и «Wikimedia Commons» вместо держателя.
+- `/artists` — 66 имён, по алфавиту имени, а не фамилии.
+- У 47 показанных работ нет `creatorKind`; `browse.js` считает их названными.
+  Сегодня это верно (проверено глазами), но аноним без поля попал бы в абзац
+  страны. Надёжнее — требовать поле в `verify-catalogue`.
+- Проверка обхода считает по каталогу, не по файлам: если на боевой машине у
+  Одюбона или Бирштадта (ровно по 4) пропадёт файл, страница исчезнет молча.
+- Эффект в поиске мерить не раньше, чем Google обойдёт карту сайта.

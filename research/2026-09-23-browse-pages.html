@@ -242,3 +242,76 @@ vl-0385, vl-0439, vl-0454.</li>
 <li><a href="https://wallpapercave.com/renaissance-iphone-wallpapers">https://wallpapercave.com/renaissance-iphone-wallpapers</a>,
 <a href="https://wallpapercave.com/renaissance-art-wallpapers">https://wallpapercave.com/renaissance-art-wallpapers</a></li>
 </ul>
+<h2>Реализация, шаг 1 и традиции (23.09.2026)</h2>
+<p>Ветка <code>browse-pages</code>, не выложено.</p>
+<p><strong>Файлы.</strong></p>
+<ul>
+<li><code>artists.js</code> — 13 записей: имя, адрес, этикетка по Wikidata, все написания
+из <code>provenance.creator</code>; <code>MIN_WORKS = 4</code>.</li>
+<li><code>browse.js</code> — какие страницы есть при данном наборе показанных работ:
+темы и традиции из <code>collections.js</code>, страны (от 4 работ и больше одного
+названного художника), художники (от 4 работ); строки блока под сеткой,
+строка «In …», указатель <code>/artists</code>.</li>
+<li><code>scripts/verify-browse.mjs</code> в <code>yarn verify</code>: правила на выдуманных работах
+и на настоящем каталоге. Падает, если незаписанный художник дорос до 4
+работ, если у записанного появилось второе написание, если записанный
+опустился ниже порога, если страна с 4 работами разных художников не
+стоит в <code>COUNTRIES</code>, если <code>title</code> длиннее 65 знаков.</li>
+<li><code>pages.js</code>, <code>server.js</code>, <code>public/styles.css</code> — блок с подписями под сеткой,
+<code>/artists</code>, <code>/artists/&lt;имя&gt;</code>, <code>/collection/&lt;страна&gt;-painting</code>, ссылка на
+художника в подписи работы, «More by …» над его работами и «More in the
+collection» над случайным добором, одна строка «In …», карта сайта.</li>
+<li><code>collections.js</code> — поля <code>kind</code> и <code>name</code>, две традиции, поле <code>term</code> снято
+(его читала только старая строка «More … →»); <code>collectionBySlug</code> снят.</li>
+</ul>
+<p><strong>Отступления от плана.</strong></p>
+<ul>
+<li>Добор соседей до десяти стоял под «More by X»: у Тайкана шесть чужих работ
+шли как его. Разделено на две секции, своих не больше пяти из десяти:
+у Кальфа одиннадцать работ, и без потолка его страницы ссылались бы только
+друг на друга (работа Кальфа: 5 и 5).</li>
+<li>Страница художника ищется по художнику, а не по составу: скрытая работа
+тоже ссылается на автора.</li>
+<li>Страны и художники в строках — по алфавиту подписи (British перед Danish,
+ван Хёйсум под H), а не по имени из каталога.</li>
+<li>Абзацы традиций сверены с каталогом: у Hudson River School годы 1828–1871
+по всем двадцати датам; у Dutch Golden Age годов нет (три без даты, две с
+годами жизни). «From public museum collections» снято у обеих: у шести работ
+держатель не назван.</li>
+</ul>
+<p><strong>Проверки</strong> (настоящий вывод, локальный сервер).</p>
+<pre><code>обход: художников 13, стран 6, тем и традиций 6
+темы: nihonga — 16, hudson-river-school — 20, dutch-golden-age — 20, moody-landscape — 14, dark-academia — 43, cottagecore — 26
+
+200 /  200 /artists  200 /artists/thomas-cole  200 /artists/yokoyama-taikan
+200 /collection/dutch-painting  200 /collection/japanese-painting
+200 /collection/british-painting  200 /collection/nihonga
+404 /collection/russian-painting  404 /artists/claude-monet
+200 /artists/albert-bierstadt
+200 /collection/hudson-river-school items=20
+200 /collection/dutch-golden-age items=20
+
+/artists/yokoyama-taikan: карточек 5
+&lt;title&gt;Thomas Cole phone wallpapers: free, no account
+карта сайта: 188 &lt;loc&gt; (166 + 6 стран + 13 художников + /artists + 2 традиции)
+работа Тайкана: More by Yokoyama Taikan — 4 карточки, More in the collection — 6
+работа Кальфа: In Dutch Golden Age · Dutch painting
+</code></pre>
+<p>Глазами (Chrome, 1440 px и рамка 390 px): блок под сеткой читается
+оглавлением, на узком экране подпись встаёт над строкой, горизонтальной
+прокрутки нет (ширина страницы 375 в рамке 390); ссылка на художника в подписи
+того же вида, что «Source file».</p>
+<p><strong>Ограничения.</strong></p>
+<ul>
+<li>Абзац страны и художника короче правила COLLECTIONS.md (около двадцати слов):
+годы и музеи не вычисляются, пока в каталоге годы жизни вместо дат
+(vl-0176, vl-0177, vl-0178) и «Wikimedia Commons» вместо держателя.</li>
+<li><code>/artists</code> — 66 имён, по алфавиту имени, а не фамилии.</li>
+<li>У 47 показанных работ нет <code>creatorKind</code>; <code>browse.js</code> считает их названными.
+Сегодня это верно (проверено глазами), но аноним без поля попал бы в абзац
+страны. Надёжнее — требовать поле в <code>verify-catalogue</code>.</li>
+<li>Проверка обхода считает по каталогу, не по файлам: если на боевой машине у
+Одюбона или Бирштадта (ровно по 4) пропадёт файл, страница исчезнет молча.</li>
+<li>Эффект в поиске мерить не раньше, чем Google обойдёт карту сайта.</li>
+</ul>
+
