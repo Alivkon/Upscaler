@@ -1,0 +1,244 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Страницы для обхода</title>
+<style>
+body{max-width:46em;margin:2em auto;padding:0 1em;font:16px/1.55 Georgia,serif}
+pre{background:#f4f4f4;padding:.8em;overflow-x:auto;font:13px/1.4 monospace;white-space:pre-wrap}
+code{background:#f4f4f4;padding:0 .2em;font:13px monospace}
+table{border-collapse:collapse}td,th{padding:.3em .6em;text-align:left;border:1px solid #ccc}
+</style>
+<h1>Страницы для обхода: художники, страны, традиции, сюжеты</h1>
+<p>23.09.2026. Замысел, не реализация: код не тронут, кроме <code>&lt;title&gt;</code> указателя.
+Обсуждено с Charlie по шагам, каждое решение ниже принято им.</p>
+<h2>Цель</h2>
+<p>Понять, чем WallpaperCave берёт выдачу, и решить, сколько страниц сайт может
+завести под поисковые фразы, не став фермой и не испортив тихий вид.</p>
+<h2>Что измерено</h2>
+<p><strong>Выдача (поиск инструмента, США, не Google; частотность не мерена).</strong>
+На <code>classical paintings wallpapers</code>, <code>dark academia painting wallpaper</code>,
+<code>oil painting phone wallpaper 4k</code>, <code>renaissance painting wallpaper iphone</code>
+десятка целиком из складов: WallpaperCave, WallpaperAccess, wallpapers.com,
+WallpaperSafari, WallpaperBat, плюс Pinterest, Etsy, стоки. У WallpaperCave
+на одну тему по странице на каждую формулировку: <code>renaissance-iphone-wallpapers</code>
+и <code>renaissance-art-wallpapers</code>, по 40 картинок, один загрузчик (штатный
+<code>caveman</code>), ноль слов текста. Узкие слова слабее: на <code>vanitas painting wallpaper</code> и <code>hudson river school wallpaper iphone</code> обойной страницы нет вовсе
+(Etsy, Getty, Википедия, магазины постеров).</p>
+<p><strong>Search Console, 23.09.</strong></p>
+<table>
+<thead>
+<tr>
+<th>что</th>
+<th>результат</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>показы с 01.08</td>
+<td>картинки 26, веб 22, переходов 0</td>
+</tr>
+<tr>
+<td>неделя 14–20.09</td>
+<td>картинки 0, веб 1</td>
+</tr>
+<tr>
+<td><code>/</code></td>
+<td>в индексе, последний обход 30.08</td>
+</tr>
+<tr>
+<td>четыре темы <code>/collection/*</code></td>
+<td>«URL is unknown to Google» все четыре</td>
+</tr>
+<tr>
+<td>работы, выборка 16 из 158</td>
+<td>в индексе 2, неизвестны 14</td>
+</tr>
+<tr>
+<td>карта сайта в Search Console</td>
+<td>не была отправлена; Charlie отправил 23.09, Google скачал через 2 с, ошибок 0, 166 страниц и 948 картинок</td>
+</tr>
+</tbody></table>
+<p>Интерфейс после отправки показывал «Couldn&#39;t fetch»; API в ту же минуту
+отдавал <code>downloaded</code>, <code>errors 0</code>. Это задержка отображения, не отказ.</p>
+<p>Узкое место сейчас не конкуренция, а обнаружение: Google не знает
+большинства страниц.</p>
+<p><strong>Подсказки Google</strong> (<code>suggestqueries</code>, en-US; признак, что фразу набирают,
+без чисел):</p>
+<table>
+<thead>
+<tr>
+<th>есть обойное намерение</th>
+<th>нет или чужое значение</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Aivazovsky, Thomas Cole (с phone, iphone, 4k)</td>
+<td>Kalf, Ottesen, Bertin, van Huysum, Gudin, Taikan</td>
+</tr>
+<tr>
+<td>Bierstadt, Lorrain, Hammershøi, Audubon</td>
+<td><code>vanitas wallpaper</code>: персонаж Kingdom Hearts</td>
+</tr>
+<tr>
+<td>Hudson River School, Dutch Golden Age, Dutch still life, Romanticism</td>
+<td><code>still life wallpaper</code>: Opeth, BIGBANG</td>
+</tr>
+<tr>
+<td>landscape, flower (с iphone), still life, seascape painting</td>
+<td>American, Danish, British painting</td>
+</tr>
+<tr>
+<td>japanese painting / art (phone, iphone, 4k)</td>
+<td></td>
+</tr>
+<tr>
+<td>french, dutch, russian, english painting: только голое <code>wallpaper</code></td>
+<td></td>
+</tr>
+<tr>
+<td><code>dutch flower painting wallpaper</code> подсказка дописывает сама</td>
+<td></td>
+</tr>
+<tr>
+<td>chinese, impressionist painting: сильно, но работ у нас 3 и около 1</td>
+<td></td>
+</tr>
+</tbody></table>
+<p>Самый частый у нас художник (Кальф, 11 работ) спроса не имеет вовсе.</p>
+<h2>Решения</h2>
+<p><strong>Почему не как WallpaperCave.</strong> Правило Google о дорвеях (spam policies,
+«Doorway abuse»): «Creating substantially similar pages that are closer to
+search results than a clearly defined, browseable hierarchy». Под него
+подпадает страница на каждую формулировку, а не страница на каждую группу
+работ. Одна страница и так ранжируется на все формулировки одного намерения.
+Скрытость ссылок в правило не входит; прежнее «спрятанная страница = дорвей»
+было ошибкой и снято в разговоре.</p>
+<p><strong>Четыре вида страниц.</strong></p>
+<table>
+<thead>
+<tr>
+<th>вид</th>
+<th>как набирается</th>
+<th>адрес</th>
+<th>сейчас</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>художник</td>
+<td>сам, из каталога, от 4 работ</td>
+<td><code>/artists/&lt;имя&gt;</code></td>
+<td>около 13</td>
+</tr>
+<tr>
+<td>страна</td>
+<td>сам, по <code>origin</code>, от 4 работ; пропуск, если все работы одного художника</td>
+<td><code>/collection/&lt;страна&gt;-painting</code></td>
+<td>American 28, Dutch 28, Japanese 28, French 27, Danish 16, British 12; Russian (6, все Айвазовский) пропущен</td>
+</tr>
+<tr>
+<td>традиция</td>
+<td>список, выбран</td>
+<td><code>/collection/&lt;имя&gt;</code></td>
+<td>Hudson River School 20, Dutch Golden Age 20, Nihonga 16</td>
+</tr>
+<tr>
+<td>сюжет и настроение</td>
+<td>список, выбран глазами</td>
+<td><code>/collection/&lt;имя&gt;</code></td>
+<td>сюжеты: landscape, flowers, still life, seascape (не отобраны); настроения: 3 темы как есть</td>
+</tr>
+</tbody></table>
+<p>Правило разделения: факт набирает страницу сам, вкус выбирает человек.
+Традиции исключение: их выбрал субагент по истории искусства, по поручению
+Charlie (ниже).</p>
+<p><strong>Порог 4 работы.</strong> Страница из одной-двух работ повторяет страницу работы.
+Счёт при этом не ранжирует (COLLECTIONS.md: 7 работ стояли выше склада на 288).</p>
+<p><strong>Англия называется British.</strong> Пять из двенадцати у Уилсона, он валлиец.
+Названия стран (Netherlands → Dutch) лежат маленькой таблицей.</p>
+<p><strong>Nihonga остаётся</strong> традицией рядом с Japanese painting: адрес живой (самая
+частая входная страница, 84 просмотра с 13.09, в основном iPhone без
+реферера), определение слова никто, кроме нас, не даёт, а общие работы
+ранжированию не мешают (COLLECTIONS.md, «Пересечение»).</p>
+<p><strong>Пересечения, посчитанные.</strong> Все 20 работ Hudson River School стоят
+в American painting (28), все 20 Dutch Golden Age в Dutch painting (28).
+По правилу COLLECTIONS.md это допустимо: имена разные и каждое верно.</p>
+<p><strong>Dutch flower painting отложен.</strong> Голландских цветов на витрине: 6 ван Хёйсума
+и 1 Марсеус ван Схрик. Страница вышла бы страницей ван Хёйсума плюс одна
+работа. Задача на добычу записана в <code>TODO.md</code> со списком художников.</p>
+<p><strong>Страница художника.</strong> <code>title</code> «Thomas Cole paintings as phone wallpapers»,
+<code>h1</code> «Thomas Cole», затем этикетка «Thomas Cole (1801–1848), American painter»
+(сверяется с Wikidata) и измеренная фраза: сколько работ, годы, музеи.
+Биография не нужна: её не процитируют, она есть в Википедии. Этикетка нужна
+для различения тёзок (Richard Wilson, Thomas Cole) и посетителю.</p>
+<p><strong>Указатель.</strong> Над сеткой ничего не меняется. Строка под сеткой становится
+блоком с подписями:</p>
+<pre><code>Traditions   Hudson River School · Dutch Golden Age · Nihonga
+Countries    American · British · Danish · Dutch · French · Japanese
+Subjects     Landscape · Flowers · Still life · Seascape
+Moods        Dark academia · Moody landscape · Cottagecore
+Artists      Aivazovsky · Audubon · … · Wilson · All artists
+</code></pre>
+<p>Слово «collection» из подписей ссылок уходит (двенадцать раз подряд это шум),
+заголовки самих страниц остаются. Художники по фамилии, по алфавиту;
+«All artists» ведёт на <code>/artists</code> со всеми 76 именами и счётом, ссылки только
+у тех, у кого есть страница. Рассылка, стоявшая справа от строки, уходит под
+блок или встаёт рядом с его верхом.</p>
+<p><strong>Страница работы.</strong> Имя в подписи становится ссылкой, если у художника есть
+страница. «More in the collection» становится «More by Thomas Cole». Строки
+«More … phone wallpapers →» по одной на тему заменяются одной:
+«In Hudson River School · Landscape · Moody landscape».</p>
+<p><strong>Данные.</strong> Файл художников по образцу <code>collections.js</code>: имя, адрес, этикетка,
+все написания из <code>provenance.creator</code>. Это сводит «Yokoyama Taikan»
+с «Yokoyama Taikan (1868-1958)» и не засчитывает «After Thomas Cole»
+в работы Коула. <code>yarn verify</code> падает, если художник дорос до 4 работ,
+а записи нет. Числа на страницах считаются из работ, как у тем сейчас.</p>
+<h2>Выбор традиций</h2>
+<p><code>research/hudson-river-school-collection-picks.json</code> и
+<code>research/dutch-golden-age-collection-picks.json</code>, по 20 работ, все живые
+(проверено по карте сайта). В каждом файле правило, причина по каждой работе
+и спорные исключения.</p>
+<ul>
+<li>Hudson River School: Коул 6 (с копией Dream of Arcadia около 1863),
+Бирштадт 3, Кенсетт 2, Хазелтайн 2, Иннесс 2, Черч, Кропси, Гиффорд,
+Хед (Newbury Marshes), Данкансон. Вне: Rocky Mountain Sheep 1884, цветы Хеда.</li>
+<li>Dutch Golden Age: Кальф 12 (с мастерской копией), Марсеус ван Схрик 2,
+ван Бейерен, Рёйсдал, Вейнантс, де Витте, ван Алст, де Ринг. Вне: все шесть
+ван Хёйсума (XVIII век), Корте 1701 (легче всего вернуть), Мериан 1705.</li>
+</ul>
+<h2>Что нашлось в каталоге попутно</h2>
+<ul>
+<li>Даты-диапазоны жизни вместо даты картины (SMK): vl-0176, vl-0177, vl-0178.</li>
+<li>Нет даты: vl-0385, vl-0439, vl-0447, vl-0454.</li>
+<li>«Wikimedia Commons» вместо владельца у частных работ с аукционов:
+vl-0385, vl-0439, vl-0454.</li>
+<li>Теги: у Корте vl-0087 «bird» на картине с крыжовником; у vl-0037 «still»
+и «life» раздельно; «museum» (153) и «painting» (147) как страницы
+бесполезны.</li>
+<li>Годы жизни в имени у части японских художников.</li>
+</ul>
+<h2>Сделано</h2>
+<ul>
+<li><code>pages.js:716</code>: <code>&lt;title&gt;</code> указателя <code>Tessarum, classical paintings as phone and 4K wallpapers</code> (было <code>…, phone and 4K desktop wallpapers at full resolution</code>). Nihonga и гравюры «classical» не вполне, Charlie счёл это
+допустимым. Проверено на локальном сервере, <code>yarn verify</code> 0. Не выложено.</li>
+<li><code>TODO.md</code>: добыть голландские цветы и сделать страницу.</li>
+</ul>
+<h2>Порядок работ</h2>
+<ol>
+<li>Художники, страны, блок под сеткой, ссылки на странице работы.</li>
+<li>Традиции: записи из двух файлов выбора.</li>
+<li>Сюжеты: листы отбора; перед этим проверить фразы в Keyword Planner.</li>
+<li>Request indexing в Search Console для новых страниц.</li>
+</ol>
+<h2>Ограничения</h2>
+<ul>
+<li>Выдача снята поиском инструмента, не Google, из США, один раз.</li>
+<li>Подсказки Google показывают, что фразу набирают, но не сколько раз.
+Частотность может дать Keyword Planner (нужен вход Charlie).</li>
+<li>Пока Google не обходит внутренние страницы, новые страницы тоже будут
+стоять незамеченными; эффект мерить не раньше, чем через несколько недель
+после отправки карты.</li>
+</ul>
+<h2>Источники</h2>
+<ul>
+<li>Google, spam policies: <a href="https://developers.google.com/search/docs/essentials/spam-policies">https://developers.google.com/search/docs/essentials/spam-policies</a></li>
+<li><a href="https://wallpapercave.com/renaissance-iphone-wallpapers">https://wallpapercave.com/renaissance-iphone-wallpapers</a>,
+<a href="https://wallpapercave.com/renaissance-art-wallpapers">https://wallpapercave.com/renaissance-art-wallpapers</a></li>
+</ul>

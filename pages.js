@@ -713,7 +713,7 @@ const tailRow = topics => `<div class="tail">${topicRow(topics)}${mailingForm}</
 export function collectionPage({ items, topics = [], origin }) {
   return layout({
     current: 'collection',
-    title: `${SITE_NAME}, phone and 4K desktop wallpapers at full resolution`,
+    title: `${SITE_NAME}, classical paintings as phone and 4K wallpapers`,
     description: DESCRIPTION,
     canonical: `${origin}/`,
     // Превью для мессенджеров и соцсетей: без него ссылка на коллекцию идёт

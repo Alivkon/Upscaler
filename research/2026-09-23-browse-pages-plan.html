@@ -1,0 +1,941 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Страницы для обхода: план</title>
+<style>
+body{max-width:46em;margin:2em auto;padding:0 1em;font:16px/1.55 Georgia,serif}
+pre{background:#f4f4f4;padding:.8em;overflow-x:auto;font:13px/1.4 monospace;white-space:pre-wrap}
+code{background:#f4f4f4;padding:0 .2em;font:13px monospace}
+table{border-collapse:collapse}td,th{padding:.3em .6em;text-align:left;border:1px solid #ccc}
+</style>
+<h1>Страницы для обхода: план реализации, шаг 1</h1>
+<blockquote>
+<p><strong>Для Claude:</strong> обязательный навык: superpowers:executing-plans (или
+superpowers:subagent-driven-development), задача за задачей.</p>
+</blockquote>
+<p><strong>Цель:</strong> страницы художников и стран, набирающиеся сами из каталога; блок
+с подписями под сеткой указателя; ссылки со страницы работы на художника
+и на страницы, где она стоит; две традиции из готовых списков.</p>
+<p><strong>Устройство:</strong> новый <code>artists.js</code> (кто есть кто в каталоге и у кого есть
+страница) и новый <code>browse.js</code> (какие страницы для обхода существуют при данном
+наборе работ и как они перечислены). Страница художника и страницы стран
+рисуются уже существующей <code>topicPage</code>: у каждой страницы появляется поле <code>path</code>.
+Замысел и все решения: <code>research/2026-09-23-browse-pages.md</code>.</p>
+<p><strong>Стек:</strong> Node (ESM), Express, строковые шаблоны в <code>pages.js</code>. Тестов в обычном
+смысле нет: проверки — скрипты <code>scripts/verify-*.mjs</code>, их запускает <code>yarn verify</code>.</p>
+<hr>
+<h2>Перед началом</h2>
+<ul>
+<li>Работать в ветке, не в worktree: картинки и манифест лежат в <code>images/</code>, их
+нет в git, и в worktree сервер покажет пустую коллекцию.</li>
+<li>В рабочем каталоге чужие незакоммиченные файлы (точечные <code>.*.mjs</code>, правки
+<code>TODO.md</code>, <code>research/social-posts.json</code>). <strong>Никогда <code>git add -A</code></strong>, только
+пути по одному (AGENTS.md).</li>
+<li>Сервер: <code>yarn start</code> (перезапускает уже идущий), <a href="http://127.0.0.1:3000">http://127.0.0.1:3000</a>.</li>
+<li>Никаких вызовов модели: ни одна задача ниже до <code>/api/upscale</code> не доходит.</li>
+</ul>
+<h3>Задача 0: ветка и то, что уже сделано</h3>
+<pre><code class="language-bash">git switch -c browse-pages
+git add pages.js research/2026-09-23-browse-pages.md research/2026-09-23-browse-pages.html \
+  research/hudson-river-school-collection-picks.json research/dutch-golden-age-collection-picks.json \
+  research/2026-09-23-browse-pages-plan.md research/2026-09-23-browse-pages-plan.html
+git commit -m &quot;Заголовок указателя называет живопись; замысел страниц для обхода
+
+Главная не содержала слова painting ни в заголовке, ни в тексте, а запрос
+classical paintings wallpapers набирают. Рядом замысел художников, стран
+и традиций и два списка традиций, выбранных по истории искусства.
+
+Co-Authored-By: Claude Opus 5.5 &lt;noreply@anthropic.com&gt;&quot;
+</code></pre>
+<p><code>TODO.md</code> не добавлять: в нём правки Charlie вперемешку с нашей строкой.</p>
+<hr>
+<h3>Задача 1: <code>artists.js</code>: кто есть кто</h3>
+<p><strong>Файлы:</strong></p>
+<ul>
+<li>Создать: <code>artists.js</code></li>
+<li>Создать: <code>scripts/verify-browse.mjs</code></li>
+<li>Изменить: <code>package.json</code> (<code>verify</code>, <code>format</code>)</li>
+</ul>
+<p><strong>Шаг 1. Проверка, которая падает.</strong> <code>scripts/verify-browse.mjs</code>:</p>
+<pre><code class="language-js">// Проверка страниц для обхода. Ломается здесь молча и в сторону «страницы нет»:
+// художник дорос до своей страницы, а записи о нём нет, — и страница просто
+// не появилась; написание имени в каталоге сменилось — и работы ушли от
+// художника без единой ошибки. Разбор — research/2026-09-23-browse-pages.md.
+import { ARTISTS, MIN_WORKS, artistOf, displayName } from &#39;../artists.js&#39;;
+
+const problems = [];
+const complain = what =&gt; problems.push(what);
+const expect = (what, actual, wanted) =&gt; {
+  if (JSON.stringify(actual) !== JSON.stringify(wanted))
+    complain(`${what}: ожидали ${JSON.stringify(wanted)}, вышло ${JSON.stringify(actual)}`);
+};
+
+// Работа в том виде, в каком её отдаёт галерея, но только с нужными полями.
+const work = (ref, creator, origin = &#39;America&#39;, creatorKind) =&gt; ({
+  ref,
+  origin,
+  provenance: { creator, ...(creatorKind ? { creatorKind } : {}) }
+});
+
+// Два написания одного человека сходятся, копия к нему не приписывается.
+expect(&#39;Тайкан без годов&#39;, artistOf(work(&#39;a&#39;, &#39;Yokoyama Taikan&#39;))?.slug, &#39;yokoyama-taikan&#39;);
+expect(&#39;Тайкан с годами&#39;, artistOf(work(&#39;b&#39;, &#39;Yokoyama Taikan (1868-1958)&#39;))?.slug, &#39;yokoyama-taikan&#39;);
+expect(&#39;копия после Коула&#39;, artistOf(work(&#39;c&#39;, &#39;After Thomas Cole (unidentified copyist)&#39;, &#39;America&#39;, &#39;unknown&#39;)), null);
+expect(&#39;не записанный художник&#39;, artistOf(work(&#39;d&#39;, &#39;Claude Monet&#39;)), null);
+expect(&#39;имя записанного&#39;, displayName(work(&#39;e&#39;, &#39;Yokoyama Taikan (1868-1958)&#39;)), &#39;Yokoyama Taikan&#39;);
+expect(&#39;годы снимаются с незаписанного&#39;, displayName(work(&#39;f&#39;, &#39;Kobayashi Kokei (1883-1957)&#39;)), &#39;Kobayashi Kokei&#39;);
+expect(&#39;годы с вопросом&#39;, displayName(work(&#39;g&#39;, &#39;Kaji Tameya (?-1894)&#39;)), &#39;Kaji Tameya&#39;);
+expect(&#39;порог&#39;, MIN_WORKS, 4);
+
+if (problems.length) {
+  for (const problem of problems) console.error(`  ${problem}`);
+  console.error(`\nобход: ${problems.length} проблем`);
+  process.exit(1);
+}
+console.log(`обход: художников записано ${ARTISTS.length}`);
+</code></pre>
+<p><strong>Шаг 2. Убедиться, что падает.</strong>
+<code>node scripts/verify-browse.mjs</code> → <code>Cannot find module &#39;…/artists.js&#39;</code>.</p>
+<p><strong>Шаг 3. <code>artists.js</code>.</strong></p>
+<pre><code class="language-js">// Художники, у которых есть своя страница, и как их узнать в каталоге.
+//
+// Страница набирается сама, когда у художника MIN_WORKS показанных работ,
+// но только если он записан здесь. Этикетку сверяют с Wikidata руками,
+// и страница без проверенной этикетки хуже, чем никакой. Что художник дорос,
+// а записи нет, ловит `yarn verify` (scripts/verify-browse.mjs).
+//
+// Почему 4. Страница из одной-двух работ повторяет страницу работы, а это
+// дубль. Счёт сам по себе не ранжирует (COLLECTIONS.md: семь работ стояли выше
+// склада на 288), так что выше порог поднимать незачем.
+//
+// `names` — все написания из `provenance.creator`. Каталог переносит строку
+// из источника как есть, и один человек записан в нём по-разному: «Yokoyama
+// Taikan» и «Yokoyama Taikan (1868-1958)». Копии («After Thomas Cole
+// (unidentified copyist)») сюда нарочно не входят: это не его работа.
+//
+// `short` — подпись в строке художников под сеткой указателя, по ней же
+// строка упорядочена. `made` — чем названы работы в абзаце и описании:
+// у Одюбона гравюры, и «paintings» было бы неправдой.
+//
+// Этикетка: годы жизни, страна, род занятий, по описанию Wikidata (23.09.2026).
+// Уилсону Wikidata даёт и 1713, и 1714; взят 1714, как в самом описании.
+export const MIN_WORKS = 4;
+
+export const ARTISTS = [
+  {
+    slug: &#39;ivan-aivazovsky&#39;,
+    name: &#39;Ivan Aivazovsky&#39;,
+    short: &#39;Aivazovsky&#39;,
+    made: &#39;paintings&#39;,
+    label: &#39;Ivan Aivazovsky (1817–1900), Russian marine painter&#39;,
+    wikidata: &#39;Q181568&#39;,
+    names: [&#39;Ivan Aivazovsky&#39;]
+  },
+  {
+    slug: &#39;john-james-audubon&#39;,
+    name: &#39;John James Audubon&#39;,
+    short: &#39;Audubon&#39;,
+    made: &#39;prints&#39;,
+    label: &#39;John James Audubon (1785–1851), American naturalist and painter&#39;,
+    wikidata: &#39;Q182882&#39;,
+    names: [&#39;John James Audubon&#39;]
+  },
+  {
+    slug: &#39;jean-victor-bertin&#39;,
+    name: &#39;Jean-Victor Bertin&#39;,
+    short: &#39;Bertin&#39;,
+    made: &#39;paintings&#39;,
+    label: &#39;Jean-Victor Bertin (1767–1842), French painter&#39;,
+    wikidata: &#39;Q331884&#39;,
+    names: [&#39;Jean-Victor Bertin&#39;]
+  },
+  {
+    slug: &#39;albert-bierstadt&#39;,
+    name: &#39;Albert Bierstadt&#39;,
+    short: &#39;Bierstadt&#39;,
+    made: &#39;paintings&#39;,
+    label: &#39;Albert Bierstadt (1830–1902), American painter&#39;,
+    wikidata: &#39;Q77132&#39;,
+    names: [&#39;Albert Bierstadt&#39;]
+  },
+  {
+    slug: &#39;thomas-cole&#39;,
+    name: &#39;Thomas Cole&#39;,
+    short: &#39;Cole&#39;,
+    made: &#39;paintings&#39;,
+    label: &#39;Thomas Cole (1801–1848), American painter&#39;,
+    wikidata: &#39;Q334001&#39;,
+    names: [&#39;Thomas Cole&#39;]
+  },
+  {
+    slug: &#39;theodore-gudin&#39;,
+    name: &#39;Théodore Gudin&#39;,
+    short: &#39;Gudin&#39;,
+    made: &#39;paintings&#39;,
+    label: &#39;Théodore Gudin (1802–1880), French painter&#39;,
+    wikidata: &#39;Q555885&#39;,
+    names: [&#39;Théodore Gudin&#39;]
+  },
+  {
+    slug: &#39;vilhelm-hammershoi&#39;,
+    name: &#39;Vilhelm Hammershøi&#39;,
+    short: &#39;Hammershøi&#39;,
+    made: &#39;paintings&#39;,
+    label: &#39;Vilhelm Hammershøi (1864–1916), Danish painter&#39;,
+    wikidata: &#39;Q380706&#39;,
+    names: [&#39;Vilhelm Hammershøi&#39;]
+  },
+  {
+    slug: &#39;willem-kalf&#39;,
+    name: &#39;Willem Kalf&#39;,
+    short: &#39;Kalf&#39;,
+    made: &#39;paintings&#39;,
+    label: &#39;Willem Kalf (1619–1693), Dutch painter&#39;,
+    wikidata: &#39;Q28144&#39;,
+    names: [&#39;Willem Kalf&#39;]
+  },
+  {
+    slug: &#39;claude-lorrain&#39;,
+    name: &#39;Claude Lorrain&#39;,
+    short: &#39;Lorrain&#39;,
+    made: &#39;paintings&#39;,
+    label: &#39;Claude Lorrain (1600–1682), French painter&#39;,
+    wikidata: &#39;Q214074&#39;,
+    names: [&#39;Claude Lorrain&#39;]
+  },
+  {
+    slug: &#39;otto-didrik-ottesen&#39;,
+    name: &#39;Otto Didrik Ottesen&#39;,
+    short: &#39;Ottesen&#39;,
+    made: &#39;paintings&#39;,
+    label: &#39;Otto Didrik Ottesen (1816–1892), Danish painter&#39;,
+    wikidata: &#39;Q12329765&#39;,
+    names: [&#39;Otto Didrik Ottesen&#39;]
+  },
+  {
+    slug: &#39;yokoyama-taikan&#39;,
+    name: &#39;Yokoyama Taikan&#39;,
+    short: &#39;Taikan&#39;,
+    made: &#39;paintings&#39;,
+    label: &#39;Yokoyama Taikan (1868–1958), Japanese painter&#39;,
+    wikidata: &#39;Q2034441&#39;,
+    names: [&#39;Yokoyama Taikan&#39;, &#39;Yokoyama Taikan (1868-1958)&#39;]
+  },
+  {
+    slug: &#39;jan-van-huysum&#39;,
+    name: &#39;Jan van Huysum&#39;,
+    short: &#39;van Huysum&#39;,
+    made: &#39;paintings&#39;,
+    label: &#39;Jan van Huysum (1682–1749), Dutch painter&#39;,
+    wikidata: &#39;Q527869&#39;,
+    names: [&#39;Jan van Huysum&#39;]
+  },
+  {
+    slug: &#39;richard-wilson&#39;,
+    name: &#39;Richard Wilson&#39;,
+    short: &#39;Wilson&#39;,
+    made: &#39;paintings&#39;,
+    label: &#39;Richard Wilson (1714–1782), Welsh landscape painter&#39;,
+    wikidata: &#39;Q471387&#39;,
+    names: [&#39;Richard Wilson&#39;]
+  }
+];
+
+const byName = new Map(ARTISTS.flatMap(artist =&gt; artist.names.map(name =&gt; [name, artist])));
+
+export const artistOf = item =&gt; byName.get(item.provenance?.creator) ?? null;
+
+// Имя для людей: у записанного — из записи, у остальных — строка каталога
+// без годов жизни в скобках на конце («Kobayashi Kokei (1883-1957)»).
+export const displayName = item =&gt;
+  artistOf(item)?.name ?? item.provenance.creator.replace(/\s*\([^()]*\d{4}\)$/, &#39;&#39;);
+</code></pre>
+<p><strong>Шаг 4. <code>package.json</code>.</strong> В <code>verify</code> после <code>node --check treatment.js</code>
+дописать <code>&amp;&amp; node --check artists.js</code>, после <code>node scripts/verify-catalogue.mjs</code>
+дописать <code>&amp;&amp; node scripts/verify-browse.mjs</code>; в оба списка prettier (в <code>verify</code>
+и в <code>format</code>) дописать <code>artists.js</code>.</p>
+<p><strong>Шаг 5. Прогнать.</strong> <code>node scripts/verify-browse.mjs</code> → <code>обход: художников записано 13</code>. Затем <code>yarn verify</code> → код 0.</p>
+<p><strong>Шаг 6. Коммит.</strong></p>
+<pre><code class="language-bash">git add artists.js scripts/verify-browse.mjs package.json
+git commit -m &quot;Художники: одно имя на человека, копии не в счёт
+
+Каталог переносит имя из источника как есть, и Тайкан записан двумя строками.
+Страница художника должна считать его работы вместе и не брать копию после
+Коула за Коула.
+
+Co-Authored-By: Claude Opus 5.5 &lt;noreply@anthropic.com&gt;&quot;
+</code></pre>
+<hr>
+<h3>Задача 2: <code>browse.js</code>: какие страницы есть</h3>
+<p><strong>Файлы:</strong></p>
+<ul>
+<li>Создать: <code>browse.js</code></li>
+<li>Изменить: <code>collections.js</code> (поля <code>kind</code> и <code>name</code> у четырёх тем; убрать
+<code>collectionBySlug</code>, когда его перестанет звать сервер, это задача 4)</li>
+<li>Изменить: <code>scripts/verify-browse.mjs</code>, <code>package.json</code></li>
+</ul>
+<p><strong>Шаг 1. Проверки, которые падают.</strong> В <code>scripts/verify-browse.mjs</code> после
+импортов из <code>artists.js</code> добавить импорт и перед итогом блок:</p>
+<pre><code class="language-js">import fs from &#39;node:fs/promises&#39;;
+import { COLLECTIONS } from &#39;../collections.js&#39;;
+import { COUNTRIES, artistIndex, browse, everyPage, leadingNames, pageAt, pagesWith, rows } from &#39;../browse.js&#39;;
+import { accession } from &#39;../public/record.js&#39;;
+import { CATALOGUE_DIR, workFile } from &#39;../works.js&#39;;
+</code></pre>
+<pre><code class="language-js">// Правила на выдуманных работах: порог, один художник на страну, порядок строк.
+const fixture = [
+  ...[&#39;1&#39;, &#39;2&#39;, &#39;3&#39;, &#39;4&#39;].map(n =&gt; work(`c${n}`, &#39;Thomas Cole&#39;)),
+  ...[&#39;1&#39;, &#39;2&#39;, &#39;3&#39;].map(n =&gt; work(`b${n}`, &#39;Albert Bierstadt&#39;)),
+  work(&#39;x1&#39;, &#39;After Thomas Cole (unidentified copyist)&#39;, &#39;America&#39;, &#39;unknown&#39;),
+  ...[&#39;1&#39;, &#39;2&#39;, &#39;3&#39;, &#39;4&#39;, &#39;5&#39;, &#39;6&#39;].map(n =&gt; work(`r${n}`, &#39;Ivan Aivazovsky&#39;, &#39;Russia&#39;))
+];
+const sample = browse(fixture);
+expect(&#39;Коул с четырьмя — страница&#39;, sample.artists.map(page =&gt; page.path).includes(&#39;/artists/thomas-cole&#39;), true);
+expect(&#39;Бирштадт с тремя — нет&#39;, sample.artists.map(page =&gt; page.path).includes(&#39;/artists/albert-bierstadt&#39;), false);
+expect(&#39;копия не в счёте Коула&#39;, pageAt(sample, &#39;/artists/thomas-cole&#39;).items.length, 4);
+expect(&#39;Америка: восемь работ, два художника&#39;, pageAt(sample, &#39;/collection/american-painting&#39;)?.items.length, 8);
+expect(&#39;Россия: один художник — страны нет&#39;, pageAt(sample, &#39;/collection/russian-painting&#39;), null);
+expect(&#39;имена по весу, копия не названа&#39;, leadingNames(pageAt(sample, &#39;/collection/american-painting&#39;).items), [
+  &#39;Thomas Cole&#39;,
+  &#39;Albert Bierstadt&#39;
+]);
+expect(&#39;строка «In» без художника&#39;, pagesWith(sample, fixture[0]).map(page =&gt; page.path), [&#39;/collection/american-painting&#39;]);
+expect(
+  &#39;строки под сеткой&#39;,
+  rows(sample).map(row =&gt; row.label),
+  [&#39;Traditions&#39;, &#39;Countries&#39;, &#39;Moods&#39;, &#39;Artists&#39;]
+);
+expect(&#39;последняя ссылка художников&#39;, rows(sample).at(-1).links.at(-1), { href: &#39;/artists&#39;, text: &#39;All artists&#39; });
+expect(
+  &#39;указатель художников: все известные, с адресом только у страниц&#39;,
+  artistIndex(sample, fixture).map(entry =&gt; [entry.name, entry.count, entry.path]),
+  [
+    [&#39;Albert Bierstadt&#39;, 3, null],
+    [&#39;Ivan Aivazovsky&#39;, 6, &#39;/artists/ivan-aivazovsky&#39;],
+    [&#39;Thomas Cole&#39;, 4, &#39;/artists/thomas-cole&#39;]
+  ]
+);
+
+// То же на настоящем каталоге: показанные записи в том виде, в каком
+// их считает browse. Картинок здесь нет: проверка о каталоге, не о файлах.
+const names = (await fs.readdir(CATALOGUE_DIR)).filter(name =&gt; /^vl-\d+\.json$/.test(name));
+const records = await Promise.all(names.map(async name =&gt; JSON.parse(await fs.readFile(workFile(name.slice(0, -5)), &#39;utf8&#39;))));
+const visible = records
+  .filter(record =&gt; record.hidden !== true &amp;&amp; record.provenance)
+  .map(record =&gt; ({ ref: accession(record.ref), origin: record.origin, provenance: record.provenance }));
+const real = browse(visible);
+
+const everyName = ARTISTS.flatMap(artist =&gt; artist.names);
+if (new Set(everyName).size !== everyName.length) complain(&#39;artists.js: одно написание у двух художников&#39;);
+const creators = new Set(visible.map(item =&gt; item.provenance.creator));
+for (const artist of ARTISTS) {
+  for (const name of artist.names)
+    if (!creators.has(name)) complain(`artists.js/${artist.slug}: написания «${name}» в каталоге нет`);
+  if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(artist.slug)) complain(`artists.js/${artist.slug}: адрес не латиницей`);
+  if (!/^Q\d+$/.test(artist.wikidata)) complain(`artists.js/${artist.slug}: wikidata не вида Q123`);
+  if (!artist.label.startsWith(`${artist.name} (`)) complain(`artists.js/${artist.slug}: этикетка не с имени`);
+  if (!real.artists.some(page =&gt; page.artist === artist))
+    complain(`artists.js/${artist.slug}: меньше ${MIN_WORKS} показанных работ, страницы нет — запись лишняя`);
+}
+const counts = new Map();
+for (const item of visible)
+  if (item.provenance.creatorKind !== &#39;unknown&#39; &amp;&amp; !artistOf(item))
+    counts.set(item.provenance.creator, (counts.get(item.provenance.creator) ?? 0) + 1);
+for (const [creator, count] of counts)
+  if (count &gt;= MIN_WORKS) complain(`«${creator}»: ${count} работ — нужна запись в artists.js`);
+
+for (const country of COUNTRIES)
+  if (!real.countries.some(page =&gt; page.country === country))
+    complain(`browse.js/${country.origin}: страницы не выходит — строка в COUNTRIES лишняя`);
+const origins = new Map();
+for (const item of visible) origins.set(item.origin, [...(origins.get(item.origin) ?? []), item]);
+for (const [origin, items] of origins)
+  if (
+    origin !== &#39;Tessarum&#39; &amp;&amp;
+    items.length &gt;= MIN_WORKS &amp;&amp;
+    leadingNames(items).length &gt; 1 &amp;&amp;
+    !COUNTRIES.some(country =&gt; country.origin === origin)
+  )
+    complain(`${origin}: ${items.length} работ разных художников — нужна строка в COUNTRIES`);
+
+for (const topic of COLLECTIONS) {
+  if (![&#39;tradition&#39;, &#39;mood&#39;].includes(topic.kind)) complain(`collections.js/${topic.slug}: kind не tradition и не mood`);
+  if (!topic.name) complain(`collections.js/${topic.slug}: нет name`);
+}
+const paths = everyPage(real).map(page =&gt; page.path);
+if (new Set(paths).size !== paths.length) complain(&#39;две страницы с одним адресом&#39;);
+for (const page of everyPage(real)) {
+  if (page.title.length &gt; 65) complain(`${page.path}: title ${page.title.length} знаков, выдача обрежет`);
+  if (page.description.length &gt; 160) complain(`${page.path}: description ${page.description.length} знаков`);
+}
+</code></pre>
+<p>Итоговую строку заменить на:</p>
+<pre><code class="language-js">console.log(
+  `обход: художников ${real.artists.length}, стран ${real.countries.length}, тем и традиций ${real.collections.length}`
+);
+</code></pre>
+<p><strong>Шаг 2. Убедиться, что падает.</strong> <code>node scripts/verify-browse.mjs</code> →
+<code>Cannot find module &#39;…/browse.js&#39;</code>.</p>
+<p><strong>Шаг 3. <code>collections.js</code>: <code>kind</code> и <code>name</code>.</strong> В каждую из четырёх записей
+<code>COLLECTIONS</code> после <code>slug</code> добавить два поля и комментарий над первой:</p>
+<pre><code class="language-js">    // `kind` — строка, в которой тема стоит под сеткой указателя: традиция
+    // (школа или движение) или настроение (подборка глазами). `name` — её
+    // подпись там и в строке «In …» на странице работы: слово «collection»,
+    // повторённое двенадцать раз подряд, — шум, а заголовок самой страницы
+    // (`heading`) его сохраняет.
+    kind: &#39;tradition&#39;,
+    name: &#39;Nihonga&#39;,
+</code></pre>
+<p><code>moody-landscape</code>: <code>kind: &#39;mood&#39;, name: &#39;Moody landscape&#39;</code>;
+<code>dark-academia</code>: <code>kind: &#39;mood&#39;, name: &#39;Dark academia&#39;</code>;
+<code>cottagecore</code>: <code>kind: &#39;mood&#39;, name: &#39;Cottagecore&#39;</code>.</p>
+<p><strong>Шаг 4. <code>browse.js</code>.</strong></p>
+<pre><code class="language-js">// Страницы, по которым коллекцию обходят: темы и традиции (списки в
+// collections.js), страны и художники (набираются сами из каталога). Здесь
+// решается, какие из них существуют при данном наборе работ и как они
+// перечислены; разметка — в pages.js. Разбор — research/2026-09-23-browse-pages.md.
+//
+// Правило разделения: факт набирает страницу сам, вкус выбирает человек.
+// Откуда работа и кто её написал — факты, они в каталоге. Что работа
+// «dark academia» — вкус, и это список.
+import { ARTISTS, MIN_WORKS, artistOf, displayName } from &#39;./artists.js&#39;;
+import { COLLECTIONS, worksOf } from &#39;./collections.js&#39;;
+
+// Страна называется на странице прилагательным, а не именем из `origin`.
+// Англия — British: пять из двенадцати работ у Уилсона, а он валлиец.
+// России здесь нет: все шесть её работ — Айвазовский, и её страница была бы
+// его страницей под другим именем.
+export const COUNTRIES = [
+  { origin: &#39;America&#39;, adjective: &#39;American&#39; },
+  { origin: &#39;Denmark&#39;, adjective: &#39;Danish&#39; },
+  { origin: &#39;England&#39;, adjective: &#39;British&#39; },
+  { origin: &#39;France&#39;, adjective: &#39;French&#39; },
+  { origin: &#39;Japan&#39;, adjective: &#39;Japanese&#39; },
+  { origin: &#39;Netherlands&#39;, adjective: &#39;Dutch&#39; }
+];
+
+// Анонимы и копии («Unknown (Japan)», «After Thomas Cole») в каталоге
+// помечены `creatorKind: &#39;unknown&#39;`; называть их именем нельзя.
+const named = item =&gt; item.provenance &amp;&amp; item.provenance.creatorKind !== &#39;unknown&#39;;
+
+// Имена по весу: кто чаще, тот первым; равные — по алфавиту, чтобы абзац
+// не менялся от перезапуска к перезапуску.
+export const leadingNames = items =&gt; {
+  const counts = new Map();
+  for (const item of items.filter(named)) counts.set(displayName(item), (counts.get(displayName(item)) ?? 0) + 1);
+  return [...counts]
+    .sort((a, b) =&gt; b[1] - a[1] || a[0].localeCompare(b[0]))
+    .map(([name]) =&gt; name);
+};
+
+const listed = names =&gt; (names.length &lt; 2 ? names.join(&#39;&#39;) : `${names.slice(0, -1).join(&#39;, &#39;)} and ${names.at(-1)}`);
+const byNames = names =&gt; (names.length &gt; 3 ? `${names.slice(0, 3).join(&#39;, &#39;)} and others` : listed(names));
+
+// Та же строка условий, что у тем (collections.js): числа из тех же работ.
+const terms = ({ count, full }) =&gt;
+  `All ${count} are phone wallpapers, ${full} of them at 2160 × 3840 or larger. ` +
+  &#39;Free to download and set as your background, no account needed.&#39;;
+
+// «Works», а не «paintings»: у Америки гравюры Одюбона, у Японии ксилографии
+// Киётики. В `title` «painting» остаётся — это слово запроса.
+function countryPage(country, items) {
+  const names = leadingNames(items);
+  const { adjective } = country;
+  return {
+    kind: &#39;country&#39;,
+    country,
+    path: `/collection/${adjective.toLowerCase()}-painting`,
+    name: `${adjective} painting`,
+    rowName: adjective,
+    title: `${adjective} painting phone wallpapers: free, no account`,
+    heading: `${adjective} painting`,
+    description: `${adjective} painting as phone wallpaper, from public museum collections: ${listed(names.slice(0, 2))}. Free, no account.`,
+    note: ({ count }) =&gt; `${count} ${adjective} works, chosen as phone wallpapers. By ${byNames(names)}.`,
+    terms,
+    items
+  };
+}
+
+function artistPage(artist, items) {
+  return {
+    kind: &#39;artist&#39;,
+    artist,
+    path: `/artists/${artist.slug}`,
+    name: artist.name,
+    rowName: artist.short,
+    // Без `made`: «Otto Didrik Ottesen paintings as phone wallpapers…» — 66 знаков,
+    // выдача обрежет; а «thomas cole phone wallpaper» Google подсказывает дословно.
+    title: `${artist.name} phone wallpapers: free, no account`,
+    heading: artist.name,
+    description: `${artist.label}. Free phone wallpapers from the ${artist.made}, no account.`,
+    note: ({ count }) =&gt; `${artist.label}. ${count} ${artist.made}, chosen as phone wallpapers.`,
+    terms,
+    items
+  };
+}
+
+// Всё, что есть для обхода при данном наборе показанных работ. Считается
+// на каждый запрос: работ полторы сотни, и держать это в памяти значило бы
+// следить, когда оно устарело.
+export function browse(items) {
+  return {
+    collections: COLLECTIONS.map(topic =&gt; ({
+      ...topic,
+      path: `/collection/${topic.slug}`,
+      rowName: topic.name,
+      items: worksOf(topic, items)
+    })),
+    countries: COUNTRIES.map(country =&gt;
+      countryPage(
+        country,
+        items.filter(item =&gt; item.origin === country.origin)
+      )
+    ).filter(page =&gt; page.items.length &gt;= MIN_WORKS &amp;&amp; leadingNames(page.items).length &gt; 1),
+    artists: ARTISTS.map(artist =&gt;
+      artistPage(
+        artist,
+        items.filter(item =&gt; artistOf(item) === artist)
+      )
+    ).filter(page =&gt; page.items.length &gt;= MIN_WORKS)
+  };
+}
+
+export const everyPage = found =&gt; [...found.collections, ...found.countries, ...found.artists];
+export const pageAt = (found, path) =&gt; everyPage(found).find(page =&gt; page.path === path) ?? null;
+
+// Где стоит работа — для строки «In …» на её странице. Художника здесь нет:
+// он назван ссылкой в подписи, и второй раз в той же подписи — повтор.
+export const pagesWith = (found, item) =&gt;
+  [...found.collections, ...found.countries].filter(page =&gt; page.items.includes(item));
+export const artistPageOf = (found, item) =&gt; found.artists.find(page =&gt; page.items.includes(item)) ?? null;
+
+// Блок под сеткой указателя. Пустая строка не выводится: подпись без ссылок
+// обещает раздел, которого нет. Строки «Subjects» пока нет вовсе — сюжетных
+// подборок ещё не отобрано, и она появится вместе с ними.
+export const rows = found =&gt;
+  [
+    { label: &#39;Traditions&#39;, pages: found.collections.filter(page =&gt; page.kind === &#39;tradition&#39;) },
+    { label: &#39;Countries&#39;, pages: found.countries },
+    { label: &#39;Moods&#39;, pages: found.collections.filter(page =&gt; page.kind === &#39;mood&#39;) },
+    { label: &#39;Artists&#39;, pages: [...found.artists, { path: &#39;/artists&#39;, rowName: &#39;All artists&#39; }] }
+  ]
+    .map(row =&gt; ({ label: row.label, links: row.pages.map(page =&gt; ({ href: page.path, text: page.rowName })) }))
+    .filter(row =&gt; row.links.length);
+
+// Указатель художников: все названные по имени, по алфавиту, со счётом.
+// Адрес — только у тех, у кого есть страница; остальные стоят именем,
+// и это показывает, что коллекция шире своих страниц.
+export function artistIndex(found, items) {
+  const entries = new Map();
+  for (const item of items.filter(named)) {
+    const name = displayName(item);
+    const page = found.artists.find(candidate =&gt; candidate.artist === artistOf(item));
+    const entry = entries.get(name) ?? { name, count: 0, path: page?.path ?? null };
+    entry.count += 1;
+    entries.set(name, entry);
+  }
+  return [...entries.values()].sort((a, b) =&gt; a.name.localeCompare(b.name));
+}
+</code></pre>
+<p><strong>Шаг 5. <code>package.json</code>.</strong> В <code>verify</code> дописать <code>&amp;&amp; node --check browse.js</code>,
+в оба списка prettier — <code>browse.js</code>.</p>
+<p><strong>Шаг 6. Прогнать.</strong> <code>yarn format</code>, затем <code>node scripts/verify-browse.mjs</code>.
+Ожидается: <code>обход: художников 13, стран 6, тем и традиций 4</code>. Если какая-то
+проверка на настоящем каталоге жалуется — это находка, а не повод ослабить
+проверку: прочитать, починить данные или сказать Charlie.
+Затем <code>yarn verify</code> → код 0.</p>
+<p><strong>Шаг 7. Коммит.</strong></p>
+<pre><code class="language-bash">git add browse.js collections.js scripts/verify-browse.mjs package.json
+git commit -m &quot;Какие страницы для обхода существуют: художники и страны от четырёх работ
+
+Факт набирает страницу сам, вкус выбирает человек. Порог четыре: меньше —
+страница повторяет страницу работы. Россия пропущена, её шесть работ — один
+Айвазовский.
+
+Co-Authored-By: Claude Opus 5.5 &lt;noreply@anthropic.com&gt;&quot;
+</code></pre>
+<hr>
+<h3>Задача 3: <code>pages.js</code>: разметка</h3>
+<p><strong>Файлы:</strong> изменить <code>pages.js</code>, <code>public/styles.css</code>.</p>
+<p>Проверка этой задачи — глазами и <code>curl</code> в задаче 4, после подключения
+маршрутов: строковые шаблоны без сервера проверять не на чем.</p>
+<p><strong>Шаг 1. Блок под сеткой.</strong> Заменить <code>topicRow</code> (строка ~647) и <code>tailRow</code>:</p>
+<pre><code class="language-js">// Блок под сеткой указателя: строки с подписью, по строке на вид страниц
+// (`rows` в browse.js). Подписи нужны, потому что ссылок стало около двадцати,
+// и одной строкой без них это уже не оглавление, а облако тегов.
+// Разделителей между ссылками нет, как не было: строка самая тихая на странице.
+const browseRows = rows =&gt;
+  rows.length
+    ? `&lt;nav class=&quot;browse&quot; aria-label=&quot;Browse the collection&quot;&gt;${rows
+        .map(
+          row =&gt;
+            `&lt;p class=&quot;browse__row&quot;&gt;&lt;span class=&quot;browse__label&quot;&gt;${escape(row.label)}&lt;/span&gt;${row.links
+              .map(link =&gt; `&lt;a href=&quot;${escape(link.href)}&quot;&gt;${escape(link.text)}&lt;/a&gt;`)
+              .join(&#39;\n            &#39;)}&lt;/p&gt;`
+        )
+        .join(&#39;\n          &#39;)}&lt;/nav&gt;`
+    : &#39;&#39;;
+</code></pre>
+<pre><code class="language-js">const tailRow = rows =&gt; `&lt;div class=&quot;tail&quot;&gt;${browseRows(rows)}${mailingForm}&lt;/div&gt;`;
+</code></pre>
+<p>Комментарий над старым <code>topicRow</code> удалить вместе с ним; если в нём есть
+причина, которая остаётся верной, перенести её в новый.</p>
+<p><strong>Шаг 2. <code>collectionPage</code>.</strong> Сигнатура <code>({ items, rows = [], origin })</code>,
+в теле <code>${tailRow(rows)}</code>.</p>
+<p><strong>Шаг 3. <code>topicPage</code>.</strong> <code>canonical: \</code>${origin}${topic.path}`<code>. Больше ничего: страница художника и страницы стран приходят тем же объектом (</code>title<code>, </code>description<code>, </code>heading<code>, </code>note<code>, </code>terms`).</p>
+<p><strong>Шаг 4. Строка «In …».</strong> Заменить <code>inTopics</code> и его комментарий:</p>
+<pre><code class="language-js">// Где ещё стоит работа: традиции, страны, настроения — одной строкой.
+// Было по строке «More … phone wallpapers →» на тему; у работы теперь бывает
+// три-четыре страницы, и четыре строки выходов под одной работой спорили бы
+// с кнопкой. Текст ссылки — имя страницы, слова запроса стоят у неё в `title`.
+const inPages = pages =&gt;
+  pages.length
+    ? `&lt;p class=&quot;in-topic&quot;&gt;In ${pages
+        .map(page =&gt; `&lt;a href=&quot;${escape(page.path)}&quot;&gt;${escape(page.name)}&lt;/a&gt;`)
+        .join(&#39; · &#39;)}&lt;/p&gt;`
+    : &#39;&#39;;
+</code></pre>
+<p><strong>Шаг 5. Имя художника ссылкой.</strong> В <code>provenance(item, name)</code> добавить третий
+довод и собрать <code>made</code> из экранированных частей:</p>
+<pre><code class="language-js">function provenance(item, name, artistPath) {
+  if (!item.provenance) return &#39;&#39;;
+  const { creator, date, work, credit, page } = item.provenance;
+  // Имя — ссылка, когда у художника есть страница; иначе текст, как было.
+  const who = artistPath ? `&lt;a href=&quot;${escape(artistPath)}&quot;&gt;${escape(creator)}&lt;/a&gt;` : escape(creator);
+  const made = [who, date ? escape(date) : &#39;&#39;].filter(Boolean).join(&#39;, &#39;);
+  const held = [work === name ? &#39;&#39; : work, credit].filter(Boolean).join(&#39; · &#39;);
+  const terms = item.license ? `${escape(item.license.name)} · ` : &#39;&#39;;
+  return `
+            &lt;p class=&quot;terms__line&quot;&gt;${made}&lt;/p&gt;
+            ${held ? `&lt;p class=&quot;terms__note&quot;&gt;${escape(held)}&lt;/p&gt;` : &#39;&#39;}
+            &lt;p class=&quot;terms__note&quot;&gt;${terms}&lt;a href=&quot;${escape(page)}&quot;&gt;Source file&lt;/a&gt;&lt;/p&gt;`;
+}
+</code></pre>
+<p>Найти вызов (<code>grep -n &quot;provenance(item&quot; pages.js</code>) и передать <code>artist?.path</code>.</p>
+<p><strong>Шаг 6. <code>workPage</code>.</strong> Сигнатура <code>({ item, others, pages = [], artist = null, origin })</code>.
+<code>artist</code> — <strong>страница</strong> художника из <code>browse</code> (у неё есть <code>path</code> и <code>name</code>),
+а не запись из <code>ARTISTS</code>: у записи <code>path</code> нет, и ссылка в подписи молча
+не появилась бы.
+<code>${inTopics(topics)}</code> → <code>${inPages(pages)}</code>. Заголовок соседей:</p>
+<pre><code class="language-js">      ${others.length ? `&lt;section class=&quot;adjacent&quot;&gt;&lt;h2 class=&quot;heading&quot;&gt;${artist ? `More by ${escape(artist.name)}` : &#39;More in the collection&#39;}&lt;/h2&gt;${grid(others)}&lt;/section&gt;` : &#39;&#39;}
+</code></pre>
+<p><strong>Шаг 7. Страница <code>/artists</code>.</strong> Новая функция рядом с <code>topicPage</code>:</p>
+<pre><code class="language-js">// Указатель художников: все, кого можно назвать по имени, со счётом работ.
+// Ссылка — у тех, у кого есть страница (browse.js, `artistIndex`); остальные
+// стоят именем, как в указателе музея, где у художника может быть одна вещь.
+export function artistsPage({ entries, origin }) {
+  return layout({
+    current: &#39;collection&#39;,
+    title: `Artists in the ${SITE_NAME} collection`,
+    description: `${entries.length} artists whose work is in the collection as free phone wallpapers, no account.`,
+    canonical: `${origin}/artists`,
+    body: `
+      &lt;div class=&quot;topic&quot;&gt;
+        &lt;h1 class=&quot;topic__title&quot;&gt;Artists&lt;/h1&gt;
+      &lt;/div&gt;
+      &lt;ul class=&quot;artists&quot;&gt;
+        ${entries
+          .map(
+            entry =&gt;
+              `&lt;li&gt;${entry.path ? `&lt;a href=&quot;${escape(entry.path)}&quot;&gt;${escape(entry.name)}&lt;/a&gt;` : escape(entry.name)} &lt;span class=&quot;artists__count&quot;&gt;${entry.count}&lt;/span&gt;&lt;/li&gt;`
+          )
+          .join(&#39;\n        &#39;)}
+      &lt;/ul&gt;
+      &lt;p class=&quot;topic__back&quot;&gt;
+        &lt;a href=&quot;/&quot;&gt;All ${SITE_NAME} wallpapers →&lt;/a&gt;
+      &lt;/p&gt;
+    `
+  });
+}
+</code></pre>
+<p><strong>Шаг 8. Карта сайта.</strong> <code>sitemap({ items, pages = [], origin })</code>; строку
+с <code>topics.map(...)</code> заменить на
+<code>...pages.map(page =&gt; url(\</code>${origin}${page.path}`, { lastmod: latestOf(page.items) })),<code>и сразу за ней</code>url(`${origin}/artists`, { lastmod: latestOf(items) }),`.
+Комментарий над строкой поправить: «Страницы для обхода: темы, традиции,
+страны, художники».</p>
+<p><strong>Шаг 9. Стили.</strong> В <code>public/styles.css</code> рядом с <code>.tail</code>/<code>.topics</code>: правило
+<code>.topics</code> удалить (класса больше нет), добавить:</p>
+<pre><code class="language-css">/* Блок под сеткой: подпись слева колонкой, ссылки справа с переносом.
+   Подпись набрана тем же кеглем и цветом, но без подчёркивания: её не нажимают.
+   На узком экране подпись встаёт над своей строкой. */
+.browse {
+  display: grid;
+  gap: 10rem;
+}
+.browse__row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6rem 18rem;
+  margin: 0;
+}
+.browse__label {
+  flex: 0 0 110rem;
+  color: var(--fg-faint);
+}
+@media (max-width: 600px) {
+  .browse__label {
+    flex-basis: 100%;
+  }
+}
+.artists {
+  columns: 16em;
+  list-style: none;
+  margin: 0;
+  padding: 0 var(--gutter);
+  font-size: 14rem;
+  line-height: 1.9;
+}
+.artists a {
+  text-decoration-color: var(--rule);
+  text-underline-offset: 3px;
+}
+.artists__count {
+  color: var(--fg-dim);
+  font-size: 12rem;
+}
+</code></pre>
+<p><code>--fg-faint</code> у подписи — проверить контраст в задаче 4: в <code>styles.css</code>
+сказано, что ниже <code>--fg-dim</code> можно только надписям, которые не читают.
+Подпись читают; если на тёмном она теряется, взять <code>--fg-dim</code> и отличать
+подпись только отсутствием подчёркивания.</p>
+<p><strong>Шаг 10.</strong> <code>yarn format</code>, <code>node --check pages.js</code>. Коммит — вместе
+с задачей 4: без маршрутов страница не собирается.</p>
+<hr>
+<h3>Задача 4: <code>server.js</code>: маршруты</h3>
+<p><strong>Файлы:</strong> изменить <code>server.js</code>, <code>collections.js</code>.</p>
+<p><strong>Шаг 0. Кто ещё зовёт старые сигнатуры.</strong> Задача 3 поменяла доводы
+<code>collectionPage</code>, <code>topicPage</code>, <code>workPage</code> и <code>sitemap</code>:</p>
+<pre><code class="language-bash">grep -rn &quot;collectionPage\|topicPage\|workPage\|sitemap(&quot; --include=*.js --include=*.mjs . | grep -v node_modules
+</code></pre>
+<p>Каждый вызов вне <code>server.js</code> (скрипты исследований, превью) перевести
+на новые доводы или сказать Charlie, если скрипт чужой.</p>
+<p><strong>Шаг 1. Импорт.</strong> Строку <code>import { COLLECTIONS, collectionBySlug, worksOf } from &#39;./collections.js&#39;;</code>
+заменить на <code>import { artistIndex, artistPageOf, browse, everyPage, pageAt, pagesWith, rows } from &#39;./browse.js&#39;;</code>
+и добавить <code>artistsPage</code> в импорт из <code>./pages.js</code>. После правок <code>grep -n &quot;COLLECTIONS\|worksOf\|collectionBySlug&quot; server.js</code>
+должен быть пуст. Если <code>collectionBySlug</code> больше нигде не зовут
+(<code>grep -rn collectionBySlug --include=*.js --include=*.mjs . | grep -v node_modules</code>),
+удалить его из <code>collections.js</code> вместе с комментарием (мёртвый код).</p>
+<p><strong>Шаг 2. Указатель.</strong></p>
+<pre><code class="language-js">async function showCollection(_req, res, next) {
+  try {
+    const visible = shown(await galleryItems());
+    html(res, 200, collectionPage({ items: visible, rows: rows(browse(visible)), origin: SITE_ORIGIN }));
+  } catch (error) {
+    next(error);
+  }
+}
+</code></pre>
+<p><strong>Шаг 3. <code>/collection/:slug</code>.</strong> Тело: <code>const found = browse(shown(await galleryItems()));</code>
+<code>const page = pageAt(found, \</code>/collection/${req.params.slug}`);<code> </code>if (!page) return next();<code> </code>html(res, 200, topicPage({ topic: page, items: page.items, origin: SITE_ORIGIN }));<code>Комментарий о</code>next()` оставить: он про то же и верен.</p>
+<p><strong>Шаг 4. Художники.</strong> Сразу за ним:</p>
+<pre><code class="language-js">// Художники: указатель и страница на каждого, у кого MIN_WORKS показанных
+// работ (browse.js). Неизвестное имя — в `next()`, по той же причине, что
+// и у тем: адреса, которого мы не давали, не существует.
+app.get(&#39;/artists&#39;, async (_req, res, next) =&gt; {
+  try {
+    const visible = shown(await galleryItems());
+    html(res, 200, artistsPage({ entries: artistIndex(browse(visible), visible), origin: SITE_ORIGIN }));
+  } catch (error) {
+    next(error);
+  }
+});
+
+app.get(&#39;/artists/:slug&#39;, async (req, res, next) =&gt; {
+  try {
+    const page = pageAt(browse(shown(await galleryItems())), `/artists/${req.params.slug}`);
+    if (!page) return next();
+    html(res, 200, topicPage({ topic: page, items: page.items, origin: SITE_ORIGIN }));
+  } catch (error) {
+    next(error);
+  }
+});
+</code></pre>
+<p><strong>Шаг 5. Страница работы.</strong> В <code>/w/:slug</code> заменить сборку <code>others</code> и <code>topics</code>:</p>
+<pre><code class="language-js">    const visible = shown(items);
+    const found = browse(visible);
+    const artistPage = artistPageOf(found, item);
+    // Соседи: сначала другие работы того же художника, если у него есть
+    // страница, — подпись над сеткой тогда «More by …», и она должна быть
+    // правдой. Добор до ADJACENT — случайный, как было, и по той же причине.
+    const sameHand = artistPage ? sample(artistPage.items.filter(work =&gt; work !== item), ADJACENT) : [];
+    const others = [
+      ...sameHand,
+      ...sample(
+        visible.filter(work =&gt; work !== item &amp;&amp; !sameHand.includes(work)),
+        ADJACENT - sameHand.length
+      )
+    ];
+    html(
+      res,
+      200,
+      workPage({ item, others, pages: pagesWith(found, item), artist: artistPage, origin: SITE_ORIGIN })
+    );
+</code></pre>
+<p>Старый комментарий о случайном порядке соседей оставить над этим блоком,
+комментарий о темах заменить: «Где стоит работа — считается по показанным:
+скрытую работу страница не покажет, и звать с её страницы туда нельзя».</p>
+<p><strong>Шаг 6. Карта сайта.</strong></p>
+<pre><code class="language-js">async function sitemapXml() {
+  const items = shown(await galleryItems());
+  return sitemap({ items, pages: everyPage(browse(items)), origin: SITE_ORIGIN });
+}
+</code></pre>
+<p><strong>Шаг 7. Проверить.</strong> <code>yarn format &amp;&amp; yarn verify</code> → код 0. <code>yarn start</code>, затем:</p>
+<pre><code class="language-bash">for p in / /artists /artists/thomas-cole /artists/yokoyama-taikan /collection/dutch-painting \
+  /collection/japanese-painting /collection/british-painting /collection/nihonga \
+  /collection/russian-painting /artists/claude-monet /artists/albert-bierstadt; do
+  printf &#39;%s %s\n&#39; &quot;$(curl -s -o /dev/null -w &#39;%{http_code}&#39; &quot;http://127.0.0.1:3000$p&quot;)&quot; &quot;$p&quot;; done
+</code></pre>
+<p>Ожидается: 200 у всех, кроме <code>/collection/russian-painting</code> и
+<code>/artists/claude-monet</code> (404). <code>/artists/albert-bierstadt</code> — 200 (четыре работы).</p>
+<pre><code class="language-bash">curl -s http://127.0.0.1:3000/artists/yokoyama-taikan | grep -c &#39;class=&quot;item&#39;   # 5
+curl -s http://127.0.0.1:3000/artists/thomas-cole | grep -o &#39;&lt;title&gt;[^&lt;]*&#39;
+curl -s http://127.0.0.1:3000/ | grep -o &#39;browse__label&quot;&gt;[^&lt;]*&#39;                  # Traditions Countries Moods Artists
+curl -s http://127.0.0.1:3000/sitemap.xml | grep -c &#39;&lt;loc&gt;&#39;                      # 166 + 6 стран + 13 художников + /artists = 186
+curl -s http://127.0.0.1:3000/w/fruit-piece-huysum-iphone-wallpaper | grep -o &#39;href=&quot;/artists/[^&quot;]*&quot;\|More by [^&lt;]*\|class=&quot;in-topic&quot;&gt;.*&#39;
+</code></pre>
+<p>Вставить в отчёт настоящий вывод, а не описание (AGENTS.md). Счётчик <code>class=&quot;item</code>
+сверить с тем, как <code>card</code> называет карточку (<code>grep -n &#39;class=&quot;item&#39; pages.js</code>),
+и поправить команду, если класс другой.</p>
+<p><strong>Шаг 8. Глазами.</strong> Открыть <code>/</code>, <code>/artists</code>, <code>/artists/thomas-cole</code>,
+<code>/collection/french-painting</code> и одну работу на 390 и на 1440 px (навык <code>run</code>
+или claude-in-chrome, снимки). Смотреть: блок под сеткой не спорит с сеткой,
+подписи читаются, рассылка встала справа от верха блока или под ним
+и не налезла; абзац страны читается фразой; ссылка на художника в подписи
+видна, но не кричит.</p>
+<p><strong>Шаг 9. Коммит.</strong></p>
+<pre><code class="language-bash">git add pages.js server.js collections.js public/styles.css
+git commit -m &quot;Страницы художников и стран, блок с подписями под сеткой
+
+Главная звала в четыре темы, и больше ни одна внутренняя страница никуда
+не вела. Теперь каждая работа ссылается на художника и на страницы, где стоит,
+а указатель — на всё это строками с подписями, чтобы двадцать ссылок читались
+оглавлением, а не облаком тегов.
+
+Co-Authored-By: Claude Opus 5.5 &lt;noreply@anthropic.com&gt;&quot;
+</code></pre>
+<hr>
+<h3>Задача 5: две традиции</h3>
+<p><strong>Файлы:</strong> изменить <code>collections.js</code>.</p>
+<p>Списки готовы: <code>research/hudson-river-school-collection-picks.json</code>,
+<code>research/dutch-golden-age-collection-picks.json</code> (по 20 <code>ref</code>, причины
+по каждой работе). Тексты — по COLLECTIONS.md; ниже черновик, <strong>перед
+коммитом показать Charlie</strong>: абзац пишется ради дословной цитаты. Тире нет
+ни в одной строке (правило Charlie).</p>
+<p><strong>Шаг 1.</strong> Добавить в <code>COLLECTIONS</code> после <code>nihonga</code> две записи; <code>refs</code> —
+массив из файла выбора, как есть:</p>
+<pre><code class="language-js">  {
+    slug: &#39;hudson-river-school&#39;,
+    kind: &#39;tradition&#39;,
+    name: &#39;Hudson River School&#39;,
+    // Состав выбран не глазами, а по истории искусства: художник и годы,
+    // не сюжет. Кто решал и почему по каждой работе, и кого оставили за
+    // бортом (Rocky Mountain Sheep 1884, цветы Хеда) —
+    // research/hudson-river-school-collection-picks.json.
+    term: &#39;Hudson River School&#39;,
+    title: &#39;Hudson River School phone wallpapers: free, no account&#39;,
+    heading: &#39;Hudson River School&#39;,
+    description:
+      &#39;Hudson River School phone wallpaper from American museum paintings: Thomas Cole, Albert Bierstadt, Kensett. Free, no account.&#39;,
+    note: ({ count }) =&gt;
+      `${count} paintings of the Hudson River School, the American landscape painters of about ` +
+      &#39;1825 to 1880, chosen as phone wallpapers. By Thomas Cole, Albert Bierstadt, John Frederick &#39; +
+      &#39;Kensett and others, from public museum collections.&#39;,
+    terms: ({ count, full }) =&gt;
+      `All ${count} are phone wallpapers, ${full} of them at 2160 × 3840 or larger. Free to ` +
+      &#39;download and set as your background, no account needed.&#39;,
+    refs: [/* из research/hudson-river-school-collection-picks.json */]
+  },
+  {
+    slug: &#39;dutch-golden-age&#39;,
+    kind: &#39;tradition&#39;,
+    name: &#39;Dutch Golden Age&#39;,
+    // Выбран по истории искусства, до 1700 года. Ван Хёйсум (род. 1682)
+    // сюда не входит, он живописец XVIII века; Корте 1701 — спорный, легче
+    // всего вернуть. Разбор — research/dutch-golden-age-collection-picks.json.
+    term: &#39;Dutch Golden Age&#39;,
+    title: &#39;Dutch Golden Age phone wallpapers: free, no account&#39;,
+    heading: &#39;Dutch Golden Age&#39;,
+    description:
+      &#39;Dutch Golden Age painting as phone wallpaper: still life by Willem Kalf, landscape, church interiors. Free, no account.&#39;,
+    note: ({ count }) =&gt;
+      `${count} paintings from the Dutch Golden Age, the seventeenth century of painting in the ` +
+      &#39;Dutch Republic, chosen as phone wallpapers. Mostly still life, by Willem Kalf, Otto Marseus &#39; +
+      &#39;van Schrieck and others, from public museum collections.&#39;,
+    terms: ({ count, full }) =&gt;
+      `All ${count} are phone wallpapers, ${full} of them at 2160 × 3840 or larger. Free to ` +
+      &#39;download and set as your background, no account needed.&#39;,
+    refs: [/* из research/dutch-golden-age-collection-picks.json */]
+  },
+</code></pre>
+<p>Имена в абзацах — по весу, пересчитать по <code>provenance.creator</code> тех же <code>refs</code>
+(COLLECTIONS.md, «Перечисление — по весу»): у Hudson River School Коул 5 (+1 копия),
+Бирштадт 3, дальше по 2 у Кенсетта, Хазелтайна, Иннесса; у Dutch Golden Age
+Кальф 11 (+1 копия), Марсеус 2, дальше по одной. Если счёт другой — поправить
+имена. «Mostly still life» — проверить счётом: натюрмортов 17 из 20.</p>
+<p><code>term</code> — поле, которое читала <code>inTopics</code>. После задачи 3 его никто не читает:
+<code>grep -n &quot;\.term\b&quot; *.js</code> — если пусто, удалить <code>term</code> у всех записей
+и комментарий к нему (мёртвый код).</p>
+<p><strong>Шаг 2.</strong> <code>yarn format &amp;&amp; yarn verify</code> → код 0, в выводе
+<code>темы: nihonga — 16, hudson-river-school — 20, dutch-golden-age — 20, …</code>
+и <code>обход: … тем и традиций 6</code>.</p>
+<p><strong>Шаг 3.</strong> <code>curl</code> обеих страниц: 200, в сетке по 20 карточек, строка
+Traditions на главной — три ссылки. Абзац прочитать, сверяя каждое
+утверждение с сеткой (COLLECTIONS.md, «Проверки»).</p>
+<p><strong>Шаг 4. Коммит</strong> (после одобрения текстов Charlie).</p>
+<pre><code class="language-bash">git add collections.js
+git commit -m &quot;Две традиции: Hudson River School и Dutch Golden Age
+
+Оба слова Google дописывает к wallpaper сам, и под каждое у нас по двадцать
+работ. Состав выбран по художнику и годам, а не по сюжету; разбор по каждой
+работе лежит в research.
+
+Co-Authored-By: Claude Opus 5.5 &lt;noreply@anthropic.com&gt;&quot;
+</code></pre>
+<hr>
+<h3>Задача 6: документы и журнал</h3>
+<p><strong>Файлы:</strong> <code>AGENTS.md</code>, <code>COLLECTIONS.md</code>, <code>research/2026-09-23-browse-pages.md</code>
+(не переписывать, а дописать раздел «Реализация» — файл сегодняшний).</p>
+<ul>
+<li><strong>AGENTS.md</strong>, список швов: две строки.
+«<code>artists.js</code> — кто есть кто в каталоге: одно имя на человека, копии не в
+счёт, и у кого есть страница»;
+«<code>browse.js</code> — какие страницы для обхода существуют при данном наборе работ
+и как они перечислены: темы и традиции списком, страны и художники сами».</li>
+<li><strong>COLLECTIONS.md</strong>, раздел «Ссылки»: ряд под сеткой стал блоком
+с подписями, подпись ссылки — <code>name</code>, а не <code>heading</code>; на странице работы
+одна строка «In …» вместо «More … phone wallpapers →». Добавить, что <code>kind</code>
+обязателен и решает строку.</li>
+<li><strong>research/2026-09-23-browse-pages.md</strong>: раздел «Реализация»: файлы,
+настоящий вывод проверок из задачи 4 шаг 7, что не проверено и почему.
+Пересобрать <code>.html</code> той же командой, что в задаче 0 собирала первый.</li>
+</ul>
+<pre><code class="language-bash">git add AGENTS.md COLLECTIONS.md research/2026-09-23-browse-pages.md research/2026-09-23-browse-pages.html
+git commit -m &quot;Документы: швы artists.js и browse.js, ссылки тем по-новому
+
+Co-Authored-By: Claude Opus 5.5 &lt;noreply@anthropic.com&gt;&quot;
+</code></pre>
+<hr>
+<h2>Осознанно упрощено в первой версии</h2>
+<ul>
+<li><strong>Абзац страны и художника короче правила.</strong> COLLECTIONS.md просит 50–60
+слов с годами и музеями; здесь около двадцати: этикетка или счёт и имена.
+Годы из <code>provenance.date</code> не считаются нарочно: у части работ там годы жизни
+художника, а не картины (vl-0176, vl-0177, vl-0178), и вычисленное «painted
+between» было бы неправдой в тексте, написанном ради цитаты. Музеи тоже:
+у 53 работ в <code>credit</code> стоит «Wikimedia Commons». Дописать абзац — после
+починки дат и держателей. Записать это в «Ограничения» журнала (задача 6).</li>
+<li><strong><code>/artists</code> по алфавиту имени, а не фамилии</strong> («Albert Bierstadt» под A).
+Музеи сортируют по фамилии, но у японских имён фамилия первой, и правило
+сортировки пришлось бы задавать каждому из 76. Если Charlie захочет по
+фамилии — поле <code>sort</code> в записи и правило для остальных.</li>
+</ul>
+<h2>После шага 1 (не в этом плане)</h2>
+<ul>
+<li>Выкладка — <code>./scripts/deploy.sh</code>, только с согласия Charlie. IndexNow
+расскажет Bing о новых адресах сам: он читает ту же карту сайта.</li>
+<li>Search Console: Request indexing для <code>/artists</code>, двух традиций и шести стран.</li>
+<li>Шаг 3 замысла: сюжеты (landscape, flowers, still life, seascape) листами
+отбора; строка «Subjects» появляется вместе с первой из них.</li>
+<li>Ошибки каталога, найденные субагентом (даты-диапазоны у vl-0176, vl-0177,
+vl-0178 и др.): отдельной задачей, не здесь.</li>
+</ul>

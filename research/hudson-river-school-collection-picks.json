@@ -1,0 +1,53 @@
+{
+  "_": "Live works chosen for the Hudson River School collection page, decided by a subagent on art-historical grounds, delegated by Charlie on 2026-09-23.",
+  "criteria": "Landscape painting (including Cole's allegorical and imagined landscapes, and foreign scenery) made c. 1825 to 1880 by painters of the Hudson River School or commonly grouped with it, including second-generation and luminist painters; decided by painter and period, not by subject. Still lifes, wildlife pieces and post-1880 work are left out.",
+  "refs": [
+    "vl-0355",
+    "vl-0354",
+    "vl-0358",
+    "vl-0461",
+    "vl-0043",
+    "vl-0046",
+    "vl-0045",
+    "vl-0465",
+    "vl-0054",
+    "vl-0297",
+    "vl-0460",
+    "vl-0350",
+    "vl-0042",
+    "vl-0053",
+    "vl-0047",
+    "vl-0057",
+    "vl-0466",
+    "vl-0463",
+    "vl-0357",
+    "vl-0464"
+  ],
+  "why": {
+    "vl-0355": "Albert Bierstadt, 1868: core second-generation painter; painted during his 1867 to 1869 European stay, and foreign scenery is part of the school's output (as with Church's tropics).",
+    "vl-0354": "Albert Bierstadt, 1866: Yosemite, the school's signature Western subject.",
+    "vl-0358": "John Frederick Kensett, 1854: White Mountains in autumn, a core school subject by a core painter.",
+    "vl-0461": "Thomas Cole, 1828: the school's founder; a religious landscape of the founding years.",
+    "vl-0043": "Frederic Edwin Church, 1847: Cole's only pupil, painted in the years right after his training.",
+    "vl-0046": "William Stanley Haseltine, 1856: usually grouped with the school (luminist coasts); painted in Italy while training alongside Bierstadt and Whittredge.",
+    "vl-0045": "Jasper F. Cropsey, 1870: core second-generation painter; the White Mountains.",
+    "vl-0465": "Thomas Cole, 1828: companion to the Expulsion; founding-years religious landscape.",
+    "vl-0054": "William Stanley Haseltine, 1869: kept with his 1856 work for consistency; painted after he settled in Rome in 1867, but the Mediterranean rock coasts are exactly the pictures that group him with the school.",
+    "vl-0297": "Martin Johnson Heade, 1871: marsh landscape, the luminist strand of the school.",
+    "vl-0460": "Thomas Cole, 1836: The Course of Empire, the school's best-known allegorical landscape series.",
+    "vl-0350": "Albert Bierstadt, 1868: Sierra Nevada, his defining Western panorama type.",
+    "vl-0042": "Robert S. Duncanson, 1867: recognized second-generation painter of the school; an imagined landscape after Moore's Lalla Rookh.",
+    "vl-0053": "George Inness, 1866: before his Tonalist turn of the late 1870s; already Barbizon-leaning, but still within the period in which he is grouped with the school.",
+    "vl-0047": "George Inness, 1858: early Inness, the phase usually counted with the school.",
+    "vl-0057": "John Frederick Kensett, 1860s: Newport coast, his luminist shore subject.",
+    "vl-0466": "Thomas Cole, 1842: The Voyage of Life, second of his two great allegorical series.",
+    "vl-0463": "Thomas Cole, 1840: imagined architectural landscape; a canonical Cole, and the non-landscape exclusion is meant for still lifes, not for his allegories.",
+    "vl-0357": "Sanford Robinson Gifford, 1868: Hudson River itself, luminist Gifford at his peak.",
+    "vl-0464": "After Thomas Cole, c. 1863: an American copy of the period; Newfields says it was probably made from Smillie's engraving that the American Art-Union sent to its members in 1850, so it records how the school's images spread. Labeled as a copy."
+  },
+  "borderline_excluded": {
+    "vl-0291": "Albert Bierstadt, 1884: after the c. 1880 end of the period, and a wildlife picture (bighorn sheep) more than a landscape.",
+    "vl-0216": "Martin Johnson Heade, 1873: a flowering branch on a ledge; still life, not landscape.",
+    "vl-0356": "Martin Johnson Heade, 1873: orchid with a hummingbird; has a jungle backdrop, but it is a botanical picture, so treated the same as Apple Blossoms."
+  }
+}
