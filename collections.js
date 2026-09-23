@@ -127,6 +127,13 @@ import { accession } from './public/record.js';
 export const COLLECTIONS = [
   {
     slug: 'nihonga',
+    // `kind` — строка, в которой тема стоит под сеткой указателя: традиция
+    // (школа или движение) или настроение (подборка глазами). `name` — её
+    // подпись там и в строке «In …» на странице работы: слово «collection»,
+    // повторённое двенадцать раз подряд, — шум, а заголовок самой страницы
+    // (`heading`) его сохраняет.
+    kind: 'tradition',
+    name: 'Nihonga',
     // Единственная тема, чьё слово читателю незнакомо. «Dark academia» и
     // «moody landscape» объясняют себя сами, «nihonga» — нет, и отсюда одно
     // отличие в абзаце: слот «характер подборки» занят определением, а не
@@ -203,6 +210,8 @@ export const COLLECTIONS = [
   },
   {
     slug: 'moody-landscape',
+    kind: 'mood',
+    name: 'Moody landscape',
     term: 'moody landscape',
     title: 'Moody landscape phone wallpapers — free, no account',
     heading: 'Moody landscape collection',
@@ -243,6 +252,8 @@ export const COLLECTIONS = [
   },
   {
     slug: 'dark-academia',
+    kind: 'mood',
+    name: 'Dark academia',
     term: 'dark academia',
     title: 'Dark academia phone wallpapers — free, no account',
     heading: 'Dark academia collection',
@@ -306,6 +317,8 @@ export const COLLECTIONS = [
   },
   {
     slug: 'cottagecore',
+    kind: 'mood',
+    name: 'Cottagecore',
     // Самая сильная из новых тем по замеру спроса
     // (research/2026-09-20-collection-demand.md): у wallpapers.com 600+ работ
     // против 300+ у dark academia, то есть категория больше той, что уже
