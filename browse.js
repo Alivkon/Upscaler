@@ -114,7 +114,9 @@ export const pageAt = (found, path) => everyPage(found).find(page => page.path =
 // он назван ссылкой в подписи, и второй раз в той же подписи — повтор.
 export const pagesWith = (found, item) =>
   [...found.collections, ...found.countries].filter(page => page.items.includes(item));
-export const artistPageOf = (found, item) => found.artists.find(page => page.items.includes(item)) ?? null;
+// Страница художника ищется по художнику, а не по составу: скрытой работы
+// в составе нет, но её автор от этого не меняется, и ссылка на него верна.
+export const artistPageOf = (found, item) => found.artists.find(page => page.artist === artistOf(item)) ?? null;
 
 // Блок под сеткой указателя. Пустая строка не выводится: подпись без ссылок
 // обещает раздел, которого нет. Строки «Subjects» пока нет вовсе — сюжетных

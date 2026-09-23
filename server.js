@@ -335,12 +335,14 @@ app.get('/w/:slug', async (req, res, next) => {
     const artistPage = artistPageOf(found, item);
     // Соседи: сначала другие работы того же художника, если у него есть
     // страница, — под своей подписью «More by …», и в ней только его работы:
-    // подпись над чужими была бы неправдой. Добор до ADJACENT — случайный,
-    // как было, и по той же причине, под «More in the collection».
+    // подпись над чужими была бы неправдой. Своих — не больше половины:
+    // у Кальфа одиннадцать работ, и без потолка его страницы ссылались бы
+    // только друг на друга. Остальное — случайный добор, как было, и по той же
+    // причине, под «More in the collection».
     const sameHand = artistPage
       ? sample(
           artistPage.items.filter(work => work !== item),
-          ADJACENT
+          ADJACENT / 2
         )
       : [];
     const others = sample(

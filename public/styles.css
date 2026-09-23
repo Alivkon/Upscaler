@@ -928,12 +928,12 @@ body.is-dragging .record--plate {
 /* Ссылка в тему, где работа стоит. Тише условий и без своей линейки: это
    не факт о работе, а выход отсюда, и выходов на странице уже два — кнопка
    и «More in the collection». Третий не должен спорить с ними за внимание. */
-.in-topic {
+.in-pages {
   margin: 14rem 0 0;
   font-size: 12rem;
   color: var(--fg-dim);
 }
-.in-topic a {
+.in-pages a {
   text-decoration-color: var(--rule);
   text-underline-offset: 3px;
 }
