@@ -831,7 +831,7 @@ body.is-dragging .record--plate {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(150rem, 1fr));
   gap: 26rem 36rem;
-  max-width: 1000rem;
+  max-width: 1200rem;
 }
 .browse__group--artists {
   grid-column: span 2;

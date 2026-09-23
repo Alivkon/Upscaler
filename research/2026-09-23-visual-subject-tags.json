@@ -1,0 +1,910 @@
+{
+  "vl-0366": {
+    "sees": "sea of clouds under a golden sky, no mountain visible",
+    "themes": {}
+  },
+  "vl-0368": {
+    "sees": "two women bathing in a tiled indoor hot spring pool",
+    "themes": {}
+  },
+  "vl-0396": {
+    "sees": "two robed figures, a bearded man and a woman beside him",
+    "themes": {}
+  },
+  "vl-0391": {
+    "sees": "gold panel with a red sun disc and flowering plum branch",
+    "themes": {
+      "flowers": "partial"
+    }
+  },
+  "vl-0026": {
+    "sees": "two warblers perched among large white magnolia blossoms",
+    "themes": {
+      "flowers": "partial"
+    }
+  },
+  "vl-0367": {
+    "sees": "armored figure flying above a temple gatepost at dusk",
+    "themes": {}
+  },
+  "vl-0068": {
+    "sees": "ink-painted tiger crouching against a plain ground",
+    "themes": {}
+  },
+  "vl-0359": {
+    "sees": "carp leaping up a misty waterfall above small waves",
+    "themes": {}
+  },
+  "vl-0390": {
+    "sees": "misty pine-covered mountainside with a village nestled below",
+    "themes": {
+      "landscape": "clear"
+    }
+  },
+  "vl-0028": {
+    "sees": "two warblers among blue gentian flowers and leaves",
+    "themes": {
+      "flowers": "partial"
+    }
+  },
+  "vl-0388": {
+    "sees": "misty rocky cliffs and waterfall with goats, water below",
+    "themes": {
+      "landscape": "clear"
+    }
+  },
+  "vl-0389": {
+    "sees": "snow-covered mountain slope with two small travelers",
+    "themes": {
+      "landscape": "clear"
+    }
+  },
+  "vl-0151": {
+    "sees": "single ink-painted bamboo branch on a plain background",
+    "themes": {}
+  },
+  "vl-0032": {
+    "sees": "banana bunch and red blossom with a butterfly and caterpillar",
+    "themes": {
+      "flowers": "partial"
+    }
+  },
+  "vl-0027": {
+    "sees": "birds around a nest amid pink wild rose blossoms",
+    "themes": {
+      "flowers": "partial"
+    }
+  },
+  "vl-0360": {
+    "sees": "green mountain landscape with waterfall, pines and a house",
+    "themes": {
+      "landscape": "clear"
+    }
+  },
+  "vl-0362": {
+    "sees": "sailing ship at sea with a torpedo explosion plume",
+    "themes": {
+      "seascape": "clear"
+    }
+  },
+  "vl-0083": {
+    "sees": "ancient obelisk and temple ruins with figures in the desert",
+    "themes": {
+      "landscape": "partial"
+    }
+  },
+  "vl-0361": {
+    "sees": "waves crashing on a rocky coastal point with a house",
+    "themes": {
+      "seascape": "clear"
+    }
+  },
+  "vl-0476": {
+    "sees": "storm-tossed sea with a lone ship's mast among huge waves",
+    "themes": {
+      "seascape": "clear"
+    }
+  },
+  "vl-0398": {
+    "sees": "pine branch over a misty waterfall in mountain scenery",
+    "themes": {
+      "landscape": "clear"
+    }
+  },
+  "vl-0370": {
+    "sees": "shrine buildings by a torii gate above a wide bay with boats",
+    "themes": {
+      "seascape": "clear"
+    }
+  },
+  "vl-0364": {
+    "sees": "winged figure carrying a woman over the sea, flowers below",
+    "themes": {
+      "flowers": "partial",
+      "seascape": "partial"
+    }
+  },
+  "vl-0157": {
+    "sees": "demon-faced monk in dark robes, chanting",
+    "themes": {}
+  },
+  "vl-0376": {
+    "sees": "mountain lake landscape with cattle grazing near the shore",
+    "themes": {
+      "landscape": "clear"
+    }
+  },
+  "vl-0336": {
+    "sees": "waterfall and hilltop town in a grand classical landscape",
+    "themes": {
+      "landscape": "clear"
+    }
+  },
+  "vl-0365": {
+    "sees": "temple hall with dark curved roofs under a starry sky",
+    "themes": {}
+  },
+  "vl-0236": {
+    "sees": "dark tidal flats and cliffs under a big cloudy sky",
+    "themes": {
+      "landscape": "clear",
+      "seascape": "partial"
+    }
+  },
+  "vl-0375": {
+    "sees": "classical landscape with trees, a castle, sheep and small figures",
+    "themes": {
+      "landscape": "clear"
+    }
+  },
+  "vl-0357": {
+    "sees": "calm hazy bay with small boats and distant hills at dusk",
+    "themes": {
+      "landscape": "partial"
+    }
+  },
+  "vl-0084": {
+    "sees": "gothic tower in a city square with small figures",
+    "themes": {}
+  },
+  "vl-0408": {
+    "sees": "misty rocky coast with lighthouse, boats and moonlight",
+    "themes": {
+      "seascape": "clear"
+    }
+  },
+  "vl-0051": {
+    "sees": "two peregrine falcons with captured prey on a hillside",
+    "themes": {}
+  },
+  "vl-0350": {
+    "sees": "dramatic mountain lake landscape with waterfalls and deer",
+    "themes": {
+      "landscape": "clear"
+    }
+  },
+  "vl-0384": {
+    "sees": "rolling grassy hills under a wide cloudy sky",
+    "themes": {
+      "landscape": "clear"
+    }
+  },
+  "vl-0259": {
+    "sees": "lakeshore with a row of trees under an overcast sky",
+    "themes": {
+      "landscape": "clear"
+    }
+  },
+  "vl-0066": {
+    "sees": "lion standing watch on a rocky outcrop above a desert plain",
+    "themes": {}
+  },
+  "vl-0297": {
+    "sees": "marsh landscape with a haystack and dramatic clouds",
+    "themes": {
+      "landscape": "clear"
+    }
+  },
+  "vl-0392": {
+    "sees": "black crow in flight against a gold background",
+    "themes": {}
+  },
+  "vl-0057": {
+    "sees": "rocky wooded headland beside a calm coastal bay",
+    "themes": {
+      "landscape": "clear",
+      "seascape": "partial"
+    }
+  },
+  "vl-0379": {
+    "sees": "interior drawing room, sofa, chairs, wall portrait, sunlight",
+    "themes": {}
+  },
+  "vl-0265": {
+    "sees": "wide river valley, tall trees, figure resting, hills",
+    "themes": {
+      "landscape": "clear"
+    }
+  },
+  "vl-0468": {
+    "sees": "giant waves at sunrise, survivors on a raft",
+    "themes": {
+      "seascape": "clear"
+    }
+  },
+  "vl-0358": {
+    "sees": "wide mountain valley, autumn trees, distant peaks",
+    "themes": {
+      "landscape": "clear"
+    }
+  },
+  "vl-0069": {
+    "sees": "Chinese scroll, waterfall and cliffs, two scholars",
+    "themes": {
+      "landscape": "clear"
+    }
+  },
+  "vl-0045": {
+    "sees": "river bend, autumn foliage, mountains behind",
+    "themes": {
+      "landscape": "clear"
+    }
+  },
+  "vl-0298": {
+    "sees": "rocky gorge, stream, two men riding a horse",
+    "themes": {
+      "landscape": "clear"
+    }
+  },
+  "vl-0280": {
+    "sees": "hillside abbey, bridge, stream, mountain backdrop",
+    "themes": {
+      "landscape": "clear"
+    }
+  },
+  "vl-0256": {
+    "sees": "dim room, dark stove, open door with light",
+    "themes": {}
+  },
+  "vl-0371": {
+    "sees": "Chinese scroll, mountains, waterfalls, autumn trees, huts",
+    "themes": {
+      "landscape": "clear"
+    }
+  },
+  "vl-0042": {
+    "sees": "valley with lake, palms, ruins, distant mountains",
+    "themes": {
+      "landscape": "clear"
+    }
+  },
+  "vl-0230": {
+    "sees": "snow-capped Alps, clouds, cattle grazing on a knoll",
+    "themes": {
+      "landscape": "clear"
+    }
+  },
+  "vl-0374": {
+    "sees": "lake and mountains, small figures fishing by shore",
+    "themes": {
+      "landscape": "clear"
+    }
+  },
+  "vl-0474": {
+    "sees": "storm surf against cliffs, tiny figures on rocks",
+    "themes": {
+      "seascape": "clear"
+    }
+  },
+  "vl-0354": {
+    "sees": "Yosemite valley, river, cliffs, trees, small figures",
+    "themes": {
+      "landscape": "clear"
+    }
+  },
+  "vl-0387": {
+    "sees": "grand palace buildings, canal, bridge, foggy sky",
+    "themes": {}
+  },
+  "vl-0319": {
+    "sees": "cliffside town over a harbor bay, sea beyond",
+    "themes": {
+      "landscape": "partial",
+      "seascape": "partial"
+    }
+  },
+  "vl-0465": {
+    "sees": "tropical garden framed by trees, distant mountain, tiny figures",
+    "themes": {
+      "landscape": "clear"
+    }
+  },
+  "vl-0372": {
+    "sees": "ink-wash mountains, mist, sparse trees",
+    "themes": {
+      "landscape": "clear"
+    }
+  },
+  "vl-0399": {
+    "sees": "moonlit gothic ruin, arched windows, rubble",
+    "themes": {}
+  },
+  "vl-0467": {
+    "sees": "storm at sea, rowboat, sinking sailing ship",
+    "themes": {
+      "seascape": "clear"
+    }
+  },
+  "vl-0394": {
+    "sees": "night fire, silhouetted buildings and crowd",
+    "themes": {}
+  },
+  "vl-0472": {
+    "sees": "skeletal death figure with scythe, moonlit clouds",
+    "themes": {}
+  },
+  "vl-0064": {
+    "sees": "river gorge, waterfall, hillside villa, small figures",
+    "themes": {
+      "landscape": "clear"
+    }
+  },
+  "vl-0381": {
+    "sees": "hill town among trees, bridge, stream, figures",
+    "themes": {
+      "landscape": "clear"
+    }
+  },
+  "vl-0240": {
+    "sees": "rocky wooded ravine, sheep grazing, stream",
+    "themes": {
+      "landscape": "clear"
+    }
+  },
+  "vl-0047": {
+    "sees": "meadow with grazing sheep, autumn trees, resting figure",
+    "themes": {
+      "landscape": "clear"
+    }
+  },
+  "vl-0386": {
+    "sees": "waterfall gorge with mythological hunting figures foreground",
+    "themes": {
+      "landscape": "partial"
+    }
+  },
+  "vl-0299": {
+    "sees": "thatched cottage, mill wheel, figures, horses, sheep",
+    "themes": {}
+  },
+  "vl-0466": {
+    "sees": "allegorical boat on water, angel figure, dark stormy sky",
+    "themes": {}
+  },
+  "vl-0063": {
+    "sees": "wide open plain, storm clouds, distant hills",
+    "themes": {
+      "landscape": "clear"
+    }
+  },
+  "vl-0418": {
+    "sees": "naval battle, warships firing, smoke, rough sea",
+    "themes": {
+      "seascape": "clear"
+    }
+  },
+  "vl-0281": {
+    "sees": "riverside trees, still water, reflections, hedges",
+    "themes": {
+      "landscape": "clear"
+    }
+  },
+  "vl-0473": {
+    "sees": "mountain gorge road, snow peaks, caravan of carts",
+    "themes": {
+      "landscape": "clear"
+    }
+  },
+  "vl-0030": {
+    "sees": "scientific illustration of assorted bivalve shells",
+    "themes": {}
+  },
+  "vl-0475": {
+    "sees": "large cresting wave under dark stormy sky",
+    "themes": {
+      "seascape": "clear"
+    }
+  },
+  "vl-0463": {
+    "sees": "fantastical classical architecture, columns, pyramid, curtain",
+    "themes": {}
+  },
+  "vl-0065": {
+    "sees": "holy family resting under trees by a river",
+    "themes": {
+      "landscape": "partial"
+    }
+  },
+  "vl-0308": {
+    "sees": "classical landscape, castle, cattle by water, tall trees",
+    "themes": {
+      "landscape": "clear"
+    }
+  },
+  "vl-0067": {
+    "sees": "stone aqueduct arches beside trees and a river",
+    "themes": {
+      "landscape": "clear"
+    }
+  },
+  "vl-0219": {
+    "sees": "ink brush painting of bamboo stalks and leaves",
+    "themes": {}
+  },
+  "vl-0318": {
+    "sees": "classical landscape with dancing figures by a lake",
+    "themes": {
+      "landscape": "clear"
+    }
+  },
+  "vl-0174": {
+    "sees": "row of dark tree trunks in a misty clearing",
+    "themes": {
+      "landscape": "clear"
+    }
+  },
+  "vl-0301": {
+    "sees": "classical landscape with a column, ruins and grazing animals",
+    "themes": {
+      "landscape": "clear"
+    }
+  },
+  "vl-0356": {
+    "sees": "large white and pink orchid blossom with a hummingbird",
+    "themes": {
+      "flowers": "clear"
+    }
+  },
+  "vl-0279": {
+    "sees": "wooded classical landscape with a statue and small figures",
+    "themes": {
+      "landscape": "clear"
+    }
+  },
+  "vl-0461": {
+    "sees": "dramatic rocky gorge landscape with waterfalls and tiny figures",
+    "themes": {
+      "landscape": "clear"
+    }
+  },
+  "vl-0046": {
+    "sees": "rock arch over a sea inlet with a distant ship",
+    "themes": {
+      "landscape": "partial",
+      "seascape": "partial"
+    }
+  },
+  "vl-0253": {
+    "sees": "bouquet of flowers in an urn with a bird nest",
+    "themes": {
+      "flowers": "clear",
+      "still-life": "clear"
+    }
+  },
+  "vl-0036": {
+    "sees": "domed church interior with people gathered below",
+    "themes": {}
+  },
+  "vl-0382": {
+    "sees": "classical landscape with trees and figures walking by a lake",
+    "themes": {
+      "landscape": "clear"
+    }
+  },
+  "vl-0038": {
+    "sees": "hillside church above a rushing waterfall under stormy clouds",
+    "themes": {
+      "landscape": "clear"
+    }
+  },
+  "vl-0407": {
+    "sees": "ships tossed in a stormy sea at night",
+    "themes": {
+      "seascape": "clear"
+    }
+  },
+  "vl-0383": {
+    "sees": "cavernous rocky landscape with fire and smoke, tiny figures",
+    "themes": {
+      "landscape": "partial"
+    }
+  },
+  "vl-0349": {
+    "sees": "gothic church interior with a congregation and a dog",
+    "themes": {}
+  },
+  "vl-0363": {
+    "sees": "dark rocky cliff over a stormy sea with a ship",
+    "themes": {
+      "seascape": "clear"
+    }
+  },
+  "vl-0054": {
+    "sees": "tall sea rock stack with small boats on calm water",
+    "themes": {
+      "seascape": "clear"
+    }
+  },
+  "vl-0417": {
+    "sees": "castle on a tidal flat under a stormy sky, small figures below",
+    "themes": {
+      "seascape": "partial"
+    }
+  },
+  "vl-0447": {
+    "sees": "gold and silver vessels on a draped table",
+    "themes": {
+      "still-life": "clear"
+    }
+  },
+  "vl-0179": {
+    "sees": "red farm buildings with cows below a dark mountain",
+    "themes": {
+      "landscape": "partial"
+    }
+  },
+  "vl-0060": {
+    "sees": "ancient temple columns overlooking a ruined city below",
+    "themes": {
+      "landscape": "partial"
+    }
+  },
+  "vl-0393": {
+    "sees": "soldiers and a horse camped in snow at night",
+    "themes": {}
+  },
+  "vl-0377": {
+    "sees": "rider and horses beside a thatched cottage under stormy sky",
+    "themes": {
+      "landscape": "partial"
+    }
+  },
+  "vl-0043": {
+    "sees": "storm-broken trees on a rocky ledge above misty mountains",
+    "themes": {
+      "landscape": "clear"
+    }
+  },
+  "vl-0439": {
+    "sees": "ornate jug, platter and draped cloth on a table",
+    "themes": {
+      "still-life": "clear"
+    }
+  },
+  "vl-0352": {
+    "sees": "chalk cliff arch with fishing boats on the shore and sea",
+    "themes": {
+      "landscape": "partial",
+      "seascape": "partial"
+    }
+  },
+  "vl-0380": {
+    "sees": "bouquet of flowers in a glass vase with a bird nest",
+    "themes": {
+      "flowers": "clear",
+      "still-life": "clear"
+    }
+  },
+  "vl-0086": {
+    "sees": "wooded riverside landscape with small figures and a dog",
+    "themes": {
+      "landscape": "clear"
+    }
+  },
+  "vl-0291": {
+    "sees": "bighorn ram standing on a rocky peak with a deer behind",
+    "themes": {}
+  },
+  "vl-0139": {
+    "sees": "red multi-armed deity seated on a lotus throne",
+    "themes": {}
+  },
+  "vl-0343": {
+    "sees": "grapes, peaches and flowers heaped on a stone ledge",
+    "themes": {
+      "still-life": "clear",
+      "flowers": "partial"
+    }
+  },
+  "vl-0378": {
+    "sees": "large tree and hillside foliage above a hidden red-roofed house",
+    "themes": {
+      "landscape": "clear"
+    }
+  },
+  "vl-0216": {
+    "sees": "cut branch of pink apple blossoms lying on a table",
+    "themes": {
+      "flowers": "clear",
+      "still-life": "clear"
+    }
+  },
+  "vl-0456": {
+    "sees": "white water lilies floating among lily pads on a pond",
+    "themes": {
+      "flowers": "clear"
+    }
+  },
+  "vl-0178": {
+    "sees": "bouquet of flowers in a vase with a bird nest, dark background",
+    "themes": {
+      "flowers": "clear",
+      "still-life": "clear"
+    }
+  },
+  "vl-0460": {
+    "sees": "burning city and harbor being destroyed in battle",
+    "themes": {
+      "landscape": "partial"
+    }
+  },
+  "vl-0446": {
+    "sees": "bouquet of flowers in a glass vase with a calling card and jewelry",
+    "themes": {
+      "flowers": "clear",
+      "still-life": "clear"
+    }
+  },
+  "vl-0164": {
+    "sees": "aerial view of shrine buildings and paths with deities above",
+    "themes": {}
+  },
+  "vl-0440": {
+    "sees": "dandelions and daisies with a ladybug, close study",
+    "themes": {
+      "flowers": "clear",
+      "still-life": "partial"
+    }
+  },
+  "vl-0252": {
+    "sees": "large mixed bouquet in a terracotta urn on a ledge",
+    "themes": {
+      "flowers": "clear",
+      "still-life": "clear"
+    }
+  },
+  "vl-0142": {
+    "sees": "Buddha and attendant figures descending in gilt robes",
+    "themes": {}
+  },
+  "vl-0275": {
+    "sees": "flowers in an urn with grapes and peaches below",
+    "themes": {
+      "flowers": "clear",
+      "still-life": "clear"
+    }
+  },
+  "vl-0353": {
+    "sees": "dense forest clearing with tiny mythological figures",
+    "themes": {
+      "landscape": "clear"
+    }
+  },
+  "vl-0226": {
+    "sees": "storm-lit ruined tower on a cliff above dark sea",
+    "themes": {
+      "seascape": "partial"
+    }
+  },
+  "vl-0397": {
+    "sees": "ink-wash painting of a snow-capped mountain",
+    "themes": {
+      "landscape": "clear"
+    }
+  },
+  "vl-0324": {
+    "sees": "classical storm landscape with fleeing tiny figures",
+    "themes": {
+      "landscape": "clear"
+    }
+  },
+  "vl-0385": {
+    "sees": "forest floor with tulips, morning glories and butterflies",
+    "themes": {
+      "flowers": "partial",
+      "still-life": "partial"
+    }
+  },
+  "vl-0177": {
+    "sees": "rose, cherries in a bowl, wine glasses and a crab",
+    "themes": {
+      "still-life": "clear",
+      "flowers": "partial"
+    }
+  },
+  "vl-0355": {
+    "sees": "erupting volcano lighting a snowy mountain at night",
+    "themes": {
+      "landscape": "clear"
+    }
+  },
+  "vl-0419": {
+    "sees": "porcelain ewer, dish with a shell, and fruit",
+    "themes": {
+      "still-life": "clear"
+    }
+  },
+  "vl-0455": {
+    "sees": "single pink rose beside a military medal",
+    "themes": {
+      "flowers": "clear"
+    }
+  },
+  "vl-0454": {
+    "sees": "melon, wine glasses and a nautilus shell on a table",
+    "themes": {
+      "still-life": "clear"
+    }
+  },
+  "vl-0453": {
+    "sees": "melon, apricots and grapes with a goldfinch and morning glory",
+    "themes": {
+      "still-life": "clear",
+      "flowers": "partial"
+    }
+  },
+  "vl-0451": {
+    "sees": "pink roses with strawberries and small wildflowers",
+    "themes": {
+      "flowers": "clear",
+      "still-life": "partial"
+    }
+  },
+  "vl-0221": {
+    "sees": "loose bouquet of mixed garden flowers, impressionist",
+    "themes": {
+      "flowers": "clear",
+      "still-life": "clear"
+    }
+  },
+  "vl-0087": {
+    "sees": "gooseberry branch with berries on a stone ledge",
+    "themes": {
+      "still-life": "clear"
+    }
+  },
+  "vl-0053": {
+    "sees": "dark dense forest with a woman seated among trees",
+    "themes": {
+      "landscape": "clear"
+    }
+  },
+  "vl-0412": {
+    "sees": "stormy sea with a small boat in heavy waves",
+    "themes": {
+      "seascape": "clear"
+    }
+  },
+  "vl-0369": {
+    "sees": "blooming rose bush against a rocky mountain backdrop",
+    "themes": {
+      "flowers": "clear",
+      "landscape": "partial"
+    }
+  },
+  "vl-0261": {
+    "sees": "dark forest landscape with a figure by a stream",
+    "themes": {
+      "landscape": "clear"
+    }
+  },
+  "vl-0464": {
+    "sees": "classical landscape with a temple, bridge and tiny figures",
+    "themes": {
+      "landscape": "clear"
+    }
+  },
+  "vl-0052": {
+    "sees": "skull, books and an hourglass on a draped table",
+    "themes": {
+      "still-life": "clear"
+    }
+  },
+  "vl-0176": {
+    "sees": "forest floor thistle with butterflies, snail and lizard",
+    "themes": {
+      "still-life": "partial",
+      "flowers": "partial"
+    }
+  },
+  "vl-0037": {
+    "sees": "silver jug, ham, fruit and a porcelain bowl on a table",
+    "themes": {
+      "still-life": "clear"
+    }
+  },
+  "vl-0457": {
+    "sees": "small bouquet in a dark vase on a saucer",
+    "themes": {
+      "flowers": "clear",
+      "still-life": "clear"
+    }
+  },
+  "vl-0423": {
+    "sees": "gilt cup, nautilus shell and a fruit bowl",
+    "themes": {
+      "still-life": "clear"
+    }
+  },
+  "vl-0444": {
+    "sees": "melon, grapes, pears and apples on a ledge",
+    "themes": {
+      "still-life": "clear"
+    }
+  },
+  "vl-0452": {
+    "sees": "pink roses on a ledge before a myrtle shrub",
+    "themes": {
+      "flowers": "clear",
+      "still-life": "partial"
+    }
+  },
+  "vl-0442": {
+    "sees": "fruit in a porcelain bowl with a wine glass",
+    "themes": {
+      "still-life": "clear"
+    }
+  },
+  "vl-0421": {
+    "sees": "lobster on a platter with a drinking horn and glasses",
+    "themes": {
+      "still-life": "clear"
+    }
+  },
+  "vl-0420": {
+    "sees": "silver jug, wine glass and citrus in a bowl",
+    "themes": {
+      "still-life": "clear"
+    }
+  },
+  "vl-0175": {
+    "sees": "dim empty room with a candlelit round table",
+    "themes": {}
+  },
+  "vl-0429": {
+    "sees": "peaches, a wine glass and orange peel on a table",
+    "themes": {
+      "still-life": "clear"
+    }
+  },
+  "vl-0485": {
+    "sees": "nautilus cup, porcelain jar and fruit on a table",
+    "themes": {
+      "still-life": "clear"
+    }
+  },
+  "vl-0428": {
+    "sees": "fruit bowl and wine glasses in a dark niche",
+    "themes": {
+      "still-life": "clear"
+    }
+  },
+  "vl-0437": {
+    "sees": "fish, silver jug and bread on a draped table",
+    "themes": {
+      "still-life": "clear"
+    }
+  },
+  "vl-0445": {
+    "sees": "wine glass and a fruit bowl with a leafy sprig",
+    "themes": {
+      "still-life": "clear"
+    }
+  },
+  "vl-0373": {
+    "sees": "dark pines silhouetted before a lake, lit cottage window",
+    "themes": {
+      "landscape": "clear"
+    }
+  }
+}

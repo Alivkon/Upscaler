@@ -119,12 +119,12 @@ export const pagesWith = (found, item) =>
 export const artistPageOf = (found, item) => found.artists.find(page => page.artist === artistOf(item)) ?? null;
 
 // Блок под сеткой указателя. Пустая строка не выводится: подпись без ссылок
-// обещает раздел, которого нет. Строки «Subjects» пока нет вовсе — сюжетных
-// подборок ещё не отобрано, и она появится вместе с ними.
+// обещает раздел, которого нет.
 export const rows = found =>
   [
     { label: 'Artists', pages: [...found.artists, { path: '/artists', rowName: 'All artists' }] },
     { label: 'Countries', pages: found.countries },
+    { label: 'Subjects', pages: found.collections.filter(page => page.kind === 'subject') },
     { label: 'Traditions', pages: found.collections.filter(page => page.kind === 'tradition') },
     { label: 'Moods', pages: found.collections.filter(page => page.kind === 'mood') }
   ]

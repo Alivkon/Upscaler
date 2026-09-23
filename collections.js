@@ -128,7 +128,8 @@ export const COLLECTIONS = [
   {
     slug: 'nihonga',
     // `kind` — строка, в которой тема стоит под сеткой указателя: традиция
-    // (школа или движение) или настроение (подборка глазами). `name` — её
+    // (школа или движение), сюжет (что изображено) или настроение (подборка
+    // глазами). `name` — её
     // подпись там и в строке «In …» на странице работы: слово «collection»,
     // повторённое двенадцать раз подряд, — шум, а заголовок самой страницы
     // (`heading`) его сохраняет.
@@ -309,6 +310,246 @@ export const COLLECTIONS = [
       'vl-0385',
       'vl-0439',
       'vl-0447'
+    ]
+  },
+  // Сюжеты. Состав выбран глазами, не текстом каталога: Sonnet посмотрел на
+  // каждую живую работу целиком (research/2026-09-23-visual-subject-tags.json),
+  // Charlie прошёл его подсказки на листе кадров (.subjectsheet.mjs) и поправил
+  // по 3–5 работ в каждом сюжете; его выбор — research/2026-09-23-subject-picks-charlie.txt.
+  // Имена, страны и музеи в абзацах — по весу, пересчитаны по этим refs.
+  {
+    slug: 'landscape-painting',
+    kind: 'subject',
+    name: 'Landscape',
+    // Годы — крайние даты всех 69, сверенные по каталогу: Лоррен, начало
+    // 1640-х (vl-0065), и Ямамото Сюнкё, 1933 (vl-0398); без даты две работы
+    // Бертена (1767–1842), внутри рамки. Страны: Франция 20, Америка 16,
+    // Англия 11, Япония 9. Имена: Бертен 7, Уилсон 5, Лоррен 5.
+    title: 'Landscape painting phone wallpapers: free, no account',
+    heading: 'Landscape painting',
+    description:
+      'Landscape painting as phone wallpaper: Jean-Victor Bertin, Richard Wilson, Claude Lorrain and the Hudson River School. Free, no account.',
+    note: ({ count }) =>
+      `${count} landscapes, chosen as phone wallpapers: French, American, British and Japanese, ` +
+      'painted between the 1640s and the 1930s. By Jean-Victor Bertin, Richard Wilson, Claude ' +
+      'Lorrain and others, from the Cleveland Museum of Art and other collections.',
+    terms: ({ count, full }) =>
+      `All ${count} are phone wallpapers, ${full} of them at 2160 × 3840 or larger. Free to ` +
+      'download and set as your background, no account needed.',
+    refs: [
+      'vl-0366',
+      'vl-0390',
+      'vl-0388',
+      'vl-0389',
+      'vl-0360',
+      'vl-0398',
+      'vl-0376',
+      'vl-0336',
+      'vl-0236',
+      'vl-0375',
+      'vl-0357',
+      'vl-0408',
+      'vl-0350',
+      'vl-0384',
+      'vl-0259',
+      'vl-0297',
+      'vl-0057',
+      'vl-0265',
+      'vl-0358',
+      'vl-0069',
+      'vl-0045',
+      'vl-0298',
+      'vl-0280',
+      'vl-0371',
+      'vl-0042',
+      'vl-0230',
+      'vl-0374',
+      'vl-0354',
+      'vl-0319',
+      'vl-0465',
+      'vl-0372',
+      'vl-0064',
+      'vl-0381',
+      'vl-0240',
+      'vl-0047',
+      'vl-0386',
+      'vl-0299',
+      'vl-0063',
+      'vl-0281',
+      'vl-0473',
+      'vl-0065',
+      'vl-0308',
+      'vl-0067',
+      'vl-0318',
+      'vl-0174',
+      'vl-0301',
+      'vl-0279',
+      'vl-0461',
+      'vl-0382',
+      'vl-0038',
+      'vl-0383',
+      'vl-0054',
+      'vl-0417',
+      'vl-0179',
+      'vl-0060',
+      'vl-0377',
+      'vl-0043',
+      'vl-0352',
+      'vl-0086',
+      'vl-0378',
+      'vl-0353',
+      'vl-0397',
+      'vl-0324',
+      'vl-0355',
+      'vl-0053',
+      'vl-0369',
+      'vl-0261',
+      'vl-0464',
+      'vl-0373'
+    ]
+  },
+  {
+    slug: 'flower-painting',
+    kind: 'subject',
+    name: 'Flowers',
+    // Нидерланды 9 и Дания 8 из 26, отсюда «mostly Danish and Dutch». Имена:
+    // Оттесен 8, ван Хёйсум 5, Одюбон 3 (птицы среди цветов — выбор Charlie).
+    title: 'Flower painting phone wallpapers: free, no account',
+    heading: 'Flower painting',
+    description:
+      'Flower painting as phone wallpaper: Otto Didrik Ottesen, Jan van Huysum, John James Audubon and others. Free, no account.',
+    note: ({ count }) =>
+      `${count} works with flowers as their subject, chosen as phone wallpapers. Mostly Danish ` +
+      "and Dutch, by Otto Didrik Ottesen and Jan van Huysum, with Audubon's birds among blossoms " +
+      'and Japanese painting.',
+    terms: ({ count, full }) =>
+      `All ${count} are phone wallpapers, ${full} of them at 2160 × 3840 or larger. Free to ` +
+      'download and set as your background, no account needed.',
+    refs: [
+      'vl-0391',
+      'vl-0026',
+      'vl-0028',
+      'vl-0032',
+      'vl-0027',
+      'vl-0364',
+      'vl-0356',
+      'vl-0380',
+      'vl-0343',
+      'vl-0216',
+      'vl-0456',
+      'vl-0178',
+      'vl-0446',
+      'vl-0440',
+      'vl-0252',
+      'vl-0275',
+      'vl-0385',
+      'vl-0177',
+      'vl-0455',
+      'vl-0453',
+      'vl-0451',
+      'vl-0221',
+      'vl-0369',
+      'vl-0176',
+      'vl-0457',
+      'vl-0452'
+    ]
+  },
+  {
+    slug: 'still-life-painting',
+    kind: 'subject',
+    name: 'Still life',
+    // Нидерланды 24 из 35. Имена: Кальф 11 (с копией), Оттесен 7, ван Хёйсум 6.
+    title: 'Still life painting phone wallpapers: free, no account',
+    heading: 'Still life painting',
+    description:
+      'Still life painting as phone wallpaper: Willem Kalf, Otto Didrik Ottesen, Jan van Huysum and others. Free, no account.',
+    note: ({ count }) =>
+      `${count} still lifes, chosen as phone wallpapers. Mostly Dutch: silver, glass and fruit ` +
+      'by Willem Kalf, flowers by Jan van Huysum. With Danish flower and fruit pieces by Otto ' +
+      'Didrik Ottesen and others.',
+    terms: ({ count, full }) =>
+      `All ${count} are phone wallpapers, ${full} of them at 2160 × 3840 or larger. Free to ` +
+      'download and set as your background, no account needed.',
+    refs: [
+      'vl-0030',
+      'vl-0253',
+      'vl-0447',
+      'vl-0439',
+      'vl-0380',
+      'vl-0343',
+      'vl-0216',
+      'vl-0178',
+      'vl-0446',
+      'vl-0252',
+      'vl-0275',
+      'vl-0385',
+      'vl-0177',
+      'vl-0419',
+      'vl-0455',
+      'vl-0454',
+      'vl-0453',
+      'vl-0451',
+      'vl-0221',
+      'vl-0087',
+      'vl-0052',
+      'vl-0176',
+      'vl-0037',
+      'vl-0457',
+      'vl-0423',
+      'vl-0444',
+      'vl-0452',
+      'vl-0442',
+      'vl-0421',
+      'vl-0420',
+      'vl-0429',
+      'vl-0485',
+      'vl-0428',
+      'vl-0437',
+      'vl-0445'
+    ]
+  },
+  {
+    slug: 'ocean-painting',
+    kind: 'subject',
+    name: 'Ocean',
+    // «Ocean», а не «seascape»: «ocean painting wallpaper» Google дописывает
+    // до ocean art, beach, waves, а «seascape painting wallpaper» — только до
+    // «what is seascape painting». «Seascapes» стоит в абзаце вторым именем,
+    // один раз. Страны: Франция, Япония, Россия, Америка по 5–6; музеи:
+    // Кливленд 6, Токийский национальный 5. Имена: Айвазовский 5, Гюден 4.
+    title: 'Ocean painting phone wallpapers: free, no account',
+    heading: 'Ocean painting',
+    description:
+      'Ocean painting as phone wallpaper: storms at sea by Ivan Aivazovsky and Théodore Gudin, coasts and calm bays. Free, no account.',
+    note: ({ count }) =>
+      `${count} seascapes, chosen as phone wallpapers: storms, waves and ships at sea, coasts ` +
+      'and calm bays. By Ivan Aivazovsky, Théodore Gudin and others, from the Cleveland Museum ' +
+      'of Art, the Tokyo National Museum and other collections.',
+    terms: ({ count, full }) =>
+      `All ${count} are phone wallpapers, ${full} of them at 2160 × 3840 or larger. Free to ` +
+      'download and set as your background, no account needed.',
+    refs: [
+      'vl-0362',
+      'vl-0361',
+      'vl-0476',
+      'vl-0370',
+      'vl-0364',
+      'vl-0236',
+      'vl-0357',
+      'vl-0408',
+      'vl-0057',
+      'vl-0468',
+      'vl-0474',
+      'vl-0467',
+      'vl-0466',
+      'vl-0418',
+      'vl-0475',
+      'vl-0046',
+      'vl-0407',
+      'vl-0363',
+      'vl-0054',
+      'vl-0352',
+      'vl-0412'
     ]
   },
   {

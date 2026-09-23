@@ -63,7 +63,7 @@ expect(
 expect(
   'строки под сеткой',
   rows(sample).map(row => row.label),
-  ['Artists', 'Countries', 'Traditions', 'Moods']
+  ['Artists', 'Countries', 'Subjects', 'Traditions', 'Moods']
 );
 expect('последняя ссылка художников', rows(sample)[0].links.at(-1), { href: '/artists', text: 'All artists' });
 expect(
@@ -127,8 +127,8 @@ for (const [origin, items] of origins)
     complain(`${origin}: ${items.length} работ разных художников — нужна строка в COUNTRIES`);
 
 for (const topic of COLLECTIONS) {
-  if (!['tradition', 'mood'].includes(topic.kind))
-    complain(`collections.js/${topic.slug}: kind не tradition и не mood`);
+  if (!['tradition', 'subject', 'mood'].includes(topic.kind))
+    complain(`collections.js/${topic.slug}: kind не tradition, не subject и не mood`);
   if (!topic.name) complain(`collections.js/${topic.slug}: нет name`);
 }
 const paths = everyPage(real).map(page => page.path);
@@ -144,5 +144,5 @@ if (problems.length) {
   process.exit(1);
 }
 console.log(
-  `обход: художников ${real.artists.length}, стран ${real.countries.length}, тем и традиций ${real.collections.length}`
+  `обход: художников ${real.artists.length}, стран ${real.countries.length}, тем, традиций и сюжетов ${real.collections.length}`
 );
