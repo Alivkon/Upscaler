@@ -221,13 +221,19 @@ export const COLLECTIONS = [
     // Бирштадт 3, дальше по 2 у Кенсетта, Хазелтайна, Иннесса. Кливленд —
     // 11 из 20; у двух держатель не назван («Wikimedia Commons»), поэтому
     // «most», а не «from museum collections».
+    //
+    // «American Romanticism» — второе имя той же школы, один раз и фразой:
+    // «american romanticism painting» Google подсказывает сам, а «…wallpaper»
+    // нет, то есть ищут термин, и абзац связывает с ним страницу. Романтизм
+    // целиком (Фридрих, Тёрнер, Айвазовский) — другой запрос и другая
+    // страница, не эта (TODO.md).
     title: 'Hudson River School phone wallpapers: free, no account',
     heading: 'Hudson River School collection',
     description:
       'Hudson River School phone wallpaper: Thomas Cole, Albert Bierstadt and other American landscape painters, 1828 to 1871. Free, no account.',
     note: ({ count }) =>
-      `${count} paintings of the Hudson River School, the American landscape painters of the ` +
-      'nineteenth century, chosen as phone wallpapers. Painted between 1828 and 1871, by Thomas ' +
+      `${count} paintings of the Hudson River School, the landscape painters of American ` +
+      'Romanticism, chosen as phone wallpapers. Painted between 1828 and 1871, by Thomas ' +
       'Cole, Albert Bierstadt, John Frederick Kensett and others. Most are from the Cleveland ' +
       'Museum of Art.',
     terms: ({ count, full }) =>
@@ -276,7 +282,7 @@ export const COLLECTIONS = [
       'Dutch Golden Age painting as phone wallpaper: still life by Willem Kalf, landscapes and a church interior. Free, no account.',
     note: ({ count }) =>
       `${count} paintings from the Dutch Golden Age, the seventeenth century of painting in the ` +
-      'Dutch Republic, chosen as phone wallpapers. Mostly still life, by Willem Kalf, Otto Marseus ' +
+      'Dutch Republic, chosen as phone wallpapers. Mostly Dutch still life, by Willem Kalf, Otto Marseus ' +
       'van Schrieck and others, from the Cleveland Museum of Art, the National Gallery of Denmark ' +
       'and other collections.',
     terms: ({ count, full }) =>
