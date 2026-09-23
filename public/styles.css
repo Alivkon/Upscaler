@@ -796,12 +796,12 @@ body.is-dragging .record--plate {
   margin-top: 26rem;
   padding-top: 16rem;
 }
-/* Строка под сеткой указателя: оглавление слева, рассылка справа. Набрана
-   как строка характеристик — мелко, капителью, приглушённо: это оглавление,
-   а не призыв, и спорить с работами над ним оно не должно.
-   Набор задан здесь, а не в `.browse`, потому что он общий на обе половины
-   строки; почему рассылка стоит рядом с `nav`, а не внутри него, — в
-   `tailRow` (pages.js). */
+/* Хвост под сеткой указателя: оглавление колонками, под ним справа рассылка.
+   Набран как строка характеристик — мелко, капителью, приглушённо: это
+   оглавление, а не призыв, и спорить с работами над ним оно не должно.
+   Набор задан здесь, а не в `.browse`, потому что он общий на обе части;
+   почему рассылка стоит рядом с `nav`, а не внутри него, — в `tailRow`
+   (pages.js). */
 .tail {
   display: flex;
   flex-wrap: wrap;
@@ -814,28 +814,64 @@ body.is-dragging .record--plate {
   text-transform: uppercase;
   color: var(--fg-dim);
 }
-/* Блок под сеткой: подпись слева колонкой, ссылки справа с переносом.
-   Подпись набрана тем же кеглем и цветом, но без подчёркивания: её не нажимают.
-   Цвет не задан, а унаследован от `.tail` (`--fg-dim`): подпись читают,
-   а ниже `--fg-dim` можно только надписям, которые не читают (`.tail__field`).
-   На узком экране подпись встаёт над своей строкой. */
+/* Блок под сеткой — список треков на альбоме: колонка на вид страниц,
+   подпись капителью строки, под ней названия строчными по одному в строку
+   и счёт справа, где у трека длительность. Подчёркиваний нет: в списке
+   ссылка узнаётся по месту, а двадцать подчёркнутых слов — это снова панель.
+   Цвет не задан, а унаследован от `.tail` (`--fg-dim`): названия и счёт
+   читают, а ниже `--fg-dim` можно только надписям, которые не читают
+   (`.tail__field`). Художников втрое больше, чем в остальных колонках, и им
+   отдано две колонки ширины со списком в два столбца. На телефоне колонок
+   две, художники — во всю ширину. */
+/* `min-width: 0`: без него сетка внутри `.tail` берёт ширину по содержимому
+   и на телефоне уезжает вправо за экран. */
 .browse {
+  flex: 1 1 100%;
+  min-width: 0;
   display: grid;
-  gap: 10rem;
+  grid-template-columns: repeat(auto-fill, minmax(150rem, 1fr));
+  gap: 26rem 36rem;
+  max-width: 1000rem;
 }
-.browse__row {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6rem 18rem;
-  margin: 0;
-}
-.browse__label {
-  flex: 0 0 110rem;
+.browse__group--artists {
+  grid-column: span 2;
 }
 @media (max-width: 600px) {
-  .browse__label {
-    flex-basis: 100%;
+  .browse {
+    grid-template-columns: 1fr 1fr;
   }
+}
+.browse__group--artists .browse__list {
+  columns: 2;
+  column-gap: 36rem;
+}
+.browse__label {
+  margin: 0 0 10rem;
+  padding-bottom: 8rem;
+  border-bottom: 1px solid var(--rule);
+}
+.browse__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  font-size: 12rem;
+  line-height: 2;
+  letter-spacing: normal;
+  text-transform: none;
+}
+.browse__list li {
+  break-inside: avoid;
+}
+.tail .browse__list a {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12rem;
+  text-decoration: none;
+}
+.browse__count {
+  font-size: 11rem;
+  font-variant-numeric: tabular-nums;
 }
 .artists {
   columns: 16em;
@@ -869,6 +905,9 @@ body.is-dragging .record--plate {
   align-items: baseline;
   gap: 10rem;
   margin-left: auto;
+  /* Под колонками оглавления рассылка — другой предмет, и отступ от них
+     больше, чем между самими колонками: иначе она читалась бы пятой. */
+  margin-top: 30rem;
 }
 /* Предложение набрано не капителью строки, а как `Subscribe` рядом: строчными
    и без разрядки. Капитель с разрядкой в этой строке занята — ею набраны

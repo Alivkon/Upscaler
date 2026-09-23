@@ -123,12 +123,17 @@ export const artistPageOf = (found, item) => found.artists.find(page => page.art
 // подборок ещё не отобрано, и она появится вместе с ними.
 export const rows = found =>
   [
-    { label: 'Traditions', pages: found.collections.filter(page => page.kind === 'tradition') },
+    { label: 'Artists', pages: [...found.artists, { path: '/artists', rowName: 'All artists' }] },
     { label: 'Countries', pages: found.countries },
-    { label: 'Moods', pages: found.collections.filter(page => page.kind === 'mood') },
-    { label: 'Artists', pages: [...found.artists, { path: '/artists', rowName: 'All artists' }] }
+    { label: 'Traditions', pages: found.collections.filter(page => page.kind === 'tradition') },
+    { label: 'Moods', pages: found.collections.filter(page => page.kind === 'mood') }
   ]
-    .map(row => ({ label: row.label, links: row.pages.map(page => ({ href: page.path, text: page.rowName })) }))
+    .map(row => ({
+      label: row.label,
+      // Счёт стоит у ссылки, как длительность у трека в списке альбома;
+      // у «All artists» его нет — это не страница работ, а указатель.
+      links: row.pages.map(page => ({ href: page.path, text: page.rowName, count: page.items?.length }))
+    }))
     .filter(row => row.links.length);
 
 // Указатель художников: все названные по имени, по алфавиту, со счётом.

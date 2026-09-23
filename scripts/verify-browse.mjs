@@ -63,9 +63,9 @@ expect(
 expect(
   'строки под сеткой',
   rows(sample).map(row => row.label),
-  ['Traditions', 'Countries', 'Moods', 'Artists']
+  ['Artists', 'Countries', 'Traditions', 'Moods']
 );
-expect('последняя ссылка художников', rows(sample).at(-1).links.at(-1), { href: '/artists', text: 'All artists' });
+expect('последняя ссылка художников', rows(sample)[0].links.at(-1), { href: '/artists', text: 'All artists' });
 expect(
   'указатель художников: все известные, с адресом только у страниц',
   artistIndex(sample, fixture).map(entry => [entry.name, entry.count, entry.path]),
