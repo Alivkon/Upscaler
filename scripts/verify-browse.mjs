@@ -42,14 +42,15 @@ const fixture = [
   ...['1', '2', '3', '4'].map(n => work(`c${n}`, 'Thomas Cole')),
   ...['1', '2', '3'].map(n => work(`b${n}`, 'Albert Bierstadt')),
   work('x1', 'After Thomas Cole (unidentified copyist)', 'America', 'unknown'),
-  ...['1', '2', '3', '4', '5', '6'].map(n => work(`r${n}`, 'Ivan Aivazovsky', 'Russia'))
+  ...['1', '2', '3', '4', '5', '6'].map(n => work(`r${n}`, 'Ivan Aivazovsky', 'Russia')),
+  work('x2', 'Unknown (Russia)', 'Russia', 'unknown')
 ];
 const sample = browse(fixture);
 expect('Коул с четырьмя — страница', sample.artists.map(page => page.path).includes('/artists/thomas-cole'), true);
 expect('Бирштадт с тремя — нет', sample.artists.map(page => page.path).includes('/artists/albert-bierstadt'), false);
 expect('копия не в счёте Коула', pageAt(sample, '/artists/thomas-cole').items.length, 4);
 expect('Америка: восемь работ, два художника', pageAt(sample, '/collection/american-painting')?.items.length, 8);
-expect('Россия: один художник — страны нет', pageAt(sample, '/collection/russian-painting'), null);
+expect('Россия: один художник и аноним — страны нет', pageAt(sample, '/collection/russian-painting'), null);
 expect('имена по весу, копия не названа', leadingNames(pageAt(sample, '/collection/american-painting').items), [
   'Thomas Cole',
   'Albert Bierstadt'
@@ -104,6 +105,12 @@ for (const item of visible)
     counts.set(item.provenance.creator, (counts.get(item.provenance.creator) ?? 0) + 1);
 for (const [creator, count] of counts)
   if (count >= MIN_WORKS) complain(`«${creator}»: ${count} работ — нужна запись в artists.js`);
+// Второе написание записанного художника: без годов оно совпадает с его именем,
+// но в `names` его нет, и работа молча уходит со страницы художника.
+const registered = new Set(ARTISTS.map(artist => artist.name));
+for (const creator of counts.keys())
+  if (registered.has(displayName({ provenance: { creator } })))
+    complain(`«${creator}»: это ${displayName({ provenance: { creator } })}, но написания нет в artists.js names`);
 
 for (const country of COUNTRIES)
   if (!real.countries.some(page => page.country === country))
