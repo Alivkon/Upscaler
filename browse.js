@@ -43,6 +43,12 @@ const terms = ({ count, full }) =>
   `All ${count} are phone wallpapers, ${full} of them at 2160 × 3840 or larger. ` +
   'Free to download and set as your background, no account needed.';
 
+// Порог свой, а не художников (MIN_WORKS): до 24.09.2026 он был общий, и когда
+// художникам его снизили до двух, стране он остался прежним. С двумя страница
+// полагалась бы Германии, Норвегии и Китаю — по две-три работы двух
+// художников (Геккель и Фридрих в одной стране), это совпадение, а не традиция.
+export const MIN_COUNTRY_WORKS = 4;
+
 // «Works», а не «paintings»: у Америки гравюры Одюбона, у Японии ксилографии
 // Киётики. В `title` «painting» остаётся — это слово запроса.
 function countryPage(country, items) {
@@ -97,7 +103,7 @@ export function browse(items) {
         country,
         items.filter(item => item.origin === country.origin)
       )
-    ).filter(page => page.items.length >= MIN_WORKS && leadingNames(page.items).length > 1),
+    ).filter(page => page.items.length >= MIN_COUNTRY_WORKS && leadingNames(page.items).length > 1),
     artists: ARTISTS.map(artist =>
       artistPage(
         artist,
@@ -137,16 +143,23 @@ export const rows = found =>
     .filter(row => row.links.length);
 
 // Указатель художников: все названные по имени, по алфавиту, со счётом.
-// Адрес — только у тех, у кого есть страница; остальные стоят именем,
-// и это показывает, что коллекция шире своих страниц.
+// Адрес — страница художника, а у кого работа одна — сама работа: своей
+// страницы у него нет (artists.js, MIN_WORKS), и вся его часть коллекции —
+// она. Без адреса остаётся только тот, у кого работ две и больше, а записи
+// нет, — это ловит `yarn verify`.
 export function artistIndex(found, items) {
   const entries = new Map();
   for (const item of items.filter(named)) {
     const name = displayName(item);
-    const page = found.artists.find(candidate => candidate.artist === artistOf(item));
-    const entry = entries.get(name) ?? { name, count: 0, path: page?.path ?? null };
+    const entry = entries.get(name) ?? { name, count: 0, page: artistPageOf(found, item), work: item };
     entry.count += 1;
     entries.set(name, entry);
   }
-  return [...entries.values()].sort((a, b) => a.name.localeCompare(b.name));
+  return [...entries.values()]
+    .map(({ name, count, page, work }) => ({
+      name,
+      count,
+      path: page?.path ?? (count === 1 ? `/w/${work.slug}` : null)
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
 }

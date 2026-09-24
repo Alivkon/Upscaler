@@ -5,7 +5,17 @@
 import { ARTISTS, MIN_WORKS, artistOf, displayName } from '../artists.js';
 import fs from 'node:fs/promises';
 import { COLLECTIONS } from '../collections.js';
-import { COUNTRIES, artistIndex, browse, everyPage, leadingNames, pageAt, pagesWith, rows } from '../browse.js';
+import {
+  COUNTRIES,
+  MIN_COUNTRY_WORKS,
+  artistIndex,
+  browse,
+  everyPage,
+  leadingNames,
+  pageAt,
+  pagesWith,
+  rows
+} from '../browse.js';
 import { accession } from '../public/record.js';
 import { CATALOGUE_DIR, workFile } from '../works.js';
 
@@ -19,6 +29,7 @@ const expect = (what, actual, wanted) => {
 // Работа в том виде, в каком её отдаёт галерея, но только с нужными полями.
 const work = (ref, creator, origin = 'America', creatorKind) => ({
   ref,
+  slug: ref,
   origin,
   provenance: { creator, ...(creatorKind ? { creatorKind } : {}) }
 });
@@ -35,19 +46,26 @@ expect('не записанный художник', artistOf(work('d', 'Claude 
 expect('имя записанного', displayName(work('e', 'Yokoyama Taikan (1868-1958)')), 'Yokoyama Taikan');
 expect('годы снимаются с незаписанного', displayName(work('f', 'Kobayashi Kokei (1883-1957)')), 'Kobayashi Kokei');
 expect('годы с вопросом', displayName(work('g', 'Kaji Tameya (?-1894)')), 'Kaji Tameya');
-expect('порог', MIN_WORKS, 4);
+expect('порог художника', MIN_WORKS, 2);
+expect('порог страны', MIN_COUNTRY_WORKS, 4);
 
 // Правила на выдуманных работах: порог, один художник на страну, порядок строк.
 const fixture = [
   ...['1', '2', '3', '4'].map(n => work(`c${n}`, 'Thomas Cole')),
   ...['1', '2', '3'].map(n => work(`b${n}`, 'Albert Bierstadt')),
+  work('l1', 'Claude Lorrain', 'France'),
   work('x1', 'After Thomas Cole (unidentified copyist)', 'America', 'unknown'),
   ...['1', '2', '3', '4', '5', '6'].map(n => work(`r${n}`, 'Ivan Aivazovsky', 'Russia')),
   work('x2', 'Unknown (Russia)', 'Russia', 'unknown')
 ];
 const sample = browse(fixture);
 expect('Коул с четырьмя — страница', sample.artists.map(page => page.path).includes('/artists/thomas-cole'), true);
-expect('Бирштадт с тремя — нет', sample.artists.map(page => page.path).includes('/artists/albert-bierstadt'), false);
+expect(
+  'Бирштадт с тремя — страница',
+  sample.artists.map(page => page.path).includes('/artists/albert-bierstadt'),
+  true
+);
+expect('Лоррен с одной — нет', sample.artists.map(page => page.path).includes('/artists/claude-lorrain'), false);
 expect('копия не в счёте Коула', pageAt(sample, '/artists/thomas-cole').items.length, 4);
 expect('Америка: восемь работ, два художника', pageAt(sample, '/collection/american-painting')?.items.length, 8);
 expect('Россия: один художник и аноним — страны нет', pageAt(sample, '/collection/russian-painting'), null);
@@ -67,10 +85,11 @@ expect(
 );
 expect('последняя ссылка художников', rows(sample)[0].links.at(-1), { href: '/artists', text: 'All artists' });
 expect(
-  'указатель художников: все известные, с адресом только у страниц',
+  'указатель художников: адрес — страница, а с одной работой — сама работа',
   artistIndex(sample, fixture).map(entry => [entry.name, entry.count, entry.path]),
   [
-    ['Albert Bierstadt', 3, null],
+    ['Albert Bierstadt', 3, '/artists/albert-bierstadt'],
+    ['Claude Lorrain', 1, '/w/l1'],
     ['Ivan Aivazovsky', 6, '/artists/ivan-aivazovsky'],
     ['Thomas Cole', 4, '/artists/thomas-cole']
   ]
@@ -120,7 +139,7 @@ for (const item of visible) origins.set(item.origin, [...(origins.get(item.origi
 for (const [origin, items] of origins)
   if (
     origin !== 'Tessarum' &&
-    items.length >= MIN_WORKS &&
+    items.length >= MIN_COUNTRY_WORKS &&
     leadingNames(items).length > 1 &&
     !COUNTRIES.some(country => country.origin === origin)
   )

@@ -5,9 +5,12 @@
 // и страница без проверенной этикетки хуже, чем никакой. Что художник дорос,
 // а записи нет, ловит `yarn verify` (scripts/verify-browse.mjs).
 //
-// Почему 4. Страница из одной-двух работ повторяет страницу работы, а это
-// дубль. Счёт сам по себе не ранжирует (COLLECTIONS.md: семь работ стояли выше
-// склада на 288), так что выше порог поднимать незачем.
+// Почему 2 (24.09.2026, было 4). В указателе художников у одних имён была
+// ссылка, у других нет, и без видимой причины. Страница из двух работ уже
+// показывает то, чего нет на странице работы, — вторую. Страница из одной
+// повторяла бы страницу работы, это дубль; такое имя в указателе ведёт прямо
+// на работу (browse.js, `artistIndex`). Счёт сам по себе не ранжирует
+// (COLLECTIONS.md: семь работ стояли выше склада на 288).
 //
 // `names` — все написания из `provenance.creator`. Каталог переносит строку
 // из источника как есть, и один человек записан в нём по-разному: «Yokoyama
@@ -19,9 +22,14 @@
 // под H, а не под V. `made` — чем названы работы в абзаце и описании:
 // у Одюбона гравюры, и «paintings» было бы неправдой.
 //
-// Этикетка: годы жизни, страна, род занятий, по описанию Wikidata (23.09.2026).
-// Уилсону Wikidata даёт и 1713, и 1714; взят 1714, как в самом описании.
-export const MIN_WORKS = 4;
+// Этикетка: годы жизни, страна, род занятий, по описанию Wikidata (23.09.2026,
+// двенадцать записей от Бёклина до Сюнкё — 24.09.2026). Уилсону Wikidata даёт
+// и 1713, и 1714; взят 1714, как в самом описании. Киётика у Wikidata
+// «Japanese artist», а не painter: работы у него — гравюры.
+//
+// Японские имена стоят по художественному имени, как Тайкан: у двух Кобаяси
+// фамилия одна, и в строке под сеткой «Kobayashi» было бы два раза.
+export const MIN_WORKS = 2;
 
 export const ARTISTS = [
   {
@@ -61,6 +69,15 @@ export const ARTISTS = [
     names: ['Albert Bierstadt']
   },
   {
+    slug: 'arnold-bocklin',
+    name: 'Arnold Böcklin',
+    short: 'Böcklin',
+    made: 'paintings',
+    label: 'Arnold Böcklin (1827–1901), Swiss painter',
+    wikidata: 'Q123071',
+    names: ['Arnold Böcklin']
+  },
+  {
     slug: 'thomas-cole',
     name: 'Thomas Cole',
     short: 'Cole',
@@ -68,6 +85,15 @@ export const ARTISTS = [
     label: 'Thomas Cole (1801–1848), American painter',
     wikidata: 'Q334001',
     names: ['Thomas Cole']
+  },
+  {
+    slug: 'gustave-courbet',
+    name: 'Gustave Courbet',
+    short: 'Courbet',
+    made: 'paintings',
+    label: 'Gustave Courbet (1819–1877), French painter',
+    wikidata: 'Q34618',
+    names: ['Gustave Courbet']
   },
   {
     slug: 'theodore-gudin',
@@ -88,6 +114,24 @@ export const ARTISTS = [
     names: ['Vilhelm Hammershøi']
   },
   {
+    slug: 'william-stanley-haseltine',
+    name: 'William Stanley Haseltine',
+    short: 'Haseltine',
+    made: 'paintings',
+    label: 'William Stanley Haseltine (1835–1900), American painter',
+    wikidata: 'Q2762575',
+    names: ['William Stanley Haseltine']
+  },
+  {
+    slug: 'martin-johnson-heade',
+    name: 'Martin Johnson Heade',
+    short: 'Heade',
+    made: 'paintings',
+    label: 'Martin Johnson Heade (1819–1904), American painter',
+    wikidata: 'Q3123472',
+    names: ['Martin Johnson Heade']
+  },
+  {
     slug: 'jan-van-huysum',
     name: 'Jan van Huysum',
     short: 'van Huysum',
@@ -95,6 +139,15 @@ export const ARTISTS = [
     label: 'Jan van Huysum (1682–1749), Dutch painter',
     wikidata: 'Q527869',
     names: ['Jan van Huysum']
+  },
+  {
+    slug: 'george-inness',
+    name: 'George Inness',
+    short: 'Inness',
+    made: 'paintings',
+    label: 'George Inness (1825–1894), American landscape painter',
+    wikidata: 'Q704868',
+    names: ['George Inness']
   },
   {
     slug: 'willem-kalf',
@@ -106,6 +159,33 @@ export const ARTISTS = [
     names: ['Willem Kalf']
   },
   {
+    slug: 'john-frederick-kensett',
+    name: 'John Frederick Kensett',
+    short: 'Kensett',
+    made: 'paintings',
+    label: 'John Frederick Kensett (1816–1872), American painter',
+    wikidata: 'Q982284',
+    names: ['John Frederick Kensett']
+  },
+  {
+    slug: 'kobayashi-kiyochika',
+    name: 'Kobayashi Kiyochika',
+    short: 'Kiyochika',
+    made: 'prints',
+    label: 'Kobayashi Kiyochika (1847–1915), Japanese artist',
+    wikidata: 'Q3121142',
+    names: ['Kobayashi Kiyochika']
+  },
+  {
+    slug: 'kobayashi-kokei',
+    name: 'Kobayashi Kokei',
+    short: 'Kokei',
+    made: 'paintings',
+    label: 'Kobayashi Kokei (1883–1957), Japanese painter',
+    wikidata: 'Q3198111',
+    names: ['Kobayashi Kokei (1883-1957)']
+  },
+  {
     slug: 'claude-lorrain',
     name: 'Claude Lorrain',
     short: 'Lorrain',
@@ -115,6 +195,24 @@ export const ARTISTS = [
     names: ['Claude Lorrain']
   },
   {
+    slug: 'john-martin',
+    name: 'John Martin',
+    short: 'Martin',
+    made: 'paintings',
+    label: 'John Martin (1789–1854), English painter',
+    wikidata: 'Q937096',
+    names: ['John Martin']
+  },
+  {
+    slug: 'george-morland',
+    name: 'George Morland',
+    short: 'Morland',
+    made: 'paintings',
+    label: 'George Morland (1763–1804), British painter',
+    wikidata: 'Q2405427',
+    names: ['George Morland']
+  },
+  {
     slug: 'otto-didrik-ottesen',
     name: 'Otto Didrik Ottesen',
     short: 'Ottesen',
@@ -122,6 +220,24 @@ export const ARTISTS = [
     label: 'Otto Didrik Ottesen (1816–1892), Danish painter',
     wikidata: 'Q12329765',
     names: ['Otto Didrik Ottesen']
+  },
+  {
+    slug: 'otto-marseus-van-schrieck',
+    name: 'Otto Marseus van Schrieck',
+    short: 'van Schrieck',
+    made: 'paintings',
+    label: 'Otto Marseus van Schrieck (1619–1678), Dutch painter',
+    wikidata: 'Q339270',
+    names: ['Otto Marseus van Schrieck']
+  },
+  {
+    slug: 'yamamoto-shunkyo',
+    name: 'Yamamoto Shunkyo',
+    short: 'Shunkyo',
+    made: 'paintings',
+    label: 'Yamamoto Shunkyo (1872–1933), Japanese painter',
+    wikidata: 'Q11466315',
+    names: ['Yamamoto Shunkyo']
   },
   {
     slug: 'yokoyama-taikan',

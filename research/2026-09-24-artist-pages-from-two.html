@@ -1,0 +1,64 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Страницы художников с двух работ</title>
+<style>
+body{max-width:46em;margin:2em auto;padding:0 1em;font:16px/1.55 Georgia,serif}
+pre{background:#f4f4f4;padding:.8em;overflow-x:auto;font:13px/1.4 monospace;white-space:pre-wrap}
+code{background:#f4f4f4;padding:0 .2em;font:13px monospace}
+</style>
+<h1>Страницы художников с двух работ</h1>
+<p>24.09.2026. Решение Charlie.</p>
+<h2>Цель</h2>
+<p>В указателе <code>/artists</code> у одних имён была ссылка, у других нет: страница
+художника появлялась с четырёх показанных работ. Со стороны это выглядело
+как недосмотр.</p>
+<h2>Решения</h2>
+<ul>
+<li>Страница художника появляется с двух показанных работ (<code>MIN_WORKS = 2</code>, было 4).
+На странице из двух работ есть то, чего нет на странице работы: вторая.</li>
+<li>У кого работа одна, своей страницы нет: она повторяла бы страницу работы.
+Его имя в <code>/artists</code> ведёт прямо на эту работу. В подписи на самой работе
+имя остаётся текстом: ссылка вела бы на ту же страницу.</li>
+<li>Страны остались на своём пороге, 4 (<code>MIN_COUNTRY_WORKS</code> в <code>browse.js</code>).
+До сих пор порог был общий. С двумя <code>yarn verify</code> потребовал бы страниц
+для Германии (Геккель, Фридрих), Норвегии (Эгедиус, Сульберг) и Китая
+(Ван Инь, Гао Цзипэй): по 2–3 работы двух художников.</li>
+</ul>
+<h2>Изменения</h2>
+<ul>
+<li><code>artists.js</code>: порог 2 и причина; двенадцать записей: Böcklin, Courbet,
+Haseltine, Heade, Inness, Kensett, Kiyochika, Kokei, Martin, Morland,
+van Schrieck, Shunkyo. Этикетки и Q-номера взяты из описаний Wikidata
+(поиск <code>wbsearchentities</code>, 24.09). Японские имена стоят по художественному
+имени, как у Тайкана.</li>
+<li><code>browse.js</code>: <code>MIN_COUNTRY_WORKS</code>; <code>artistIndex</code> даёт одноработному адрес
+<code>/w/&lt;slug&gt;</code>.</li>
+<li><code>pages.js</code>: комментарий над <code>artistsPage</code>.</li>
+<li><code>scripts/verify-browse.mjs</code>: оба порога, Бирштадт с тремя теперь со
+страницей, у Лоррена с одной работой ссылка ведёт на неё.</li>
+</ul>
+<h2>Проверки</h2>
+<p>Счёт по показанным работам (158, скрытые не в счёте): 66 имён; 13 уже
+со страницей, 12 с двумя-тремя работами, 41 с одной.</p>
+<pre><code>$ yarn verify
+обход: художников 25, стран 6, тем, традиций и сюжетов 11
+verify exit 0
+
+$ curl /artists: имён со ссылкой 66, без ссылки 0
+$ curl /artists/gustave-courbet → 200
+  &lt;title&gt;Gustave Courbet phone wallpapers: free, no account&lt;/title&gt;
+$ curl /w/the-great-day-of-his-wrath-john-martin-iphone-wallpaper
+  &quot;More by John Martin&quot;: 1, ссылка на /artists/john-martin: 1
+$ curl / → ссылок на /artists/* в строке под сеткой: 25 (было 13)
+$ curl /sitemap.xml → адресов /artists/*: 25
+</code></pre>
+<h2>Ограничения</h2>
+<ul>
+<li>Строка «Artists» под сеткой указателя выросла с 13 до 25 имён.</li>
+<li>Этикетки сверены с описанием Wikidata, но не с другими источниками.
+У Морланда и Кенсетта Wikidata пишет «artist», в этикетке «painter»: оба
+писали маслом, и работы в коллекции живописные.</li>
+<li>Отдельного правила для художника, у которого в каталоге две записи
+разными написаниями, нет: его ловит <code>yarn verify</code>, как и раньше.</li>
+</ul>
+
