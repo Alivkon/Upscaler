@@ -661,6 +661,59 @@ export const COLLECTIONS = [
     ]
   },
   {
+    slug: 'dark-floral',
+    kind: 'mood',
+    name: 'Dark floral',
+    // Спрос: `dark floral phone wallpaper`, `dark flower phone wallpaper`,
+    // `vintage floral wallpaper iphone`, по 100–1k в месяц, а первая страница
+    // по ним похожа на Flowers в приглушённом виде; research/2026-09-24-dark-demand.md.
+    // Без «phone» то же «dark floral» означает обои на стену, поэтому «phone» в `title`.
+    //
+    // «Vintage» набирают, но на странице оно звучало бы чужим словом; стоит
+    // оно только в `title` и `description`, то есть в выдаче, и в `title`
+    // не в первых двух словах, чтобы вкладка начиналась с «Dark floral».
+    //
+    // Отбор: лист .darkfloralsheet.mjs: подсказки Sonnet по картинке
+    // (research/2026-09-24-visual-dark-floral-tags.json), решение Charlie
+    // (research/2026-09-24-dark-floral-picks-charlie.txt). Flowers остаётся
+    // как есть: «flower painting wallpaper» того же порядка, и это другой запрос.
+    title: 'Dark floral phone wallpapers: free vintage flower paintings',
+    heading: 'Dark floral collection',
+    description:
+      'Dark floral phone wallpaper from vintage flower paintings: roses, tulips and poppies on dark grounds, by Ottesen and van Huysum. Free, no account.',
+    // Оттесен 7 и ван Хёйсум 6 из 19, отсюда «mostly». Даты по каталогу:
+    // де Ринг 1630–1660 самый ранний, Ямамото Хосуй «Meiji era, 19th century».
+    note: ({ count }) =>
+      `${count} flower paintings chosen for their dark grounds: roses, tulips and poppies in ` +
+      'vases and urns, blossoms on a branch, water lilies on a forest lake. Mostly by Otto Didrik ' +
+      'Ottesen and Jan van Huysum, painted from the 17th to the 19th century, from the SMK in ' +
+      'Copenhagen, the Cleveland Museum of Art and other collections.',
+    terms: ({ count, full }) =>
+      `All ${count} are phone wallpapers at 9:16, ${full} of them at 2160 × 3840 or larger. Free to ` +
+      'download and set as your background, no account needed.',
+    refs: [
+      'vl-0452',
+      'vl-0457',
+      'vl-0455',
+      'vl-0275',
+      'vl-0216',
+      'vl-0446',
+      'vl-0456',
+      'vl-0178',
+      'vl-0380',
+      'vl-0369',
+      'vl-0221',
+      'vl-0451',
+      'vl-0440',
+      'vl-0177',
+      'vl-0385',
+      'vl-0252',
+      'vl-0343',
+      'vl-0253',
+      'vl-0356'
+    ]
+  },
+  {
     slug: 'cottagecore',
     kind: 'mood',
     name: 'Cottagecore',
