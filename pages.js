@@ -1122,10 +1122,27 @@ const alternates = (item, switchable) => {
 };
 
 // Страницы, на которых работа стоит, и страница её художника приходят
+// Полка под работой: несколько работ со страницы, где стоит и эта, и ссылка
+// на всю страницу. Ссылка — ради того, чтобы полка читалась выборкой, а не
+// всей темой: шесть карточек и черта под ними иначе выглядят концом. Полка без
+// страницы (`page: null`) — случайная из всей коллекции у работы, которая
+// ни на одной странице не стоит; её «всё» — строка под полками.
+const shelf = ({ page, items }) => {
+  const heading = !page
+    ? 'More in the collection'
+    : page.kind === 'artist'
+      ? `More by ${escape(page.name)}`
+      : `More in ${escape(page.name)}`;
+  const all = page
+    ? `<p class="outro"><a class="link" href="${escape(page.path)}">See all ${page.items.length} →</a></p>`
+    : '';
+  return `<section class="adjacent"><h2 class="heading">${heading}</h2>${grid(items)}${all}</section>`;
+};
+
 // снаружи: страница работы о составе страниц не знает и знать не должна —
 // его решает `browse.js`, и считает `server.js` один раз на запрос. `artist` —
 // страница художника (с `path`), а не запись из `ARTISTS`: у записи адреса нет.
-export function workPage({ item, sameHand = [], others, pages = [], artist = null, origin }) {
+export function workPage({ item, shelves = [], total, pages = [], artist = null, origin }) {
   // Проём показывает кадр 9:16, и всё, что страница о работе утверждает —
   // размер, вес, тип, разметка, превью, — относится к нему же: посетитель
   // получает по кнопке именно этот файл. Плита названа отдельно и ниже.
@@ -1246,7 +1263,7 @@ export function workPage({ item, sameHand = [], others, pages = [], artist = nul
   // кнопки: расширением Pinterest сохраняют мимо неё, и без атрибута в пин
   // ушёл бы `alt`.
   //
-  // Соседние работы под ней («More in the collection», «More by …») их не получают
+  // Полки под ней («More by …», «More in …») их не получают
   // нарочно: пин с них указывал бы на эту страницу, а не на свою.
   const pinned =
     ` data-pin-media="${origin}${escape(file.url)}" data-pin-url="${origin}/w/${escape(item.slug)}"` +
@@ -1371,8 +1388,8 @@ export function workPage({ item, sameHand = [], others, pages = [], artist = nul
           ${alternates(item, Boolean(otherFile))}
         </div>
       </div>
-      ${sameHand.length ? `<section class="adjacent"><h2 class="heading">More by ${escape(artist.name)}</h2>${grid(sameHand)}</section>` : ''}
-      ${others.length ? `<section class="adjacent"><h2 class="heading">More in the collection</h2>${grid(others)}</section>` : ''}
+      ${shelves.map(shelf).join('\n      ')}
+      <p class="outro"><a class="link" href="/">All ${total} works →</a></p>
     `
   });
 }

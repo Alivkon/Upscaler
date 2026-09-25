@@ -1,0 +1,45 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Полки под работой</title>
+<style>
+body{max-width:46em;margin:2em auto;padding:0 1em;font:16px/1.55 Georgia,serif}
+code{background:#f4f4f4;padding:0 .2em;font:13px monospace}
+table{border-collapse:collapse}td,th{padding:.3em .6em;text-align:left}
+</style>
+<h1>Полки под работой: по одной на каждую страницу, где она стоит</h1>
+<h2>Цель</h2>
+<p>Под работой стояли «More by …» (до пяти работ художника) и «More in the collection» (случайный добор до десяти). Случайный ряд ничего не говорит о работе. Charlie предложил вместо него показывать по ряду на каждую тему, где работа стоит: «More by художник», «More in Landscape», «More in Dark academia».
+<h2>Решения</h2>
+<ul>
+<li><strong>Полка — на каждую страницу работы:</strong> художник, темы, страны (<code>pagesWith</code> в <code>browse.js</code>).
+<li><strong>Порядок: художник, потом темы и страны от меньшей к большей.</strong> Темы вложены: Moody landscape (14) в Landscape (69), Nihonga (16) в Japanese painting (28). Меньшая описывает работу точнее. Ручного порядка нет, растущая тема уходит вниз сама.
+<li><strong>Страны в полках.</strong> Сначала предлагалось их исключить. Замер показал обратное: у 16 из 28 японских работ нет страницы художника, у 6 нет темы. Страна у них единственная полка, кроме Nihonga.
+</ul>
+<table border="1"><tr><th>страна<th>работ<th>без страницы художника<th>без темы<tr><td>Japanese<td>28<td>16<td>6<tr><td>Dutch<td>28<td>9<td>0<tr><td>French<td>27<td>7<td>2<tr><td>American<td>28<td>6<td>2</table>
+<ul>
+<li><strong>Работа на полках не повторяется</strong>, выборка в каждой случайная, как была у общего ряда.
+<li><strong>Видно, что есть ещё.</strong> Полка кончается ссылкой «See all N →» на свою страницу, страница кончается «All 158 works →» на указатель. Без этого пять карточек и черта читались концом коллекции.
+<li><strong>Случайная полка осталась только у работ без единой страницы</strong> (14 из 158), иначе их страница кончалась бы ничем.
+<li><strong>Шесть работ, не больше трёх полок</strong> (<code>SHELF</code>, <code>SHELVES</code> в <code>gallery.js</code>). Сетка ставит две колонки на телефоне и три на ноутбуке (1400 px). При пяти каждая полка кончалась дыркой (2+2+1, 3+2), шесть заполняют ряды в обоих случаях. Предел 18 работ на страницу, прежде 10.
+</ul>
+<h2>Изменения</h2>
+<ul>
+<li><code>gallery.js</code>: <code>ADJACENT = 10</code> → <code>SHELF = 6</code>, <code>SHELVES = 3</code>.
+<li><code>server.js</code>, маршрут <code>/w/:slug</code>: сборка полок вместо <code>sameHand</code> и <code>others</code>.
+<li><code>pages.js</code>: <code>workPage</code> принимает <code>shelves</code> и <code>total</code>, полку рисует <code>shelf()</code>.
+</ul>
+<h2>Проверка</h2>
+<p><code>yarn verify</code> — код 0. Все 158 страниц работ с локального сервера разобраны по разметке:
+<table border="1"><tr><th>полок на странице<th>страниц<tr><td>3<td>121<tr><td>2<td>23<tr><td>1<td>14</table>
+<ul>
+<li>Повторов между полками: 0 из 158 страниц. Работа сама себя не показывает ни на одной.
+<li>Работ под работой: от 6 до 18, у 57 страниц 18.
+<li>Пример: <code>/w/alpes-japonaises-yamamoto-shunkyo-…</code> — More by Yamamoto Shunkyo [1] | More in Nihonga [6] | More in Japanese painting [6].
+<li>Снимки headless Chromium на ширине 390 и 1400 px: ряды полные (2×3 и 3×2).
+</ul>
+<h2>Ограничения</h2>
+<ul>
+<li>При трёх полках у работы, стоящей на четырёх и более страницах, самые большие страницы отрезаются. Чаще всего это Landscape (69).
+<li>На широком окне в 4 колонки полка ложится 4+2.
+<li>Заголовок «More in Landscape» берёт <code>name</code> страницы как есть, с заглавной.
+</ul>

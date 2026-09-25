@@ -6,7 +6,7 @@ import compression from 'compression';
 import express from 'express';
 import multer from 'multer';
 import sharp from 'sharp';
-import { IMAGES_DIR, ADJACENT, ensureImageDirectories, galleryItems, isImage } from './gallery.js';
+import { IMAGES_DIR, SHELF, SHELVES, ensureImageDirectories, galleryItems, isImage } from './gallery.js';
 import { HttpError } from './http-error.js';
 import { announce, configured as indexNowReady, key as indexNowKey } from './indexnow.js';
 import { journal } from './journal.js';
@@ -333,26 +333,51 @@ app.get('/w/:slug', async (req, res, next) => {
     // не покажет, и звать с её страницы туда нельзя.
     const found = browse(visible);
     const artistPage = artistPageOf(found, item);
-    // Соседи: сначала другие работы того же художника, если у него есть
-    // страница, — под своей подписью «More by …», и в ней только его работы:
-    // подпись над чужими была бы неправдой. Своих — не больше половины:
-    // у Кальфа одиннадцать работ, и без потолка его страницы ссылались бы
-    // только друг на друга. Остальное — случайный добор, как было, и по той же
-    // причине, под «More in the collection».
-    const sameHand = artistPage
-      ? sample(
-          artistPage.items.filter(work => work !== item),
-          ADJACENT / 2
+    const pages = pagesWith(found, item);
+    // Под работой — полки: по одной на каждую страницу, где она стоит, чтобы
+    // «ещё» значило «ещё такого же», а не «ещё чего-нибудь». Сначала художник,
+    // потом темы и страны от меньшей к большей: темы вложены (Moody landscape
+    // в Landscape, Nihonga в Japanese painting), и меньшая описывает работу
+    // точнее. Полок не больше SHELVES, работа на полках не повторяется, а
+    // выборка в каждой случайная — по той же причине, что прежде у общей:
+    // с любой работы уводили бы одни и те же соседи.
+    //
+    // Страны в полках нарочно: у японских работ шестнадцать из двадцати восьми
+    // без страницы художника, и страна у них — единственная полка, кроме Nihonga.
+    const shelves = [];
+    const taken = new Set([item]);
+    const where = [artistPage, ...[...pages].sort((a, b) => a.items.length - b.items.length)];
+    for (const page of where.filter(Boolean)) {
+      if (shelves.length === SHELVES) break;
+      const picked = sample(
+        page.items.filter(work => !taken.has(work)),
+        SHELF
+      );
+      if (!picked.length) continue;
+      picked.forEach(work => taken.add(work));
+      shelves.push({ page, items: picked });
+    }
+    // Работе без единой страницы — случайная полка из всей коллекции, иначе
+    // её страница кончалась бы ничем.
+    if (!shelves.length)
+      shelves.push({
+        page: null,
+        items: sample(
+          visible.filter(work => work !== item),
+          SHELF
         )
-      : [];
-    const others = sample(
-      visible.filter(work => work !== item && !sameHand.includes(work)),
-      ADJACENT - sameHand.length
-    );
+      });
     html(
       res,
       200,
-      workPage({ item, sameHand, others, pages: pagesWith(found, item), artist: artistPage, origin: SITE_ORIGIN })
+      workPage({
+        item,
+        shelves,
+        total: visible.length,
+        pages,
+        artist: artistPage,
+        origin: SITE_ORIGIN
+      })
     );
   } catch (error) {
     next(error);
