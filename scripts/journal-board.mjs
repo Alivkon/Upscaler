@@ -16,7 +16,7 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { appleShare, deviceOf, foreign, imageIndex, readDays, visitsOf } from './journal-read.mjs';
+import { deviceOf, foreign, imageIndex, readDays, visitsOf } from './journal-read.mjs';
 import { TYPES, searchReport } from './search-console.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -105,12 +105,32 @@ for (const visit of people) {
 }
 const noRef = coldEntries.filter(entry => entry.ref === '-').length;
 
+// Ссылку, вставленную в iMessage, Apple разворачивает в превью и страницу
+// для него берёт сама, под заголовком с тремя именами сразу — такого нет ни
+// у настоящего Facebook, ни у Twitter. Тот же сборщик стоит за превью
+// в Заметках, Почте и в шапке меню «Поделиться», которое могли и закрыть,
+// так что это «ссылка была в превью Apple», а не «отправили». Считается
+// только ответ 2xx: после редиректа сборщик пришёл бы второй раз, уже по новому
+// адресу, и одно превью стало бы двумя.
+const appleShare = record =>
+  record.kind === 'page' && record.status < 300 && record.ua.includes('facebookexternalhit/1.1 Facebot Twitterbot/1.0');
+
 // Превью Apple — по всем заходам, а не по людям: сборщик Apple машина,
-// хоть и позванная человеком. Единица — страница в заходе: та же ссылка,
-// вставленная дважды за минуту, приходит двумя строками, а превью у неё одно.
-const shared = [
-  ...new Set(visits.flatMap(visit => visit.lines.filter(appleShare).map(line => `${visit.key} ${line.path}`)))
-].map(key => key.split(' ')[1]);
+// хоть и позванная человеком. Та же ссылка, развёрнутая дважды за минуту,
+// приходит двумя строками, а превью у неё одно; поэтому строки одной
+// страницы в одном заходе сливаются, только если между ними меньше минуты.
+// Заход целиком единицей не годится: заголовок у сборщика один на все
+// устройства, и заход у него — это сеть за сутки, так что отправка утром
+// и отправка вечером слились бы в одну.
+const shared = [];
+const lastPreview = new Map();
+for (const line of records.filter(appleShare).sort((a, b) => a.time.localeCompare(b.time))) {
+  const key = `${line.key} ${line.path}`;
+  const at = Date.parse(line.time);
+  const before = lastPreview.get(key);
+  if (before === undefined || at - before >= 60_000) shared.push(line.path);
+  lastPreview.set(key, at);
+}
 const alone = coldEntries.filter(entry => entry.pages === 1).length;
 
 // Перезапуск сервера посреди дня виден по составу столбцов. Соль `visit`

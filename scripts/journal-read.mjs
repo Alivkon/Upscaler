@@ -6,21 +6,13 @@
 // здесь: вопросы к журналу будут прибывать, а правила чтения — те же.
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import { COLUMNS } from '../journal.js';
+import { COLUMNS, claimedBy } from '../journal.js';
 import { galleryItems } from '../gallery.js';
 
 // Реферер с чужого сайта. Свой — это переход внутри витрины, и он отвечает
 // на другой вопрос, чем «откуда пришли»; прочерк — что реферера не было вовсе.
 export const foreign = ref =>
   ref !== '-' && !ref.startsWith('tessarum') && !ref.startsWith('127.0.0.1') && !ref.startsWith('localhost');
-
-// Ссылку, вставленную в iMessage, Apple разворачивает в превью и страницу
-// для него берёт сама, под заголовком с тремя именами сразу — такого нет ни
-// у настоящего Facebook, ни у Twitter. Тот же сборщик стоит за превью
-// в Заметках, Почте и в шапке меню «Поделиться», которое могли и закрыть,
-// так что это «ссылка была в превью Apple», а не «отправили».
-export const appleShare = record =>
-  record.kind === 'page' && record.ua.includes('facebookexternalhit/1.1 Facebot Twitterbot/1.0');
 
 // ── чтение ─────────────────────────────────────────────────────
 
@@ -116,12 +108,17 @@ export async function imageIndex() {
 // Заход — это все строки одного `visit` за день. Правило грубое и заведомо
 // неточное; его и проверяют `--sample` и ручные ярлыки.
 //
-// Четыре признака, по убыванию надёжности. Назвался краулером — краулер,
-// и спорить не о чем. Не взял ни одной удачной страницы и ни одного файла —
-// стучался, а не смотрел. Забрал страницу и не забрал к ней ни файла — не
-// браузер: браузер просит `styles.css` и карточки в ту же секунду, а качалка
-// берёт разметку и уходит. Не прислал языка вовсе — признак слабый, сам по
-// себе не судит.
+// Пять признаков, и решает первый сработавший: заход, пойманный двумя,
+// получает ярлык того, что стоит выше. Назвался краулером: краулер, и спорить
+// не о чем. Не прислал заголовка браузера вовсе: тоже. Не взял ни одной
+// удачной страницы и ни одного файла: стучался, а не смотрел. Забрал страницу
+// и не забрал к ней ни файла: не браузер, потому что браузер просит
+// `styles.css` и карточки в ту же секунду, а качалка берёт разметку и уходит.
+// Последний, «без Sec-Fetch», ниже.
+//
+// Назвавшимся считается и строка, где `bot` прочерк, но заголовок узнаёт
+// `claimedBy`: имя попало в список позже, чем строка в журнал. Так
+// пересчитались картинки превью iMessage, записанные до 26.09.2026.
 //
 // «Одни 404» появился позже остальных и закрывает дыру в правиле «молча»:
 // оно считает только строки `page`, а сканер дырок в WordPress до страницы
@@ -131,7 +128,7 @@ export async function imageIndex() {
 // и мала: человек, у которого первым запросом ушёл `/favicon.ico` и который
 // тут же закрыл вкладку, тоже попадёт в машины.
 //
-// «Без Sec-Fetch» — пятый, и держится он на том, что заголовок
+// «Без Sec-Fetch» держится на том, что заголовок
 // `Sec-Fetch-Dest` браузер ставит сам, на каждый запрос: Chrome с 2020 года,
 // Firefox с 2021-го, Safari с 16.4. Заход, в котором его нет ни на одной
 // строке, браузером не был. Правило закрыло качалку 24.09: 51 заход по
@@ -144,8 +141,30 @@ export async function imageIndex() {
 // `/sitemap.xml`. Похожих на браузер среди них нет. Сравнение строгое, с
 // `'none'`: так `journal.js` пишет отсутствие заголовка, а прочерк — это
 // строка, записанная до появления столбца, и она ничего не доказывает.
+//
+// Стоит он последним, потому что ловит и тех, кого уже поймали признаки выше:
+// за 13.09–26.09 заголовка не было ни разу в 456 заходах, и 343 из них
+// уже были «одни 404» или «молча». Стоя выше, он переименовал бы их, и таблица
+// «Машины: кто» перестала бы показывать сканеры и качалки разметки отдельно.
+//
+// Safari и всё, что на iPhone, до 16.4 заголовка не ставят вовсе, и такой
+// заход правило не судит. Граница снизу, 15: на iOS 15 остались iPhone 6s,
+// 7 и первый SE, а 16.0–16.3 бывает у того, кто не обновлялся. Всё, что
+// старше, в 2026-м уже не телефон, а подпись: за тот же месяц это семь
+// заходов «Safari 8» на OS X 10.10, и каждый только за `/robots.txt`.
+const withoutFetchMetadata = ua => {
+  const version =
+    ua.match(/(?:iPhone|iPad|iPod).*? OS (\d+)_(\d+)/) ||
+    (!/Chrome|Chromium|CriOS|Edg|Firefox/.test(ua) && ua.match(/Version\/(\d+)\.(\d+).*Safari/));
+  if (!version) return false;
+  const [major, minor] = [Number(version[1]), Number(version[2])];
+  return major === 15 || (major === 16 && minor < 4);
+};
+
 function classify(lines) {
-  const declared = lines.map(line => line.bot).find(bot => bot && bot !== '-' && bot !== 'noua');
+  const declared = lines
+    .map(line => (line.bot === '-' ? claimedBy(line.ua) : line.bot))
+    .find(bot => bot && bot !== '-' && bot !== 'noua');
   const pages = lines.filter(line => line.kind === 'page').length;
   const props = lines.filter(line => line.kind === 'asset' || line.kind === 'image').length;
   const noua = lines.some(line => line.bot === 'noua');
@@ -153,13 +172,11 @@ function classify(lines) {
     line => (line.kind === 'page' && line.status < 400) || line.kind === 'asset' || line.kind === 'image'
   );
   if (declared) return { bot: true, why: declared.split(':')[0], fake: declared.endsWith(':fake') };
-  // Картинки превью iMessage `journal.js` узнаёт с 26.09.2026; строки до
-  // того записаны без метки, и узнавать их приходится здесь.
-  if (lines.some(line => /networkingextension/i.test(line.ua))) return { bot: true, why: 'preview' };
   if (noua) return { bot: true, why: 'без заголовка' };
-  if (lines.every(line => line.dest === 'none')) return { bot: true, why: 'без Sec-Fetch' };
   if (!got) return { bot: true, why: 'одни 404' };
   if (pages > 0 && props === 0) return { bot: true, why: 'молча' };
+  if (lines.every(line => line.dest === 'none') && !withoutFetchMetadata(lines[0].ua))
+    return { bot: true, why: 'без Sec-Fetch' };
   return { bot: false, why: 'человек' };
 }
 

@@ -193,6 +193,15 @@ function countryOf(ip) {
   }
 }
 
+// Имя краулера, которое решается по одному заголовку, без адреса. Сводка
+// перечитывает им строки, записанные до того, как имя попало в `CRAWLERS`:
+// адрес для этого не нужен, и старые дни пересчитываются сами. Имя, которое
+// подтверждается адресом, так не узнать — его нет, и ответ тогда `null`.
+export function claimedBy(ua) {
+  const found = CRAWLERS.find(([pattern]) => pattern.test(ua));
+  return found && !found[2] ? found[1] : null;
+}
+
 async function botOf(ua, ip) {
   if (!ua) return 'noua';
   for (const [pattern, name, hostPattern] of CRAWLERS) {
