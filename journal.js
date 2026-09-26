@@ -106,7 +106,14 @@ const CRAWLERS = [
   [/duckduckbot/i, 'duckduckbot', null],
   [/baiduspider/i, 'baiduspider', null],
   [/ahrefsbot|semrushbot|mj12bot|dotbot|dataforseobot|petalbot|bytespider|amazonbot/i, 'seobot', null],
-  [/facebookexternalhit|twitterbot|slackbot|telegrambot|discordbot|whatsapp|pinterest|redditbot/i, 'preview', null],
+  // `NetworkingExtension` — iMessage: превью ссылки забирает страницу под
+  // именем facebookexternalhit, а картинки к ней отдельным запросом, где
+  // слова «bot» нет. Без этого одна отправленная ссылка — «человек унёс 4 файла».
+  [
+    /facebookexternalhit|twitterbot|slackbot|telegrambot|discordbot|whatsapp|pinterest|redditbot|networkingextension/i,
+    'preview',
+    null
+  ],
   [/bot|crawler|spider|scraper|curl|wget|python-requests|node-fetch|httpx|axios|go-http-client/i, 'bot', null]
 ];
 

@@ -131,6 +131,9 @@ function classify(lines) {
     line => (line.kind === 'page' && line.status < 400) || line.kind === 'asset' || line.kind === 'image'
   );
   if (declared) return { bot: true, why: declared.split(':')[0], fake: declared.endsWith(':fake') };
+  // Картинки превью iMessage `journal.js` узнаёт с 26.09.2026; строки до
+  // того записаны без метки, и узнавать их приходится здесь.
+  if (lines.some(line => /networkingextension/i.test(line.ua))) return { bot: true, why: 'preview' };
   if (noua) return { bot: true, why: 'без заголовка' };
   if (!got) return { bot: true, why: 'одни 404' };
   if (pages > 0 && props === 0) return { bot: true, why: 'молча' };
