@@ -14,6 +14,14 @@ import { galleryItems } from '../gallery.js';
 export const foreign = ref =>
   ref !== '-' && !ref.startsWith('tessarum') && !ref.startsWith('127.0.0.1') && !ref.startsWith('localhost');
 
+// Ссылку, вставленную в iMessage, Apple разворачивает в превью и страницу
+// для него берёт сама, под заголовком с тремя именами сразу — такого нет ни
+// у настоящего Facebook, ни у Twitter. Тот же сборщик стоит за превью
+// в Заметках, Почте и в шапке меню «Поделиться», которое могли и закрыть,
+// так что это «ссылка была в превью Apple», а не «отправили».
+export const appleShare = record =>
+  record.kind === 'page' && record.ua.includes('facebookexternalhit/1.1 Facebot Twitterbot/1.0');
+
 // ── чтение ─────────────────────────────────────────────────────
 
 // Строка из файла в запись. Читается не «по числу столбцов», и это не
@@ -122,6 +130,20 @@ export async function imageIndex() {
 // человеком: за неделю таких набиралось 64 из 188. Цена правила известна
 // и мала: человек, у которого первым запросом ушёл `/favicon.ico` и который
 // тут же закрыл вкладку, тоже попадёт в машины.
+//
+// «Без Sec-Fetch» — пятый, и держится он на том, что заголовок
+// `Sec-Fetch-Dest` браузер ставит сам, на каждый запрос: Chrome с 2020 года,
+// Firefox с 2021-го, Safari с 16.4. Заход, в котором его нет ни на одной
+// строке, браузером не был. Правило закрыло качалку 24.09: 51 заход по
+// картинке, один заголовок Chrome 145, язык zh-CN, реферер `tessarum.com/`
+// и каждый раз новая страна — BG, BR, CO, ET, SE, VN; каждый шёл в людях
+// и «уносил файл». За 13.09–26.09 правило перевело в машины 113 заходов из
+// 358, и глазами пройдены все: кроме качалки, это `tessarum-research`,
+// `fasthttp`, `okhttp`, `GoogleOther`, Dataprovider, рендер Google под
+// видом Nexus 5X, сборщики иконок у Apple и запросы к `/robots.txt` и
+// `/sitemap.xml`. Похожих на браузер среди них нет. Сравнение строгое, с
+// `'none'`: так `journal.js` пишет отсутствие заголовка, а прочерк — это
+// строка, записанная до появления столбца, и она ничего не доказывает.
 function classify(lines) {
   const declared = lines.map(line => line.bot).find(bot => bot && bot !== '-' && bot !== 'noua');
   const pages = lines.filter(line => line.kind === 'page').length;
@@ -135,6 +157,7 @@ function classify(lines) {
   // того записаны без метки, и узнавать их приходится здесь.
   if (lines.some(line => /networkingextension/i.test(line.ua))) return { bot: true, why: 'preview' };
   if (noua) return { bot: true, why: 'без заголовка' };
+  if (lines.every(line => line.dest === 'none')) return { bot: true, why: 'без Sec-Fetch' };
   if (!got) return { bot: true, why: 'одни 404' };
   if (pages > 0 && props === 0) return { bot: true, why: 'молча' };
   return { bot: false, why: 'человек' };

@@ -1,0 +1,65 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Журнал: машины среди людей</title>
+<style>
+body{max-width:46em;margin:2em auto;padding:0 1em;font:16px/1.55 Georgia,serif}
+pre{background:#f4f4f4;padding:.8em;overflow-x:auto;font:13px/1.4 monospace;white-space:pre-wrap}
+code{background:#f4f4f4;padding:0 .2em;font:13px monospace}
+table{border-collapse:collapse}td,th{padding:.3em .6em;text-align:left}
+</style>
+<h1>Журнал: кого сводка считала людьми</h1>
+
+<h2>Цель</h2>
+
+<p>26.09 доска показала «4 унесли файлов» у одного Хаммерсхёя при нуле просмотров его страницы. Нужно было понять, откуда это, и пройти журнал на другие такие же ошибки.
+
+<h2>Что нашлось</h2>
+
+<p><strong>Превью iMessage.</strong> Ссылку, вставленную в iMessage, Apple разворачивает в два запроса: страницу берёт под заголовком <code>facebookexternalhit/1.1 Facebot Twitterbot/1.0</code> (он уже шёл в <code>preview</code>), картинки к ней — отдельным запросом <code>NetworkingExtension/… iOS/27.0</code>, где слова «bot» нет. Второй запрос сводка считала человеком, который унёс файлы. 26.09 это 05:27:31–32 UTC: страница, потом через секунду кадр phone, кадр tall дважды и плита. За 13.09–26.09 таких заходов 19.
+
+<p><strong>Качалка за сменой адресов.</strong> 24.09, 16:46–17:10 UTC: 51 заход по одной картинке, у всех один заголовок Chrome 145 на Mac, язык <code>zh-CN</code>, реферер <code>tessarum.com/</code>, у каждого новая страна (BG, BR, CO, ET, SE, VN, MA…). Каждый шёл в людях и «уносил файл». Отличает их то, что <code>Sec-Fetch-Dest</code> не пришёл ни разу: настоящий Chrome ставит его на каждый запрос.
+
+<h2>Решения</h2>
+
+<ol>
+<li><code>journal.js</code>: <code>networkingextension</code> добавлен к правилу <code>preview</code>. Выложено 26.09 (коммит <code>2462907</code>), проверено запросом с этим заголовком: строка в боевом журнале получила <code>preview</code>.
+<li><code>scripts/journal-read.mjs</code>, <code>classify</code>: тот же заголовок узнаётся по <code>ua</code> в строках, записанных до выкладки.
+<li><code>scripts/journal-read.mjs</code>, <code>classify</code>: пятое правило, «без Sec-Fetch»: заход, у которого <code>dest</code> равен <code>'none'</code> на всех строках, — машина. Сравнение строгое: прочерк означает строку, записанную до появления столбца, а столбец есть с первого дня журнала (<code>d471277</code>, 12.09).
+<li><code>scripts/journal-read.mjs</code>: <code>appleShare</code>, то есть строка страницы с тройным заголовком Apple. <code>scripts/journal-board.mjs</code>: число и таблица «Превью Apple». Считаются все заходы, не только люди; единица — страница в заходе, поэтому двойная вставка за минуту считается одной.
+</ol>
+
+<h2>Проверка правила «без Sec-Fetch»</h2>
+
+<p>За 13.09–26.09 оно перевело в машины 113 заходов из 358 «людей». Пройдены глазами все группы:
+
+<table border="1">
+<tr><th>что это<th>заходов
+<tr><td>качалка zh-CN, 24.09<td>51
+<tr><td><code>/robots.txt</code>, <code>/sitemap.xml</code> под браузерным заголовком<td>27
+<tr><td>сборщики иконок Apple (<code>apple-touch-icon…</code>, <code>com.apple.WebKit.Networking</code>, <code>SafariViewService</code>, <code>CFNetwork</code>)<td>13
+<tr><td>по одному файлу (<code>/work.js</code>, <code>/styles.css</code>, иконки) без языка<td>11
+<tr><td><code>tessarum-research</code>, <code>fasthttp</code>, <code>okhttp</code>, <code>GoogleOther</code>, Dataprovider<td>7
+<tr><td>рендер Google под видом Nexus 5X<td>3
+<tr><td><code>/</code> и иконка, Chrome 105, который <code>Sec-Fetch-Dest</code> ставить уже умел<td>1
+</table>
+
+<p>Похожих на браузер, который смотрел страницу, среди них нет. Обратной ошибки (человек в машинах) это правило не проверяет; её проверяет <code>journal-rollup.mjs --sample</code>.
+
+<h2>Результат</h2>
+
+<p><code>node scripts/journal-rollup.mjs --days 14 --dir log/prod</code>, до правила «без Sec-Fetch» и после:
+
+<pre>до:    Заходов 2807: людей 358, машин 2449. Страниц у людей 570, на заход 1.6
+       Унесли 542 файлов
+после: Заходов 2807: людей 245, машин 2562. Страниц у людей 490, на заход 2.0
+       Унесли 354 файлов</pre>
+
+<p>Превью Apple за те же две недели: 27, из них <code>/collection/nihonga</code> 9 (PH, US), <code>/</code> 9, Бирштадт «Among the Sierra Nevada» 2. Три из них из DE, это, скорее всего, сам Charlie; в коде они не отброшены, потому что так пропал бы и настоящий посетитель из Германии.
+
+<h2>Ограничения</h2>
+
+<ul>
+<li>Сборщик Apple работает в iMessage, Заметках, Почте и в шапке меню «Поделиться», даже закрытого, так что превью значит «ссылка была в превью», а не «отправили».
+<li>Остались 35 заходов настоящих браузеров (iPhone, Safari), которые брали картинки со страниц витрины, а самой страницы не просили. Похоже на восстановленную из памяти вкладку. Люди, но их страницы не посчитаны.
+<li><code>yarn verify</code> проходит; <code>journal-read.mjs</code> и <code>journal-board.mjs</code> работают на своей машине и выкладки не требуют.
+</ul>

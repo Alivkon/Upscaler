@@ -16,7 +16,7 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { deviceOf, foreign, imageIndex, readDays, visitsOf } from './journal-read.mjs';
+import { appleShare, deviceOf, foreign, imageIndex, readDays, visitsOf } from './journal-read.mjs';
 import { TYPES, searchReport } from './search-console.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -104,6 +104,13 @@ for (const visit of people) {
   if (seen.length) coldEntries.push({ ref: seen[0].ref, first: seen[0].path, pages: seen.length });
 }
 const noRef = coldEntries.filter(entry => entry.ref === '-').length;
+
+// Превью Apple — по всем заходам, а не по людям: сборщик Apple машина,
+// хоть и позванная человеком. Единица — страница в заходе: та же ссылка,
+// вставленная дважды за минуту, приходит двумя строками, а превью у неё одно.
+const shared = [
+  ...new Set(visits.flatMap(visit => visit.lines.filter(appleShare).map(line => `${visit.key} ${line.path}`)))
+].map(key => key.split(' ')[1]);
 const alone = coldEntries.filter(entry => entry.pages === 1).length;
 
 // Перезапуск сервера посреди дня виден по составу столбцов. Соль `visit`
@@ -302,6 +309,7 @@ const page = `<!doctype html>
   ${number(pages.length, 'страниц', `${(pages.length / (people.length || 1)).toFixed(1)} на заход`)}
   ${number(fromReddit.length, 'с Reddit', `без реферера ${noRef}`)}
   ${number(takes.length, 'унесли файлов', `ушли с первой же ${alone} из ${coldEntries.length}`)}
+  ${number(shared.length, 'превью Apple')}
 </div>
 
 ${
@@ -346,6 +354,11 @@ ${table(
 )}
 ${table('Что смотрели', rank(tally(pages.map(record => record.path))))}
 ${table('Что унесли', rank(tally(takes.map(nameOf))))}
+${table(
+  'Превью Apple',
+  rank(tally(shared)),
+  'Страница, которую Apple взял для превью ссылки: iMessage, Заметки, Почта и шапка меню «Поделиться», даже если его закрыли. Значит «ссылка была в превью», а не «отправили».'
+)}
 ${table(
   'Restore — /api/upscale',
   outcomes,
