@@ -13,6 +13,7 @@
 import { button, formatDims } from './record.js';
 import * as opening from './opening.js';
 import { inBrowser, onServer, withoutModel } from './make.js';
+import { formatOf, report } from './note.js';
 // Правила размера и один вопрос «умеет ли этот браузер вообще» — оба дёшевы
 // и нужны до всякой работы. Сам счёт и его рантайм на шесть мегабайт грузятся
 // по требованию, уже из `make.js`, и с 24.08 у большинства посетителей
@@ -43,6 +44,7 @@ const els = {
   file: document.querySelector('#intake-file'),
   growth: document.querySelector('#intake-growth'),
   note: document.querySelector('#intake-note'),
+  rating: document.querySelector('#intake-rating'),
   options: document.querySelector('#intake-options'),
   enlarge: document.querySelector('#intake-enlarge'),
   terms: document.querySelector('#intake-terms'),
@@ -92,6 +94,7 @@ const FINISH_FAILED = 'Your browser could not apply these changes.';
 // место названо там, где ему и положено, в строке о приватности.
 const WORKING = 'Making your wallpaper';
 let restored = null; // готовая работа: имя файла и адрес
+let pressed = 0; // когда нажали кнопку — для секунд в записи о готовом (note.js)
 
 const chooseFile = () => els.file.click();
 
@@ -158,13 +161,17 @@ const setOptions = enabled => {
 // в единственном месте, где предложение и появляется. Так его нельзя забыть
 // снять — а забытым он врал бы посетителю о том, куда уедет файл.
 let offered = null;
+// Какая сцена сейчас на экране — для записи об уходе и правой кнопке (note.js).
+let scene = 'empty';
 
 const setStage = stage => {
   offered = null;
+  scene = stage;
   els.frame.classList.toggle('is-working', stage === 'working');
   els.frame.classList.toggle('is-done', stage === 'done');
   els.note.classList.toggle('is-ready', stage === 'done');
   els.options.hidden = stage === 'done';
+  els.rating.hidden = stage !== 'done';
   els.terms.hidden = stage === 'done';
   els.about.hidden = stage === 'working' || stage === 'done';
 };
@@ -172,14 +179,26 @@ const setStage = stage => {
 // Принять принесённое. Формат спрашивает страница, потому что отказ по нему —
 // это фраза посетителю; всё остальное — показать, измерить, раскодировать —
 // делает проём и отвечает исключением.
-async function bring(file) {
+//
+// `how` — каким из трёх способов принесли: диалог, перетаскивание или Ctrl-V.
+// Нужен он только записи — страница со всеми тремя обращается одинаково.
+async function bring(file, how) {
   if (!file) return;
-  if (!ACCEPTED_TYPES.has(file.type)) return renderFailed(FILE_REQUIREMENTS);
+  const type = formatOf(file);
+  if (!ACCEPTED_TYPES.has(file.type)) {
+    // Отказанный формат записывается отдельно: HEIC с айфона здесь
+    // не принимается, и сколько людей в это упирается, иначе не узнать.
+    report('refused', how, type);
+    return renderFailed(FILE_REQUIREMENTS);
+  }
   try {
     await opening.receive(file);
   } catch (error) {
+    report('failed', 'open', type);
     return renderFailed(error.message);
   }
+  const { width, height } = opening.brought;
+  report('chose', how, `${width}x${height}`, type, `${Math.round(file.size / 1000)}kb`);
   restored = null;
   renderMeasured();
   draw();
@@ -197,7 +216,12 @@ async function bring(file) {
 // посчитать в браузере, — а браузер только что не справился с картинкой
 // в тысячу пикселей. Оставить ему кнопку на четырёхкратный счёт значило бы
 // позвать туда, откуда сейчас вернулись.
-const draw = () => opening.showChosen(chosen()).then(shown => shown || renderFailed(FINISH_FAILED));
+const draw = () =>
+  opening.showChosen(chosen()).then(shown => {
+    if (shown) return;
+    report('failed', 'preview');
+    renderFailed(FINISH_FAILED);
+  });
 
 // Сначала кадр, потом размер — тот же порядок, в котором работает и счёт
 // (`upscaleInBrowser`). Обратный порядок здесь уже стоял: он растил картинку
@@ -343,7 +367,7 @@ function renderMeasured() {
   setOptions(true);
 }
 
-function renderWorking(note) {
+function renderWorking(message) {
   setStage('working');
   const waiting = button('Working…', 'btn');
   waiting.disabled = true;
@@ -353,7 +377,7 @@ function renderWorking(note) {
   // от одного файла на месте другого. Гасится и верхнее место — с выбранным
   // файлом оно и так пусто, но пустым его надо оставить и здесь.
   els.choose.replaceChildren();
-  els.note.textContent = note;
+  els.note.textContent = message;
   els.note.classList.remove('is-error');
   setOptions(false);
 }
@@ -393,6 +417,7 @@ function renderFinished() {
   download.href = restored.url;
   download.download = restored.filename;
   download.textContent = 'Download';
+  download.addEventListener('click', () => report('download', restored.provider));
   els.choose.replaceChildren();
   els.actions.replaceChildren(download, button('Do another', 'btn btn--ghost', startOver));
   // Скачивание ничем не закрыто: показан тот же файл полного разрешения,
@@ -423,6 +448,45 @@ function renderFinished() {
   els.privacy.textContent = restored.provider === 'server' ? SENT_TO_US : STAYS_HERE;
   els.note.classList.remove('is-error');
   setOptions(false);
+  renderRating();
+}
+
+// Понравилось ли готовое. Download меряет это плохо: часть людей сохраняет
+// правой кнопкой, а скачанное ещё не значит понравившееся. Оценка уходит
+// вместе с тем, кто считал, — ради этого её и спрашивают: сервер и браузер
+// дают разное, и сравнить их больше нечем. Один щелчок и без поля для слов:
+// слова посетителя — личное, а журнал обещает, что личного в нём нет.
+// В журнал уходит то же слово, что на кнопке: два имени одного ответа
+// в сводке пришлось бы переводить обратно.
+const GRADES = ['Poor', 'Fair', 'Good'];
+
+function renderRating() {
+  const { provider } = restored;
+  // Нажатая кнопка исчезает вместе с ответами, и фокус, оставшись без места,
+  // упал бы в начало страницы. Его принимает сама строка (`tabindex="-1"`
+  // в разметке): читалка произносит «Thank you.», следующий Tab идёт дальше.
+  const answers = GRADES.map(grade =>
+    button(grade, 'link', () => {
+      report('rated', provider, grade);
+      els.rating.textContent = 'Thank you.';
+      els.rating.focus();
+    })
+  );
+  // Ответы — одной группой: на узкой колонке они уходят под вопрос все
+  // вместе, а не по одному. Точки между ними — украшение, читалке не нужны.
+  // Отдельными элементами, а не `::before` на кнопке: содержимое псевдоэлемента
+  // входит в имя кнопки, и читалка сказала бы «· Fair».
+  const dot = () => {
+    const span = document.createElement('span');
+    span.className = 'rating__dot';
+    span.setAttribute('aria-hidden', 'true');
+    span.textContent = '·';
+    return span;
+  };
+  const group = document.createElement('span');
+  group.className = 'rating__answers';
+  group.append(...answers.flatMap((answer, index) => (index ? [dot(), answer] : [answer])));
+  els.rating.replaceChildren('Rate the result:', group);
 }
 
 // Авария возвращает страницу в предыдущее состояние и говорит, что случилось:
@@ -499,6 +563,7 @@ function sayProgress({ loaded, starting, done, total, secondsLeft }) {
 // модель не трогает вовсе (`growthNeeded`), и путь у неё тот же, что у снятой
 // галочки.
 async function restore() {
+  pressed = performance.now();
   if (willEnlarge()) return restoreOnServer();
   renderWorking(`${WORKING}…`);
   try {
@@ -507,6 +572,7 @@ async function restore() {
     // Причина остаётся в консоли — это единственный способ узнать, на чём
     // именно спотыкаются чужие браузеры.
     console.warn('local finish failed:', error);
+    report('failed', 'finish');
     return renderFailed(FINISH_FAILED);
   }
 }
@@ -521,6 +587,7 @@ async function restoreOnServer() {
     made = await onServer(job());
   } catch (error) {
     console.warn('server upscale failed:', error);
+    report('failed', 'server');
     // Отказ сервера — ещё не отказ вовсе, и чаще всего он даже не поломка:
     // пять картинок в час с браузера, полсотни в сутки на всех (limits.js).
     // Вторая ветка бесплатна и ничьего разрешения не спрашивает — предлагаем
@@ -537,6 +604,7 @@ async function restoreOnServer() {
 // Вторая ветка, по кнопке из `renderOffered`. Отказ здесь окончательный:
 // предлагать за ним сервер, который только что отказал, было бы кольцом.
 async function restoreInBrowser() {
+  pressed = performance.now();
   els.privacy.textContent = STAYS_HERE;
   renderWorking(`${WORKING}…`);
   let made;
@@ -544,6 +612,7 @@ async function restoreInBrowser() {
     made = await inBrowser(job());
   } catch (error) {
     console.warn('local upscale failed:', error);
+    report('failed', 'browser');
     return renderFailed(error.message === TOO_BIG ? TOO_BIG : LOCAL_FAILED);
   }
   // `null` сюда не доходит: умеет ли браузер вообще, спрошено до того, как
@@ -555,16 +624,25 @@ async function restoreInBrowser() {
 
 // Показать сделанное — одинаково для всех трёх способов: разница между ними
 // кончается на блобе.
+//
+// Запись о готовом — кто считал (`server`, `browser` без модели, `webgpu`
+// и `wasm` у браузерной модели), какие галочки стояли, что вышло и за сколько
+// секунд от нажатия. Галочки во время работы заперты, поэтому читаются здесь
+// так же верно, как в момент нажатия.
 async function showResult(made) {
   try {
     restored = { filename: made.filename, url: await opening.showMade(made.blob), provider: made.provider };
     renderFinished();
   } catch (error) {
-    renderFailed(error.message);
+    report('failed', 'show');
+    return renderFailed(error.message);
   }
+  const effects = EFFECTS.filter(name => els[name].checked).join(',') || 'none';
+  const seconds = Math.round((performance.now() - pressed) / 1000);
+  report('made', made.provider, effects, opening.shownSize().join('x'), `${seconds}s`);
 }
 
-els.file.addEventListener('change', () => bring(els.file.files[0]));
+els.file.addEventListener('change', () => bring(els.file.files[0], 'pick'));
 // Отделочные галочки меняют картинку в проёме. Кадр вдобавок меняет и то,
 // из чего растят, — то есть подпись под увеличением, а через неё и строку
 // о том, куда уедет файл: кадр уносит две трети площади, и картинка, которой
@@ -622,7 +700,7 @@ addEventListener('drop', event => {
   event.preventDefault();
   dragDepth = 0;
   document.body.classList.remove('is-dragging');
-  bring(event.dataTransfer.files[0]);
+  bring(event.dataTransfer.files[0], 'drop');
 });
 
 // Третий способ принести картинку — Ctrl-V. Снимок экрана нигде не лежит
@@ -640,8 +718,21 @@ addEventListener('paste', event => {
   const file = event.clipboardData?.files[0];
   if (!file) return;
   event.preventDefault();
-  bring(file);
+  bring(file, 'paste');
 });
+
+// Две записи, которых не видно по запросам. Правая кнопка на проёме — это
+// намёк, а не доказательство: меню открыли, но «Save image as» могли и не
+// выбрать, а долгое нажатие на телефоне срабатывает не везде. Уход — только
+// с принесённым файлом: без него пустая приёмка писала бы строку на каждый
+// заход, а заход журнал и так видит.
+//
+// Слово — сцена на экране, а не «готово ли что-нибудь»: ушедший за полторы
+// минуты счёта на сервере (`working`) и ушедший, не нажав кнопки
+// (`measured`), — это разные ответы, ради которых запись и заводилась.
+const stageWord = () => (offered ? 'offered' : scene);
+els.frame.addEventListener('contextmenu', () => opening.brought && report('rightclick', stageWord()));
+addEventListener('pagehide', () => opening.brought && report('left', stageWord()));
 
 // Пустая запись рисуется скриптом, а не приходит с сервера: номера у неё ещё
 // нет, характеристик тоже, и всё, что тут есть, зависит от выбранного файла.

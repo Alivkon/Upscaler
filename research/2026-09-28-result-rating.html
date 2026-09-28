@@ -1,0 +1,61 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Оценка готового</title>
+<style>
+body{max-width:46em;margin:2em auto;padding:0 1em;font:16px/1.55 Georgia,serif}
+pre{background:#f4f4f4;padding:.8em;overflow-x:auto;font:13px/1.4 monospace;white-space:pre-wrap}
+code{background:#f4f4f4;padding:0 .2em;font:13px monospace}
+</style>
+<h1>Оценка готового: «Rate the result»</h1>
+
+<h2>Цель</h2>
+
+<p>Узнать, нравится ли людям то, что вышло, и отдельно: нравится ли одинаково то, что посчитал сервер, и то, что посчитал браузер. Download на это отвечает плохо: часть людей сохраняет картинку правой кнопкой (это уже пишется как <code>rightclick/done</code>), а скачанное ещё не значит понравившееся.
+
+<h2>Решения</h2>
+
+<ul>
+<li><strong>Три ответа, один щелчок:</strong> Poor · Fair · Good. После щелчка строка меняется на «Thank you.». Слова оценки, а не чувства: первый вариант («Not great · Fine · Love it») Charlie счёл приторным. В журнал уходит то же слово, что на кнопке.
+<li><strong>Строка видна сразу на готовом, а не после Download.</strong> Иначе её не увидят те, кто сохраняет правой кнопкой.
+<li><strong>Вид: «Rate the result: Poor · Fair · Good», ссылками, за чертой.</strong> Первый вид, приглушённая строка, был невидим: Charlie не нашёл бы его, не зная, где искать. Второй, маленькие призрачные кнопки, был заметен, но терял лёгкость. Итог: цвет текста вместо приглушённого, своя строка за чертой, приглушённые точки между ответами и появление через секунду после готового (0.9 с, в скрытой вкладке ждёт, пока её откроют; при «меньше движения» не анимируется). Ответы переносятся одной группой.
+<li><strong>Оценка уходит вместе с тем, кто считал:</strong> <code>rated/&lt;server|browser|webgpu|wasm&gt;/&lt;poor|fair|good&gt;</code>. Ради этой пары её и спрашивают.
+<li><strong>Без поля для слов.</strong> Написанное посетителем может быть личным, а журнал обещает, что личного в нём нет.
+<li><strong>Ни куки, ни нового маршрута.</strong> Запись идёт тем же <code>note()</code> в тот же <code>/api/note</code>, сервер пускает только закрытый список.
+</ul>
+
+<h2>Изменения</h2>
+
+<ul>
+<li><code>pages.js</code>: <code>&lt;p class="rating" id="intake-rating" hidden&gt;</code> под <code>#intake-note</code>.
+<li><code>public/intake.js</code>: <code>GRADES</code>, <code>renderRating()</code>, вызов из <code>renderFinished</code>; <code>setStage</code> прячет строку вне сцены <code>done</code>.
+<li><code>public/styles.css</code>: <code>.rating</code>, <code>.rating__answers</code>, <code>.rating .link</code>, <code>.rating__dot</code>, <code>@keyframes rating-in</code>.
+<li><code>public/note.js</code>: в <code>NOTED</code> добавлено <code>rated/${MAKER}/(poor|fair|good)</code>.
+<li><code>scripts/journal-rollup.mjs</code>: таблица «Оценка готового», по паре «кто считал × ответ».
+</ul>
+
+<h2>Проверка</h2>
+
+<p><code>yarn verify</code>: код 0 (синтаксис, форматирование, проверки журнала и счётчика).
+
+<p>Словарь <code>NOTED</code>:
+
+<pre>ok  /api/note/rated/server/good
+ok  /api/note/rated/browser/poor
+ok  /api/note/rated/webgpu/fair
+no  /api/note/rated/server/great
+no  /api/note/rated/great</pre>
+
+<p>Сервер: <code>POST /api/note/rated/server/good</code> → 204, <code>…/rated/server/great</code> → 404.
+
+<p>В Chrome на <code>127.0.0.1:3000/restore</code>, без увеличения (модель не звалась, <code>/api/upscale</code> в тесте ещё и перекрыт): до готового строка скрыта; на готовом видна «Rate the result Poor Fair Good»; щелчок по «Good» даёт «Thank you.» и строку в журнале <code>/api/note/rated/browser/good</code>; «Do another» строку прячет. Сводка:
+
+<pre>Оценка готового
+  browser good  1</pre>
+
+<h2>Ограничения</h2>
+
+<ul>
+<li>Ответов будет мало: одноразовые посетители, на такие строки обычно отвечают единицы процентов.
+<li>Серверная ветка вживую не прогонялась (платный вызов); код у неё тот же, отличается только значение <code>provider</code>.
+<li>Колонка 280 px проверена в Chrome: вопрос сверху, три ответа строкой под ним, без вылезания за край.
+</ul>

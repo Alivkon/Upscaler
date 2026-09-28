@@ -1567,6 +1567,11 @@ export function intakePage({ origin, runtime, runtimeBytes }) {
                свойство выбора, а не отдельное объявление. Здесь теперь
                говорит только ход работы и авария. -->
           <p class="terms__note" id="intake-note"></p>
+          <!-- Оценка готового: одна строка под «Your wallpaper is ready»,
+               видна только на готовом (renderRating в intake.js). Стоит
+               сразу, а не после Download: часть людей сохраняет правой
+               кнопкой, и до кнопки они не доходят. -->
+          <p class="rating" id="intake-rating" tabindex="-1" hidden></p>
           <!-- Галочки «Add to the collection» здесь больше нет. Выключенная,
                с оговоркой «Not available at the moment», она показывалась
                ровно в одном состоянии — над готовой работой, — то есть

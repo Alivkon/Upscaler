@@ -9,7 +9,7 @@
 //
 // Часы подменяются: окна — час и сутки, и ждать их по-настоящему нельзя.
 // Подмена же разводит случаи между собой — сутки вперёд, и все три ведра пусты.
-import { upscaleAllowance } from '../limits.js';
+import { noteAllowance, upscaleAllowance } from '../limits.js';
 
 const HOUR = 60 * 60 * 1000;
 let clock = Date.parse('2026-08-22T09:00:00Z');
@@ -158,9 +158,34 @@ travel(25);
   if (passed.length !== 50) complain(`одновременно на сайте прошли ${passed.length}, а не 50`);
 }
 
+// 9. Записи приёмки: шестьдесят в час с адреса, соседний адрес не задет,
+// через час место снова есть. Ворота бесплатные, но сводка верит только
+// тому, что через них прошло.
+travel(25);
+{
+  const from = ip => ({ ip });
+  const passed = Array.from({ length: 100 }, () => noteAllowance(from('192.0.2.1'))).filter(Boolean).length;
+  if (passed !== 60) complain(`записей с адреса прошло ${passed}, а не 60`);
+  if (!noteAllowance(from('192.0.2.2'))) complain('потолок записей одного адреса задел соседний');
+  travel(1);
+  if (!noteAllowance(from('192.0.2.1'))) complain('через час записи с адреса не открылись');
+}
+
+// 10. Оценки — своё ведро: десять в час с адреса, и полное ведро записей
+// их не задевает. Ради этого ведро и отдельное: иначе частые записи соседей
+// по адресу съедали бы редкую оценку.
+travel(25);
+{
+  const from = ip => ({ ip });
+  for (let i = 0; i < 60; i++) noteAllowance(from('192.0.2.3'));
+  if (noteAllowance(from('192.0.2.3'))) complain('ведро записей не закрылось на шестидесяти');
+  const rated = Array.from({ length: 20 }, () => noteAllowance(from('192.0.2.3'), 'rating')).filter(Boolean).length;
+  if (rated !== 10) complain(`оценок с адреса прошло ${rated}, а не 10`);
+}
+
 if (problems.length) {
   console.error(`счётчик вызовов: ${problems.length} ошибок`);
   for (const problem of problems) console.error(`  ${problem}`);
   process.exit(1);
 }
-console.log('счётчик вызовов: восемь проверок пройдены');
+console.log('счётчик вызовов: десять проверок пройдены');

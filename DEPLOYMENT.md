@@ -76,6 +76,13 @@ docker exec upscaler node scripts/journal-rollup.mjs --days 7
 docker exec upscaler node scripts/journal-rollup.mjs --days 7 --sample 10
 ```
 
+Что делали на приёмке — строки `/api/note/…` (`public/note.js`): размер
+принесённого, кто считал, скачали ли. По заходу их видно рядом с остальными:
+
+```bash
+grep -h /api/note/ /opt/apps/upscaler/log/*.tsv | cut -f1,2,8
+```
+
 `--sample` печатает случайные заходы целиком, чтобы разметить их рукой:
 «бот или человек» — правило «да/нет», и без ручных ярлыков его точность
 и полнота неизвестны, а от него зависит каждое число в сводке.

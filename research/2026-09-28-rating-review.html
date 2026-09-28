@@ -1,0 +1,48 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Оценка готового: правки по ревью</title>
+<style>
+body{max-width:46em;margin:2em auto;padding:0 1em;font:16px/1.55 Georgia,serif}
+pre{background:#f4f4f4;padding:.8em;overflow-x:auto;font:13px/1.4 monospace;white-space:pre-wrap}
+code{background:#f4f4f4;padding:0 .2em;font:13px monospace}
+</style>
+<h1>Оценка готового: правки по ревью</h1>
+<h2>Цель</h2>
+<p>Ревью строки «Rate the result: Poor · Fair · Good» (<code>2026-09-28-result-rating.md</code>) нашло девять мест. Ни одно не ломало страницу; два теряли или искажали ответы, ради которых строка заведена.
+<h2>Решения и изменения</h2>
+<ol>
+<li><strong>Сводка резала редкие пары.</strong> <code>rank()</code> отдаёт десять строк, а пар «кто считал × ответ» двенадцать, событий приёмки около тридцати. Обе таблицы теперь целиком (<code>scripts/journal-rollup.mjs</code>, <code>Infinity</code>).
+<li><strong>Оценка делила ведро с остальными записями.</strong> 60 записей в час с адреса на все события: за одним адресом частые <code>chose</code>, <code>left</code>, <code>rightclick</code> съедали редкую оценку (429, а посетитель видит «Thank you.»). У оценок своё ведро <code>rating</code>, 10 в час с адреса (<code>limits.js</code>). По куке не стали: куку ставит только <code>/api/upscale</code>, у браузерной ветки её нет, и её оценки пропали бы целиком.
+<li><strong>Невидимые ответы нажимались.</strong> Секунду до проявления строка прозрачна, но щелчок и Tab её находили. В начальный кадр <code>rating-in</code> добавлено <code>visibility: hidden</code> (<code>public/styles.css</code>).
+<li><strong>Фокус падал в начало страницы</strong> после ответа: нажатая кнопка исчезает. Строка получила <code>tabindex="-1"</code> (<code>pages.js</code>) и принимает фокус после ответа (<code>renderRating</code>); рамка фокуса на ней снята, строка не нажимается. <code>aria-live</code> не взят: он озвучил бы и сам вопрос при появлении.
+<li><strong><code>dot.ariaHidden</code></strong> работает не во всех браузерах; теперь <code>setAttribute('aria-hidden', 'true')</code>.
+<li><strong><code>note</code> значило три вещи</strong> в <code>public/intake.js</code>. Функция записи переименована в <code>report</code> (<code>public/note.js</code> и 12 вызовов), параметр <code>renderWorking(note)</code> в <code>message</code>. Маршрут <code>/api/note</code>, <code>NOTED</code>, <code>noteAllowance</code> и <code>els.note</code> не тронуты: маршрут, возможно, уже на проде, а <code>els.note</code> держится за <code>#intake-note</code> в разметке.
+<li><strong>Имя движка: просьба, а не факт.</strong> <code>provider</code> был <code>providers[0]</code>: не поднявшийся WebGPU onnxruntime молча вычёркивает, и wasm-результат записывался как <code>webgpu</code>. Теперь <code>ort.env.webgpu.device ? 'webgpu' : 'wasm'</code> (<code>public/upscale-local.js</code>). В onnxruntime-web 1.27.0 <code>env.webgpu.device</code> ставит <code>webgpuOnCreateSession</code>, только когда сессия на WebGPU создана; не поднявшийся бэкенд до этого не доходит (<code>resolveBackendAndExecutionProviders</code>).
+<li><strong>Точки через CSS, как советовало ревью, не взяты.</strong> Содержимое <code>::before</code> внутри кнопки входит в её имя («· Fair») и получает её подчёркивание. Точки остались элементами, цикл стал одним <code>flatMap</code>.
+<li><strong>Поддельные оценки.</strong> Для <code>rated</code> без <code>Sec-Fetch-Site</code> теперь 403 (для прочих записей по-прежнему пропускаем) (<code>server.js</code>). Цена: оценки Safari до 16.4 теряются. Скрипт, подделавший заголовок, этим не остановить; его держит ведро в 10 в час.
+</ol>
+<p>И комментарий <code>public/note.js</code>: «куки нет» было неверно. Куку <code>visitor</code>, если она есть, браузер присылает сам; журнал её не пишет. Та же фраза «Ни куки» в <code>2026-09-28-result-rating.md</code> не исправлена: записи в <code>research/</code> не правятся задним числом.
+<h2>Проверки</h2>
+<p><code>yarn verify</code>: код 0; <code>счётчик вызовов: десять проверок пройдены</code> (новая, 10-я: ведро оценок отдельно от ведра записей).
+<p>Маршрут, <code>curl</code> на <code>127.0.0.1:3000</code>:
+<pre>rated/server/good  без заголовка            403
+rated/server/good  cross-site               403
+rated/server/good  same-origin              204
+rated/server/great same-origin              404
+chose/…            без заголовка            204
+chose/…            cross-site               403
+rated/wasm/fair ×12 same-origin  204 ×9, затем 429 ×3
+left/done после полного ведра оценок        204</pre>
+<p>Сводка на копии журнала с дописанными парами: все 12 пар «кто × ответ» и все 23 пары событий на месте.
+<p>Chrome, <code>/restore</code>, <code>/api/upscale</code> перекрыт в самой вкладке (запрос не ушёл):
+<ul>
+<li>часы анимации переведены руками: 0, 500, 990 мс: <code>visibility: hidden</code>, щелчок и фокус «Good» не находят; 1100 мс и дальше: находят;
+<li>Enter на «Good» с клавиатуры: «Thank you.», фокус на строке, следующий Tab идёт на <code>License</code> ниже по странице;
+<li>ветка «Enlarge in my browser» на картинке 240×420: <code>made/wasm/none/960x1680/9s</code>, щелчок по «Fair»: <code>rated/wasm/fair</code> с кодом 204.
+</ul>
+<h2>Ограничения</h2>
+<ul>
+<li>WebGPU-сторона пункта 7 вживую не проверена: Chrome этой машины адаптера не выдаёт, и WebGPU не запрашивался вовсе. Проверено чтением исходника 1.27.0 и тем, что отдаваемый страницей <code>ort.webgpu.min.mjs</code> содержит то же присваивание.
+<li>Серверная ветка не запускалась (платный вызов).
+<li>Первая попытка оценки в Chrome получила 429: ведро адреса 127.0.0.1 уже было выбрано <code>curl</code>-проверкой. Это потолок в работе; после перезапуска 204.
+</ul>

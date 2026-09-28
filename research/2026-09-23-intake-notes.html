@@ -1,0 +1,203 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Записи приёмки</title>
+<style>
+body{max-width:46em;margin:2em auto;padding:0 1em;font:16px/1.55 Georgia,serif}
+pre{background:#f4f4f4;padding:.8em;overflow-x:auto;font:13px/1.4 monospace;white-space:pre-wrap}
+code{background:#f4f4f4;padding:0 .2em;font:13px monospace}
+table{border-collapse:collapse}td,th{padding:.3em .6em;text-align:left;border:1px solid #ccc}
+</style>
+<h1>Записи приёмки: что случилось в браузере</h1>
+<p>23.09.2026.</p>
+<h2>Повод</h2>
+<p>Первые увеличения с чужих машин. Журнал за 13–23.09:</p>
+<table>
+<thead>
+<tr>
+<th>когда (UTC)</th>
+<th>visit</th>
+<th>откуда</th>
+<th>что</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>21.09 12:46</td>
+<td>4b3763fa</td>
+<td>reddit → <code>/</code> → <code>/restore</code></td>
+<td><code>/api/upscale</code> 200, 64.7 с, ответ 306 КБ</td>
+</tr>
+<tr>
+<td>21.09 13:18–13:30</td>
+<td>4b3763fa</td>
+<td><code>/restore</code> ×3</td>
+<td>файл принесён, отделка в превью, на сервер ничего</td>
+</tr>
+<tr>
+<td>21.09 20:27</td>
+<td>66d22cd6</td>
+<td><code>/restore</code> без реферера</td>
+<td>то же, на сервер ничего</td>
+</tr>
+<tr>
+<td>23.09 13:31</td>
+<td>84b91a8f</td>
+<td><code>/restore</code> без реферера</td>
+<td><code>/api/upscale</code> 200, 86.3 с, ответ 955 КБ</td>
+</tr>
+<tr>
+<td>23.09 13:34, 13:37</td>
+<td>84b91a8f</td>
+<td><code>/restore</code> ×2</td>
+<td>файл принесён, на сервер ничего</td>
+</tr>
+</tbody></table>
+<p>Все три <code>visit</code> — Windows, Chrome 153, США, en-US. Людей из США в эти дни
+4–6 в сутки. Скорее всего один человек, но это не доказано: Chrome 153 на
+Windows — самый частый браузер, а заход на <code>/restore</code> без реферера за 10 дней
+был 7 раз.</p>
+<p>Чего по журналу узнать было нельзя:</p>
+<ul>
+<li>размер принесённой картинки — строка <code>upscale: …</code> пишется только в консоль
+контейнера, и выкладка 23.09 в 18:44 её стёрла;</li>
+<li>что было после пяти поздних заходов: отделка без увеличения считается
+в браузере, скачивание берёт blob из памяти, правая кнопка — тоже без
+запроса. «Сделал обои у себя», «сохранил превью» и «ушёл» в журнале
+выглядят одинаково.</li>
+</ul>
+<p>Картинки сервер не хранит (<code>multer.memoryStorage</code>, ответ — байтами), поэтому
+повторить их увеличение самим нельзя.</p>
+<h2>Решение</h2>
+<p>Приёмка шлёт пустой <code>sendBeacon</code> на <code>/api/note/&lt;событие&gt;/&lt;подробности&gt;</code>.
+Строку пишет существующий <code>journal.js</code>, новых столбцов и файлов нет.</p>
+<table>
+<thead>
+<tr>
+<th>событие</th>
+<th>подробности</th>
+<th>где</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>chose</code></td>
+<td>способ (<code>pick</code>, <code>drop</code>, <code>paste</code>), <code>ШxВ</code>, формат, вес в КБ</td>
+<td><code>bring</code></td>
+</tr>
+<tr>
+<td><code>refused</code></td>
+<td>способ, формат (HEIC и прочее, что не берём)</td>
+<td><code>bring</code></td>
+</tr>
+<tr>
+<td><code>made</code></td>
+<td>кто считал (<code>server</code>, <code>browser</code>, <code>webgpu</code>, <code>wasm</code>), галочки, <code>ШxВ</code> готового, секунды от нажатия</td>
+<td><code>showResult</code></td>
+</tr>
+<tr>
+<td><code>failed</code></td>
+<td><code>open</code>, <code>preview</code>, <code>finish</code>, <code>server</code>, <code>browser</code>, <code>show</code></td>
+<td>по одному на каждый <code>catch</code></td>
+</tr>
+<tr>
+<td><code>download</code></td>
+<td>кто считал</td>
+<td>кнопка Download</td>
+</tr>
+<tr>
+<td><code>rightclick</code></td>
+<td><code>preview</code> или <code>made</code></td>
+<td><code>contextmenu</code> на проёме</td>
+</tr>
+<tr>
+<td><code>left</code></td>
+<td><code>preview</code> или <code>made</code></td>
+<td><code>pagehide</code>, только если файл принесён</td>
+</tr>
+</tbody></table>
+<p>Имя файла не отправляется: оно бывает личным, а журнал обещает, что личного
+в нём нет. Сервер пропускает с кодом 204 только эти семь слов и до пяти
+подробностей из <code>[a-z0-9.,-]</code>; всё остальное — 404, как любой чужой адрес.</p>
+<h2>Файлы</h2>
+<ul>
+<li><code>public/note.js</code> — новый: отправка и довод, что отправляется и что нет;</li>
+<li><code>public/intake.js</code> — вызовы <code>note</code> в семи местах, <code>bring</code> получил способ;</li>
+<li><code>server.js</code> — маршрут <code>POST /api/note/…</code> → 204;</li>
+<li><code>scripts/journal-rollup.mjs</code> — таблица «Приёмка (/api/note)».</li>
+</ul>
+<h2>Проверка</h2>
+<p><code>yarn verify</code> — код 0.</p>
+<p>Маршрут, curl на локальный сервер (<code>PORT=3077</code>, журнал в scratchpad):</p>
+<pre><code>/api/note/chose/pick/3024x4032/jpeg/2400kb              204
+/api/note/made/server/treat,crop/1701x3024/86s          204
+/api/note/left/preview                                  204
+/api/note/rightclick/made                               204
+/api/note/chose/pick/passport%20John.jpg                404
+/api/note/hack                                          404
+/api/note/made/a/b/c/d/e/f                              404
+GET /api/note/left/preview                              404
+</code></pre>
+<p>Страница в Chrome: файл <code>passport John.jpg</code> 1200×1600 через поле выбора,
+галочка dim, «Make my wallpaper» без увеличения (модель не звалась, на
+локальном сервере увеличение к тому же выключено), Download, правая кнопка,
+вставка HEIC, уход на <code>/license</code>. Журнал:</p>
+<pre><code>api 204 /api/note/chose/pick/1200x1600/jpeg/15kb
+api 204 /api/note/made/browser/treat/1200x1600/1s
+api 204 /api/note/download/browser
+api 204 /api/note/rightclick/made
+api 204 /api/note/refused/paste/heic
+api 204 /api/note/left/made
+</code></pre>
+<p>Слово <code>passport</code> в журнале встречается один раз — в 404 от ручного curl,
+не от страницы.</p>
+<h2>Ограничения</h2>
+<ul>
+<li><code>rightclick</code> — намёк: меню открыли, а «Save image as» могли не выбрать.
+Долгое нажатие на телефоне вызывает <code>contextmenu</code> не везде (iOS Safari — нет).</li>
+<li><code>left</code> на телефонах теряется чаще: <code>pagehide</code> при сворачивании вкладки
+приходит не всегда.</li>
+<li>Блокировщик может резать <code>sendBeacon</code>; путь назван <code>note</code>, а не <code>track</code>
+или <code>collect</code>, но гарантии нет.</li>
+<li>Путь <code>server</code> проверен только curl&#39;ом: живой вызов модели не делался.</li>
+<li>До выкладки ничего из этого на боевой машине не пишется.</li>
+</ul>
+<h2>Правки после ревью (23.09, вечер)</h2>
+<p>Ревью нашло три дыры; все три закрыты.</p>
+<ul>
+<li><strong>Словарь, а не набор знаков.</strong> Маршрут пропускал любой путь из
+<code>[a-z0-9.,-]</code>, то есть и <code>chose/passport-john.jpg</code>. Теперь 204 получает
+только путь из <code>NOTED</code> (<code>public/note.js</code>): по строке на событие, закрытые
+списки и числа. Формат файла тоже из списка (<code>formatOf</code>), чужой подтип —
+<code>other</code>. Сервер берёт словарь из того же файла, второго списка нет.</li>
+<li><strong>Потолок и чужие сайты.</strong> <code>noteAllowance</code> в <code>limits.js</code>: 60 записей в час
+с адреса, сверх — 429. <code>Sec-Fetch-Site</code> не <code>same-origin</code> — 403. Сводка
+считает только 204, так что налитое в неё не попадает.</li>
+<li><strong>Сцена вместо «готово или нет».</strong> <code>left</code> и <code>rightclick</code> пишут сцену на
+экране (<code>measured</code>, <code>offered</code>, <code>working</code>, <code>done</code>), её запоминает
+<code>setStage</code>. Прежнее <code>preview</code>/<code>made</code> путало ушедшего во время счёта с
+ушедшим до кнопки, а после отказа в новом файле писало <code>made</code> по старой
+работе — это видно и в проверке выше: <code>refused/paste/heic</code>, затем
+<code>left/made</code>.</li>
+</ul>
+<p>Проверка — curl на тестовый сервер (порт 3055, журнал в scratchpad):</p>
+<pre><code>204  chose/pick/1200x1600/jpeg/15kb, made/server/crop,treat/2160x3840/86s,
+     made/browser/none/1200x1600/1s, left/working, left/offered,
+     refused/paste/heic, failed/open/other
+404  chose/passport-john.jpg, refused/paste/passport-john, left/preview
+403  Sec-Fetch-Site: cross-site, same-site
+     60 подряд с одного адреса: 53 × 204 + 7 × 429 (с семью выше — ровно 60)
+</code></pre>
+<p>Страница в Chrome на том же сервере, увеличение снято (модель не звалась):
+JPEG <code>passport John.jpg</code> 1200×1600 перетаскиванием, галочка dim, «Make my
+wallpaper», правая кнопка на готовом, HEIC перетаскиванием, уход на <code>/license</code>:</p>
+<pre><code>api 204 /api/note/chose/drop/1200x1600/jpeg/14kb
+api 204 /api/note/made/browser/treat/1200x1600/1s
+api 204 /api/note/rightclick/done
+api 204 /api/note/refused/drop/heic
+api 204 /api/note/left/measured
+</code></pre>
+<p>Тот же путь, что утром дал <code>left/made</code>, теперь даёт <code>left/measured</code>.
+Слова <code>passport</code> в журнале нет ни разу.</p>
+<p>Что осталось как было: путь с 404 журнал пишет как любой ненайденный адрес,
+на любом маршруте. Личного не шлёт наша страница; запретить это чужому
+скрипту журнал не может.</p>
+
+

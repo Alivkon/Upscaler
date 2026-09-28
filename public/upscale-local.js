@@ -191,7 +191,13 @@ async function session(report = () => {}) {
       executionProviders: providers,
       enableMemPattern: false
     });
-    return { ort, sess, provider: providers[0], in: sess.inputNames[0], out: sess.outputNames[0] };
+    // Кто считает на самом деле, а не кого просили: не поднявшийся WebGPU
+    // onnxruntime молча вычёркивает из списка, и сессия выходит на wasm.
+    // `env.webgpu.device` он ставит сам, только когда сессия на WebGPU
+    // создана, — это и есть ответ. Отдельные узлы WebGPU может отдать
+    // процессору, но считает всё равно он, и имя ему то же.
+    const provider = ort.env.webgpu.device ? 'webgpu' : 'wasm';
+    return { ort, sess, provider, in: sess.inputNames[0], out: sess.outputNames[0] };
   })();
   // Неудача не запоминается. Обещание присваивается до того, как оно
   // разрешится, и одна оборванная загрузка рантайма без этого отравляла бы

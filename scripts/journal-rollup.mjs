@@ -254,6 +254,20 @@ table(
 const untouched = slugs.filter(slug => ![...crawl.values()].some(seen => seen.has(slug)));
 if (untouched.length) console.log(`  не забирал никто: ${untouched.length}, первая — ${untouched[0]}`);
 
+// ── приёмка ─────────────────────────────────────────────────────
+// Что случилось в браузере (`public/note.js`): событие и первая подробность —
+// кто считал, каким способом принесли, на чём упало. Размеры и секунды
+// здесь не складываются: их смотрят по заходу, через `--sample`.
+const notes = human.filter(record => record.path.startsWith('/api/note/') && record.status === 204);
+// Обе таблицы — целиком, без десятки `rank`: пар здесь около тридцати,
+// и срезались бы редкие — `failed …`, `wasm poor`, ради которых их и читают.
+table(rank(tally(notes.map(record => record.path.split('/').slice(3, 5).join(' '))), Infinity), 'Приёмка (/api/note)');
+// Оценка готового — отдельно: в общей таблице видно только, кто считал,
+// а спрашивают её ради пары «кто считал × что сказали».
+const rated = notes.filter(record => record.path.startsWith('/api/note/rated/'));
+if (rated.length)
+  table(rank(tally(rated.map(record => record.path.split('/').slice(4).join(' '))), Infinity), 'Оценка готового');
+
 // ── чего не нашли и сколько ждали ──────────────────────────────
 
 table(rank(tally(records.filter(record => record.kind === 'miss').map(record => record.path))), 'Чего не нашли (404)');

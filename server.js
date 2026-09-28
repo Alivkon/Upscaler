@@ -10,7 +10,7 @@ import { IMAGES_DIR, SHELF, SHELVES, ensureImageDirectories, galleryItems, isIma
 import { HttpError } from './http-error.js';
 import { announce, configured as indexNowReady, key as indexNowKey } from './indexnow.js';
 import { journal } from './journal.js';
-import { mailingAllowance, upscaleAllowance } from './limits.js';
+import { mailingAllowance, noteAllowance, upscaleAllowance } from './limits.js';
 import { subscribers } from './mailing.js';
 import {
   artistsPage,
@@ -28,6 +28,7 @@ import {
 import { artistIndex, artistPageOf, browse, everyPage, pageAt, pagesWith, rows } from './browse.js';
 import { finish, phoneWindow } from './treatment.js';
 import { serverLongestSide } from './public/frame.js';
+import { NOTED } from './public/note.js';
 import { MODEL as MODEL_FILE, WEIGHED } from './public/model-files.js';
 import { MODEL, configured as upscalerReady, enlarge } from './upscaler.js';
 
@@ -630,6 +631,34 @@ app.post('/api/upscale', upload.single('photo'), async (req, res, next) => {
 app.post('/api/gallery/share/:filename', (_req, res) =>
   res.status(403).json({ error: 'Adding works to the collection is not available at the moment.' })
 );
+
+// Записи приёмки о том, что случилось в браузере (`public/note.js`). Маршрут
+// ничего не делает: строку пишет журнал, как и для любого запроса, а путь
+// и есть запись. Работа маршрута — решить, с каким кодом она ляжет, потому
+// что сводка приёмки считает только 204.
+//
+// 204 получает лишь путь из словаря `NOTED` (public/note.js): закрытые списки
+// слов и числа, так что имени файла там не передать. Остальное — 404, и эту
+// строку журнал пишет как любую ненайденную: адрес, набранный руками, он
+// записывает всегда, на любом маршруте. Личного не присылает наша страница;
+// запретить присылать его чужому скрипту журнал не может.
+//
+// Два фильтра от налитых записей. Чужая страница, зовущая маршрут из браузера
+// своего посетителя, получает 403: `Sec-Fetch-Site` у неё `cross-site`
+// (у старых Safari заголовка нет, и их пропускаем). Скрипту с потолком
+// помогает `noteAllowance`: сверх него — 429.
+//
+// Оценке строже: без заголовка — тоже 403. Ответов на неё единицы, и
+// `curl` в цикле решал бы, кто лучше — сервер или браузер. Цена — оценки
+// Safari до 16.4, их теряем. Скрипт, подделавший заголовок, этим не
+// остановить; его держит маленькое ведро `rating`.
+app.post(/^\/api\/note\//, (req, res, next) => {
+  if (!NOTED.test(req.path)) return next();
+  const rating = req.path.startsWith('/api/note/rated/');
+  const site = req.get('sec-fetch-site');
+  if ((site || rating) && site !== 'same-origin') return res.status(403).end();
+  res.status(noteAllowance(req, rating ? 'rating' : 'note') ? 204 : 429).end();
+});
 
 // Ненайденный адрес. Посетителю нужна страница, а скрипту приёмки — JSON:
 // отвечать разметкой на `fetch` значит показать в аварии кусок HTML.
