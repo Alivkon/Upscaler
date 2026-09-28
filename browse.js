@@ -7,7 +7,7 @@
 // Откуда работа и кто её написал — факты, они в каталоге. Что работа
 // «dark academia» — вкус, и это список.
 import { ARTISTS, MIN_WORKS, artistOf, displayName } from './artists.js';
-import { COLLECTIONS, worksOf } from './collections.js';
+import { COLLECTIONS, terms, worksOf } from './collections.js';
 
 // Страна называется на странице прилагательным, а не именем из `origin`.
 // Англия — British: пять из двенадцати работ у Уилсона, а он валлиец.
@@ -31,28 +31,31 @@ const named = item => item.provenance && item.provenance.creatorKind !== 'unknow
 // не менялся от перезапуска к перезапуску.
 export const leadingNames = items => {
   const counts = new Map();
-  for (const item of items.filter(named)) counts.set(displayName(item), (counts.get(displayName(item)) ?? 0) + 1);
+  for (const item of items.filter(named)) {
+    const name = displayName(item);
+    counts.set(name, (counts.get(name) ?? 0) + 1);
+  }
   return [...counts].sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0])).map(([name]) => name);
 };
 
 const listed = names => (names.length < 2 ? names.join('') : `${names.slice(0, -1).join(', ')} and ${names.at(-1)}`);
 const byNames = names => (names.length > 3 ? `${names.slice(0, 3).join(', ')} and others` : listed(names));
 
-// Та же строка условий, что у тем (collections.js): числа из тех же работ.
-const terms = ({ count, full }) =>
-  `All ${count} are phone wallpapers, ${full} of them at 2160 × 3840 or larger. ` +
-  'Free to download and set as your background, no account needed.';
-
+// «Works», а не «paintings»: у Америки гравюры Одюбона, у Японии ксилографии
+// Киётики. В `title` «painting» остаётся — это слово запроса.
+//
+// Страницы нет, если работ меньше MIN_COUNTRY_WORKS или художник у них один:
+// тогда она повторяла бы его страницу под другим именем (см. Россию выше).
+//
 // Порог свой, а не художников (MIN_WORKS): до 24.09.2026 он был общий, и когда
 // художникам его снизили до двух, стране он остался прежним. С двумя страница
 // полагалась бы Германии, Норвегии и Китаю — по две-три работы двух
 // художников (Геккель и Фридрих в одной стране), это совпадение, а не традиция.
 export const MIN_COUNTRY_WORKS = 4;
 
-// «Works», а не «paintings»: у Америки гравюры Одюбона, у Японии ксилографии
-// Киётики. В `title` «painting» остаётся — это слово запроса.
 function countryPage(country, items) {
   const names = leadingNames(items);
+  if (items.length < MIN_COUNTRY_WORKS || names.length < 2) return null;
   const { adjective } = country;
   return {
     kind: 'country',
@@ -103,7 +106,7 @@ export function browse(items) {
         country,
         items.filter(item => item.origin === country.origin)
       )
-    ).filter(page => page.items.length >= MIN_COUNTRY_WORKS && leadingNames(page.items).length > 1),
+    ).filter(Boolean),
     artists: ARTISTS.map(artist =>
       artistPage(
         artist,

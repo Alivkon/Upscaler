@@ -127,6 +127,13 @@ import { accession } from './public/record.js';
 // и он живёт в каталоге; здесь нужна сама работа, чем бы её страница ни
 // называлась. Порядок в теме берётся из `catalogue/order.json`, как и на
 // указателе, — развеска решена там один раз.
+//
+// Строка условий под сеткой одна на всех, кроме настроений: у тех в ней
+// ещё «at 9:16». Её же берут страны и художники (browse.js).
+export const terms = ({ count, full }) =>
+  `All ${count} are phone wallpapers, ${full} of them at 2160 × 3840 or larger. Free to ` +
+  'download and set as your background, no account needed.';
+
 export const COLLECTIONS = [
   {
     slug: 'nihonga',
@@ -159,9 +166,7 @@ export const COLLECTIONS = [
       'ink on silk, the Japanese way of painting that continued after Western oil reached Meiji ' +
       'Japan. By Yokoyama Taikan, Kobayashi Kokei and Yamamoto Shunkyo, from the Tokyo National ' +
       'Museum and other public collections.',
-    terms: ({ count, full }) =>
-      `All ${count} are phone wallpapers, ${full} of them at 2160 × 3840 or larger. Free to ` +
-      'download and set as your background, no account needed.',
+    terms,
     // Отбор здесь не глазами, а по технике, и это единственная тема, где так
     // можно. «Нихонга» — не период и не манера: это минеральная краска и тушь
     // по шёлку в отличие от привезённого масла, и музей пишет технику в поле
@@ -240,9 +245,7 @@ export const COLLECTIONS = [
       'Romanticism. Painted between 1828 and 1871, by Thomas ' +
       'Cole, Albert Bierstadt, John Frederick Kensett and others. Most are from the Cleveland ' +
       'Museum of Art.',
-    terms: ({ count, full }) =>
-      `All ${count} are phone wallpapers, ${full} of them at 2160 × 3840 or larger. Free to ` +
-      'download and set as your background, no account needed.',
+    terms,
     refs: [
       'vl-0355',
       'vl-0354',
@@ -289,9 +292,7 @@ export const COLLECTIONS = [
       'Dutch Republic. Mostly Dutch still life, by Willem Kalf, Otto Marseus ' +
       'van Schrieck and others, from the Cleveland Museum of Art, the National Gallery of Denmark ' +
       'and other collections.',
-    terms: ({ count, full }) =>
-      `All ${count} are phone wallpapers, ${full} of them at 2160 × 3840 or larger. Free to ` +
-      'download and set as your background, no account needed.',
+    terms,
     refs: [
       'vl-0086',
       'vl-0038',
@@ -336,9 +337,7 @@ export const COLLECTIONS = [
       `${count} French, American, British and Japanese landscapes, ` +
       'painted between the 1640s and the 1930s. By Jean-Victor Bertin, Richard Wilson, Claude ' +
       'Lorrain and others, from the Cleveland Museum of Art and other collections.',
-    terms: ({ count, full }) =>
-      `All ${count} are phone wallpapers, ${full} of them at 2160 × 3840 or larger. Free to ` +
-      'download and set as your background, no account needed.',
+    terms,
     refs: [
       'vl-0366',
       'vl-0390',
@@ -425,9 +424,7 @@ export const COLLECTIONS = [
       `${count} works with flowers as their subject. Mostly Danish ` +
       "and Dutch, by Otto Didrik Ottesen and Jan van Huysum, with Audubon's birds among blossoms " +
       'and Japanese painting.',
-    terms: ({ count, full }) =>
-      `All ${count} are phone wallpapers, ${full} of them at 2160 × 3840 or larger. Free to ` +
-      'download and set as your background, no account needed.',
+    terms,
     refs: [
       'vl-0391',
       'vl-0026',
@@ -470,9 +467,7 @@ export const COLLECTIONS = [
       `${count} still lifes. Mostly Dutch: silver, glass and fruit ` +
       'by Willem Kalf, flowers by Jan van Huysum. With Danish flower and fruit pieces by Otto ' +
       'Didrik Ottesen and others.',
-    terms: ({ count, full }) =>
-      `All ${count} are phone wallpapers, ${full} of them at 2160 × 3840 or larger. Free to ` +
-      'download and set as your background, no account needed.',
+    terms,
     refs: [
       'vl-0030',
       'vl-0253',
@@ -528,9 +523,7 @@ export const COLLECTIONS = [
       `${count} seascapes: storms, waves and ships at sea, coasts ` +
       'and calm bays. By Ivan Aivazovsky, Théodore Gudin and others, from the Cleveland Museum ' +
       'of Art, the Tokyo National Museum and other collections.',
-    terms: ({ count, full }) =>
-      `All ${count} are phone wallpapers, ${full} of them at 2160 × 3840 or larger. Free to ` +
-      'download and set as your background, no account needed.',
+    terms,
     refs: [
       'vl-0362',
       'vl-0361',

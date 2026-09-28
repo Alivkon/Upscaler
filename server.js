@@ -285,9 +285,9 @@ app.get('/page/:page', (_req, res) => res.redirect(301, '/'));
 app.get('/collection/:slug', async (req, res, next) => {
   try {
     const found = browse(shown(await galleryItems()));
-    const page = pageAt(found, `/collection/${req.params.slug}`);
-    if (!page) return next();
-    html(res, 200, topicPage({ topic: page, items: page.items, origin: SITE_ORIGIN }));
+    const topic = pageAt(found, `/collection/${req.params.slug}`);
+    if (!topic) return next();
+    html(res, 200, topicPage({ topic, origin: SITE_ORIGIN }));
   } catch (error) {
     next(error);
   }
@@ -307,9 +307,9 @@ app.get('/artists', async (_req, res, next) => {
 
 app.get('/artists/:slug', async (req, res, next) => {
   try {
-    const page = pageAt(browse(shown(await galleryItems())), `/artists/${req.params.slug}`);
-    if (!page) return next();
-    html(res, 200, topicPage({ topic: page, items: page.items, origin: SITE_ORIGIN }));
+    const topic = pageAt(browse(shown(await galleryItems())), `/artists/${req.params.slug}`);
+    if (!topic) return next();
+    html(res, 200, topicPage({ topic, origin: SITE_ORIGIN }));
   } catch (error) {
     next(error);
   }
