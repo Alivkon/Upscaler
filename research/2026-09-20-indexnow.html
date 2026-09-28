@@ -179,3 +179,51 @@ ssh root@145.223.96.83 "docker exec upscaler sh -c 'wc -l &lt; /app/indexnow/sen
 <li>Измерения: <code>log/prod/*.tsv</code>, 13–20.09.2026.
 </ul>
 
+
+<h2>Включено на боевой машине — 20.09.2026</h2>
+
+<p>Выключатель щёлкнут: в <code>/opt/apps/upscaler/.env</code> дописана одна строка — <code>INDEXNOW_KEY</code> (имя; значение здесь не записано, хотя секретом и не является: тот же ключ сайт отдаёт открыто по <code>/&lt;ключ&gt;.txt</code>). Файл в git не едет, и ключ остаётся только на машине и на самом сайте. Остальные строки <code>.env</code> не тронуты — имена до и после совпадают, добавилось ровно одно:
+
+<pre>до:    KIE_API_KEY PORT HOST REPLICATE_API_TOKEN UPSCALE_URL UPSCALE_KEY UPSCALE_SECRET
+после: то же + INDEXNOW_KEY</pre>
+
+<p>Выкладки не делалось: код (<code>indexnow.js</code>) уже лежал на машине, контейнер пересоздан документированной строкой, чтобы прочитать новый <code>.env</code>:
+
+<pre>cd /opt/apps/upscaler &amp;&amp; docker compose --project-directory /opt/apps/upscaler up -d --build
+ Container upscaler Recreated
+ Container upscaler Started
+upscaler Up 8 seconds (healthy)</pre>
+
+<h3>Маршрут ключа</h3>
+
+<pre>HTTP/2 200
+content-type: text/plain; charset=utf-8
+content-length: 32</pre>
+
+<p>Тело — сам ключ, 32 знака, без перевода строки.
+
+<h3>Отправка</h3>
+
+<pre>$ docker logs upscaler 2&gt;&amp;1 | grep -i indexnow
+IndexNow: отправлено адресов — 166 из 166 новых.
+
+$ docker exec upscaler sh -c 'wc -l &lt; /app/indexnow/sent.tsv'
+167
+
+$ curl -s https://tessarum.com/sitemap.xml | grep -o "&lt;loc&gt;" | wc -l
+166</pre>
+
+<p>166 адресов в карте, 166 отправлено, 167 строк в файле состояния — шапка и строка на адрес. Bing принял: строка в лог пишется только после 200 или 202, всё прочее кончилось бы <code>IndexNow: &lt;код&gt;</code> и пустым файлом. Таблицу отправок в Bing Webmaster Tools смотрит Charlie — доступа к ней у выкладки нет.
+
+<p>Ожидалось 165 адресов, ушло 166: между записью выше и включением вышла четвёртая тема (<code>/collection/cottagecore</code>, 77d32e9).
+
+<h3>Заодно проверено, что доехали слова</h3>
+
+<ul>
+<li>главная — описание из двух фраз («Real museum paintings and engravings, not AI-generated…»);
+<li><code>/license</code> — оба новых абзаца («These are scans of real paintings…», «Using a painting from this collection… needs no permission»);
+<li>страница работы — «from Cleveland Museum of Art, 1915.687» у музейной работы и без оборота <code>from</code> у работы, пришедшей только из Wikimedia Commons (<code>crow-in-flight-on-gold-iphone-wallpaper</code>, <code>…golden-calf-lorrain…</code>);
+<li>подпись у галочки «Dimmed» — на странице работы.
+</ul>
+
+<p>Одно расхождение с ожиданием, и оно не поломка: галочки «Dimmed» на <code>/collection/dark-academia</code> нет. На машине лежит код новее той записи — fb976fe оставил галочку только на странице работы; на теме всегда приглушено.
