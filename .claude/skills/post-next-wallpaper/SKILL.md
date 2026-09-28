@@ -26,16 +26,17 @@ cd /home/charlie/repos/Upscaler && node scripts/for-tumblr.mjs
 
 This (re)writes `images/for-tumblr/<ref>-<slug>.jpg` (900px wide, aspect
 preserved) for every **non-hidden** catalogue work, using each work's
-**untreated** file — `scan.crops.phone` when the work has a scan (i.e.
-`treatment` is `dim` or `ceil`), falling back to `crops.phone` for
-`treatment: "none"`, which has no separate scan — plus
-`images/for-tumblr/index.json` (title, alt, tags, provenance, tessarum URL
-per ref). It's deliberately undersized: big enough to look sharp on a Tumblr
-dash card, short of what any modern phone needs as an actual wallpaper, so a
-viewer who wants the real file has to click through to the work page.
+**whole painting as scanned**: the `scan` plate when the work has one (i.e.
+`treatment` is `dim` or `ceil`), the plate itself for `treatment: "none"`,
+whose plate is the scan. Not the phone crop and not the dimmed file: since
+25.09.2026 Tumblr shows the painting, and the crops live on the work page.
+It also writes `images/for-tumblr/index.json` (title, alt, tags, provenance,
+tessarum URL per ref). It's deliberately undersized: big enough to look sharp
+on a Tumblr dash card, short of an actual wallpaper, so a viewer who wants
+the real file has to click through to the work page.
 Pinterest posts use the full-size, **treated** `crops.phone` file instead
-(see §4) — Tumblr always shows the undimmed original, Pinterest keeps
-matching what the gallery ships.
+(see §4) — Tumblr shows the painting, Pinterest keeps matching what the
+gallery ships.
 
 ## 1. Read what's already posted
 
@@ -46,8 +47,7 @@ Known gaps in that file, from before it existed — don't let its absence of a
 ref be read as "definitely unposted":
 - **Tumblr** (`tessarum-blog`, blog URL `https://tessarum-blog.tumblr.com/`):
   vl-0083 (Egypt and Nubia) was posted before this tracker, at full plate
-  size and the landscape (uncropped) aspect — a mistake, logged so it isn't
-  repeated, not something to fix retroactively.
+  size (the 900px-wide copy is the rule now, the landscape aspect is fine).
 - **Pinterest** (account `oninfrared`, display name `grtnwdrknss`, profile
   `https://www.pinterest.com/oninfrared/`): the "Created" tab already held
   several tessarum pins before this tracker (at least vl-0067 "An Aqueduct
@@ -57,6 +57,11 @@ ref be read as "definitely unposted":
   Not fully catalogued by ref. **Before picking a Pinterest work, check the
   live Created tab** (screenshot or `find`) as well as the JSON, so you don't
   duplicate one of these.
+
+Every entry carries `crop` and `edit` (see §3 step 6, §4 step 10). Tumblr
+history, filled in afterwards from dates and git: 12.09 whole plate, dimmed
+(Charlie's eye); 13–18.09 phone crop, gallery's treated file; 21–25.09
+phone crop, scan; from 26.09 whole painting, scan.
 
 ## 2. Pick the next work
 
@@ -73,8 +78,8 @@ file).
 
 ## 3. Tumblr
 
-Tumblr always gets the **non-dimmed** file (§0) — don't substitute the
-gallery's treated version even if it looks closer to what's live on the site.
+Tumblr always gets the **whole scanned painting** (§0) — don't substitute
+the phone crop or the gallery's dimmed version.
 
 1. Open `https://www.tumblr.com/new/photo` in Chrome (logged-in session,
    blog `tessarum-blog` is the default target — confirm the composer header
@@ -85,24 +90,45 @@ gallery's treated version even if it looks closer to what's live on the site.
    ```
    cp images/for-tumblr/<file> "$SCRATCHPAD/for-tumblr/<file>"
    ```
-3. Caption: type `${provenance.work} · ${provenance.credit}` (e.g.
-   `Landscape Near Paris · Cleveland Museum of Art, 1975.78`). Fall back to
-   `title` only if `provenance` is missing. Select all the caption text
-   (`ctrl+a` after typing, or triple-click), then press **`ctrl+k`** — a
-   `https://` input appears (it renders anchored near the top of the image,
-   which looks like it's the image's own link field, but it isn't: it's the
-   text-link popup, just positioned oddly). Type the work's tessarum URL
-   (`https://tessarum.com/w/<slug>?source=tumblr`) and press Return. The
-   `?source=` tag is how `yarn stats` counts visits from the Tumblr app,
-   which sends no referrer; don't drop it. Verify with
-   `find`/`read_page` that the caption text is now an `<a>` with the right
-   `href` before posting — don't trust the screenshot alone, the underline
-   is easy to miss.
+3. Caption: three short lines, plain text (not a link), then a blank line
+   and the link:
+   ```
+   **Mount Vesuvius at Midnight**
+   Albert Bierstadt, 1868
+   Oil on canvas
+
+   Tessarum
+   ```
+   Title is `provenance.work` in bold (`ctrl+b` before typing, `ctrl+b`
+   again after). Second line `${provenance.creator}, ${provenance.date}`;
+   drop the year if there's no `date`. Third line is the medium, capitalised
+   as a sentence ("Oil on canvas", "Ink and color on silk"). No museum name.
+   The catalogue doesn't store the medium, so look it up for this one work
+   from the source in `provenance.page`, open API first (Cleveland:
+   `https://openaccess-api.clevelandart.org/api/artworks/<accession>` →
+   `technique`; Wikimedia Commons: the file page's "Medium" row; SMK:
+   `https://api.smk.dk/api/v1/art?object_number=<nr>` → `techniques`). One
+   request, human pace (AGENTS.md, «Музеи и чужие сайты»). If it isn't
+   stated, leave the line out rather than guess.
+   Lines inside the block are soft breaks: type the title, `Return`, then
+   on each following line go `Home`, `BackSpace`, `shift+Return` so the
+   three sit together; one plain `Return` before `Tessarum` gives the gap.
+   Then double-click `Tessarum`, press **`ctrl+k`** — a `https://` input
+   appears (it can render near the top of the image, but it's the text-link
+   popup) — type `https://tessarum.com/w/<slug>?source=tumblr` and press
+   Return. The `?source=` tag is how `yarn stats` counts visits from the
+   Tumblr app, which sends no referrer; don't drop it. Verify with
+   `javascript_tool` that the composer has exactly one `<a>` with text
+   `Tessarum` and the right `href` before posting — don't trust the
+   screenshot alone.
 4. Tags: `#add tags` field, comma-separated, no `#` prefix needed when
    typing (Tumblr adds it). Reuse a consistent core — `painting`, `art`,
-   `art history`, `phone wallpaper` — plus 1–2 tags fitting *this* work's own
-   `tags`/`alt` mood (`dark academia`, `landscape painting`, `still life`,
-   `japanese art`, whatever actually fits), plus **one niche, low-competition
+   `art history`, `phone wallpaper` — plus `dark academia` on **most**
+   works: skip it only for plainly bright, cheerful pieces (sunny florals,
+   light illustrations). Plus the medium in lower case when step 3 found
+   one (`oil on canvas`, `watercolor`), plus 1–2 tags fitting *this* work's
+   own `tags`/`alt` mood (`landscape painting`, `still life`, `japanese art`,
+   `volcano`, whatever actually fits), plus **one niche, low-competition
    tag** most posts should carry — check candidates first by visiting
    `https://www.tumblr.com/tagged/<tag>` and reading what's already there:
    an empty or off-topic result is the niche opportunity Charlie wants
@@ -111,10 +137,15 @@ gallery's treated version even if it looks closer to what's live on the site.
    wallpaper searcher wants.
 5. Click **Post now**. Confirm with a screenshot that it says "Posted to
    tessarum-blog", then verify on `https://tessarum-blog.tumblr.com/` that
-   the post rendered as a vertical crop (if it looks landscape/full-plate,
-   the wrong file got uploaded — stop and check).
+   the post shows the whole painting, not a tall phone crop (if it's the
+   crop, the copies weren't refreshed — stop and check).
 6. Append to `research/social-posts.json`'s `tumblr` array: `ref`, `slug`,
-   `postedAt` (today, ISO date), `file`, `tags`.
+   `postedAt` (today, ISO date), `file`, `crop`, `edit`, `medium` (or
+   `null`), `tags`. `crop` is what part of the painting went up: `"whole"`
+   now, `"phone"` for the phone crop. `edit` is which version: `"scan"` now,
+   or `"dim"` / `"ceil"` for the gallery's treated file. The `for-tumblr`
+   file name is the same whichever it holds and gets rebuilt, so these two
+   fields are the only record of what a post actually showed (§1).
 
 ## 4. Pinterest
 
@@ -153,7 +184,9 @@ scratchpad for upload.
 9. Verify on `https://www.pinterest.com/oninfrared/` (Created tab, sorted
    newest-first) that the new pin is there.
 10. Append to `research/social-posts.json`'s `pinterest` array: `ref`,
-    `slug`, `postedAt`, `board`, `title`, `file` (the full-size path used).
+    `slug`, `postedAt`, `board`, `title`, `file` (the full-size path used),
+    `crop: "phone"`, and `edit`: the rule in the file name (`-dim-phone-` →
+    `"dim"`, `-ceil-phone-` → `"ceil"`, `-none-phone-` → `"scan"`).
 
 ## 5. Report back
 

@@ -4,49 +4,216 @@
       "ref": "vl-0083",
       "slug": "egypt-and-nubia-volume-i-english-print-iphone-wallpaper",
       "postedAt": "2026-09-12",
-      "note": "posted before this tracker existed, at full plate size and landscape crop (the plate, not crops.phone) — do not repeat that mistake; leave as-is, do not repost"
+      "note": "posted before this tracker existed, at full plate size (the whole painting, now the rule, but the full-size file, not the 900px copy); leave as-is, do not repost",
+      "crop": "whole",
+      "edit": "dim"
     },
     {
       "ref": "vl-0063",
       "slug": "landscape-near-paris-landscape-desktop-wallpaper",
       "postedAt": "2026-09-13",
       "file": "images/for-tumblr/vl-0063-landscape-near-paris-landscape-desktop-wallpaper.jpg",
-      "tags": ["painting", "art", "landscape painting", "dark academia", "art history", "phone wallpaper", "georges michel", "romanticism"]
+      "crop": "phone",
+      "edit": "dim",
+      "tags": [
+        "painting",
+        "art",
+        "landscape painting",
+        "dark academia",
+        "art history",
+        "phone wallpaper",
+        "georges michel",
+        "romanticism"
+      ]
     },
     {
       "ref": "vl-0216",
       "slug": "apple-blossoms-still-life-iphone-wallpaper",
       "postedAt": "2026-09-14",
       "file": "images/for-tumblr/vl-0216-apple-blossoms-still-life-iphone-wallpaper.jpg",
-      "tags": ["painting", "art", "art history", "phone wallpaper", "still life", "floral", "martin johnson heade"]
+      "crop": "phone",
+      "edit": "dim",
+      "tags": [
+        "painting",
+        "art",
+        "art history",
+        "phone wallpaper",
+        "still life",
+        "floral",
+        "martin johnson heade"
+      ]
     },
     {
       "ref": "vl-0291",
       "slug": "rocky-mountain-sheep-bierstadt-iphone-wallpaper",
       "postedAt": "2026-09-15",
       "file": "images/for-tumblr/vl-0291-rocky-mountain-sheep-bierstadt-iphone-wallpaper.jpg",
-      "tags": ["painting", "art", "art history", "phone wallpaper", "mountains", "storm", "albert bierstadt bighorn sheep"]
+      "crop": "phone",
+      "edit": "dim",
+      "tags": [
+        "painting",
+        "art",
+        "art history",
+        "phone wallpaper",
+        "mountains",
+        "storm",
+        "albert bierstadt bighorn sheep"
+      ]
     },
     {
       "ref": "vl-0164",
       "slug": "kasuga-shrine-mandala-architectural-iphone-wallpaper",
       "postedAt": "2026-09-16",
       "file": "images/for-tumblr/vl-0164-kasuga-shrine-mandala-architectural-iphone-wallpaper.jpg",
-      "tags": ["painting", "art", "art history", "phone wallpaper", "dark academia", "japanese art", "kasuga mandala"]
+      "crop": "phone",
+      "edit": "ceil",
+      "tags": [
+        "painting",
+        "art",
+        "art history",
+        "phone wallpaper",
+        "dark academia",
+        "japanese art",
+        "kasuga mandala"
+      ]
     },
     {
       "ref": "vl-0219",
       "slug": "bamboo-in-four-seasons-autumn-iphone-wallpaper",
       "postedAt": "2026-09-17",
       "file": "images/for-tumblr/vl-0219-bamboo-in-four-seasons-autumn-iphone-wallpaper.jpg",
-      "tags": ["painting", "art", "art history", "phone wallpaper", "chinese art", "minimalist", "ink bamboo painting"]
+      "crop": "phone",
+      "edit": "ceil",
+      "tags": [
+        "painting",
+        "art",
+        "art history",
+        "phone wallpaper",
+        "chinese art",
+        "minimalist",
+        "ink bamboo painting"
+      ]
     },
     {
       "ref": "vl-0371",
       "slug": "maple-viewing-wang-yin-iphone-wallpaper",
       "postedAt": "2026-09-18",
       "file": "images/for-tumblr/vl-0371-maple-viewing-wang-yin-iphone-wallpaper.jpg",
-      "tags": ["painting", "art", "art history", "phone wallpaper", "chinese art", "landscape painting", "wang yin"]
+      "crop": "phone",
+      "edit": "ceil",
+      "tags": [
+        "painting",
+        "art",
+        "art history",
+        "phone wallpaper",
+        "chinese art",
+        "landscape painting",
+        "wang yin"
+      ]
+    },
+    {
+      "ref": "vl-0318",
+      "slug": "landscape-with-the-adoration-of-the-golden-calf-lorrain-iphone-wallpaper",
+      "postedAt": "2026-09-21",
+      "file": "images/for-tumblr/vl-0318-landscape-with-the-adoration-of-the-golden-calf-lorrain-iphone-wallpaper.jpg",
+      "crop": "phone",
+      "edit": "scan",
+      "tags": [
+        "painting",
+        "art",
+        "art history",
+        "phone wallpaper",
+        "landscape painting",
+        "dark academia",
+        "claude lorrain"
+      ]
+    },
+    {
+      "ref": "vl-0253",
+      "slug": "flowers-in-an-urn-huysum-iphone-wallpaper",
+      "postedAt": "2026-09-22",
+      "file": "images/for-tumblr/vl-0253-flowers-in-an-urn-huysum-iphone-wallpaper.jpg",
+      "crop": "phone",
+      "edit": "scan",
+      "tags": [
+        "painting",
+        "art",
+        "art history",
+        "phone wallpaper",
+        "still life",
+        "floral",
+        "jan van huysum"
+      ]
+    },
+    {
+      "ref": "vl-0179",
+      "slug": "ase-farm-in-telemark-dark-landscape-desktop-wallpaper",
+      "postedAt": "2026-09-23",
+      "file": "images/for-tumblr/vl-0179-ase-farm-in-telemark-dark-landscape-desktop-wallpaper.jpg",
+      "crop": "phone",
+      "edit": "scan",
+      "tags": [
+        "painting",
+        "art",
+        "art history",
+        "phone wallpaper",
+        "dark academia",
+        "norway",
+        "halfdan egedius"
+      ]
+    },
+    {
+      "ref": "vl-0476",
+      "slug": "aivazovsky-aivasovsky-constantinovich-storm-desktop-wallpaper",
+      "postedAt": "2026-09-24",
+      "file": "images/for-tumblr/vl-0476-aivazovsky-aivasovsky-constantinovich-storm-desktop-wallpaper.jpg",
+      "crop": "phone",
+      "edit": "scan",
+      "tags": [
+        "painting",
+        "art",
+        "art history",
+        "phone wallpaper",
+        "storm",
+        "seascape",
+        "storm on the sea of azov"
+      ]
+    },
+    {
+      "ref": "vl-0069",
+      "slug": "gazing-at-a-waterfall-river-landscape-iphone-wallpaper",
+      "postedAt": "2026-09-25",
+      "file": "images/for-tumblr/vl-0069-gazing-at-a-waterfall-river-landscape-iphone-wallpaper.jpg",
+      "crop": "phone",
+      "edit": "scan",
+      "tags": [
+        "painting",
+        "art",
+        "art history",
+        "phone wallpaper",
+        "japanese art",
+        "landscape painting",
+        "gazing at a waterfall"
+      ]
+    },
+    {
+      "ref": "vl-0355",
+      "slug": "mount-vesuvius-at-midnight-bierstadt-iphone-wallpaper",
+      "postedAt": "2026-09-28",
+      "file": "images/for-tumblr/vl-0355-mount-vesuvius-at-midnight-bierstadt-iphone-wallpaper.jpg",
+      "crop": "whole",
+      "edit": "scan",
+      "medium": "oil on canvas",
+      "tags": [
+        "painting",
+        "art",
+        "art history",
+        "phone wallpaper",
+        "dark academia",
+        "oil on canvas",
+        "volcano",
+        "volcano painting"
+      ]
     }
   ],
   "pinterest": [
@@ -60,7 +227,9 @@
       "postedAt": "2026-09-13",
       "board": "Art",
       "title": "Landscape Near Paris, Georges Michel — dark academia phone wallpaper",
-      "file": "images/crops/landscape-near-paris-landscape-desktop-wallpaper-dim-phone-1772x3840.jpg"
+      "file": "images/crops/landscape-near-paris-landscape-desktop-wallpaper-dim-phone-1772x3840.jpg",
+      "crop": "phone",
+      "edit": "dim"
     },
     {
       "ref": "vl-0216",
@@ -68,7 +237,9 @@
       "postedAt": "2026-09-14",
       "board": "Art",
       "title": "Apple Blossoms, Martin Johnson Heade, dark academia phone wallpaper",
-      "file": "images/crops/apple-blossoms-still-life-iphone-wallpaper-dim-phone-2066x4477.jpg"
+      "file": "images/crops/apple-blossoms-still-life-iphone-wallpaper-dim-phone-2066x4477.jpg",
+      "crop": "phone",
+      "edit": "dim"
     },
     {
       "ref": "vl-0291",
@@ -76,7 +247,9 @@
       "postedAt": "2026-09-15",
       "board": "Art",
       "title": "Rocky Mountain Sheep, Albert Bierstadt, dark academia phone wallpaper",
-      "file": "images/crops/rocky-mountain-sheep-bierstadt-iphone-wallpaper-dim-phone-1477x3200.jpg"
+      "file": "images/crops/rocky-mountain-sheep-bierstadt-iphone-wallpaper-dim-phone-1477x3200.jpg",
+      "crop": "phone",
+      "edit": "dim"
     },
     {
       "ref": "vl-0164",
@@ -84,7 +257,9 @@
       "postedAt": "2026-09-16",
       "board": "Art",
       "title": "Kasuga Shrine Mandala, early 1300s Japanese painting, dark academia phone wallpaper",
-      "file": "images/crops/kasuga-shrine-mandala-architectural-iphone-wallpaper-ceil-phone-2864x6205.jpg"
+      "file": "images/crops/kasuga-shrine-mandala-architectural-iphone-wallpaper-ceil-phone-2864x6205.jpg",
+      "crop": "phone",
+      "edit": "ceil"
     },
     {
       "ref": "vl-0219",
@@ -92,7 +267,9 @@
       "postedAt": "2026-09-17",
       "board": "Art",
       "title": "Bamboo in Four Seasons: Autumn, Yuan dynasty Chinese ink painting, dark academia phone wallpaper",
-      "file": "images/crops/bamboo-in-four-seasons-autumn-iphone-wallpaper-ceil-phone-2308x5000.jpg"
+      "file": "images/crops/bamboo-in-four-seasons-autumn-iphone-wallpaper-ceil-phone-2308x5000.jpg",
+      "crop": "phone",
+      "edit": "ceil"
     },
     {
       "ref": "vl-0371",
@@ -100,7 +277,69 @@
       "postedAt": "2026-09-18",
       "board": "Art",
       "title": "Maple Viewing, Wang Yin, dark academia phone wallpaper",
-      "file": "images/crops/maple-viewing-wang-yin-iphone-wallpaper-ceil-phone-836x1811.jpg"
+      "file": "images/crops/maple-viewing-wang-yin-iphone-wallpaper-ceil-phone-836x1811.jpg",
+      "crop": "phone",
+      "edit": "ceil"
+    },
+    {
+      "ref": "vl-0318",
+      "slug": "landscape-with-the-adoration-of-the-golden-calf-lorrain-iphone-wallpaper",
+      "postedAt": "2026-09-21",
+      "board": "Art",
+      "title": "Landscape with the Adoration of the Golden Calf, Claude Lorrain, dark academia phone wallpaper",
+      "file": "images/crops/landscape-with-the-adoration-of-the-golden-calf-lorrain-iphone-wallpaper-ceil-phone-1749x3789.jpg",
+      "crop": "phone",
+      "edit": "ceil"
+    },
+    {
+      "ref": "vl-0083",
+      "slug": "egypt-and-nubia-volume-i-english-print-iphone-wallpaper",
+      "postedAt": "2026-09-22",
+      "board": "Art",
+      "title": "Egypt and Nubia, Volume I: Luxor, Louis Haghe, phone wallpaper",
+      "file": "images/crops/egypt-and-nubia-volume-i-english-print-iphone-wallpaper-none-phone-1424x3086.jpg",
+      "crop": "phone",
+      "edit": "scan"
+    },
+    {
+      "ref": "vl-0253",
+      "slug": "flowers-in-an-urn-huysum-iphone-wallpaper",
+      "postedAt": "2026-09-23",
+      "board": "Art",
+      "title": "Flowers in an Urn, Jan van Huysum, dark academia phone wallpaper",
+      "file": "images/crops/flowers-in-an-urn-huysum-iphone-wallpaper-ceil-phone-1846x4000.jpg",
+      "crop": "phone",
+      "edit": "ceil"
+    },
+    {
+      "ref": "vl-0179",
+      "slug": "ase-farm-in-telemark-dark-landscape-desktop-wallpaper",
+      "postedAt": "2026-09-24",
+      "board": "Art",
+      "title": "The Åse Farm in Telemark, Halfdan Egedius, dark academia phone wallpaper",
+      "file": "images/crops/ase-farm-in-telemark-dark-landscape-desktop-wallpaper-ceil-phone-1360x2947.jpg",
+      "crop": "phone",
+      "edit": "ceil"
+    },
+    {
+      "ref": "vl-0476",
+      "slug": "aivazovsky-aivasovsky-constantinovich-storm-desktop-wallpaper",
+      "postedAt": "2026-09-25",
+      "board": "Art",
+      "title": "Storm on the Sea of Azov, Ivan Aivazovsky, phone wallpaper",
+      "file": "images/crops/aivazovsky-aivasovsky-constantinovich-storm-desktop-wallpaper-none-phone-1625x3520.jpg",
+      "crop": "phone",
+      "edit": "scan"
+    },
+    {
+      "ref": "vl-0069",
+      "slug": "gazing-at-a-waterfall-river-landscape-iphone-wallpaper",
+      "postedAt": "2026-09-28",
+      "board": "Art",
+      "title": "Gazing at a Waterfall, Tani Bunchō, dark academia phone wallpaper",
+      "file": "images/crops/gazing-at-a-waterfall-river-landscape-iphone-wallpaper-ceil-phone-1514x3280.jpg",
+      "crop": "phone",
+      "edit": "ceil"
     }
   ]
 }

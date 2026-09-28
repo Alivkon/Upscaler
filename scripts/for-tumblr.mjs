@@ -1,11 +1,11 @@
 // Downsized copies of every gallery work, sized for the Tumblr dash: sharp
-// enough to look good in a feed, short of an actual phone wallpaper so a
-// viewer who wants the real resolution has to click through to the work page.
+// enough to look good in a feed, short of an actual wallpaper so a viewer who
+// wants the real resolution has to click through to the work page.
 //
-// Uses the untreated file (`scan.crops.phone` when a scan exists, i.e. the
-// work has `treatment` `dim` or `ceil`; falls back to `crops.phone` for
-// `treatment: "none"`, which has no separate scan because there's nothing to
-// differ) — Tumblr always gets the undimmed version, unlike the gallery.
+// Uses the whole painting as scanned (`scan` when the work has one, i.e.
+// `treatment` `dim` or `ceil`; the plate itself for `treatment: "none"`, whose
+// plate is the scan) — not the phone crop and not the dimmed file. Tumblr shows
+// the painting; the crops are on the work page.
 //
 // Запуск: node scripts/for-tumblr.mjs
 import fs from 'node:fs/promises';
@@ -44,12 +44,12 @@ for (const ref of order) {
     continue;
   }
   const entry = manifest.get(ref);
-  const phone = entry?.scan?.crops?.phone || entry?.crops?.phone;
-  if (!phone) {
+  const scan = entry?.scan || entry;
+  if (!scan?.file) {
     skippedNoFile++;
     continue;
   }
-  const src = `images/${phone.file}`;
+  const src = `images/${scan.file}`;
   try {
     await fs.access(src);
   } catch {
