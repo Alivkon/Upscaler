@@ -129,6 +129,10 @@ const cfBeacon = `<script type="module" src="https://static.cloudflareinsights.c
 // что он накопил в поиске, а 404 на месте живой страницы копится у Google
 // как soft-404. С `noindex` работа выпадает из выдачи чисто, ссылка у того,
 // кто её сохранил, продолжает работать, а возвращается работа снятием поля.
+//
+// Остальным страницам — `max-image-preview:large`: без него Google вправе
+// показать картинку в выдаче маленькой, а крупные карточки Discover даёт только
+// сайтам, разрешившим большое превью. Картинка здесь и есть то, за чем приходят.
 function layout({
   title,
   description,
@@ -162,7 +166,7 @@ function layout({
     ${gtmHead}
     <title>${escape(title)}</title>
     <meta name="description" content="${escape(description)}" />
-    ${noindex ? '<meta name="robots" content="noindex, follow" />' : ''}
+    <meta name="robots" content="${noindex ? 'noindex, follow' : 'max-image-preview:large'}" />
     ${canonical ? `<link rel="canonical" href="${escape(canonical)}" />` : ''}
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="${SITE_NAME}" />

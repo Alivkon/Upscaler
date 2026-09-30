@@ -1,0 +1,60 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>max-image-preview:large</title>
+<style>
+body{max-width:46em;margin:2em auto;padding:0 1em;font:16px/1.55 Georgia,serif}
+pre{background:#f4f4f4;padding:.8em;overflow-x:auto;font:13px/1.4 monospace;white-space:pre-wrap}
+code{background:#f4f4f4;padding:0 .2em;font:13px monospace}
+table{border-collapse:collapse}td,th{padding:.3em .6em;text-align:left}
+</style>
+<h1>max-image-preview:large: большое превью в выдаче</h1>
+
+<p>30 сентября 2026
+
+<h2>Цель</h2>
+
+<p>Разрешить Google показывать картинки сайта крупно. Без директивы Google вправе показать в выдаче маленькое превью, а крупные карточки в Discover даёт только сайтам, разрешившим <code>large</code>. Для витрины обоев картинка и есть то, по чему выбирают: мелкая миниатюра читается не как «большая на сайте», а как «эта хуже».
+
+<p>Пробел найден аудитом чужих скилов (<code>2026-09-28-seo-skills-audit.md</code>): директиву не упоминает ни один из десяти, и у нас её тоже не было.
+
+<h2>Решения</h2>
+
+<ul>
+<li><strong>На всех страницах, кроме снятых работ.</strong> Снятые (<code>hidden: true</code>) несут <code>noindex, follow</code> как раньше: в выдаче их нет, превью им не нужно.
+<li><strong>Мысль «маленькое превью заставит зайти за большим» отвергнута.</strong> Google Картинки не показывают размеры файла, так что о большой версии говорит только заголовок страницы, а он уже несёт «4K · 2160 × 3840».
+<li>Не проверено: насколько директива меняет вкладку «Картинки», а не только Discover. Документация Google однозначного ответа не даёт, поэтому ниже точка отсчёта для сравнения.
+</ul>
+
+<h2>Изменения</h2>
+
+<p><code>pages.js</code>, <code>layout()</code>: тег <code>&lt;meta name="robots"&gt;</code> теперь стоит всегда; <code>noindex, follow</code> для снятых работ, <code>max-image-preview:large</code> для остальных. Комментарий над функцией объясняет почему.
+
+<h2>Проверки</h2>
+
+<ul>
+<li><code>yarn verify</code>: «All matched files use Prettier code style!», код 0.
+<li>Перед выкладкой <code>rsync --dry-run --checksum --itemize-changes</code>: меняется только <code>pages.js</code>.
+<li><code>./scripts/deploy.sh</code>: контейнер <code>Up 26 seconds (healthy)</code>, <code>/</code>, <code>/robots.txt</code>, <code>/sitemap.xml</code> отвечают 200.
+<li>Боевой сайт после выкладки (30.09.2026, 11:23 UTC):
+</ul>
+
+<table border="1">
+<tr><th>страница<th>robots
+<tr><td><code>/</code><td><code>max-image-preview:large</code>
+<tr><td><code>/w/landscape-near-paris-landscape-desktop-wallpaper</code><td><code>max-image-preview:large</code>
+<tr><td><code>/collection/dark-academia</code><td><code>max-image-preview:large</code>
+<tr><td><code>/w/dusk-ridge-dark-gradient-iphone-wallpaper</code> (снята)<td><code>noindex, follow</code>
+</table>
+
+<h2>Точка отсчёта</h2>
+
+<p>Выкладка 30.09.2026. Сравнивать показы и переходы по картинкам (<code>yarn stats</code>, часть «Google», <code>searchType: image</code>) до и после, не раньше чем через 3-4 недели: Google обходит сайт медленно (из 205 адресов карты сайта к 21.09 знал 73), и директива доходит до выдачи только с повторным обходом страницы.
+
+<p>Состояние до, выгрузка Search Console «Индексирование страниц» за 04-21.09: 36 проиндексировано, 37 нет (27 <code>noindex</code> у снятых работ, 3 переадресации, 7 «просканировано, не проиндексировано»), показов 0-4 в день.
+
+<h2>Источники</h2>
+
+<ul>
+<li>Google Search Central, мета-теги robots, <code>max-image-preview</code>: <a href="https://developers.google.com/search/docs/crawling-indexing/robots-meta-tag">https://developers.google.com/search/docs/crawling-indexing/robots-meta-tag</a>
+<li>Google Discover, требование крупных картинок: <a href="https://developers.google.com/search/docs/appearance/google-discover">https://developers.google.com/search/docs/appearance/google-discover</a>
+</ul>
