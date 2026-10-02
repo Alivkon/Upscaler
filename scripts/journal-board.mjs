@@ -16,7 +16,7 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { deviceOf, foreign, imageIndex, readDays, visitsOf } from './journal-read.mjs';
+import { deviceOf, foreign, imageIndex, ownVisit, readDays, visitsOf } from './journal-read.mjs';
 import { TYPES, searchReport } from './search-console.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -81,7 +81,7 @@ try {
 }
 
 const visits = visitsOf(records);
-const people = visits.filter(visit => !visit.bot);
+const people = visits.filter(visit => !visit.bot && !ownVisit(visit));
 const humanKeys = new Set(people.map(visit => visit.key));
 const human = records.filter(record => humanKeys.has(record.key));
 

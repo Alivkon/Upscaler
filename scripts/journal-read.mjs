@@ -180,6 +180,10 @@ function classify(lines) {
   return { bot: false, why: 'человек' };
 }
 
+// Свой заход — тот, где журнал узнал куку хозяина (`markOwner` в `journal.js`).
+// Это не бот и не посетитель: в счёт людей он не идёт ни на доске, ни в сводке.
+export const ownVisit = visit => visit.lines.some(line => line.source === 'me');
+
 export function visitsOf(records) {
   const groups = new Map();
   for (const record of records) {

@@ -9,7 +9,7 @@
 // его точность и полнота неизвестны, а от него зависит каждое число выше.
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { deviceOf, foreign, imageIndex, readDays, visitsOf } from './journal-read.mjs';
+import { deviceOf, foreign, imageIndex, ownVisit, readDays, visitsOf } from './journal-read.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, '..');
@@ -54,7 +54,7 @@ if (!records.length) {
 }
 const { byUrl, total, slugs } = await imageIndex();
 const visits = visitsOf(records);
-const people = visits.filter(visit => !visit.bot);
+const people = visits.filter(visit => !visit.bot && !ownVisit(visit));
 const bots = visits.filter(visit => visit.bot);
 // Множество, а не поиск по списку на каждую строку: заходов тысячи, строк
 // десятки тысяч, и на месяце это перебор в миллиарды сравнений — сводка

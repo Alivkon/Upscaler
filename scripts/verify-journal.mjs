@@ -42,13 +42,18 @@ async function request({
     statusCode: status,
     getHeader: name => (name.toLowerCase() === 'content-type' ? type : undefined),
     write: () => true,
-    end: () => true
+    end: () => true,
+    cookies: [],
+    cookie(name, value) {
+      this.cookies.push(`${name}=${value}`);
+    }
   });
   await new Promise(done => write(req, res, done));
   if (after) req.path = after;
   res.write(body);
   res.end();
   res.emit('finish');
+  return res;
 }
 
 // Запись идёт через поток и через `await` на подтверждение краулера, то есть
@@ -343,6 +348,20 @@ Object.assign(dns, real);
   if (all[18]?.source !== '-') complain(`метка-массив записана: ${all[18]?.source}`);
 }
 
+// 16. Свой заход. Ссылка `?source=me` ставит куку хозяина, и дальше любой
+// заход с ней пишется как `me` — даже по ссылке из Tumblr. Без ссылки куку
+// не получает никто: на этом держится довод «без баннера».
+{
+  const marked = await request({ path: '/', query: { source: 'me' }, headers: { 'user-agent': CHROME } });
+  const plain = await request({ path: '/', headers: { 'user-agent': CHROME } });
+  await request({ path: '/', query: { source: 'tumblr' }, headers: { 'user-agent': CHROME, cookie: 'a=b; me=1' } });
+  const all = await lines(22);
+  if (!marked.cookies.includes('me=1')) complain('ссылка ?source=me не поставила куку хозяина');
+  if (plain.cookies.length) complain(`посетитель без ссылки получил куку: ${plain.cookies}`);
+  if (all[19]?.source !== 'me') complain(`заход по ?source=me записан как ${all[19]?.source}`);
+  if (all[21]?.source !== 'me') complain(`заход с кукой хозяина записан как ${all[21]?.source}`);
+}
+
 await fs.rm(DIRECTORY, { recursive: true, force: true });
 
 if (problems.length) {
@@ -350,4 +369,4 @@ if (problems.length) {
   for (const problem of problems) console.error(`  ${problem}`);
   process.exit(1);
 }
-console.log('журнал запросов: пятнадцать проверок пройдены');
+console.log('журнал запросов: шестнадцать проверок пройдены');

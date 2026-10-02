@@ -11,8 +11,8 @@
 // нельзя: без него не будет и картинки. Поэтому считает сервер.
 //
 // БЕЗ БАННЕРА. Согласия требует запись на устройство посетителя — куки,
-// localStorage, отпечаток. Здесь на устройство не пишется ничего, и читать
-// оттуда нечего. Адрес посетителя в файл не попадает ни разу: из него
+// localStorage, отпечаток. Здесь на устройство посетителя не пишется ничего,
+// и читать оттуда нечего; кука хозяина (`markOwner`) — не посетителю. Адрес посетителя в файл не попадает ни разу: из него
 // и заголовка браузера считается `visit` — восемь знаков хэша с солью,
 // которая рождается в памяти при старте и никуда не сохраняется. Соль
 // не пережила перезапуск — прежние `visit` не восстановимы никем, включая нас.
@@ -252,9 +252,36 @@ function refOf(value) {
 // набранного руками. Остальной запрос не пишется по той же причине, что
 // и у `refOf`, а сама метка берётся, только если похожа на нашу: адрес
 // набирает кто угодно, и произвольный текст в журнал попадать не должен.
-function sourceOf(query) {
-  const value = query?.source;
+//
+// Метка `me` особая: её несёт не ссылка, а кука хозяина (`OWNER` ниже),
+// и она сильнее любой другой — свой переход по ссылке из Tumblr остаётся своим.
+function sourceOf(req) {
+  if (isOwner(req)) return 'me';
+  const value = req.query?.source;
   return typeof value === 'string' && /^[a-z0-9-]{1,32}$/.test(value) ? value : '-';
+}
+
+// Кука хозяина — единственное, что журнал пишет на устройство, и пишет её
+// только по ссылке `?source=me`, которую открывает сам Charlie. Посетитель
+// её не получает никогда, поэтому довод «без баннера» (в начале файла)
+// остаётся в силе. Нужна она потому, что узнать себя больше не по чему:
+// адреса в журнале нет, `visit` меняется со сменой адреса, а Chrome Charlie
+// выходит в сеть из США, хотя сам он в Германии.
+const OWNER = 'me';
+const A_YEAR = 365 * 24 * 60 * 60;
+
+function isOwner(req) {
+  return (req.get('cookie') || '').split(';').some(pair => pair.trim() === `${OWNER}=1`);
+}
+
+function markOwner(req, res) {
+  if (req.query?.source !== 'me' || isOwner(req)) return;
+  res.cookie(OWNER, '1', {
+    httpOnly: true,
+    sameSite: 'lax',
+    secure: req.protocol === 'https',
+    maxAge: A_YEAR * 1000
+  });
 }
 
 // Вид запроса — четыре слова, и все четыре видны из ответа, а не угаданы.
@@ -370,7 +397,7 @@ export function journal(directory) {
           await botOf(ua, req.ip),
           formatsOf(req.get('accept')),
           countryOf(req.ip),
-          sourceOf(req.query),
+          sourceOf(req),
           ua
         ];
         writer(day).write(line.map(field).join('\t') + '\n');
@@ -378,6 +405,7 @@ export function journal(directory) {
         console.error(`журнал: ${error.message}`);
       }
     });
+    markOwner(req, res);
     next();
   };
 }
