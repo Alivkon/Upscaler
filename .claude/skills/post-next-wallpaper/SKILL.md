@@ -97,7 +97,7 @@ the phone crop or the gallery's dimmed version.
    Albert Bierstadt, 1868
    Oil on canvas
 
-   Tessarum
+   Classical art phone wallpapers
    ```
    Title is `provenance.work` in bold (`ctrl+b` before typing, `ctrl+b`
    again after). Second line `${provenance.creator}, ${provenance.date}`;
@@ -112,14 +112,15 @@ the phone crop or the gallery's dimmed version.
    stated, leave the line out rather than guess.
    Lines inside the block are soft breaks: type the title, `Return`, then
    on each following line go `Home`, `BackSpace`, `shift+Return` so the
-   three sit together; one plain `Return` before `Tessarum` gives the gap.
-   Then double-click `Tessarum`, press **`ctrl+k`** — a `https://` input
+   three sit together; one plain `Return` before the link line gives the gap.
+   Then select the whole line `Classical art phone wallpapers` (`Home`,
+   `shift+End`), press **`ctrl+k`** — a `https://` input
    appears (it can render near the top of the image, but it's the text-link
    popup) — type `https://tessarum.com/w/<slug>?source=tumblr` and press
    Return. The `?source=` tag is how `yarn stats` counts visits from the
    Tumblr app, which sends no referrer; don't drop it. Verify with
    `javascript_tool` that the composer has exactly one `<a>` with text
-   `Tessarum` and the right `href` before posting — don't trust the
+   `Classical art phone wallpapers` and the right `href` before posting — don't trust the
    screenshot alone.
 4. Tags: `#add tags` field, comma-separated, no `#` prefix needed when
    typing (Tumblr adds it). Reuse a consistent core — `painting`, `art`,
@@ -136,9 +137,13 @@ the phone crop or the gallery's dimmed version.
    Skip a tag if the existing tagged content is unrelated to what a
    wallpaper searcher wants.
 5. Click **Post now**. Confirm with a screenshot that it says "Posted to
-   tessarum-blog", then verify on `https://tessarum-blog.tumblr.com/` that
+   tessarum-blog", then verify on `https://www.tumblr.com/tessarum-blog` that
    the post shows the whole painting, not a tall phone crop (if it's the
-   crop, the copies weren't refreshed — stop and check).
+   crop, the copies weren't refreshed — stop and check). Not the public
+   `tessarum-blog.tumblr.com`: it runs a browser check that the automated
+   Chrome fails, then answers "Rate limit exceeded" after a handful of page
+   loads (30.09 and twice on 02.10). If the in-app view blocks too, stop and
+   say so rather than retry.
 6. Append to `research/social-posts.json`'s `tumblr` array: `ref`, `slug`,
    `postedAt` (today, ISO date), `file`, `crop`, `edit`, `medium` (or
    `null`), `tags`. `crop` is what part of the painting went up: `"whole"`
