@@ -214,6 +214,86 @@
         "volcano",
         "volcano painting"
       ]
+    },
+    {
+      "ref": "vl-0086",
+      "slug": "landscape-with-hunters-landscape-desktop-wallpaper",
+      "postedAt": "2026-09-29",
+      "file": "images/for-tumblr/vl-0086-landscape-with-hunters-landscape-desktop-wallpaper.jpg",
+      "crop": "whole",
+      "edit": "scan",
+      "medium": "oil on canvas",
+      "tags": [
+        "painting",
+        "art",
+        "art history",
+        "phone wallpaper",
+        "dark academia",
+        "oil on canvas",
+        "landscape painting",
+        "dutch golden age",
+        "jan wijnants"
+      ]
+    },
+    {
+      "ref": "vl-0399",
+      "slug": "louis-the-ruins-holyrood-desktop-wallpaper",
+      "postedAt": "2026-09-30",
+      "file": "images/for-tumblr/vl-0399-louis-the-ruins-holyrood-desktop-wallpaper.jpg",
+      "crop": "whole",
+      "edit": "scan",
+      "medium": "oil on canvas",
+      "tags": [
+        "painting",
+        "art",
+        "art history",
+        "phone wallpaper",
+        "dark academia",
+        "oil on canvas",
+        "gothic ruins",
+        "romanticism",
+        "louis daguerre"
+      ]
+    },
+    {
+      "ref": "vl-0365",
+      "slug": "the-hall-of-amida-buddha-kobayashi-kokei-iphone-wallpaper",
+      "postedAt": "2026-10-02",
+      "file": "images/for-tumblr/vl-0365-the-hall-of-amida-buddha-kobayashi-kokei-iphone-wallpaper.jpg",
+      "crop": "whole",
+      "edit": "scan",
+      "medium": "color on silk",
+      "tags": [
+        "painting",
+        "art",
+        "art history",
+        "phone wallpaper",
+        "dark academia",
+        "color on silk",
+        "japanese art",
+        "buddhist temple",
+        "kobayashi kokei"
+      ]
+    },
+    {
+      "ref": "vl-0474",
+      "slug": "aivazovsky-wave-storm-iphone-wallpaper",
+      "postedAt": "2026-10-02",
+      "file": "images/for-tumblr/vl-0474-aivazovsky-wave-storm-iphone-wallpaper.jpg",
+      "crop": "whole",
+      "edit": "scan",
+      "medium": "oil on canvas",
+      "tags": [
+        "painting",
+        "art",
+        "art history",
+        "phone wallpaper",
+        "dark academia",
+        "oil on canvas",
+        "seascape",
+        "stormy sea",
+        "aivazovsky storm"
+      ]
     }
   ],
   "pinterest": [
@@ -340,6 +420,46 @@
       "file": "images/crops/gazing-at-a-waterfall-river-landscape-iphone-wallpaper-ceil-phone-1514x3280.jpg",
       "crop": "phone",
       "edit": "ceil"
+    },
+    {
+      "ref": "vl-0355",
+      "slug": "mount-vesuvius-at-midnight-bierstadt-iphone-wallpaper",
+      "postedAt": "2026-09-29",
+      "board": "Art",
+      "title": "Mount Vesuvius at Midnight, Albert Bierstadt, dark academia phone wallpaper",
+      "file": "images/crops/mount-vesuvius-at-midnight-bierstadt-iphone-wallpaper-ceil-phone-1554x3366.jpg",
+      "crop": "phone",
+      "edit": "ceil"
+    },
+    {
+      "ref": "vl-0086",
+      "slug": "landscape-with-hunters-landscape-desktop-wallpaper",
+      "postedAt": "2026-09-30",
+      "board": "Art",
+      "title": "Landscape with Hunters, Jan Wijnants, dark academia phone wallpaper",
+      "file": "images/crops/landscape-with-hunters-landscape-desktop-wallpaper-ceil-phone-1763x3820.jpg",
+      "crop": "phone",
+      "edit": "ceil"
+    },
+    {
+      "ref": "vl-0399",
+      "slug": "louis-the-ruins-holyrood-desktop-wallpaper",
+      "postedAt": "2026-10-01",
+      "board": "Art",
+      "title": "The Ruins of Holyrood Chapel, Louis Daguerre, dark academia phone wallpaper",
+      "file": "images/crops/louis-the-ruins-holyrood-desktop-wallpaper-ceil-phone-1313x2844.jpg",
+      "crop": "phone",
+      "edit": "ceil"
+    },
+    {
+      "ref": "vl-0365",
+      "slug": "the-hall-of-amida-buddha-kobayashi-kokei-iphone-wallpaper",
+      "postedAt": "2026-10-02",
+      "board": "Art",
+      "title": "The Hall of Amida Buddha, Kobayashi Kokei, dark academia phone wallpaper",
+      "file": "images/crops/the-hall-of-amida-buddha-kobayashi-kokei-iphone-wallpaper-dim-phone-1146x2483.jpg",
+      "crop": "phone",
+      "edit": "dim"
     }
   ]
 }
