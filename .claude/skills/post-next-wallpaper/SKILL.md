@@ -31,7 +31,8 @@ preserved) for every **non-hidden** catalogue work, using each work's
 whose plate is the scan. Not the phone crop and not the dimmed file: since
 25.09.2026 Tumblr shows the painting, and the crops live on the work page.
 It also writes `images/for-tumblr/index.json` (title, alt, tags, provenance,
-tessarum URL per ref). It's deliberately undersized: big enough to look sharp
+tessarum URL per ref, plus `full` and `more` for the caption's two links,
+see §3 step 3). It's deliberately undersized: big enough to look sharp
 on a Tumblr dash card, short of an actual wallpaper, so a viewer who wants
 the real file has to click through to the work page.
 Pinterest posts use the full-size, **treated** `crops.phone` file instead
@@ -84,20 +85,21 @@ the phone crop or the gallery's dimmed version.
 1. Open `https://www.tumblr.com/new/photo` in Chrome (logged-in session,
    blog `tessarum-blog` is the default target — confirm the composer header
    says `tessarum-blog`, not the personal account).
-2. Upload `images/for-tumblr/<ref>-<slug>.jpg`. The `file_upload` tool only
-   accepts paths under the scratchpad or an already-shared folder — copy the
-   file there first if needed:
-   ```
-   cp images/for-tumblr/<file> "$SCRATCHPAD/for-tumblr/<file>"
-   ```
-3. Caption: three short lines, plain text (not a link), then a blank line
-   and the link:
+2. Upload `images/for-tumblr/<ref>-<slug>.jpg` with `file_upload`,
+   straight from the repo path. If the tool refuses the path, copy the file
+   into the session's scratchpad directory and upload it from there; `/tmp`
+   paths outside the scratchpad are refused too. In the nightly run
+   `$SCRATCHPAD` is not set and the repo path works (two test runs,
+   10.10.2026).
+3. Caption: one block of four lines, then a gap, then `more`. Two links,
+   both lowercase:
    ```
    **Mount Vesuvius at Midnight**
    Albert Bierstadt, 1868
    Oil on canvas
+   full size, 4780 × 3366
 
-   Classical art phone wallpapers
+   more
    ```
    Title is `provenance.work` in bold (`ctrl+b` before typing, `ctrl+b`
    again after). Second line `${provenance.creator}, ${provenance.date}`;
@@ -106,22 +108,57 @@ the phone crop or the gallery's dimmed version.
    The catalogue doesn't store the medium, so look it up for this one work
    from the source in `provenance.page`, open API first (Cleveland:
    `https://openaccess-api.clevelandart.org/api/artworks/<accession>` →
-   `technique`; Wikimedia Commons: the file page's "Medium" row; SMK:
-   `https://api.smk.dk/api/v1/art?object_number=<nr>` → `techniques`). One
-   request, human pace (AGENTS.md, «Музеи и чужие сайты»). If it isn't
+   `technique`; Wikimedia Commons: the file page's "Medium" row, and when
+   the wikitext leaves it empty but names a `wikidata` id, that item's P186;
+   SMK: `https://api.smk.dk/api/v1/art?object_number=<nr>` → `techniques`).
+   One request, human pace (AGENTS.md, «Музеи и чужие сайты»). If it isn't
    stated, leave the line out rather than guess.
-   Lines inside the block are soft breaks: type the title, `Return`, then
-   on each following line go `Home`, `BackSpace`, `shift+Return` so the
-   three sit together; one plain `Return` before the link line gives the gap.
-   Then select the whole line `Classical art phone wallpapers` (`Home`,
-   `shift+End`), press **`ctrl+k`** — a `https://` input
-   appears (it can render near the top of the image, but it's the text-link
-   popup) — type `https://tessarum.com/w/<slug>?source=tumblr` and press
-   Return. The `?source=` tag is how `yarn stats` counts visits from the
-   Tumblr app, which sends no referrer; don't drop it. Verify with
-   `javascript_tool` that the composer has exactly one `<a>` with text
-   `Classical art phone wallpapers` and the right `href` before posting — don't trust the
-   screenshot alone.
+
+   Fourth line is `full size, ${full.width} × ${full.height}` from the
+   work's `full` in `index.json` (the `×` sign, not the letter x), linked to
+   `${url}?source=tumblr`, the painting's page. Don't work the numbers out
+   yourself: they are the scan's size from the manifest. When `full` is
+   `null` the site's file is barely bigger than the Tumblr copy, so leave
+   the line out; the post then has only `more`.
+
+   `more` is linked to `${more}?source=tumblr`. `index.json` has already
+   chosen the page (`scripts/for-tumblr.mjs`): the painter's own page when
+   it holds three works or more, otherwise a collection (tradition, then
+   subject, then mood), otherwise the homepage. Use it as given, don't pick
+   another. It says "more" and not the page's name on purpose (10.10.2026):
+   Charlie clicked a bare "more" on someone else's post and wouldn't have
+   clicked "Dark academia collection".
+
+   The `?source=` tag is how `yarn stats` counts visits from the Tumblr
+   app, which sends no referrer; don't drop it from either link.
+
+   Typing. Lines inside the block are soft breaks: type the title,
+   `Return`, then on each following line go `Home`, `BackSpace`,
+   `shift+Return` so the four sit together; one plain `Return` before `more`
+   gives the gap.
+
+   Linking `more`: it is a paragraph of its own, so with the cursor in it
+   press `Home`, then `shift+End`. Linking `full size, …`: it is the last
+   line of a soft-broken block, and there `Home` can jump to the start of
+   the whole block, which puts the link on all four lines (Sonnet's test
+   run, 10.10.2026). So right after typing the line, select it backwards
+   by its own length: `shift+Left` repeated once per character (22 for
+   `full size, 5632 × 3840`). Either way, before opening the link box read
+   `getSelection().toString()` with `javascript_tool` and go on only when
+   it is exactly the line's text.
+
+   Then press **`ctrl+k`** as a key press of its own: sent in the same call
+   as the selection keys the box doesn't open, and the address you type
+   replaces the line and turns into a link card. A `https://` input appears
+   (it can render over the line above, but it's the text-link box); if it
+   doesn't, click the chain icon in the small toolbar over the selection.
+   Type the address and press Return. Don't click on a finished link to
+   move the cursor, it opens the page; click to the right of the line.
+
+   Verify with `javascript_tool` before posting, don't trust the screenshot
+   alone: the composer has exactly these `<a>` elements, `full size, …`
+   with the painting's address and `more` with the `more` address, both
+   ending `?source=tumblr`, and no link card block.
 4. Tags: `#add tags` field, comma-separated, no `#` prefix needed when
    typing (Tumblr adds it). Reuse a consistent core — `painting`, `art`,
    `art history`, `phone wallpaper` — plus `dark academia` on **most**
@@ -146,7 +183,9 @@ the phone crop or the gallery's dimmed version.
    say so rather than retry.
 6. Append to `research/social-posts.json`'s `tumblr` array: `ref`, `slug`,
    `postedAt` (today, ISO date), `file`, `crop`, `edit`, `medium` (or
-   `null`), `tags`. `crop` is what part of the painting went up: `"whole"`
+   `null`), `tags`, and `more` (the address behind "more", without the
+   `?source=` tag; posts before 10.10.2026 had one link, to the painting,
+   and carry no `more`). `crop` is what part of the painting went up: `"whole"`
    now, `"phone"` for the phone crop. `edit` is which version: `"scan"` now,
    or `"dim"` / `"ceil"` for the gallery's treated file. The `for-tumblr`
    file name is the same whichever it holds and gets rebuilt, so these two

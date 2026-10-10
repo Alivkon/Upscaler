@@ -7,12 +7,43 @@
 // plate is the scan) — not the phone crop and not the dimmed file. Tumblr shows
 // the painting; the crops are on the work page.
 //
+// The index also says where the caption's two links go (10.10.2026). `full` is
+// the scan's size from the manifest, for the "full size, W × H" line; it is
+// null when the scan is too small for that line to be worth a click. `more` is
+// the page behind "more": the painter's own page when it holds enough works,
+// otherwise the collection that reads most like "more by this painter":
+// tradition, then subject, then mood. The homepage when there is none.
+// A mood is our reading of the painting, and nothing in the caption prepares
+// the viewer for it: Friedrich's "Summer" under "more" led to cottagecore.
+//
 // Запуск: node scripts/for-tumblr.mjs
 import fs from 'node:fs/promises';
 import sharp from 'sharp';
+import { galleryItems } from '../gallery.js';
+import { artistPageOf, browse } from '../browse.js';
 
 const WIDTH = 900;
 const OUT_DIR = 'images/for-tumblr';
+const SITE = 'https://tessarum.com';
+// Below this width the site's file is barely bigger than the Tumblr copy.
+const FULL_MIN_WIDTH = 1200;
+// An artist page of two works shows one other painting: thin for "more".
+const MORE_MIN_WORKS = 3;
+const MORE_KINDS = ['tradition', 'subject', 'mood'];
+
+const shown = (await galleryItems()).filter(item => !item.hidden);
+const found = browse(shown);
+
+function morePath(slug) {
+  const item = shown.find(candidate => candidate.slug === slug);
+  if (!item) return '/';
+  const artist = artistPageOf(found, item);
+  if (artist && artist.items.length >= MORE_MIN_WORKS) return artist.path;
+  const [collection] = found.collections
+    .filter(page => page.items.includes(item))
+    .sort((a, b) => MORE_KINDS.indexOf(a.kind) - MORE_KINDS.indexOf(b.kind) || a.items.length - b.items.length);
+  return collection?.path ?? '/';
+}
 
 const catalogue = new Map();
 for (const file of await fs.readdir('catalogue')) {
@@ -74,7 +105,9 @@ for (const ref of order) {
     file: `${ref}-${work.slug}.jpg`,
     width: WIDTH,
     height,
-    url: `https://tessarum.com/w/${work.slug}`
+    full: scan.width >= FULL_MIN_WIDTH ? { width: scan.width, height: scan.height } : null,
+    url: `${SITE}/w/${work.slug}`,
+    more: `${SITE}${morePath(work.slug)}`
   });
 }
 
