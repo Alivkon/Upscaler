@@ -1729,7 +1729,7 @@ export function licensePage({ origin }) {
         </p>
         <p class="prose__lead">
           Nearly everything in this collection comes from an open collection and is not ours to
-          license at all — <a href="#public-domain">those are free of us entirely</a>. A few
+          license at all: <a href="#public-domain">those are free of us entirely</a>. A few
           photographs are <a href="#cc-by">CC BY</a> and ask for credit. Works drawn by us carry
           <a href="#tessarum">terms of our own</a>, and there are none of those on the shelf today.
           The tool that enlarges your own picture <a href="#model">runs on borrowed work too</a>.
@@ -1755,14 +1755,14 @@ export function licensePage({ origin }) {
         </p>
         <p>
           Age alone is not what makes them free. An engraving from 1705 is out of copyright, but a
-          photograph of that engraving can be a new work with a living owner — which is why the
+          photograph of that engraving can be a new work with a living owner. That is why the
           collection takes only files whose holder has said otherwise in as many words.
         </p>
 
         <h2 id="cc-by">Works under CC BY</h2>
         <p>
           A few photographs are free to use on one condition: credit. They are marked
-          <em>CC BY</em> and stay under that licence when you take them — we cannot put our terms on
+          <em>CC BY</em> and stay under that licence when you take them. We cannot put our terms on
           top, and we do not try to. Keep the author's name with the file, link
           <a href="https://creativecommons.org/licenses/by/4.0/" rel="license noopener" target="_blank"
             >the licence</a
@@ -1790,8 +1790,8 @@ export function licensePage({ origin }) {
             or a stock library that does what this site does is not permitted, whether free or paid.
           </li>
           <li>
-            <strong>Sell a file unchanged.</strong> Selling a work as it stands — as a download,
-            a print, or on an object whose value is the picture itself — is not permitted.
+            <strong>Sell a file unchanged.</strong> Selling a work as it stands is not permitted,
+            whether as a download, a print, or on an object whose value is the picture itself.
             Modify it meaningfully and what you made is yours to sell.
           </li>
         </ul>
@@ -1801,7 +1801,7 @@ export function licensePage({ origin }) {
           Enlarging happens on our machines. The picture you drop is sent to us, passed to a graphics
           card we rent by the second from
           <a href="https://modal.com" rel="noopener" target="_blank">Modal</a>, and sent straight
-          back to you. We write it to no disk and keep no copy — the enlarged file exists once, in
+          back to you. We write it to no disk and keep no copy. The enlarged file exists once, in
           your browser, which is also why there is no second chance at downloading it.
         </p>
         <p>
@@ -1814,7 +1814,7 @@ export function licensePage({ origin }) {
           asks nothing of anybody.
         </p>
         <p>
-          There is a second one, and you meet it only if the first refuses — our server has a daily
+          There is a second one, and you meet it only if the first refuses. Our server has a daily
           ceiling, and past it the page offers to do the work in your own browser instead. Then it
           downloads a small neural network alongside itself and runs it on your device, and the
           picture never leaves it. That one is
@@ -1824,8 +1824,8 @@ export function licensePage({ origin }) {
           by Kim2091, under
           <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="license noopener" target="_blank"
             >CC BY-NC-SA 4.0</a
-          >. Our copy is modified — the exported output dimensions are corrected, without which it
-          will not run on a graphics card — and so our copy carries the same licence.
+          >. Our copy is modified: the exported output dimensions are corrected, without which it
+          will not run on a graphics card. So our copy carries the same licence.
         </p>
         <p>
           None of this touches the file you download. The enlarged picture is yours, on the terms the
