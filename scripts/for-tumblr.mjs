@@ -34,6 +34,19 @@ const MORE_KINDS = ['tradition', 'subject', 'mood'];
 const shown = (await galleryItems()).filter(item => !item.hidden);
 const found = browse(shown);
 
+// Two crops of one painting that share more than this much of their area
+// look like the same picture twice in a post. Charlie set it on 14.10.2026
+// after looking at the pairs: Morland's 62% was too alike, 42–44% were not.
+const SIMILAR_MAX = 0.45;
+
+// Where a crop sits on the scan comes from the manifest (`left`, `top`):
+// the generator placed it and is the only one that knows its rules.
+function shared(a, b) {
+  const x = Math.max(0, Math.min(a.left + a.width, b.left + b.width) - Math.max(a.left, b.left));
+  const y = Math.max(0, Math.min(a.top + a.height, b.top + b.height) - Math.max(a.top, b.top));
+  return (x * y) / (a.width * a.height);
+}
+
 function morePath(slug) {
   const item = shown.find(candidate => candidate.slug === slug);
   if (!item) return '/';
@@ -61,11 +74,34 @@ for (const file of await fs.readdir('images/manifest')) {
 
 await fs.mkdir(OUT_DIR, { recursive: true });
 
+// What this run wrote. Everything else in OUT_DIR is removed at the end: a crop
+// the similarity rule now drops, or a work since hidden, would otherwise sit
+// there next to the files a post may use.
+const written = new Set(['index.json']);
+
+// The crop is cut from the copy at least twice the Tumblr width rather than
+// the full-size file: the same 900 px after the resize, a quarter of the
+// decoding. Not the 960 one: a q82 copy shrunk by 6% keeps its artefacts.
+function cropSource(crop) {
+  const copy = (crop.copies || []).filter(c => c.width >= 2 * WIDTH).sort((a, b) => a.width - b.width)[0];
+  return `images/${(copy || crop).file}`;
+}
+
+async function exists(file) {
+  try {
+    await fs.access(file);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 const order = JSON.parse(await fs.readFile('catalogue/order.json', 'utf8'));
 
 let made = 0,
   skippedHidden = 0,
-  skippedNoFile = 0;
+  skippedNoFile = 0,
+  skippedNoCrop = 0;
 const index = [];
 for (const ref of order) {
   const work = catalogue.get(ref);
@@ -81,9 +117,7 @@ for (const ref of order) {
     continue;
   }
   const src = `images/${scan.file}`;
-  try {
-    await fs.access(src);
-  } catch {
+  if (!(await exists(src))) {
     skippedNoFile++;
     continue;
   }
@@ -92,7 +126,37 @@ for (const ref of order) {
   const meta = await img.metadata();
   const height = Math.round((meta.height / meta.width) * WIDTH);
   await img.resize(WIDTH, height).jpeg({ quality: 84, mozjpeg: true }).toFile(outFile);
+  written.add(`${ref}-${work.slug}.jpg`);
   made++;
+  // The scan's 9:16 crops at the same width, for posts that put a close-up
+  // above the painting (14.10.2026). Same reason as the painting: good on
+  // the dash, short of a wallpaper. The main crop first, then the work's other
+  // recorded crops (`variants` in the manifest) that differ enough from the
+  // ones before them. `shows` is how much of the painting a crop holds; the
+  // posting skill decides from it whether to use the crops at all.
+  const tall = [];
+  const taken = [];
+  // A crop without a position (placed by content) is kept and not compared.
+  const candidates = [scan.crops?.tall, ...(scan.variants || []).map(variant => variant.tall)];
+  for (const [i, tallSrc] of candidates.entries()) {
+    if (!tallSrc) continue;
+    const from = cropSource(tallSrc);
+    if (!(await exists(from))) {
+      skippedNoCrop++;
+      continue;
+    }
+    const placed = tallSrc.left != null && tallSrc.top != null;
+    if (placed && taken.some(other => shared(tallSrc, other) > SIMILAR_MAX)) continue;
+    if (placed) taken.push(tallSrc);
+    // The number is the crop's place in the generator's file names, so a
+    // dropped variant leaves a gap (`-tall`, `-tall-3`) rather than renaming.
+    const tallFile = `${ref}-${work.slug}-tall${i ? `-${i + 1}` : ''}.jpg`;
+    const tallHeight = Math.round((tallSrc.height / tallSrc.width) * WIDTH);
+    await sharp(from).resize(WIDTH, tallHeight).jpeg({ quality: 84, mozjpeg: true }).toFile(`${OUT_DIR}/${tallFile}`);
+    written.add(tallFile);
+    const shows = (tallSrc.width * tallSrc.height) / (scan.width * scan.height);
+    tall.push({ file: tallFile, width: WIDTH, height: tallHeight, shows: Math.round(shows * 1000) / 1000 });
+  }
   index.push({
     ref,
     slug: work.slug,
@@ -105,6 +169,7 @@ for (const ref of order) {
     file: `${ref}-${work.slug}.jpg`,
     width: WIDTH,
     height,
+    tall: tall.length ? tall : null,
     full: scan.width >= FULL_MIN_WIDTH ? { width: scan.width, height: scan.height } : null,
     url: `${SITE}/w/${work.slug}`,
     more: `${SITE}${morePath(work.slug)}`
@@ -112,4 +177,13 @@ for (const ref of order) {
 }
 
 await fs.writeFile(`${OUT_DIR}/index.json`, JSON.stringify(index, null, 2));
-console.log(`made ${made}, skipped hidden ${skippedHidden}, skipped no file ${skippedNoFile}`);
+let removed = 0;
+for (const file of await fs.readdir(OUT_DIR)) {
+  if (written.has(file)) continue;
+  await fs.rm(`${OUT_DIR}/${file}`);
+  removed++;
+}
+console.log(
+  `made ${made}, skipped hidden ${skippedHidden}, skipped no file ${skippedNoFile}, ` +
+    `crops missing ${skippedNoCrop}, removed ${removed}`
+);

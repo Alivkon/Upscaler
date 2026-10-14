@@ -73,6 +73,12 @@ in order and pick the first `ref` that:
   posting to, **and**
 - (Pinterest only) doesn't visibly already exist on the live Created tab.
 
+On Tumblr a painting can also sit in a group post's `refs` (§3a). That
+alone doesn't make it posted: take it if today's post would be a crop post
+(§3: crop under 50%, or a scroll) and the group went out at least 14 days
+ago. Otherwise skip it. A group painting never gets a plain single post:
+two posts of the same whole painting are a repeat.
+
 Don't hand-pick for "quality" — the point is steady, unglamorous coverage of
 the whole gallery. Only skip a work if it's clearly unusable (e.g. missing
 file).
@@ -82,11 +88,70 @@ file).
 Tumblr always gets the **whole scanned painting** (§0) — don't substitute
 the phone crop or the gallery's dimmed version.
 
+**When the crop is a real close-up, it goes above the painting (14.10.2026).**
+How much of the painting the `tall` crop (9:16) shows is `tall[0].shows` in
+`index.json` (crop area over scan area, written by
+`scripts/for-tumblr.mjs`).
+
+- **Under 50%:** post the `tall` crop(s) first, the whole painting last,
+  each in its own photo block so they stack vertically.
+- **50% or more:** whole painting only, as before. Charlie looked at Kalf's
+  nautilus still life (66%) next to its crop and called them "too similar".
+- **Narrower than 9:16** (`width / height < 0.5625`, the hanging scrolls,
+  18 works on 14.10.2026): the `tall` crop **only**, no painting, whatever
+  the percentage. Tumblr caps a picture's height at about 1700 px, so a
+  3.5:1 scroll is served 471 px wide and stretched to the 540 px column:
+  visibly soft (Maple Viewing, 14.10.2026). The whole scroll stays one
+  click away behind `full size` in the caption.
+
+The line sits in a natural gap. Of the 158 works in `index.json` on
+14.10.2026, 77 are under 50%, 80 are at 60% or more, and one is in between.
+Sunlight and Shadow (25%) and Before a Thunderstorm (40%) were the test
+drafts he liked.
+
+Use the `tall` crop, never `phone` (19.5:9): Charlie finds that one too
+long for Tumblr. Upload `images/for-tumblr/<tall[i].file>`: the scan's crop at
+900 px wide, like the painting. Not the full-size file in `images/crops/`:
+Charlie wants every Tumblr picture good on the dash but slightly too small
+to use as a wallpaper, so the real one is a click away (14.10.2026).
+
+**Several saved crops.** Some works have more than one recorded crop
+position (`research/to-crop-positions.md`, all kept on purpose, see its
+header). Since 14.10.2026 the generator cuts them too (`variants` in
+`wallpaper-gen/museum-works.json` and in the manifest, files
+`…-tall-2-…`, `…-tall-3-…`), and `scripts/for-tumblr.mjs` lists them in
+`tall`, which is a list: the main crop first, then the others that pass
+the similarity rule. Post every crop in `tall`, in that order, then the
+painting.
+
+The rule (`SIMILAR_MAX` in the script): a crop is left out when it shares
+**more than 45%** of its area with one already taken. Charlie set 45% on
+14.10.2026 after looking at the pairs side by side: Morland's 62% were too
+alike, and he moved the line down from a first 55%. On that day 16 works
+have two crops (vl-0240 three); vl-0291, vl-0359, vl-0473 and vl-0475 lose
+their second, Morland and Landscape Near Paris their third.
+
 1. Open `https://www.tumblr.com/new/photo` in Chrome (logged-in session,
    blog `tessarum-blog` is the default target — confirm the composer header
    says `tessarum-blog`, not the personal account).
-2. Upload `images/for-tumblr/<ref>-<slug>.jpg` with `file_upload`,
-   straight from the repo path. If the tool refuses the path, copy the file
+2. Upload the pictures, one photo block each, in the order above:
+   - **painting only:** `images/for-tumblr/<file>` into the composer's
+     first file input;
+   - **crops, then painting:** each `images/for-tumblr/<tall[i].file>` in
+     its own block, then the painting in a new block of its own, last.
+     The painting never goes into the first input here: it would land
+     above the crops;
+   - **scroll:** the crops alone, each in its own block, no painting.
+
+   The first picture goes into the composer's first file input. For each
+   next one, click the empty line under the last image, then click
+   `[aria-label="Add photo"]` with `javascript_tool` (calling `.click()`
+   from a script opens no system file window; it adds an "Upload images"
+   block), then `find` its file input and `file_upload` into it. Several
+   files in one input land side by side in one row; one per block stacks
+   them.
+
+   Upload with `file_upload` straight from the repo path. If the tool refuses the path, copy the file
    into the session's scratchpad directory and upload it from there; `/tmp`
    paths outside the scratchpad are refused too. In the nightly run
    `$SCRATCHPAD` is not set and the repo path works (two test runs,
@@ -161,7 +226,7 @@ the phone crop or the gallery's dimmed version.
    ending `?source=tumblr`, and no link card block.
 4. Tags: `#add tags` field, comma-separated, no `#` prefix needed when
    typing (Tumblr adds it). Reuse a consistent core — `painting`, `art`,
-   `art history`, `phone wallpaper` — plus `dark academia` on **most**
+   `art history`, `phone wallpaper`, `tessarum` — plus `dark academia` on **most**
    works: skip it only for plainly bright, cheerful pieces (sunny florals,
    light illustrations). Plus the medium in lower case when step 3 found
    one (`oil on canvas`, `watercolor`), plus 1–2 tags fitting *this* work's
@@ -173,10 +238,45 @@ the phone crop or the gallery's dimmed version.
    (e.g. the specific painter's name, when nothing's posted under it yet).
    Skip a tag if the existing tagged content is unrelated to what a
    wallpaper searcher wants.
+
+   Plus **every collection the work is in**, with its synonyms. Membership
+   is the `refs` list of each entry in `COLLECTIONS` (`collections.js`):
+   ```bash
+   node --input-type=module -e 'import { COLLECTIONS } from "./collections.js";
+   console.log(COLLECTIONS.filter(c => c.refs.includes("<ref>")).map(c => c.slug))'
+   ```
+   Tag the first column of this list as written, then its synonyms. Not
+   the collection's `name`: `Landscape`, `Flowers`, `Ocean` would make the
+   bare `landscape`, `flowers`, `ocean`, tags full of photographs, while
+   a wallpaper searcher types `landscape painting`. Skip a tag the mood/subject
+   step above already added. The list was drafted 14.10.2026 and not yet
+   checked on Tumblr: the first time a synonym is used, open its
+   `tagged/` page as above, and drop it from the list here if what's there
+   is off-topic.
+
+   | collection | synonyms |
+   |---|---|
+   | hudson river school | american romanticism, american landscape |
+   | nihonga | japanese painting, japanese art |
+   | dutch golden age | dutch painting, baroque |
+   | landscape painting | |
+   | flower painting | |
+   | still life painting | still life |
+   | ocean painting | seascape, marine painting |
+   | moody landscape | moody aesthetic |
+   | dark academia | |
+   | dark floral | dark botanical |
+   | cottagecore | cottage aesthetic |
+
+   Charlie added `american romanticism` by hand to the 14.10 Bierstadt
+   post, which missed `hudson river school` and `moody landscape`: that
+   is where this rule comes from.
 5. Click **Post now**. Confirm with a screenshot that it says "Posted to
    tessarum-blog", then verify on `https://www.tumblr.com/tessarum-blog` that
-   the post shows the whole painting, not a tall phone crop (if it's the
-   crop, the copies weren't refreshed — stop and check). Not the public
+   the last picture is the one this section puts last: the whole painting,
+   or for a scroll its last crop. If a picture that should be the whole
+   painting shows a tall crop, the copies weren't refreshed — stop and
+   check. Not the public
    `tessarum-blog.tumblr.com`: it runs a browser check that the automated
    Chrome fails, then answers "Rate limit exceeded" after a handful of page
    loads (30.09 and twice on 02.10). If the in-app view blocks too, stop and
@@ -186,10 +286,87 @@ the phone crop or the gallery's dimmed version.
    `null`), `tags`, and `more` (the address behind "more", without the
    `?source=` tag; posts before 10.10.2026 had one link, to the painting,
    and carry no `more`). `crop` is what part of the painting went up: `"whole"`
-   now, `"phone"` for the phone crop. `edit` is which version: `"scan"` now,
+   for the painting alone, `"tall+whole"` for crop then painting (from
+   14.10.2026; with several variants `"tall:v1,v2+whole"`), `"tall"` (or
+   `"tall:v1,v2"`) for a scroll's crops alone, `"phone"` for the phone crop
+   (13–25.09). `edit` is which version: `"scan"` now,
    or `"dim"` / `"ceil"` for the gallery's treated file. The `for-tumblr`
    file name is the same whichever it holds and gets rebuilt, so these two
    fields are the only record of what a post actually showed (§1).
+
+## 3a. Tumblr group posts (2–3 paintings by one painter)
+
+Charlie's call, 14.10.2026, after previews of school groups (rejected:
+"doesn't super work") and Tumblr drafts of Kalf as three and as two:
+occasionally a post shows **two or three paintings by the same painter**.
+Three when the painter has them, two otherwise. He weighed running out of
+paintings faster against the look and chose three: once a week is slow
+enough, and new works keep arriving.
+
+**When.** If none of the last six `tumblr` entries is a group, today is a
+group day, and it replaces the single post. One post a day either way.
+When no lead qualifies (below), post the single as usual; tomorrow is a
+group day again. Don't loosen the shape rule or reuse a painter to make
+one.
+
+**Which ones.** Walk `index.json` in order, as in §2. The lead is the
+first work with at least one partner: another work by the same
+`provenance.creator` (skip `creatorKind: "unknown"`, anonymous and
+"after …" copies), of the same orientation (all upright or all wide) and
+a similar shape (aspect ratio within 25% of the lead's). Take the lead and
+the next one or two partners in `index.json` order. Each painting must be
+one of:
+
+- **not posted yet.**
+- **a crop post's painting**: posted as `tall+whole` (crop over painting,
+  §3), at least 14 days ago. That post showed a close-up first, so a group
+  with its whole painting is a different enough post.
+
+So a painting gets at most two posts on Tumblr, a crop post and a group,
+14 days apart in either order (§2 says when a group painting gets its crop
+post). A painting that went out as a plain single post (`crop: "whole"`)
+is **never** in a group, and a group painting never gets one: two posts of
+the same whole painting are a repeat. Scrolls (§3) stay out of groups: the
+whole scroll is soft at full column width, and worse beside another.
+
+**How often per painter.** One group per painter. A second one later only
+if the painter has more than three works in `index.json` (Kalf, Ottesen,
+Hammershøi, Bertin, Cole…), and not in back-to-back group weeks.
+
+**Layout.** Three at most. Wide and upright end up about the same length:
+three wide stacked is roughly what three upright take as 2 + 1.
+- **Upright:** all files into one file input. Two land side by side in one
+  row; with three, Tumblr puts the first two in a row and the third full
+  width below (the Kalf test). Upload the lead last, so it gets the big
+  spot.
+- **Wide:** one block each (§3 step 2), so they stack. Wide paintings
+  uploaded together land in one row instead, at 268 px each for two (the
+  Kensett test, 14.10.2026): too small. Tumblr won't stack them by itself.
+
+**Caption.** First line bold `Two by <painter>` or `Three by <painter>`,
+then one line per painting, `<title>, <date> · full size`, with
+`full size` linked to that painting's `url` plus `?source=tumblr` (no
+dimensions, they'd crowd the line). A gap, then `more` with
+`?source=tumblr`. Files: each painting's `images/for-tumblr/<file>`, 900 px
+wide, same as single posts.
+
+`more` must lead to **more than the post already shows**. Don't copy the
+lead's `more` from `index.json` blindly: it points to the painter's page
+when that page holds 3 works (`MORE_MIN_WORKS` in
+`scripts/for-tumblr.mjs`), which is 2 new paintings behind a single post
+but 1 or none behind a group. Same standard as the single post, so: the
+painter's page (`/artists/<slug>`) only if it holds **at least two works
+that aren't in the post** (4+ for two, 5+ for three). Otherwise the
+collection `morePath` would pick (tradition, then subject, then mood,
+smallest first) that holds the lead, again with at least two works not in
+the post; otherwise the homepage. Count the way the script does, with
+`artistPageOf` and `found.collections` from `browse.js`.
+
+**Tags:** the §3 step 4 core, the painter's name, and the collection tags
+of every painting in the post (deduplicated).
+
+**Record.** One entry: `refs: [<lead>, …]`, `slugs`, `crop: "group"`,
+`edit: "scan"`, plus `postedAt`, `tags`, `more` as in §3 step 6.
 
 ## 4. Pinterest
 
