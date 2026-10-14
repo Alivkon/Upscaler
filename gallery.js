@@ -259,13 +259,13 @@ async function cropsOf(entry) {
   return found;
 }
 
-// Вторая версия той же картины — та, на которую переводит галочка «Dimmed»
-// всё, что страница о файле утверждает и отдаёт. Генератор делает её вторым
-// файлом рядом с главным и называет полем по тому, что она такое: `scan` —
-// нетронутый скан у работы, которая выходит приглушённой, `dimmed` —
-// приглушённый файл у работы с правилом `none`, которая выходит сканом.
-// Поэтому здесь один разбор на два поля: устроены они одинаково, а отличаются
-// только тем, в какую сторону работает галочка.
+// Версия картины — файл со всем, что страница о нём утверждает и отдаёт:
+// размеры, копии, кадры. У работы их две, скан и приглушённая, и галочка
+// «Dimmed» переводит с одной на другую. Генератор пишет главный файл и второй
+// рядом с ним полем по тому, что он такое: `scan` — нетронутый скан у работы
+// с правилом `dim` или `ceil`, `dimmed` — приглушённый файл у правила `none`.
+// Поэтому здесь один разбор на все три узла: устроены они одинаково, а какой
+// из них страница привозит первым, решает `catalogueItems` (всегда скан).
 //
 // СТРАНИЦА ОСТАЁТСЯ ОДНА. Вторая версия — не отдельная работа: та же картина,
 // тот же художник, тот же музейный номер и тот же запрос в поиске. Разведи их
@@ -321,21 +321,27 @@ async function catalogueItems() {
   const made = new Map((await readManifest()).map(entry => [entry.ref, entry]));
   const items = [];
   for (const work of await loadWorks()) {
-    let file, width, height, bytes, copies, before, crops, scan, dimmed;
+    let version, before, dimmed, treatment;
     const plate = made.get(work.ref);
     if (await madeFile(plate)) {
       const beforeEntry = (await madeFile(plate.before)) && plate.before;
-      const plateCopies = [];
-      for (const copy of plate.copies || []) if (await madeFile(copy)) plateCopies.push(copy);
-      file = plate.file;
-      width = plate.width;
-      height = plate.height;
-      bytes = plate.bytes;
-      copies = plateCopies.map(copy => ({ url: imageUrl(copy.file), width: copy.width, height: copy.height }));
       before = beforeEntry ? imageUrl(beforeEntry.file) : null;
-      crops = await cropsOf(plate);
-      scan = await versionOf(plate.scan);
-      dimmed = await versionOf(plate.dimmed);
+      // СТРАНИЦА ПРИВОЗИТ СКАН ВСЕГДА (14.10.2026), а приглушённое — второй
+      // версией, на которую переводит галочка «Dimmed». В манифесте наоборот
+      // у 303 работ: главный файл у правила `dim` и `ceil` приглушённый, скан
+      // лежит полем `scan`. Здесь это и разворачивается, в одном месте на все
+      // страницы и карту сайта: указатель, страница работы и поиск должны
+      // показывать один и тот же файл, иначе Google считал бы их двумя
+      // картинками.
+      //
+      // Правило работы (`treatment`) при этом не теряется: им куратор сказал,
+      // идёт ли картине приглушение, и указатель по нему решает, предлагать ли
+      // под карточкой «Try dimmed».
+      const plateVersion = await versionOf(plate);
+      const scan = await versionOf(plate.scan);
+      version = scan || plateVersion;
+      dimmed = scan ? plateVersion : await versionOf(plate.dimmed);
+      treatment = plate.treatment || null;
     } else if (typeof work.file === 'string') {
       const filePath = resolveEntryPath(work.file);
       const stat = filePath && (await fs.stat(filePath).catch(() => null));
@@ -344,23 +350,26 @@ async function catalogueItems() {
         .metadata()
         .catch(() => ({}));
       if (!meta.width || !meta.height) continue;
-      file = work.file;
-      width = meta.width;
-      height = meta.height;
-      bytes = stat.size;
-      copies = [];
+      version = {
+        url: imageUrl(work.file),
+        filename: path.basename(work.file),
+        width: meta.width,
+        height: meta.height,
+        bytes: stat.size,
+        copies: [],
+        crops: {}
+      };
       before = null;
-      crops = {};
-      scan = null;
       dimmed = null;
+      treatment = null;
     } else {
       continue;
     }
     items.push({
       ref: accession(work.ref),
       slug: work.slug,
-      url: imageUrl(file),
-      filename: path.basename(file),
+      url: version.url,
+      filename: version.filename,
       title: work.title,
       alt: work.alt,
       // Описание для Pinterest. Пустая строка, а не `undefined`: страница
@@ -381,24 +390,24 @@ async function catalogueItems() {
       // работа без файла просто не показывается и это авария, а скрытая —
       // решение, и оно записано словом.
       hidden: work.hidden === true,
-      width,
-      height,
-      bytes,
+      width: version.width,
+      height: version.height,
+      bytes: version.bytes,
       // Чем страница работу показывает. Отдаёт она всё равно `url`: копии
       // существуют только ради проёма, в котором работа стоит, и в разметке
       // объявлены лишь как варианты `srcset`.
-      copies,
+      copies: version.copies,
       // Кадры под телефон, указатель и рабочий стол. Пустой объект, а не
       // `undefined`: страница спрашивает у него кадр по имени, и работа,
       // до которой генератор ещё не дошёл, роняла бы `/w/<slug>` в 500.
-      crops,
-      // Вторая версия работы, на которую переводит галочка «Dimmed». Полей
-      // два, и у работы заполнено ровно одно: `scan` — если страница отдаёт
-      // приглушённое, `dimmed` — если страница отдаёт скан (правило `none`).
-      // Оба `null` значат «переключать не на что», и тогда галочки на странице
+      crops: version.crops,
+      // Приглушённая версия работы, на которую переводит галочка «Dimmed».
+      // `null` значит «переключать не на что», и тогда галочки на странице
       // нет вовсе.
-      scan,
       dimmed,
+      // Правило работы из манифеста: `dim`, `ceil`, `none`; `null` у работ,
+      // которым его не выбирают (свои, присланные).
+      treatment,
       // День, когда работа вошла в коллекцию, — для `lastmod` в карте сайта.
       // Берётся из каталога, а не из `mtime` файла: рендер детерминирован,
       // но переписывает файл при каждом запуске.
@@ -453,8 +462,8 @@ async function uploadedItems() {
       // работе, а присланный файл не наш, чтобы его обрабатывать, — значит,
       // и галочке «Dimmed» на такой странице переключать нечего.
       crops: {},
-      scan: null,
       dimmed: null,
+      treatment: null,
       width,
       height,
       bytes: stat.size,

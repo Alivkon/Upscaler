@@ -155,7 +155,7 @@ function layout({
   // `layout` без `current`.
   const nav = [
     ['/', 'Collection', current === 'collection'],
-    ['/restore', 'Make your own', current === 'restore'],
+    ['/restore', 'Make a wallpaper', current === 'restore'],
     ['/mailing-list', 'Mailing list', current === 'mailing-list']
   ];
   return `<!doctype html>
@@ -196,8 +196,8 @@ function layout({
          дойдёт до script в конце тела; на странице работы — ещё и не
          дожидаясь work.js, который его импортирует, то есть на оборот до сети
          раньше. Для галочки «Dimmed» этот оборот видимый: пока её скрипт
-         не выполнился, страница стоит приглушённой, и снявший галочку
-         успевает увидеть не тот файл — и скачать его. -->
+         не выполнился, страница стоит сканом, и тот, кто выбрал приглушённое
+         на прошлой работе, успевает увидеть не тот файл — и скачать его. -->
     ${preload ? `<link rel="modulepreload" href="${escape(preload)}" />` : ''}
     ${runtime ? `<meta name="ort-version" content="${escape(runtime)}" />` : ''}
     <!-- Вес того, что качает первая картинка. Сервер видит эти файлы у себя
@@ -347,25 +347,19 @@ const plateSizes = item => {
 const offered = item => item.crops?.tall || item;
 const tile = item => item.crops?.tall || item;
 
-// Вторая версия работы — та, на которую переводит галочка «Dimmed». Работа
-// несёт ровно одно из двух полей (`gallery.js`), и какое именно — это и есть
-// направление галочки: `scan` значит «страница отдаёт приглушённое, галочка
-// снимается на скан», `dimmed` — «страница отдаёт скан, галочка ставится
-// на приглушённое». Второе бывает у правила `none`.
-const otherOf = item => item.scan || item.dimmed || null;
+// Вторая версия работы — приглушённая, на неё переводит галочка «Dimmed».
+// Привозит страница всегда скан (`catalogueItems` в gallery.js, 14.10.2026).
+const otherOf = item => item.dimmed || null;
 
-// Чем работа стоит на странице в эту минуту, одним словом. Оно же уезжает
-// в разметку (`data-shown`), и уезжает на КАЖДЫЙ переключаемый элемент, а не
-// на страницу: переключаемых мест на странице работы несколько — проём, две
-// кнопки, ряд кадров, — и слово, сказанное один раз на всю страницу, пришлось
-// бы держать в согласии с каждым из них.
-//
-// Спрашивается то же поле и в том же порядке, что у `otherOf`: работа несёт
-// ровно одно из двух (`gallery.js`), но проверять это некому — ни там, ни
-// в `scripts/verify-catalogue.mjs`. Разойдись эти две строки в порядке,
-// и у работы с обоими полями страница привезла бы приглушённое, а сказала бы
-// «scan»: галочка стояла бы неверно и переключала бы всё наоборот.
-const shownKind = item => (item.scan ? 'dim' : 'scan');
+// Чем работа стоит на странице, когда приехала, одним словом: сканом. Оно же
+// уезжает в разметку (`data-shown`), и уезжает на КАЖДЫЙ переключаемый
+// элемент, а не на страницу: переключаемых мест на странице работы
+// несколько — проём, две кнопки, ряд кадров, — и после клика каждое из них
+// говорит за себя (`public/versions.js`).
+const SHOWN = 'scan';
+
+// Правила, которыми куратор сказал «этой картине приглушение идёт».
+const DIM_CHOSEN = new Set(['dim', 'ceil']);
 
 // Тот же кадр у второй версии. Спрашивают всегда «а что вместо вот этого
 // файла», потому что файлов у страницы несколько и у каждого своя роль — кадр
@@ -394,9 +388,9 @@ const otherOfFile = (item, file) => {
 // (селектора «атрибут, имя которого начинается на…» в CSS нет, а список имён
 // в `querySelectorAll` был бы тем самым вторым списком). Он ещё и отвечает,
 // ЧТО ИМЕННО СЕЙЧАС В ЖИВЫХ АТРИБУТАХ, — а без этого ответа скрипт не знает,
-// надо ли этот элемент трогать: работа с правилом `none` привезена сканом,
-// соседняя — приглушённой, и «поменять местами всё» на второй такой странице
-// вернуло бы выбор посетителя обратно.
+// надо ли этот элемент трогать: «поменять местами всё», сделанное дважды —
+// по выбору из `localStorage` и потом по галочке, — вернуло бы выбор
+// посетителя обратно.
 //
 // Пустая строка — значение, а не пропуск: она означает «а у второй версии
 // этого атрибута нет», и переключение его снимет. Поэтому отсеивается только
@@ -430,15 +424,10 @@ const otherPair = (file, other) => {
 
 const otherShot = (file, other, shown) => otherData(otherPair(file, other), shown);
 
-// Галочка. С сервера она стоит так, как собрана страница: нажата у работы,
-// которая выходит приглушённой, снята у работы с правилом `none` — та выходит
-// сканом, и нажатая галочка над сканом была бы подписью не к тому, что видно.
-// Выбор, сделанный посетителем руками, сильнее и приходит из `localStorage`
-// (`public/dimmed.js`): разметка одна на всех, а выбор у каждого свой.
-//
-// В сетке темы работы бывают собраны в разные стороны, и `on` там — «все ли
-// переключаемые собраны приглушёнными». Считает это сервер, а не скрипт: он
-// и так знает список работ, а скрипт пришлось бы учить пересчитывать страницу.
+// Галочка. С сервера она снята: страница приезжает сканом, и нажатая галочка
+// над сканом была бы подписью не к тому, что видно. Выбор, сделанный
+// посетителем руками, сильнее и приходит из `localStorage` (`public/dimmed.js`):
+// разметка одна на всех, а выбор у каждого свой.
 //
 // Набрана она строкой настроек приёмки (`.options__row`), а не своим элементом:
 // галочка на сайте одна и та же вещь, и вторая её реализация разошлась бы
@@ -448,19 +437,14 @@ const otherShot = (file, other, shown) => otherData(otherPair(file, other), show
 // Отступ приходит доводом: вставляют галочку в двух местах разной глубины —
 // под абзацем темы и под кнопками работы, — и один зашитый отступ был бы
 // верным ровно в одном из них.
-// Подпись — тем же `.options__fine`, что уже несёт «no preview» у «Increase
-// size» в приёмке: строка второй строкой внутри `.options__text`, своих
-// правил не заводит и подтягивает `:has(.options__fine)`, который ставит
-// квадрат по верху, а не по середине двух строк.
-const dimmedBox = (pad, on) => `<label class="options__row dimmed">
-${pad}  <input type="checkbox" id="dimmed"${on ? ' checked' : ''} />
+//
+// Подписи под словом нет (14.10.2026): галочка сама показывает разницу на
+// картине, а строка повторялась на каждой странице работы и в поиске ничего
+// не давала.
+const dimmedBox = pad => `<label class="options__row dimmed">
+${pad}  <input type="checkbox" id="dimmed" />
 ${pad}  <span class="options__box" aria-hidden="true"></span>
-${pad}  <span class="options__text"
-${pad}    >Dimmed<span class="options__fine"
-${pad}      >Dimmed is the painting made darker and less colourful, so your icons and
-${pad}      clock stay easy to read. Off is the plain museum scan.</span
-${pad}    ></span
-${pad}  >
+${pad}  <span class="options__text">Dimmed</span>
 ${pad}</label>`;
 
 // Заголовок в каталоге разрезается на имя работы и хвост для выдачи: «In the
@@ -518,13 +502,33 @@ export const cardCreator = item => {
   return creator && creatorKind !== 'unknown' ? creator : '';
 };
 
+// Значок «Try dimmed» в углу картинки. Стояла ссылка словами рядом
+// с Download, и под карточкой стало две строки ссылок на 114 работах из 156:
+// Charlie прочёл это как слишком много текста. Значок на самой картине
+// не прибавляет этикетке ни строки, а показывается только по наведению
+// (styles.css): виден на всех картинах сразу, он мешал на них смотреть.
+//
+// Стоит он рядом с проёмом, а не внутри: проём — ссылка на работу, а кнопка
+// внутри ссылки — недопустимая разметка. Вид — матовое стекло в углу, как
+// круглые кнопки экрана блокировки: сайт раздаёт обои, и значок напоминает
+// телефон, а не панель управления. Рисунок — круг, половина которого
+// заштрихована, как тень на гравюре: речь о тоне картины. Месяц с солнцем,
+// стоявшие тут до того, Charlie прочёл как ночной режим. Штриховка слева
+// предлагает приглушённую версию, справа возвращает скан. Линии обрезаны по
+// полукругу заранее: `clipPath` держится на `id`, а карточек 114, и `id`
+// повторился бы на странице. Значков и подписей по два, видны по одному: какие — решает
+// CSS по `data-shown` карточки (`.version` в styles.css). Подписи только для
+// диктора: на экране значок без слов.
+const versionButton = `
+            <button class="version" type="button"><svg class="version__dim" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.2" /><path class="version__hatch" d="M1.8 8.2L8 2M2.38 10.62L8 5M3.62 12.38L8 8M5.38 13.62L8 11" /></svg><span class="version__dim">Try dimmed</span><svg class="version__scan" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.2" /><path class="version__hatch" d="M8 5L10.62 2.38M8 8L12.38 3.62M8 11L13.62 5.38M8 14L14.2 7.8" /></svg><span class="version__scan">Show original</span></button>`;
+
 // Карточка указателя. Ссылок на работу две: изображение и подпись. Подпись
 // несёт текст ссылки, а изображение — единственное, на что посетитель целится.
 //
 // `--ratio` проставлен здесь, а не по загрузке файла: размеры работы известны
 // из каталога, и проём принимает её пропорции ещё до того, как что-то
 // загрузилось. Иначе указатель прыгал бы по мере загрузки картинок.
-function card(item, { eager = false, priority = false } = {}) {
+function card(item, { eager = false, priority = false, switchable = false } = {}) {
   // Показывается и отдаётся один файл. Раньше это были разные кадры — 9:16
   // в проёме, 9:19.5 по кнопке, — и подпись приходилось оговаривать: размер
   // под «Download» описывал не ту картинку, что видна. Теперь оговаривать
@@ -532,10 +536,12 @@ function card(item, { eager = false, priority = false } = {}) {
   // сегодняшнее, а вопросы разные — «чем показана» и «что отдаёт».
   const shownFile = tile(item);
   const file = offered(item);
-  // О ВТОРОМ ФАЙЛЕ КАРТОЧКА НЕ ГОВОРИТ НИЧЕГО: ни одна сетка на сайте
-  // не переключается. Галочка «Dimmed» живёт только на странице работы, где
-  // работа одна и вопрос о ней имеет один ответ; сетка же — указатель, тема,
-  // соседи под работой — показывает то, что выбрано по каждой работе.
+  // О ВТОРОМ ФАЙЛЕ КАРТОЧКА ПО УМОЛЧАНИЮ НЕ ГОВОРИТ НИЧЕГО: сетка темы
+  // и соседи под работой не переключаются. Галочка «Dimmed» живёт только на
+  // странице работы, где работа одна и вопрос о ней имеет один ответ; сетка
+  // же показывает каждую работу сканом, как и вся витрина. Исключение — указатель
+  // (`switchable`, 14.10.2026): там переключатель у каждой карточки свой,
+  // ссылка «Try dimmed», и вопрос снова задан об одной работе.
   // Атрибуты, по которым никто не переключит, были бы обещанием переключения,
   // которого в сетке не бывает.
   const ratio = `${shownFile.width} / ${shownFile.height}`;
@@ -555,21 +561,28 @@ function card(item, { eager = false, priority = false } = {}) {
   // а больший запас перекинул бы DPR 3 на ступень 960 без всякой пользы.
   const sized = shownWith(shownFile.copies, `(max-width: 520px) 40vw, ${scaled(320)}`);
   const creator = cardCreator(item);
+  // Вторая версия карточки: те же два места, что у страницы работы, — картинка
+  // и то, что отдаёт Download. Предлагается она только работам, которым
+  // приглушение выбрал куратор (`dim`, `ceil`): у правила `none` оно есть
+  // на странице работы, но с витрины его не советуют. Переключатель —
+  // значок в углу картинки (`versionButton`).
+  const other = switchable && DIM_CHOSEN.has(item.treatment) ? otherOf(item) : null;
+  const shown = SHOWN;
   // Номер встал на место слова «JPEG». Слово это не несло ничего: файлы
   // в коллекции все до одного JPEG, и строка, одинаковая на всех карточках,
   // — это место, занятое ничем. Номер на его месте хотя бы называет работу
   // в собрании, а размер, стоящий первым, остаётся подсвеченным (`.lead`).
-  return `<figure class="item">
+  return `<figure class="item"${other ? ` data-shown="${shown}"` : ''}>
           <div class="record">
             <a class="record__image" href="/w/${escape(item.slug)}" style="--ratio: ${ratio}" tabindex="-1">
-              <img src="${escape(shownFile.url)}"${sized} alt="${escape(item.alt)}" width="${shownFile.width}" height="${shownFile.height}"${loading} />
-            </a>
+              <img src="${escape(shownFile.url)}"${sized}${other ? otherShot(shownFile, tile(other), shown) : ''} alt="${escape(item.alt)}" width="${shownFile.width}" height="${shownFile.height}"${loading} />
+            </a>${other ? versionButton : ''}
           </div>
           <figcaption class="caption">
             <h3 class="caption__title"><a href="/w/${escape(item.slug)}">${escape(cardName(item))}</a></h3>
             <p class="caption__by">${escape(creator)}</p>
             <p class="caption__spec">${specLine([formatDims(file.width, file.height), item.ref])}</p>
-            <a class="link" href="${escape(file.url)}" download>Download</a>
+            <a class="link" href="${escape(file.url)}"${other ? otherData({ href: offered(other).url }, shown) : ''} download>Download wallpaper</a>
           </figcaption>
         </figure>`;
 }
@@ -604,9 +617,10 @@ function card(item, { eager = false, priority = false } = {}) {
 // Это та же ошибка, что и `TS·––––` на приёмке, только в другую сторону:
 // там гость решил, что загружать надо наше, здесь — что его уйдёт к нам.
 //
-// «Make your own» называет действие, и слот перестаёт читаться как вакансия.
-// Слова те же, что в шапке: карточка и пункт шапки ведут в одно место, и
-// одинаковые слова здесь связывают их, а не двоятся.
+// «Make your own wallpaper» называет действие, и слот перестаёт читаться как
+// вакансия. «Wallpaper» здесь ради гостя по ссылке: кроме `<title>`, нигде не
+// сказано, что это сайт обоев. В шапке то же короче — «Make a wallpaper»:
+// длинное там переносилось на ладони в третью строку.
 //
 // Проём для чтения с экрана скрыт (`aria-hidden`): те же слова стоят ниже
 // в этикетке, и диктор, прочитавший их дважды, объявил бы две работы вместо
@@ -614,7 +628,7 @@ function card(item, { eager = false, priority = false } = {}) {
 const inviteCard = () => `<figure class="item item--invite">
           <div class="record">
             <a class="record__image" href="/restore" style="--ratio: 9 / 16" tabindex="-1" aria-hidden="true"
-              ><span>Make your own</span></a
+              ><span>Make your own wallpaper</span></a
             >
           </div>
           <figcaption class="caption">
@@ -627,9 +641,9 @@ const inviteCard = () => `<figure class="item item--invite">
 // `eager` — сколько первых карточек грузить сразу. По умолчанию ни одной:
 // сетка «ещё из коллекции» на странице работы стоит ниже сгиба, и торопить
 // её значит отнимать канал у самой работы.
-const grid = (items, eager = 0, lead = '') =>
+const grid = (items, eager = 0, lead = '', switchable = false) =>
   `<div class="collection">\n        ${lead ? `${lead}\n        ` : ''}${items
-    .map((item, index) => card(item, { eager: index < eager, priority: eager > 0 && index === 0 }))
+    .map((item, index) => card(item, { eager: index < eager, priority: eager > 0 && index === 0, switchable }))
     .join('\n        ')}\n      </div>`;
 
 // Указатель — вся коллекция одной страницей. Постраничность была и снята:
@@ -728,6 +742,7 @@ const tailRow = rows => `<div class="tail">${browseRows(rows)}${mailingForm}</di
 export function collectionPage({ items, rows = [], origin }) {
   return layout({
     current: 'collection',
+    script: '/try-dimmed.js',
     title: `${SITE_NAME}, classical paintings as phone and 4K wallpapers`,
     description: DESCRIPTION,
     canonical: `${origin}/`,
@@ -751,7 +766,7 @@ export function collectionPage({ items, rows = [], origin }) {
     // сетка — сама себе содержание, а прятать заголовок классом ради
     // строчки в аудите значит держать текст, который никто не прочтёт.
     body: `
-      ${grid(items, EAGER_CARDS, inviteCard())}
+      ${grid(items, EAGER_CARDS, inviteCard(), true)}
       ${tailRow(rows)}
     `
   });
@@ -796,10 +811,9 @@ export function topicPage({ topic, origin }) {
   // над пятью светлыми карточками, и клик, которым посетитель это исправлял,
   // галочку СНИМАЛ, делая светлыми все 43.
   //
-  // Сетка теперь показывает то, что выбрано по каждой работе, — так же, как
-  // указатель, и по той же причине: выбор куратора и есть ответ страницы
-  // на вопрос «как эта работа выглядит». Спрашивают же о работе, а не о теме,
-  // и переключить её можно там, где она одна, — на странице работы.
+  // С 14.10.2026 вопрос о смешанной сетке снят иначе: витрина привозит каждую
+  // работу сканом (`catalogueItems` в gallery.js), и тема тоже. Переключить
+  // работу можно там, где она одна, — на странице работы.
   return layout({
     current: 'collection',
     title: topic.title,
@@ -1114,7 +1128,7 @@ const alternates = (item, switchable) => {
     // и страница, на которой галочки нет, всё равно переключила бы ряд —
     // пришедшему с темы со снятой галочкой, — то есть переключилась бы
     // наполовину.
-    .map(row => ({ ...row, other: switchable ? otherOfFile(item, row.file) : null, shown: shownKind(item) }));
+    .map(row => ({ ...row, other: switchable ? otherOfFile(item, row.file) : null, shown: SHOWN }));
   // Одна работа без единого кадра — это работа, у которой в проёме и так
   // стоит плита. Предлагать её же второй раз незачем.
   if (rows.length === 1 && !item.crops?.tall) return '';
@@ -1159,12 +1173,8 @@ export function workPage({ item, shelves = [], total, pages = [], artist = null,
   // поломка, а не отсутствие возможности. `null` — работа нарисована нами или
   // генератор до второго файла не дошёл; на странице тогда ни атрибутов,
   // ни галочки.
-  //
-  // `shown` — в какую сторону галочка работает на этой странице: у правила
-  // `none` проём привезён сканом и галочка ставится, у остальных привезён
-  // приглушённым и галочка снимается.
   const otherFile = otherOfFile(item, file);
-  const shown = shownKind(item);
+  const shown = SHOWN;
   const size = formatDims(file.width, file.height);
   // «4K» стоит в заголовке вкладки и в описании, но не на самой странице.
   // Для поиска `3840` и `4k` — разные строки: работа, у которой сказан только
@@ -1255,7 +1265,7 @@ export function workPage({ item, shelves = [], total, pages = [], artist = null,
   // и примерно 70vw на телефоне.
   const shownPlate = shownWith(file.copies, plateSizes(file));
   // Описание пина — своим полем, а не тем же `alt`. `alt` написан для того,
-  // кто картинку не видит, и начинается со служебного («Dimmed vertical iPhone
+  // кто картинку не видит, и начинается со служебного («Vertical iPhone
   // background from a painting: …»); в сетке Pinterest от описания видно
   // первые 75–100 знаков — ровно эту часть, а не те слова, по которым ищут.
   // Поле необязательное и откатывается на `alt`, пока не написано: 359 записей
@@ -1383,10 +1393,10 @@ export function workPage({ item, shelves = [], total, pages = [], artist = null,
           <div class="caption">
             <h1 class="caption__title">${escape(named ? name : item.ref)}</h1>
             <div class="actions">
-              <a class="btn" href="${escape(file.url)}"${otherData({ href: otherFile?.url, download: otherFile?.filename }, shown)} download="${escape(file.filename)}">Download</a>
+              <a class="btn" href="${escape(file.url)}"${otherData({ href: otherFile?.url, download: otherFile?.filename }, shown)} download="${escape(file.filename)}">Download wallpaper</a>
               <a class="btn btn--ghost btn--pin" href="${escape(pinTo(file))}"${otherData({ href: otherFile && pinTo(otherFile) }, shown)} target="_blank" rel="noopener">Pinterest</a>
             </div>
-            ${otherFile ? dimmedBox('            ', shown === 'dim') : ''}
+            ${otherFile ? dimmedBox('            ') : ''}
           </div>
           ${terms ? `<div class="terms">${terms}</div>` : ''}
           ${inPages(pages)}
@@ -1598,7 +1608,7 @@ export function intakePage({ origin, runtime, runtimeBytes }) {
                картинку с Pinterest в размер экрана», и ответ на такой вопрос
                ищется по названию места, откуда её взяли. Примером оно и читается,
                а не единственным случаем: заголовок над абзацем говорит «any
-               picture», а второй абзац ничем не ограничен. Стояла здесь
+               picture». Стояла здесь
                оговорка «or anywhere else on the web» — и убрана: она
                спотыкала фразу ровно там, где та должна идти, и страховала
                от прочтения, которого страница не допускает. Ушло с ней
@@ -1650,10 +1660,6 @@ export function intakePage({ origin, runtime, runtimeBytes }) {
             <p>
               Saved a picture from Pinterest but it&#39;s too small for a phone background? Enlarge it to
               2160 × 3840 here.
-            </p>
-            <p>
-              Dimming quiets a busy picture so icons and the clock stay readable over it; a gentle
-              blur does the same. The vignette just darkens the corners a little.
             </p>
           </div>
           <!-- Здесь стояла полная подпись к модели: имя, автор, лицензия.
