@@ -1672,7 +1672,7 @@ export function intakePage({ origin, runtime, runtimeBytes }) {
           <div class="intake-about" id="intake-about">
             <p>
               Saved a picture from Pinterest but it&#39;s too small for a phone background? Enlarge it to
-              2160 × 3840 here.
+              2160 × 3840 here, then dim or blur it if you like.
             </p>
           </div>
           <!-- Здесь стояла полная подпись к модели: имя, автор, лицензия.
