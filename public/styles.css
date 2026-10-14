@@ -549,19 +549,12 @@ main > .collection {
   outline-offset: 2px;
 }
 /* Слов на картине нет: значок объясняет себя по первому нажатию (Charlie,
-   14.10.2026, после пилюли и подписи сбоку). Подписи остаются диктору.
+   14.10.2026, после пилюли и подписи сбоку). Подписи остаются диктору
+   (`.visually-hidden` в разметке).
 
    Значков и подписей по два, видны те, что ведут на другую версию: карточка
    в скане предлагает приглушённую (штриховка слева), приглушённая — скан
    (штриховка справа, `try-dimmed.js`). */
-.version span {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  overflow: hidden;
-  clip-path: inset(50%);
-  white-space: nowrap;
-}
 .item[data-shown='scan'] .version__scan,
 .item[data-shown='dim'] .version__dim {
   display: none;

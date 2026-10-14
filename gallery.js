@@ -297,6 +297,27 @@ async function versionOf(node) {
   };
 }
 
+// Неладное в манифесте сайт не чинит, а говорит в лог — по разу на работу
+// и запуск: витрина собирается на каждый запрос, и без памяти одна и та же
+// строка повторялась бы с каждым посетителем.
+const warned = new Set();
+const warnOnce = (ref, message) => {
+  const line = `${ref}: ${message}`;
+  if (warned.has(line)) return;
+  warned.add(line);
+  console.warn(line);
+};
+
+// `upscaled` берётся, только если в нём есть обе строки, которые страница
+// пишет под источником (`provenance` в pages.js): иначе страница работы
+// падала бы целиком, а не теряла одну строку.
+const upscaledOf = (ref, upscaled) => {
+  if (!upscaled) return null;
+  if (typeof upscaled.factor === 'string' && typeof upscaled.from === 'string') return upscaled;
+  warnOnce(ref, 'поле upscaled без строк factor и from, строка об увеличении не показана');
+  return null;
+};
+
 // Кураторские работы. Порядок — каталога, а не манифеста: манифест про файлы,
 // а порядок на указателе — про развеску.
 //
@@ -337,12 +358,18 @@ async function catalogueItems() {
       // Правило работы (`treatment`) при этом не теряется: им куратор сказал,
       // идёт ли картине приглушение, и указатель по нему решает, предлагать ли
       // под карточкой «Try dimmed».
+      //
+      // Скан, записанный в манифесте, но не найденный на диске, страница
+      // заменяет приглушённым: лучше работа в чужом виде, чем дыра на
+      // витрине. Но молча это вернуло бы ровно то, от чего уходили, поэтому
+      // в лог.
       const plateVersion = await versionOf(plate);
       const scan = await versionOf(plate.scan);
+      if (plate.scan && !scan) warnOnce(work.ref, 'скана нет на диске, страница отдаёт приглушённый файл');
       version = scan || plateVersion;
       dimmed = scan ? plateVersion : await versionOf(plate.dimmed);
       treatment = plate.treatment || null;
-      upscaled = plate.upscaled || null;
+      upscaled = upscaledOf(work.ref, plate.upscaled);
     } else if (typeof work.file === 'string') {
       const filePath = resolveEntryPath(work.file);
       const stat = filePath && (await fs.stat(filePath).catch(() => null));

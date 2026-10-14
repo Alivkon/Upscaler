@@ -76,9 +76,8 @@ export async function readDays(DIRECTORY, DAYS) {
 //
 // `frame` отвечает «какой кадр», `version` — «какая из двух»: вопросы разные,
 // и одно поле на оба отвечало бы половиной правды. Какая версия перед нами,
-// говорит имя поля, а не измерение файла: `scan` у работы заполнен тогда,
-// когда страница отдаёт приглушённое, `dimmed` — когда страница отдаёт скан
-// (gallery.js).
+// говорит имя поля, а не измерение файла: главный файл работы — скан,
+// приглушённый лежит полем `dimmed` (`catalogueItems` в gallery.js, с 14.10.2026).
 export async function imageIndex() {
   const shown = (await galleryItems()).filter(item => !item.hidden);
   const byUrl = new Map();
@@ -94,8 +93,7 @@ export async function imageIndex() {
         for (const copy of cut.copies || []) put(copy.url, frame, false, version);
       }
     };
-    walk(item, item.scan ? 'dim' : 'scan');
-    if (item.scan) walk(item.scan, 'scan');
+    walk(item, 'scan');
     if (item.dimmed) walk(item.dimmed, 'dim');
   });
   // `slugs` — показанные работы в порядке витрины: по нему считается, что

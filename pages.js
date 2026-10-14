@@ -143,7 +143,7 @@ function layout({
   body,
   ld,
   script,
-  preload,
+  preload = [],
   runtime,
   runtimeBytes,
   current,
@@ -192,13 +192,13 @@ function layout({
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Sometype+Mono:wght@400..500&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="/styles.css" />
-    <!-- Модуль, названный в шапке, браузер качает сразу, а не когда разбор
+    <!-- Модули, названные в шапке, браузер качает сразу, а не когда разбор
          дойдёт до script в конце тела; на странице работы — ещё и не
          дожидаясь work.js, который его импортирует, то есть на оборот до сети
          раньше. Для галочки «Dimmed» этот оборот видимый: пока её скрипт
          не выполнился, страница стоит сканом, и тот, кто выбрал приглушённое
          на прошлой работе, успевает увидеть не тот файл — и скачать его. -->
-    ${preload ? `<link rel="modulepreload" href="${escape(preload)}" />` : ''}
+    ${preload.map(href => `<link rel="modulepreload" href="${escape(href)}" />`).join('')}
     ${runtime ? `<meta name="ort-version" content="${escape(runtime)}" />` : ''}
     <!-- Вес того, что качает первая картинка. Сервер видит эти файлы у себя
          на диске, браузер — нет: отдаются они сжатыми на лету, и длины в
@@ -395,12 +395,12 @@ const otherOfFile = (item, file) => {
 // Пустая строка — значение, а не пропуск: она означает «а у второй версии
 // этого атрибута нет», и переключение его снимет. Поэтому отсеивается только
 // `null` и `undefined` — «сказать нечего».
-const otherData = (pairs, shown) => {
+const otherData = pairs => {
   const written = Object.entries(pairs)
     .filter(([, value]) => value != null)
     .map(([name, value]) => ` data-other-${name}="${escape(value)}"`)
     .join('');
-  return written ? ` data-shown="${shown}"${written}` : '';
+  return written ? ` data-shown="${SHOWN}"${written}` : '';
 };
 
 // Пара атрибутов картинки: чем подменить `src` и `srcset`. Считается в одном
@@ -422,7 +422,7 @@ const otherPair = (file, other) => {
   return { src: other.url, srcset: file.copies.length ? srcsetOf(other.copies) : null };
 };
 
-const otherShot = (file, other, shown) => otherData(otherPair(file, other), shown);
+const otherShot = (file, other) => otherData(otherPair(file, other));
 
 // Галочка. С сервера она снята: страница приезжает сканом, и нажатая галочка
 // над сканом была бы подписью не к тому, что видно. Выбор, сделанный
@@ -520,7 +520,7 @@ export const cardCreator = item => {
 // CSS по `data-shown` карточки (`.version` в styles.css). Подписи только для
 // диктора: на экране значок без слов.
 const versionButton = `
-            <button class="version" type="button"><svg class="version__dim" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.2" /><path class="version__hatch" d="M1.8 8.2L8 2M2.38 10.62L8 5M3.62 12.38L8 8M5.38 13.62L8 11" /></svg><span class="version__dim">Try dimmed</span><svg class="version__scan" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.2" /><path class="version__hatch" d="M8 5L10.62 2.38M8 8L12.38 3.62M8 11L13.62 5.38M8 14L14.2 7.8" /></svg><span class="version__scan">Show original</span></button>`;
+            <button class="version" type="button"><svg class="version__dim" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.2" /><path class="version__hatch" d="M1.8 8.2L8 2M2.38 10.62L8 5M3.62 12.38L8 8M5.38 13.62L8 11" /></svg><span class="visually-hidden version__dim">Try dimmed</span><svg class="version__scan" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.2" /><path class="version__hatch" d="M8 5L10.62 2.38M8 8L12.38 3.62M8 11L13.62 5.38M8 14L14.2 7.8" /></svg><span class="visually-hidden version__scan">Show original</span></button>`;
 
 // Карточка указателя. Ссылок на работу две: изображение и подпись. Подпись
 // несёт текст ссылки, а изображение — единственное, на что посетитель целится.
@@ -566,23 +566,29 @@ function card(item, { eager = false, priority = false, switchable = false } = {}
   // приглушение выбрал куратор (`dim`, `ceil`): у правила `none` оно есть
   // на странице работы, но с витрины его не советуют. Переключатель —
   // значок в углу картинки (`versionButton`).
-  const other = switchable && DIM_CHOSEN.has(item.treatment) ? otherOf(item) : null;
-  const shown = SHOWN;
+  //
+  // Второй файл спрашивается у `otherOfFile`, как на странице работы: кадр
+  // к кадру. Нет у приглушённой версии этого кадра — нет и значка, а не
+  // целая плита в проёме 9:16.
+  const chosen = switchable && DIM_CHOSEN.has(item.treatment);
+  const otherShown = chosen ? otherOfFile(item, shownFile) : null;
+  const otherFile = chosen ? otherOfFile(item, file) : null;
+  const other = Boolean(otherShown && otherFile);
   // Номер встал на место слова «JPEG». Слово это не несло ничего: файлы
   // в коллекции все до одного JPEG, и строка, одинаковая на всех карточках,
   // — это место, занятое ничем. Номер на его месте хотя бы называет работу
   // в собрании, а размер, стоящий первым, остаётся подсвеченным (`.lead`).
-  return `<figure class="item"${other ? ` data-shown="${shown}"` : ''}>
+  return `<figure class="item"${other ? ` data-shown="${SHOWN}"` : ''}>
           <div class="record">
             <a class="record__image" href="/w/${escape(item.slug)}" style="--ratio: ${ratio}" tabindex="-1">
-              <img src="${escape(shownFile.url)}"${sized}${other ? otherShot(shownFile, tile(other), shown) : ''} alt="${escape(item.alt)}" width="${shownFile.width}" height="${shownFile.height}"${loading} />
+              <img src="${escape(shownFile.url)}"${sized}${other ? otherShot(shownFile, otherShown) : ''} alt="${escape(item.alt)}" width="${shownFile.width}" height="${shownFile.height}"${loading} />
             </a>${other ? versionButton : ''}
           </div>
           <figcaption class="caption">
             <h3 class="caption__title"><a href="/w/${escape(item.slug)}">${escape(cardName(item))}</a></h3>
             <p class="caption__by">${escape(creator)}</p>
             <p class="caption__spec">${specLine([formatDims(file.width, file.height), item.ref])}</p>
-            <a class="link" href="${escape(file.url)}"${other ? otherData({ href: offered(other).url }, shown) : ''} download>Download wallpaper</a>
+            <a class="link" href="${escape(file.url)}"${other ? otherData({ href: otherFile.url }) : ''} download>Download wallpaper</a>
           </figcaption>
         </figure>`;
 }
@@ -1084,8 +1090,8 @@ const beforeFrame = item => `
 // можно в один жест, и уже зная, что сохраняешь. Кнопка Download наверху
 // остаётся кнопкой: она отдаёт файл, который посетитель уже видит в проёме.
 const fileTile = row => `<li class="alternates__file">
-                <a href="${escape(row.file.url)}"${otherData({ href: row.other?.url }, row.shown)}>
-                  <span class="alternates__shot"><img src="${escape(row.file.url)}"${shownWith(row.file.copies, scaled(96))}${otherShot(row.file, row.other, row.shown)} alt="${escape(row.alt)}" width="${row.file.width}" height="${row.file.height}" loading="lazy" /></span>${
+                <a href="${escape(row.file.url)}"${otherData({ href: row.other?.url })}>
+                  <span class="alternates__shot"><img src="${escape(row.file.url)}"${shownWith(row.file.copies, scaled(96))}${otherShot(row.file, row.other)} alt="${escape(row.alt)}" width="${row.file.width}" height="${row.file.height}" loading="lazy" /></span>${
                     row.label ? `\n                  <span class="alternates__label">${escape(row.label)}</span>` : ''
                   }
                 </a>
@@ -1137,7 +1143,7 @@ const alternates = (item, switchable) => {
     // и страница, на которой галочки нет, всё равно переключила бы ряд —
     // пришедшему с темы со снятой галочкой, — то есть переключилась бы
     // наполовину.
-    .map(row => ({ ...row, other: switchable ? otherOfFile(item, row.file) : null, shown: SHOWN }));
+    .map(row => ({ ...row, other: switchable ? otherOfFile(item, row.file) : null }));
   // Одна работа без единого кадра — это работа, у которой в проёме и так
   // стоит плита. Предлагать её же второй раз незачем.
   if (rows.length === 1 && !item.crops?.tall) return '';
@@ -1183,7 +1189,6 @@ export function workPage({ item, shelves = [], total, pages = [], artist = null,
   // генератор до второго файла не дошёл; на странице тогда ни атрибутов,
   // ни галочки.
   const otherFile = otherOfFile(item, file);
-  const shown = SHOWN;
   const size = formatDims(file.width, file.height);
   // «4K» стоит в заголовке вкладки и в описании, но не на самой странице.
   // Для поиска `3840` и `4k` — разные строки: работа, у которой сказан только
@@ -1300,13 +1305,10 @@ export function workPage({ item, shelves = [], total, pages = [], artist = null,
   // имя сменяемого атрибута, а сменяется здесь `data-pin-media`. Расширение
   // Pinterest сохраняет мимо кнопки и читает именно его — значит, оно обязано
   // называть тот файл, который в эту минуту на странице виден.
-  const otherPicture = otherData(
-    {
-      ...otherPair(file, otherFile),
-      'data-pin-media': otherFile && `${origin}${otherFile.url}`
-    },
-    shown
-  );
+  const otherPicture = otherData({
+    ...otherPair(file, otherFile),
+    'data-pin-media': otherFile && `${origin}${otherFile.url}`
+  });
   // Отправка в Pinterest — контурной кнопкой рядом с Download, а не значком
   // с логотипом. Страница работы набрана музейной этикеткой, и красный кружок
   // в ней читается рекламой; `btn--ghost` — та же форма и тот же шрифт, что
@@ -1335,7 +1337,7 @@ export function workPage({ item, shelves = [], total, pages = [], artist = null,
   // стояло сперва здесь и читалось как ещё одно такое утверждение, потом
   // переехало к Download — а 23.08.2026 ушло со страницы работы вовсе:
   // человек пришёл за картинкой, взял её и не обязан по дороге узнавать,
-  // что тут ещё умеют. Приглашение осталось в шапке («Make your own») и
+  // что тут ещё умеют. Приглашение осталось в шапке («Make a wallpaper») и
   // на странице прав — там, где его читают нарочно.
   //
   // А блок, которому нечего сказать, не рисуется вовсе: черта без
@@ -1388,8 +1390,9 @@ export function workPage({ item, shelves = [], total, pages = [], artist = null,
     script: '/work.js',
     // Галочку переключает `dimmed.js`, а приезжает он импортом из `work.js` —
     // то есть был бы найден только после того, как тот придёт целиком. Здесь
-    // он назван шапкой и едет рядом с ним, а не за ним.
-    preload: '/dimmed.js',
+    // он назван шапкой и едет рядом с ним, а не за ним. С ним `versions.js`,
+    // который он сам импортирует: иначе тот же оборот повторился бы на нём.
+    preload: ['/dimmed.js', '/versions.js'],
     body: `
       <div class="plate">
         <figure class="record record--plate">
@@ -1402,8 +1405,8 @@ export function workPage({ item, shelves = [], total, pages = [], artist = null,
           <div class="caption">
             <h1 class="caption__title">${escape(named ? name : item.ref)}</h1>
             <div class="actions">
-              <a class="btn" href="${escape(file.url)}"${otherData({ href: otherFile?.url, download: otherFile?.filename }, shown)} download="${escape(file.filename)}">Download wallpaper</a>
-              <a class="btn btn--ghost btn--pin" href="${escape(pinTo(file))}"${otherData({ href: otherFile && pinTo(otherFile) }, shown)} target="_blank" rel="noopener">Pinterest</a>
+              <a class="btn" href="${escape(file.url)}"${otherData({ href: otherFile?.url, download: otherFile?.filename })} download="${escape(file.filename)}">Download wallpaper</a>
+              <a class="btn btn--ghost btn--pin" href="${escape(pinTo(file))}"${otherData({ href: otherFile && pinTo(otherFile) })} target="_blank" rel="noopener">Pinterest</a>
             </div>
             ${otherFile ? dimmedBox('            ') : ''}
           </div>
@@ -1431,9 +1434,8 @@ export function workPage({ item, shelves = [], total, pages = [], artist = null,
 //
 // Говорит она теперь не про действие, а про то, что выйдет: «Restore an
 // image» называло операцию словом, которого в этом значении не знают, а
-// «Make your own wallpaper» называет результат — и держится за соседний
-// пункт шапки «Make your own», где слово «свой» противопоставлено
-// «Collection» и объясняет само себя.
+// «Make your own wallpaper» называет результат. В шапке тот же пункт
+// короче, «Make a wallpaper»: длинное переносилось на ладони в третью строку.
 // Версия рантайма приходит с сервера и уходит в `<meta>`: путь до
 // onnxruntime-web она содержит целиком (`/vendor/ort/1.27.0/…`), а вписать её
 // в `upscale-local.js` значило бы завести вторую запись о версии рядом с
@@ -1538,10 +1540,10 @@ export function intakePage({ origin, runtime, runtimeBytes }) {
                а сама картинка: любая из шести пересчитывает проём сразу же.
                Оговорка осталась одна и ровно там, где показать нечего.
 
-               Слово «Dim» — то же, каким витрина называет свой обычный вид
-               в галочке «Dimmed»: приёмка считает на чужой картинке ровно то
-               правило dim, которым сделана вся коллекция, и второе слово
-               обещало бы вторую обработку.
+               Слово «Dim» — то же, каким витрина называет вторую версию
+               работы в галочке «Dimmed»: приёмка считает на чужой картинке
+               ровно то правило dim, которым сделаны приглушённые файлы
+               коллекции, и второе слово обещало бы вторую обработку.
 
                «A phone», а не «my phone»: экран посетителя нигде не
                спрашивается — ни screen, ни devicePixelRatio, ни медиа-запроса,
@@ -1727,6 +1729,25 @@ export function intakePage({ origin, runtime, runtimeBytes }) {
 //
 // Якоря `#public-domain` и `#cc-by` менять нельзя: на них ссылается карточка
 // каждой работы через `LICENSES` в `works.js`.
+// Строка об увеличенных работах на /license. `upscaled` — их поля `upscaled`
+// с витрины (server.js), и из них же множители: «2× or 4×», вписанное
+// в текст, стало бы неправдой с первой работой ×3. Ни одной — строки нет:
+// «0 scans were upscaled» говорило бы об увеличении там, где его нет.
+const enlargedLine = upscaled => {
+  if (!upscaled.length) return '';
+  const factors = [...new Set(upscaled.map(entry => entry.factor.replace('x', '×')))].sort(
+    (a, b) => parseFloat(a) - parseFloat(b)
+  );
+  const named = factors.length > 1 ? `${factors.slice(0, -1).join(', ')} or ${factors.at(-1)}` : factors[0];
+  const one = upscaled.length === 1;
+  return ` ${one ? 'One scan was' : `${upscaled.length} scans were`} too small for a phone screen and ${
+    one ? 'was' : 'were'
+  } upscaled ${named} with a non-generative model: it sharpens the detail already
+          in the scan and does not paint anything new. ${
+            one ? 'That work says so on its page.' : 'Each of those works says so on its page.'
+          }`;
+};
+
 export function licensePage({ origin, upscaled }) {
   return layout({
     current: 'collection',
@@ -1740,9 +1761,7 @@ export function licensePage({ origin, upscaled }) {
         <p>
           These are scans of real paintings and drawings held by museums, not AI-generated images;
           cropping and darkening them for a phone screen is ordinary image processing, done by fixed
-          rules, not by a generator. ${upscaled} scans were too small for a phone screen and were
-          upscaled 2× or 4× with a non-generative model: it sharpens the detail already in the scan
-          and does not paint anything new. Each of those works says so on its page.
+          rules, not by a generator.${enlargedLine(upscaled)}
         </p>
         <p class="prose__lead">
           Nearly everything in this collection comes from an open collection and is not ours to
