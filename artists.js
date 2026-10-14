@@ -159,15 +159,6 @@ export const ARTISTS = [
     names: ['Willem Kalf']
   },
   {
-    slug: 'john-frederick-kensett',
-    name: 'John Frederick Kensett',
-    short: 'Kensett',
-    made: 'paintings',
-    label: 'John Frederick Kensett (1816–1872), American painter',
-    wikidata: 'Q982284',
-    names: ['John Frederick Kensett']
-  },
-  {
     slug: 'kobayashi-kiyochika',
     name: 'Kobayashi Kiyochika',
     short: 'Kiyochika',
