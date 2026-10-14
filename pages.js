@@ -502,25 +502,27 @@ export const cardCreator = item => {
   return creator && creatorKind !== 'unknown' ? creator : '';
 };
 
-// Значок «Try dimmed» в углу картинки. Стояла ссылка словами рядом
-// с Download, и под карточкой стало две строки ссылок на 114 работах из 156:
-// Charlie прочёл это как слишком много текста. Значок на самой картине
-// не прибавляет этикетке ни строки, а показывается только по наведению
-// (styles.css): виден на всех картинах сразу, он мешал на них смотреть.
+// Значок «Try dimmed» в этикетке, справа на строке названия. Стояла ссылка
+// словами рядом с Download — две строки ссылок на 114 работах из 156 Charlie
+// прочёл как слишком много текста. Потом значок лежал на самой картине,
+// кругом матового стекла по наведению, и выглядел кнопкой приложения на
+// холсте: витрина устроена как стена галереи, а там на картине не лежит
+// ничего, всё — на этикетке рядом. Теперь он набран её же серым, без стекла
+// и тени, и виден всегда, на ладони тоже. Справа, а не в строке после номера:
+// там он терялся среди знаков строки.
 //
-// Стоит он рядом с проёмом, а не внутри: проём — ссылка на работу, а кнопка
-// внутри ссылки — недопустимая разметка. Вид — матовое стекло в углу, как
-// круглые кнопки экрана блокировки: сайт раздаёт обои, и значок напоминает
-// телефон, а не панель управления. Рисунок — круг, половина которого
-// заштрихована, как тень на гравюре: речь о тоне картины. Месяц с солнцем,
-// стоявшие тут до того, Charlie прочёл как ночной режим. Штриховка слева
-// предлагает приглушённую версию, справа возвращает скан. Линии обрезаны по
-// полукругу заранее: `clipPath` держится на `id`, а карточек 114, и `id`
-// повторился бы на странице. Значков и подписей по два, видны по одному: какие — решает
-// CSS по `data-shown` карточки (`.version` в styles.css). Подписи только для
-// диктора: на экране значок без слов.
+// Рисунок — квадрат, половина которого заштрихована, как тень на гравюре:
+// речь о тоне картины. Месяц с солнцем, стоявшие тут до того, Charlie прочёл
+// как ночной режим; круг со штриховкой, лежавший на картине, на этикетке
+// смотрелся кнопкой рядом с моноширинным набором — квадрат встаёт к буквам.
+// Штриховка слева предлагает приглушённую версию, справа возвращает скан.
+// Штрихи кончаются на краях своей половины, без `clipPath`: тот держится
+// на `id`, а карточек 114, и `id` повторился бы на странице. Значков
+// и подписей по два, видны по одному: какие — решает CSS по `data-shown`
+// карточки (`.version` в styles.css). Подписи только для диктора: на экране
+// значок без слов.
 const versionButton = `
-            <button class="version" type="button"><svg class="version__dim" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.2" /><path class="version__hatch" d="M1.8 8.2L8 2M2.38 10.62L8 5M3.62 12.38L8 8M5.38 13.62L8 11" /></svg><span class="visually-hidden version__dim">Try dimmed</span><svg class="version__scan" viewBox="0 0 16 16" aria-hidden="true"><circle cx="8" cy="8" r="6.2" /><path class="version__hatch" d="M8 5L10.62 2.38M8 8L12.38 3.62M8 11L13.62 5.38M8 14L14.2 7.8" /></svg><span class="visually-hidden version__scan">Show original</span></button>`;
+            <button class="version" type="button"><svg class="version__dim" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.6 2.6H13.4V13.4H2.6ZM8 2.6V13.4" /><path class="version__hatch" d="M2.6 5.9L5.9 2.6M2.6 9.3L8 3.9M2.6 12.7L8 7.3M5.3 13.4L8 10.7" /></svg><span class="visually-hidden version__dim">Try dimmed</span><svg class="version__scan" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.6 2.6H13.4V13.4H2.6ZM8 2.6V13.4" /><path class="version__hatch" d="M8 5.3L10.7 2.6M8 8.7L13.4 3.3M8 12.1L13.4 6.7M10.1 13.4L13.4 10.1" /></svg><span class="visually-hidden version__scan">Show original</span></button>`;
 
 // Карточка указателя. Ссылок на работу две: изображение и подпись. Подпись
 // несёт текст ссылки, а изображение — единственное, на что посетитель целится.
@@ -565,7 +567,7 @@ function card(item, { eager = false, priority = false, switchable = false } = {}
   // и то, что отдаёт Download. Предлагается она только работам, которым
   // приглушение выбрал куратор (`dim`, `ceil`): у правила `none` оно есть
   // на странице работы, но с витрины его не советуют. Переключатель —
-  // значок в углу картинки (`versionButton`).
+  // значок в этикетке (`versionButton`).
   //
   // Второй файл спрашивается у `otherOfFile`, как на странице работы: кадр
   // к кадру. Нет у приглушённой версии этого кадра — нет и значка, а не
@@ -582,10 +584,10 @@ function card(item, { eager = false, priority = false, switchable = false } = {}
           <div class="record">
             <a class="record__image" href="/w/${escape(item.slug)}" style="--ratio: ${ratio}" tabindex="-1">
               <img src="${escape(shownFile.url)}"${sized}${other ? otherShot(shownFile, otherShown) : ''} alt="${escape(item.alt)}" width="${shownFile.width}" height="${shownFile.height}"${loading} />
-            </a>${other ? versionButton : ''}
+            </a>
           </div>
           <figcaption class="caption">
-            <h3 class="caption__title"><a href="/w/${escape(item.slug)}">${escape(cardName(item))}</a></h3>
+            <h3 class="caption__title"><a href="/w/${escape(item.slug)}">${escape(cardName(item))}</a></h3>${other ? versionButton : ''}
             <p class="caption__by">${escape(creator)}</p>
             <p class="caption__spec">${specLine([formatDims(file.width, file.height), item.ref])}</p>
             <a class="link" href="${escape(file.url)}"${other ? otherData({ href: otherFile.url }) : ''} download>Download wallpaper</a>

@@ -470,85 +470,58 @@ main > .collection {
   margin-top: 8rem;
   font-size: 12rem;
 }
-/* Значок «Try dimmed» в углу картинки (`versionButton` в pages.js). Стоит
-   на картине, а не в этикетке: там его видно, и этикетка остаётся той же,
-   что у соседей. Матовое стекло с тёмным оттенком: белое терялось на светлых
-   углах (замерено на «Spring of Mountain»), чёрный круг с кромкой выглядел
-   наклейкой поверх живописи. Отступы — поле паспарту (`.record`) плюс 8:
-   значок лежит в проёме, а не на паспарту. */
-.collection .record {
+/* Значок «Try dimmed» в этикетке (`versionButton` в pages.js): справа на
+   строке названия, под правым краем картины. Без стекла и тени — не кнопка
+   на холсте, а знак на этикетке, — и виден всегда: ни наведения, ни ладони
+   он не ждёт. Светлый, как «Download wallpaper»: на этикетке светлое
+   нажимается, серое сообщает, и серым значок читался пометкой. Название отступает от него, чтобы
+   длинное не подлезло под значок. */
+.item[data-shown] .caption {
   position: relative;
+}
+.item[data-shown] .caption__title {
+  padding-right: 26rem;
 }
 .version {
   position: absolute;
-  right: calc(7rem + 8rem);
-  bottom: calc(14rem + 8rem);
+  top: 0;
+  right: 0;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32rem;
-  height: 32rem;
   padding: 0;
-  color: color-mix(in srgb, var(--fg) 85%, var(--ground));
-  background: rgba(24, 24, 26, 0.22);
-  -webkit-backdrop-filter: blur(10px) saturate(1.4);
-  backdrop-filter: blur(10px) saturate(1.4);
+  color: var(--fg);
+  background: none;
   border: 0;
-  border-radius: 16rem;
-  box-shadow:
-    inset 0 0 0 0.5px rgba(255, 255, 255, 0.18),
-    0 1px 8px rgba(0, 0, 0, 0.14);
   cursor: pointer;
 }
-/* площадь нажатия шире видимого круга на 8 с каждой стороны: целиться
-   в круг 32 px неудобно */
+/* площадь нажатия шире видимого квадрата на 8 с каждой стороны: целиться
+   в значок 16 px неудобно */
 .version::before {
   content: '';
   position: absolute;
   inset: -8rem;
 }
 .version svg {
-  width: 15rem;
-  height: 15rem;
+  width: 16rem;
+  height: 16rem;
   flex: none;
   fill: none;
   stroke: currentColor;
-  stroke-width: 1.1;
+  stroke-width: 1.2;
   stroke-linecap: round;
   stroke-linejoin: round;
 }
 /* штриховка тоньше контура и с плоскими концами: круглые заходили бы за
-   середину круга на другую половину. Штрихов четыре, а не семь: тонкие
-   и частые на 15 px сливались в серое пятно. Цвет значка сплошной, чуть
-   темнее текста: полупрозрачный брал оттенок картины и выглядел грязным. */
+   середину квадрата на другую половину. Штрихов четыре, а не семь: тонкие
+   и частые на 15 px сливались в серое пятно. */
 .version__hatch {
-  stroke-width: 0.8;
+  stroke-width: 0.9;
   stroke-linecap: butt;
-}
-/* Значок есть, только пока на работу наведена мышь: виден на каждой картине
-   сразу, он мешал на них смотреть (Charlie, 14.10.2026). На ладони наведения
-   нет, и значка нет вовсе: приглушённую версию там предлагает галочка
-   «Dimmed» на странице работы. С клавиатуры значок проявляется по фокусу. */
-@media (hover: hover) {
-  .version {
-    opacity: 0;
-    transition: opacity 0.2s ease;
-  }
-  .item:hover .version,
-  .version:focus-visible {
-    opacity: 1;
-  }
-}
-@media (hover: none) {
-  .version {
-    display: none;
-  }
 }
 .version:focus-visible {
   outline: 2px solid var(--fg);
   outline-offset: 2px;
 }
-/* Слов на картине нет: значок объясняет себя по первому нажатию (Charlie,
+/* Слов у значка нет: он объясняет себя по первому нажатию (Charlie,
    14.10.2026, после пилюли и подписи сбоку). Подписи остаются диктору
    (`.visually-hidden` в разметке).
 
