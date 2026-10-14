@@ -321,7 +321,7 @@ async function catalogueItems() {
   const made = new Map((await readManifest()).map(entry => [entry.ref, entry]));
   const items = [];
   for (const work of await loadWorks()) {
-    let version, before, dimmed, treatment;
+    let version, before, dimmed, treatment, upscaled;
     const plate = made.get(work.ref);
     if (await madeFile(plate)) {
       const beforeEntry = (await madeFile(plate.before)) && plate.before;
@@ -342,6 +342,7 @@ async function catalogueItems() {
       version = scan || plateVersion;
       dimmed = scan ? plateVersion : await versionOf(plate.dimmed);
       treatment = plate.treatment || null;
+      upscaled = plate.upscaled || null;
     } else if (typeof work.file === 'string') {
       const filePath = resolveEntryPath(work.file);
       const stat = filePath && (await fs.stat(filePath).catch(() => null));
@@ -362,6 +363,7 @@ async function catalogueItems() {
       before = null;
       dimmed = null;
       treatment = null;
+      upscaled = null;
     } else {
       continue;
     }
@@ -408,6 +410,11 @@ async function catalogueItems() {
       // Правило работы из манифеста: `dim`, `ceil`, `none`; `null` у работ,
       // которым его не выбирают (свои, присланные).
       treatment,
+      // Увеличена ли работа моделью до генератора: `{ factor, from, … }`
+      // из манифеста или `null`. Страница говорит об этом под источником —
+      // у работ под CC BY изменение обязано быть названо, а у остальных файл
+      // иначе выдавал бы себя за скан в том размере, которого у музея нет.
+      upscaled,
       // День, когда работа вошла в коллекцию, — для `lastmod` в карте сайта.
       // Берётся из каталога, а не из `mtime` файла: рендер детерминирован,
       // но переписывает файл при каждом запуске.
@@ -464,6 +471,7 @@ async function uploadedItems() {
       crops: {},
       dimmed: null,
       treatment: null,
+      upscaled: null,
       width,
       height,
       bytes: stat.size,

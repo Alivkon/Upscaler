@@ -1002,10 +1002,19 @@ function provenance(item, name, artistPath) {
   const made = [who, date ? escape(date) : ''].filter(Boolean).join(', ');
   const held = [work === name ? '' : work, credit].filter(Boolean).join(' · ');
   const terms = item.license ? `${escape(item.license.name)} · ` : '';
+  // Увеличенная моделью работа называет это прямо под источником: по ссылке
+  // лежит файл меньше того, что отдаёт страница. Числа — из манифеста
+  // («2x», «1166×3000»), здесь только пишутся так, как пишет их весь сайт.
+  const enlarged = item.upscaled
+    ? `<p class="terms__note">Upscaled ${escape(item.upscaled.factor.replace('x', '×'))} from the ${escape(
+        item.upscaled.from.replace('×', ' × ')
+      )} scan.</p>`
+    : '';
   return `
             <p class="terms__line">${made}</p>
             ${held ? `<p class="terms__note">${escape(held)}</p>` : ''}
-            <p class="terms__note">${terms}<a href="${escape(page)}">Source file</a></p>`;
+            <p class="terms__note">${terms}<a href="${escape(page)}">Source file</a></p>
+            ${enlarged}`;
 }
 
 // Работа «до» и стекло, под которым её сравнивают с тем, что вышло.
@@ -1718,7 +1727,7 @@ export function intakePage({ origin, runtime, runtimeBytes }) {
 //
 // Якоря `#public-domain` и `#cc-by` менять нельзя: на них ссылается карточка
 // каждой работы через `LICENSES` в `works.js`.
-export function licensePage({ origin }) {
+export function licensePage({ origin, upscaled }) {
   return layout({
     current: 'collection',
     title: `Licensing`,
@@ -1731,7 +1740,9 @@ export function licensePage({ origin }) {
         <p>
           These are scans of real paintings and drawings held by museums, not AI-generated images;
           cropping and darkening them for a phone screen is ordinary image processing, done by fixed
-          rules, not by a generator.
+          rules, not by a generator. ${upscaled} scans were too small for a phone screen and were
+          upscaled 2× or 4× with a non-generative model: it sharpens the detail already in the scan
+          and does not paint anything new. Each of those works says so on its page.
         </p>
         <p class="prose__lead">
           Nearly everything in this collection comes from an open collection and is not ours to

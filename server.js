@@ -389,7 +389,16 @@ app.get('/restore', (_req, res) =>
   html(res, 200, intakePage({ origin: SITE_ORIGIN, runtime: ORT_VERSION, runtimeBytes: JSON.stringify(LOAD_BYTES) }))
 );
 
-app.get('/license', (_req, res) => html(res, 200, licensePage({ origin: SITE_ORIGIN })));
+// Сколько работ увеличено моделью, страница считает по витрине, а не пишет
+// числом: число в тексте разошлось бы с коллекцией при первой же новой работе.
+app.get('/license', async (_req, res, next) => {
+  try {
+    const upscaled = shown(await galleryItems()).filter(item => item.upscaled).length;
+    html(res, 200, licensePage({ origin: SITE_ORIGIN, upscaled }));
+  } catch (error) {
+    next(error);
+  }
+});
 
 app.get('/mailing-list', (_req, res) => html(res, 200, mailingListPage({ origin: SITE_ORIGIN })));
 
