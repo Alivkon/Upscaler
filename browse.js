@@ -14,13 +14,83 @@ import { COLLECTIONS, terms, worksOf } from './collections.js';
 // России здесь нет: все шесть её работ — Айвазовский, и её страница была бы
 // его страницей под другим именем. Порядок — по прилагательному: так строка
 // стоит под сеткой указателя.
+//
+// `about` — то, что о стране сказано словами после счёта и имён (14.10.2026):
+// чем её картины хороши как обои и где у них встают часы. Чисел в нём нет —
+// число, вписанное руками, разъезжается со списком молча (pages.js, `topicPage`).
+// Сверено по контактным листам и замеру полосы часов —
+// research/2026-10-14-seo-hour.md: японские работы в основном высокие и сверху
+// светлые; у Кальфа сверху чёрная стена, у ван Хёйсума и Одюбона сюжет до
+// верхнего края; британские и французские приглушены по цвету, но не по
+// контрасту — небо светлое, земля тёмная. У стран, чьё подмножество — своя
+// традиция (Hudson, нихонга, Golden Age), ссылка туда, обратная — в абзаце
+// традиции (collections.js): страницы пересекаются целиком, и связь между
+// ними говорит Google, какая о чём. Страна пополняется сама, а абзац нет:
+// после каждой новой работы он перечитывается (ADDING.md, шаг 5).
 export const COUNTRIES = [
-  { origin: 'America', adjective: 'American' },
-  { origin: 'England', adjective: 'British' },
-  { origin: 'Denmark', adjective: 'Danish' },
-  { origin: 'Netherlands', adjective: 'Dutch' },
-  { origin: 'France', adjective: 'French' },
-  { origin: 'Japan', adjective: 'Japanese' }
+  {
+    origin: 'America',
+    adjective: 'American',
+    about: [
+      'Most are landscapes of the ',
+      { href: '/collection/hudson-river-school', text: 'Hudson River School' },
+      ", with open sky at the top for the clock. Thomas Cole's ",
+      { href: '/w/cole-the-garden-eden-desktop-wallpaper', text: 'The Garden of Eden' },
+      " frames the screen with trees down both sides. Audubon's birds mostly fill the page to the top " +
+        'edge, so the clock lands on a bird. They give the clock no clear space, but they were too charming ' +
+        'to leave out.'
+    ]
+  },
+  {
+    origin: 'England',
+    adjective: 'British',
+    about: [
+      'Nearly all are wide landscapes in muted browns and olive greens, so app icons stand out against them ' +
+        'on a home screen. Most have sky across the top, under the clock.'
+    ]
+  },
+  {
+    origin: 'Denmark',
+    adjective: 'Danish',
+    about: [
+      'Ottesen painted flowers and fruit in bright colour on near-black backgrounds. Most of his still lifes ' +
+        'have the colour at the bottom, and the top, where the clock is, stays dark. Hammershøi painted ' +
+        'empty grey rooms, fields and the old Christiansborg palace, with plain wall or sky at the top.'
+    ]
+  },
+  {
+    origin: 'Netherlands',
+    adjective: 'Dutch',
+    about: [
+      'Nearly all are dark. Kalf set his silver and fruit low on a black background, with nothing at the ' +
+        "top where the clock goes. Van Huysum's bouquets fill the picture to the top edge, so the clock " +
+        'sits on flowers. The seventeenth-century ones are also on a page of their own, ',
+      { href: '/collection/dutch-golden-age', text: 'Dutch Golden Age' },
+      '.'
+    ]
+  },
+  {
+    origin: 'France',
+    adjective: 'French',
+    about: [
+      'Most are landscapes in muted browns and greens. Claude Lorrain and Bertin put tall trees at one side ' +
+        'and leave the sky open at the top, behind the clock. Gudin painted the sea, mostly in storms.'
+    ]
+  },
+  {
+    origin: 'Japan',
+    adjective: 'Japanese',
+    about: [
+      'Most are tall and narrow, so on a phone you see nearly all of each picture. Many have light silk or ' +
+        'gold at the top, behind the clock. Set the clock colour to black, or download the dimmed ' +
+        'version. The oldest are Buddhist paintings from the 1300s. In the Meiji years, after Japan opened ' +
+        'to the West, some painters took up oil on canvas, among them Yamamoto Hosui, who painted ',
+      { href: '/w/the-garden-of-eden-yamamoto-hosui-iphone-wallpaper', text: 'The Garden of Eden' },
+      '. Others kept to mineral pigment and ink on silk, the style that came to be called ',
+      { href: '/collection/nihonga', text: 'nihonga' },
+      '.'
+    ]
+  }
 ];
 
 // Анонимы и копии («Unknown (Japan)», «After Thomas Cole») в каталоге
@@ -56,7 +126,7 @@ export const MIN_COUNTRY_WORKS = 4;
 function countryPage(country, items) {
   const names = leadingNames(items);
   if (items.length < MIN_COUNTRY_WORKS || names.length < 2) return null;
-  const { adjective } = country;
+  const { adjective, about } = country;
   return {
     kind: 'country',
     country,
@@ -66,7 +136,7 @@ function countryPage(country, items) {
     title: `${adjective} painting phone wallpapers: free, no account`,
     heading: `${adjective} painting`,
     description: `${adjective} painting as phone wallpaper, from public museum collections: ${listed(names.slice(0, 2))}. Free, no account.`,
-    note: ({ count }) => `${count} ${adjective} works, by ${byNames(names)}.`,
+    note: ({ count }) => [`${count} ${adjective} works, by ${byNames(names)}. `, ...about],
     terms,
     items
   };

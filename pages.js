@@ -40,6 +40,14 @@ const escape = value =>
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#39;');
 
+// Абзац темы — строка или ряд кусков, где ссылка — `{ href, text }`. Так
+// ссылка стоит внутри предложения, а текст по-прежнему проходит `escape` весь.
+const prose = note =>
+  [note]
+    .flat()
+    .map(part => (typeof part === 'string' ? escape(part) : `<a href="${escape(part.href)}">${escape(part.text)}</a>`))
+    .join('');
+
 const specLine = parts =>
   parts
     .filter(Boolean)
@@ -839,7 +847,7 @@ export function topicPage({ topic, origin }) {
     body: `
       <div class="topic">
         <h1 class="topic__title">${escape(topic.heading)}</h1>
-        <p class="topic__note">${escape(topic.note(measured))}</p>
+        <p class="topic__note">${prose(topic.note(measured))}</p>
       </div>
       ${grid(items, EAGER_CARDS)}
       ${topic.terms ? `<p class="topic__terms">${escape(topic.terms(measured))}</p>` : ''}

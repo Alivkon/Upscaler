@@ -161,11 +161,24 @@ export const COLLECTIONS = [
     heading: 'Nihonga collection',
     description:
       'Nihonga phone wallpaper from Japanese museum paintings: mineral pigment and ink on silk, Meiji and Taishō. Up to 2160 × 3840, free, no account.',
-    note: ({ count }) =>
+    // «Most minimalist» — замер 14.10.2026 по карточкам всех 17 тем и стран
+    // (research/2026-10-14-seo-hour.md): у нихонги самая спокойная картинка
+    // (медиана перепадов 8,7; у цветов 20,3) и самый светлый верх (75; у Dutch
+    // 16). Отсюда и совет про чёрные часы. «Best backgrounds» — слово Charlie.
+    //
+    // Ссылка в конце — обратная той, что стоит на странице страны (browse.js,
+    // `about`): нихонга целиком внутри японской, и Google видит, какая из двух
+    // шире. Ёга и гравюры Киётики — те восемь, что сняты отсюда по технике.
+    note: ({ count }) => [
       `${count} nihonga paintings. Nihonga means mineral pigment and ` +
-      'ink on silk, the Japanese way of painting that continued after Western oil reached Meiji ' +
-      'Japan. By Yokoyama Taikan, Kobayashi Kokei and Yamamoto Shunkyo, from the Tokyo National ' +
-      'Museum and other public collections.',
+        'ink on silk, the Japanese way of painting that continued after Western oil reached Meiji ' +
+        'Japan. Most show a small subject on plain silk or gold, which makes them the most minimalist pictures ' +
+        'in the collection and some of the best phone backgrounds. The silk and gold are light, so set your ' +
+        'clock colour to black. By Yokoyama Taikan, Kobayashi Kokei and Yamamoto Shunkyo, from the Tokyo National ' +
+        'Museum and other public collections. Older scrolls, Meiji oils and woodblock prints are with the rest of ',
+      { href: '/collection/japanese-painting', text: 'Japanese painting' },
+      '.'
+    ],
     terms,
     // Отбор здесь не глазами, а по технике, и это единственная тема, где так
     // можно. «Нихонга» — не период и не манера: это минеральная краска и тушь
@@ -240,11 +253,15 @@ export const COLLECTIONS = [
     heading: 'Hudson River School collection',
     description:
       'Hudson River School phone wallpaper: Thomas Cole, Albert Bierstadt and other American landscape painters, 1828 to 1871. Free, no account.',
-    note: ({ count }) =>
+    // Ссылка в конце — обратная той, что на странице страны (browse.js, `about`).
+    note: ({ count }) => [
       `${count} paintings of the Hudson River School, the landscape painters of American ` +
-      'Romanticism. Painted between 1828 and 1871, by Thomas ' +
-      'Cole, Albert Bierstadt and others. Most are from the Cleveland ' +
-      'Museum of Art.',
+        'Romanticism. Painted between 1828 and 1871, by Thomas ' +
+        'Cole, Albert Bierstadt and others. Most are from the Cleveland ' +
+        "Museum of Art. Audubon's birds and Heade's flowers are with the rest of ",
+      { href: '/collection/american-painting', text: 'American painting' },
+      '.'
+    ],
     terms,
     refs: [
       'vl-0355',
@@ -281,15 +298,28 @@ export const COLLECTIONS = [
     // весу: Кальф 11 (и копия), Марсеус 2, дальше по одной. Музеи тоже по весу:
     // Кливленд 4, SMK 4, остальные по одной; у четырёх держатель не назван,
     // поэтому «other collections», а не «museums».
+    //
+    // Чёрный фон и пустой верх — замер 14.10.2026 по карточкам (полоса часов
+    // 10–32 % высоты против низа 60–95 %, research/2026-10-14-seo-hour.md): у всех
+    // 17 натюрмортов верх тёмный (яркость 5–28), у 16 предметы внизу (кроме
+    // омара с рогом, vl-0421), пуст верх у 13. Не пуст у vl-0421, vl-0419,
+    // большой ванитас vl-0439 и «лесной подстилки» Марсеуса vl-0385 — отсюда
+    // «most», а не «all».
     title: 'Dutch Golden Age phone wallpapers: free, no account',
     heading: 'Dutch Golden Age collection',
     description:
       'Dutch Golden Age painting as phone wallpaper: still life by Willem Kalf, landscapes and a church interior. Free, no account.',
-    note: ({ count }) =>
+    // Ссылка в конце — обратная той, что на странице страны (browse.js, `about`).
+    note: ({ count }) => [
       `${count} paintings from the Dutch Golden Age, the seventeenth century of painting in the ` +
-      'Dutch Republic. Mostly Dutch still life, by Willem Kalf, Otto Marseus ' +
-      'van Schrieck and others, from the Cleveland Museum of Art, the National Gallery of Denmark ' +
-      'and other collections.',
+        'Dutch Republic. Most are still lifes by Willem Kalf, Otto Marseus van Schrieck and others, with ' +
+        'the objects low on a black background. The top of the screen, where the clock goes, is usually ' +
+        'left empty. They come from the Cleveland Museum ' +
+        "of Art, the National Gallery of Denmark and other collections. Jan van Huysum's flowers, painted " +
+        'after 1700, are with the rest of ',
+      { href: '/collection/dutch-painting', text: 'Dutch painting' },
+      '.'
+    ],
     terms,
     refs: [
       'vl-0086',
