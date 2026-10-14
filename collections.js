@@ -243,7 +243,7 @@ export const COLLECTIONS = [
     note: ({ count }) =>
       `${count} paintings of the Hudson River School, the landscape painters of American ` +
       'Romanticism. Painted between 1828 and 1871, by Thomas ' +
-      'Cole, Albert Bierstadt, John Frederick Kensett and others. Most are from the Cleveland ' +
+      'Cole, Albert Bierstadt and others. Most are from the Cleveland ' +
       'Museum of Art.',
     terms,
     refs: [
