@@ -538,7 +538,7 @@ const versionButton = `
 // `--ratio` проставлен здесь, а не по загрузке файла: размеры работы известны
 // из каталога, и проём принимает её пропорции ещё до того, как что-то
 // загрузилось. Иначе указатель прыгал бы по мере загрузки картинок.
-function card(item, { eager = false, priority = false, switchable = false } = {}) {
+function card(item, { eager = false, priority = false } = {}) {
   // Показывается и отдаётся один файл. Раньше это были разные кадры — 9:16
   // в проёме, 9:19.5 по кнопке, — и подпись приходилось оговаривать: размер
   // под «Download» описывал не ту картинку, что видна. Теперь оговаривать
@@ -546,14 +546,12 @@ function card(item, { eager = false, priority = false, switchable = false } = {}
   // сегодняшнее, а вопросы разные — «чем показана» и «что отдаёт».
   const shownFile = tile(item);
   const file = offered(item);
-  // О ВТОРОМ ФАЙЛЕ КАРТОЧКА ПО УМОЛЧАНИЮ НЕ ГОВОРИТ НИЧЕГО: сетка темы
-  // и соседи под работой не переключаются. Галочка «Dimmed» живёт только на
-  // странице работы, где работа одна и вопрос о ней имеет один ответ; сетка
-  // же показывает каждую работу сканом, как и вся витрина. Исключение — указатель
-  // (`switchable`, 14.10.2026): там переключатель у каждой карточки свой,
-  // ссылка «Try dimmed», и вопрос снова задан об одной работе.
-  // Атрибуты, по которым никто не переключит, были бы обещанием переключения,
-  // которого в сетке не бывает.
+  // Галочка «Dimmed» живёт только на странице работы, где работа одна
+  // и вопрос о ней имеет один ответ. В сетке — указатель, тема, соседи под
+  // работой — переключатель у каждой карточки свой, значок в этикетке,
+  // и вопрос снова задан об одной работе. Сначала он стоял на одном указателе
+  // (14.10.2026); в тот же день встал и в остальные сетки: гость, пришедший
+  // на тему, приглушения иначе не видел вовсе.
   const ratio = `${shownFile.width} / ${shownFile.height}`;
   const loading = ` loading="${eager ? 'eager' : 'lazy'}"${priority ? ' fetchpriority="high"' : ''}`;
   // Сетка — `repeat(auto-fill, minmax(280rem, 1fr))`: карточка держится между
@@ -580,7 +578,7 @@ function card(item, { eager = false, priority = false, switchable = false } = {}
   // Второй файл спрашивается у `otherOfFile`, как на странице работы: кадр
   // к кадру. Нет у приглушённой версии этого кадра — нет и значка, а не
   // целая плита в проёме 9:16.
-  const chosen = switchable && DIM_CHOSEN.has(item.treatment);
+  const chosen = DIM_CHOSEN.has(item.treatment);
   const otherShown = chosen ? otherOfFile(item, shownFile) : null;
   const otherFile = chosen ? otherOfFile(item, file) : null;
   const other = Boolean(otherShown && otherFile);
@@ -657,9 +655,9 @@ const inviteCard = () => `<figure class="item item--invite">
 // `eager` — сколько первых карточек грузить сразу. По умолчанию ни одной:
 // сетка «ещё из коллекции» на странице работы стоит ниже сгиба, и торопить
 // её значит отнимать канал у самой работы.
-const grid = (items, eager = 0, lead = '', switchable = false) =>
+const grid = (items, eager = 0, lead = '') =>
   `<div class="collection">\n        ${lead ? `${lead}\n        ` : ''}${items
-    .map((item, index) => card(item, { eager: index < eager, priority: eager > 0 && index === 0, switchable }))
+    .map((item, index) => card(item, { eager: index < eager, priority: eager > 0 && index === 0 }))
     .join('\n        ')}\n      </div>`;
 
 // Указатель — вся коллекция одной страницей. Постраничность была и снята:
@@ -782,7 +780,7 @@ export function collectionPage({ items, rows = [], origin }) {
     // сетка — сама себе содержание, а прятать заголовок классом ради
     // строчки в аудите значит держать текст, который никто не прочтёт.
     body: `
-      ${grid(items, EAGER_CARDS, inviteCard(), true)}
+      ${grid(items, EAGER_CARDS, inviteCard())}
       ${tailRow(rows)}
     `
   });
@@ -829,9 +827,11 @@ export function topicPage({ topic, origin }) {
   //
   // С 14.10.2026 вопрос о смешанной сетке снят иначе: витрина привозит каждую
   // работу сканом (`catalogueItems` в gallery.js), и тема тоже. Переключить
-  // работу можно там, где она одна, — на странице работы.
+  // работу можно там, где она одна: на странице работы галочкой, а здесь
+  // значком в этикетке карточки, как на указателе.
   return layout({
     current: 'collection',
+    script: '/try-dimmed.js',
     title: topic.title,
     description: topic.description,
     canonical: `${origin}${topic.path}`,
@@ -1402,7 +1402,8 @@ export function workPage({ item, shelves = [], total, pages = [], artist = null,
     // то есть был бы найден только после того, как тот придёт целиком. Здесь
     // он назван шапкой и едет рядом с ним, а не за ним. С ним `versions.js`,
     // который он сам импортирует: иначе тот же оборот повторился бы на нём.
-    preload: ['/dimmed.js', '/versions.js'],
+    // `try-dimmed.js` — значки на карточках соседей под работой.
+    preload: ['/dimmed.js', '/versions.js', '/try-dimmed.js'],
     body: `
       <div class="plate">
         <figure class="record record--plate">

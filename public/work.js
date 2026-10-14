@@ -9,6 +9,8 @@ import { openLightbox } from './lightbox.js';
 // своё сам, доставать из него нечего. Импорты при этом выполняются до тела
 // модуля — поэтому всё, что читается ниже из `src`, уже переключено.
 import './dimmed.js';
+// Значки «Try dimmed» на карточках соседей под работой — тем же путём.
+import './try-dimmed.js';
 
 const frame = document.querySelector('#work-frame');
 const picture = document.querySelector('#work-picture');
