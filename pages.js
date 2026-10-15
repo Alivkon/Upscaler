@@ -232,6 +232,7 @@ function layout({
       <a href="/license">License</a>
     </footer>
     ${script ? `<script type="module" src="${script}"></script>` : ''}
+    <script type="module" src="/hand.js"></script>
     ${cfBeacon}
   </body>
 </html>

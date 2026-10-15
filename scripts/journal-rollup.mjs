@@ -69,6 +69,11 @@ console.log(
   `\nЗаходов ${visits.length}: людей ${people.length}, машин ${bots.length}. ` +
     `Страниц у людей ${humanPages}, на заход ${(humanPages / (people.length || 1)).toFixed(1)}`
 );
+// Рука (`public/hand.js`) — подтверждение, а не признак: без неё заход
+// в машины не уходит. Строка появилась 15.10.2026, дни до неё дают ноль.
+const HAND = record => record.path === '/api/note/hand' && record.status === 204;
+const handed = new Set(human.filter(HAND).map(record => record.key));
+console.log(`  из них двигали мышью или пальцем: ${handed.size}`);
 
 table(rank(tally(bots.map(visit => visit.why))), 'Машины: кто (заходов)');
 const fakes = bots.filter(visit => visit.fake);
@@ -258,7 +263,7 @@ if (untouched.length) console.log(`  не забирал никто: ${untouched
 // Что случилось в браузере (`public/note.js`): событие и первая подробность —
 // кто считал, каким способом принесли, на чём упало. Размеры и секунды
 // здесь не складываются: их смотрят по заходу, через `--sample`.
-const notes = human.filter(record => record.path.startsWith('/api/note/') && record.status === 204);
+const notes = human.filter(record => record.path.startsWith('/api/note/') && record.status === 204 && !HAND(record));
 // Обе таблицы — целиком, без десятки `rank`: пар здесь около тридцати,
 // и срезались бы редкие — `failed …`, `wasm poor`, ради которых их и читают.
 table(rank(tally(notes.map(record => record.path.split('/').slice(3, 5).join(' '))), Infinity), 'Приёмка (/api/note)');

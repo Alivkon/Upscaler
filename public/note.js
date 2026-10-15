@@ -72,7 +72,9 @@ export const NOTED = new RegExp(
       `made/${MAKER}/(${EFFECT}(,${EFFECT}){0,3}|none)/${SIZE}/\\d{1,5}s`,
       `download/${MAKER}`,
       `rated/${MAKER}/(poor|fair|good)`,
-      `(rightclick|left)/${STAGE}`
+      `(rightclick|left)/${STAGE}`,
+      // Не приёмка, а любая страница: первое движение руки (`hand.js`).
+      'hand'
     ].join('|') +
     ')$'
 );

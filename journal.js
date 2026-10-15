@@ -114,6 +114,9 @@ const CRAWLERS = [
     'preview',
     null
   ],
+  // Браузер без окна: заголовок у него человеческий, кроме одного слова.
+  // 15.10.2026 два таких захода с `HeadlessChrome/150` шли в людях.
+  [/headlesschrome|phantomjs|lighthouse|puppeteer|playwright|selenium/i, 'headless', null],
   [/bot|crawler|spider|scraper|curl|wget|python-requests|node-fetch|httpx|axios|go-http-client/i, 'bot', null]
 ];
 

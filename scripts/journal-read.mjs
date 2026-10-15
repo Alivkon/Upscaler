@@ -106,13 +106,14 @@ export async function imageIndex() {
 // Заход — это все строки одного `visit` за день. Правило грубое и заведомо
 // неточное; его и проверяют `--sample` и ручные ярлыки.
 //
-// Семь признаков, и решает первый сработавший: заход, пойманный двумя,
+// Восемь признаков, и решает первый сработавший: заход, пойманный двумя,
 // получает ярлык того, что стоит выше. Назвался краулером: краулер, и спорить
 // не о чем. Не прислал заголовка браузера вовсе: тоже. Не взял ни одной
 // удачной страницы и ни одного файла: стучался, а не смотрел. Забрал страницу
 // и не забрал к ней ни файла: не браузер, потому что браузер просит
 // `styles.css` и карточки в ту же секунду, а качалка берёт разметку и уходит.
-// Три последних, «без Sec-Fetch», «одни файлы» и «без картинок», ниже.
+// Четыре последних, «без Sec-Fetch», «старше заголовка», «одни файлы» и
+// «без картинок», ниже.
 //
 // Назвавшимся считается и строка, где `bot` прочерк, но заголовок узнаёт
 // `claimedBy`: имя попало в список позже, чем строка в журнал. Так
@@ -158,6 +159,26 @@ const withoutFetchMetadata = ua => {
   const [major, minor] = [Number(version[1]), Number(version[2])];
   return major === 15 || (major === 16 && minor < 4);
 };
+
+// «Старше заголовка»: то же правило с другой стороны. Браузер, который назвался
+// версией без `Sec-Fetch-Dest` (Safari и iOS до 16.4, Chrome до 76, Firefox
+// до 90), а заголовок прислал, назвался чужим именем. Это современный Chrome
+// в костюме старого телефона. За 14.09–15.10 правило поймало 8 заходов из 350
+// «людей», и все восемь машины: пять раз `iPhone13,2; U; CPU iPhone OS 14_0`
+// из PL (31 карточка за 3 секунды, каждый раз одна и та же), iOS 13 с zh-CN
+// за 2 секунды и пара «iOS 10 + Android 7 с Chrome 59» в одну секунду 15.10.
+const claimedOlder = ua => {
+  let found;
+  if ((found = ua.match(/(?:iPhone|iPad|iPod).*? OS (\d+)_(\d+)/)))
+    return +found[1] < 16 || (+found[1] === 16 && +found[2] < 4);
+  if ((found = ua.match(/(?:Chrome|CriOS)\/(\d+)/))) return +found[1] < 76;
+  if ((found = ua.match(/Firefox\/(\d+)/))) return +found[1] < 90;
+  if ((found = ua.match(/Version\/(\d+)\.(\d+).*Safari/))) return +found[1] < 16 || (+found[1] === 16 && +found[2] < 4);
+  return false;
+};
+
+const olderThanItsHeaders = lines =>
+  claimedOlder(lines[0].ua) && lines.some(line => line.dest !== 'none' && line.dest !== '-');
 
 // «Качалка файлов»: брал картинки адресом, как документ, и ни разу не попросил
 // того, из чего браузер строит страницу, — ни карточки, ни скрипта, ни стиля.
@@ -231,6 +252,7 @@ function classify(lines) {
   if (pages > 0 && props === 0) return { bot: true, why: 'молча' };
   if (lines.every(line => line.dest === 'none') && !withoutFetchMetadata(lines[0].ua))
     return { bot: true, why: 'без Sec-Fetch' };
+  if (olderThanItsHeaders(lines)) return { bot: true, why: 'старше заголовка' };
   if (fetchedOnlyFiles(lines)) return { bot: true, why: 'одни файлы' };
   if (sawNoPictures(lines)) return { bot: true, why: 'без картинок' };
   return { bot: false, why: 'человек' };
