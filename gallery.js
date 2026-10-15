@@ -342,7 +342,7 @@ async function catalogueItems() {
   const made = new Map((await readManifest()).map(entry => [entry.ref, entry]));
   const items = [];
   for (const work of await loadWorks()) {
-    let version, before, dimmed, treatment, upscaled;
+    let version, before, dimmed, upscaled;
     const plate = made.get(work.ref);
     if (await madeFile(plate)) {
       const beforeEntry = (await madeFile(plate.before)) && plate.before;
@@ -355,10 +355,6 @@ async function catalogueItems() {
       // показывать один и тот же файл, иначе Google считал бы их двумя
       // картинками.
       //
-      // Правило работы (`treatment`) при этом не теряется: им куратор сказал,
-      // идёт ли картине приглушение, и указатель по нему решает, предлагать ли
-      // под карточкой «Try dimmed».
-      //
       // Скан, записанный в манифесте, но не найденный на диске, страница
       // заменяет приглушённым: лучше работа в чужом виде, чем дыра на
       // витрине. Но молча это вернуло бы ровно то, от чего уходили, поэтому
@@ -368,7 +364,6 @@ async function catalogueItems() {
       if (plate.scan && !scan) warnOnce(work.ref, 'скана нет на диске, страница отдаёт приглушённый файл');
       version = scan || plateVersion;
       dimmed = scan ? plateVersion : await versionOf(plate.dimmed);
-      treatment = plate.treatment || null;
       upscaled = upscaledOf(work.ref, plate.upscaled);
     } else if (typeof work.file === 'string') {
       const filePath = resolveEntryPath(work.file);
@@ -389,7 +384,6 @@ async function catalogueItems() {
       };
       before = null;
       dimmed = null;
-      treatment = null;
       upscaled = null;
     } else {
       continue;
@@ -434,9 +428,6 @@ async function catalogueItems() {
       // `null` значит «переключать не на что», и тогда галочки на странице
       // нет вовсе.
       dimmed,
-      // Правило работы из манифеста: `dim`, `ceil`, `none`; `null` у работ,
-      // которым его не выбирают (свои, присланные).
-      treatment,
       // Увеличена ли работа моделью до генератора: `{ factor, from, … }`
       // из манифеста или `null`. Страница говорит об этом под источником —
       // у работ под CC BY изменение обязано быть названо, а у остальных файл
@@ -497,7 +488,6 @@ async function uploadedItems() {
       // и галочке «Dimmed» на такой странице переключать нечего.
       crops: {},
       dimmed: null,
-      treatment: null,
       upscaled: null,
       width,
       height,

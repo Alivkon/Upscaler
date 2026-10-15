@@ -367,9 +367,6 @@ const otherOf = item => item.dimmed || null;
 // говорит за себя (`public/versions.js`).
 const SHOWN = 'scan';
 
-// Правила, которыми куратор сказал «этой картине приглушение идёт».
-const DIM_CHOSEN = new Set(['dim', 'ceil']);
-
 // Тот же кадр у второй версии. Спрашивают всегда «а что вместо вот этого
 // файла», потому что файлов у страницы несколько и у каждого своя роль — кадр
 // в проёме, целая плита, плитки ряда, — и отображение это живёт здесь одно
@@ -571,17 +568,18 @@ function card(item, { eager = false, priority = false } = {}) {
   const sized = shownWith(shownFile.copies, `(max-width: 520px) 40vw, ${scaled(320)}`);
   const creator = cardCreator(item);
   // Вторая версия карточки: те же два места, что у страницы работы, — картинка
-  // и то, что отдаёт Download. Предлагается она только работам, которым
-  // приглушение выбрал куратор (`dim`, `ceil`): у правила `none` оно есть
-  // на странице работы, но с витрины его не советуют. Переключатель —
-  // значок в этикетке (`versionButton`).
+  // и то, что отдаёт Download. Переключатель — значок в этикетке
+  // (`versionButton`), и стоит он у каждой работы, у которой есть второй
+  // файл. До 15.10.2026 его ставили только правилам `dim` и `ceil`, а работам
+  // с `none` приглушение с витрины не предлагали; Charlie снял это различие:
+  // гостю нужен тёмный экран, а не мнение куратора о картине, — так же, как
+  // галочка «Dimmed» на странице работы есть у всех трёх правил.
   //
   // Второй файл спрашивается у `otherOfFile`, как на странице работы: кадр
   // к кадру. Нет у приглушённой версии этого кадра — нет и значка, а не
   // целая плита в проёме 9:16.
-  const chosen = DIM_CHOSEN.has(item.treatment);
-  const otherShown = chosen ? otherOfFile(item, shownFile) : null;
-  const otherFile = chosen ? otherOfFile(item, file) : null;
+  const otherShown = otherOfFile(item, shownFile);
+  const otherFile = otherOfFile(item, file);
   const other = Boolean(otherShown && otherFile);
   // Номер встал на место слова «JPEG». Слово это не несло ничего: файлы
   // в коллекции все до одного JPEG, и строка, одинаковая на всех карточках,
