@@ -231,6 +231,22 @@ const ratings = visitsOf(everything)
     return { day: line.day, maker, word };
   });
 const ratedNow = ratings.filter(rating => inWindow.has(rating.day));
+// Кто считал — значит, что оценили. `browser` — модели не было вовсе, файл
+// хватал по размеру, и оценка говорит об отделке; остальные три — об
+// увеличении (`showResult` в intake.js). Делить их нужно, чтобы «Good» за
+// приглушение не засчитывался модели.
+const MADE = {
+  server: 'увеличено на сервере',
+  webgpu: 'увеличено в браузере',
+  wasm: 'увеличено в браузере',
+  browser: 'без увеличения'
+};
+const WORDS = ['good', 'fair', 'poor'];
+const grades = list => WORDS.map(word => `${word} ${list.filter(rating => rating.word === word).length}`).join(' · ');
+const byMade = [...new Set(Object.values(MADE))].map(made => [
+  made,
+  ratings.filter(rating => MADE[rating.maker] === made)
+]);
 
 let subscribed = null;
 try {
@@ -385,7 +401,7 @@ const page = `<!doctype html>
 </div>
 
 <div class="row">
-  ${number(ratedNow.length, 'оценок готового', `всего ${ratings.length}: ${['good', 'fair', 'poor'].map(word => `${word} ${ratings.filter(rating => rating.word === word).length}`).join(' · ')}`)}
+  ${number(ratedNow.length, 'оценок готового', `всего ${ratings.length}: ${grades(ratings)}`)}
   ${subscribed ? number(subscribedNow.length, 'подписались', `всего ${subscribed.length}`) : number('?', 'подписались', 'счёт не получен: yarn stats')}
 </div>
 
@@ -443,7 +459,10 @@ ${table(
 )}
 ${table(
   'Оценки готового, за всё время',
-  ratings.map(rating => [`${rating.day} · ${rating.maker === 'server' ? 'сервер' : 'браузер'}`, rating.word]),
+  [
+    ...byMade.map(([made, list]) => [`${made}: ${list.length}`, grades(list)]),
+    ...ratings.map(rating => [`${rating.day} · ${MADE[rating.maker] ?? rating.maker}`, rating.word])
+  ],
   'Кнопки Poor · Fair · Good под готовыми обоями. Свои заходы не в счёт.'
 )}
 ${
