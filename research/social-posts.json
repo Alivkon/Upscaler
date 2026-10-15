@@ -437,6 +437,36 @@
         "albert bierstadt"
       ],
       "more": "https://tessarum.com/artists/albert-bierstadt"
+    },
+    {
+      "refs": [
+        "vl-0445",
+        "vl-0428",
+        "vl-0454"
+      ],
+      "slugs": [
+        "kalf-nautilus-still-life-3-iphone-wallpaper",
+        "kalf-still-life-with-3-iphone-wallpaper",
+        "kalf-still-life-with-8-iphone-wallpaper"
+      ],
+      "postedAt": "2026-10-15",
+      "crop": "group",
+      "edit": "scan",
+      "tags": [
+        "painting",
+        "art",
+        "art history",
+        "phone wallpaper",
+        "tessarum",
+        "dark academia",
+        "willem kalf",
+        "dutch golden age",
+        "dutch painting",
+        "baroque",
+        "still life painting",
+        "still life"
+      ],
+      "more": "https://tessarum.com/artists/willem-kalf"
     }
   ],
   "pinterest": [
@@ -661,6 +691,16 @@
       "board": "Art",
       "title": "The Summer (Landscape with couple), Caspar David Friedrich, dark academia phone wallpaper",
       "file": "images/crops/the-summer-landscape-with-couple-friedrich-iphone-wallpaper-dim-phone-1772x3840.jpg",
+      "crop": "phone",
+      "edit": "dim"
+    },
+    {
+      "ref": "vl-0418",
+      "slug": "gudin-storm-shipwreck-desktop-wallpaper",
+      "postedAt": "2026-10-15",
+      "board": "Art",
+      "title": "Combat du Cap Lézard, Théodore Gudin, dark academia phone wallpaper",
+      "file": "images/crops/gudin-storm-shipwreck-desktop-wallpaper-dim-phone-1115x2416.jpg",
       "crop": "phone",
       "edit": "dim"
     }
