@@ -62,6 +62,26 @@ if (PULL) {
   }
 }
 
+// Рассылка: сколько подписались, но не кто. Адреса лежат на боевой машине
+// в своём каталоге (`mailing.js`), и сюда приезжают только время и форма:
+// `log/` обещает, что личного в нём нет, и копия адресов на машине
+// разработчика отменила бы это обещание. Отрезает адрес `awk` там же,
+// на сервере, поэтому по сети адреса тоже не идут.
+const SUBSCRIBED = path.join(DIRECTORY, 'subscribed.tsv');
+const MAIL_SOURCE = option('mail-from', 'root@145.223.96.83:/opt/apps/upscaler/mail/subscribers.tsv');
+if (PULL) {
+  const [host, file] = MAIL_SOURCE.split(':');
+  try {
+    const rows = execFileSync('ssh', [host, `awk -F'\\t' '!/^#/ && NF {print $1 "\\t" $3}' ${file}`], {
+      encoding: 'utf8'
+    });
+    fs.writeFileSync(SUBSCRIBED, rows);
+    console.log(`рассылка, без адресов → ${path.relative(ROOT, SUBSCRIBED)}`);
+  } catch (error) {
+    console.error(`рассылка не получена, на доске прошлый счёт: ${error.message}`);
+  }
+}
+
 // ── счёт ───────────────────────────────────────────────────────
 
 const { records, days } = await readDays(DIRECTORY, DAYS);
@@ -194,6 +214,40 @@ for (const visit of people) {
   if (!visit.key.startsWith(last)) continue;
   hours[new Date(visit.lines[0].time).getHours()] += 1;
 }
+
+// ── отклик: оценки и подписки ──────────────────────────────────
+// Обоих единицы в месяц, и за день почти всегда ноль. На вопрос «было ли
+// вообще» отвечает только счёт за всё время, поэтому для него журнал
+// читается целиком, а не за окно доски. Свои заходы не в счёт: оценку
+// из проверки приёмки ставил хозяин.
+const { records: everything } = await readDays(DIRECTORY, Infinity);
+const inWindow = new Set(days);
+const ratings = visitsOf(everything)
+  .filter(visit => !ownVisit(visit))
+  .flatMap(visit => visit.lines)
+  .filter(line => line.path.startsWith('/api/note/rated/') && line.status === 204)
+  .map(line => {
+    const [maker, word] = line.path.split('/').slice(4);
+    return { day: line.day, maker, word };
+  });
+const ratedNow = ratings.filter(rating => inWindow.has(rating.day));
+
+let subscribed = null;
+try {
+  subscribed = fs
+    .readFileSync(SUBSCRIBED, 'utf8')
+    .split('\n')
+    .filter(Boolean)
+    .map(row => {
+      const [time, from] = row.split('\t');
+      return { day: time.slice(0, 10), from };
+    });
+} catch {
+  // Счёта нет — доска собрана без `--pull`. Число тогда говорит об этом
+  // словами, а не нулём: ноль значил бы «никто не подписался».
+}
+const subscribedNow = subscribed?.filter(row => inWindow.has(row.day)) ?? [];
+const FORMS = { collection: 'под сеткой', page: 'страница рассылки', '-': 'форма не названа' };
 
 // ── страница ───────────────────────────────────────────────────
 
@@ -330,6 +384,11 @@ const page = `<!doctype html>
   ${number(shared.length, 'превью Apple')}
 </div>
 
+<div class="row">
+  ${number(ratedNow.length, 'оценок готового', `всего ${ratings.length}: ${['good', 'fair', 'poor'].map(word => `${word} ${ratings.filter(rating => rating.word === word).length}`).join(' · ')}`)}
+  ${subscribed ? number(subscribedNow.length, 'подписались', `всего ${subscribed.length}`) : number('?', 'подписались', 'счёт не получен: yarn stats')}
+</div>
+
 ${
   mixed(last)
     ? '<p class="warn">В этот день менялся состав столбцов журнала — сервер перезапускали. ' +
@@ -382,6 +441,20 @@ ${table(
   outcomes,
   'Все запросы, не только люди. Потолок на всех — 50 в сутки, и счётчик сервера обнуляется при перезапуске.'
 )}
+${table(
+  'Оценки готового, за всё время',
+  ratings.map(rating => [`${rating.day} · ${rating.maker === 'server' ? 'сервер' : 'браузер'}`, rating.word]),
+  'Кнопки Poor · Fair · Good под готовыми обоями. Свои заходы не в счёт.'
+)}
+${
+  subscribed
+    ? table(
+        'Подписки, за всё время',
+        rank(tally(subscribed.map(row => FORMS[row.from] ?? row.from))),
+        'Из файла рассылки на боевой машине; адреса сюда не приезжают.'
+      )
+    : ''
+}
 ${table('Чем смотрели', rank(tally(people.map(visit => deviceOf(visit.lines[0].ua)))))}
 ${table(
   'Чего не нашли (404)',
@@ -404,6 +477,9 @@ fs.writeFileSync(OUT, page);
 console.log(`доска: ${OUT}`);
 console.log(
   `  люди ${people.length}, страниц ${pages.length}, с Reddit ${fromReddit.length}, унесли ${takes.length}, отказов Restore ${refused}`
+);
+console.log(
+  `  оценок ${ratedNow.length} (всего ${ratings.length}), подписались ${subscribed ? `${subscribedNow.length} (всего ${subscribed.length})` : '— счёт не получен'}`
 );
 
 if (flag('open')) {

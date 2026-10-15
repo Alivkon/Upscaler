@@ -41,7 +41,8 @@ function recordOf(parts) {
 export async function readDays(DIRECTORY, DAYS, DAY = null) {
   let names;
   try {
-    names = (await fs.readdir(DIRECTORY)).filter(name => name.endsWith('.tsv')).sort();
+    // Только дни: рядом с ними лежат и другие таблицы (`subscribed.tsv`).
+    names = (await fs.readdir(DIRECTORY)).filter(name => /^\d{4}-\d{2}-\d{2}\.tsv$/.test(name)).sort();
   } catch {
     console.error(`журнала нет: ${DIRECTORY}`);
     process.exit(1);
