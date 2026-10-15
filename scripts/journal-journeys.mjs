@@ -99,6 +99,12 @@ function steps(visit, byUrl, total) {
       flush();
       const what = known ? `${title('/w/' + known.slug)} (${known.frame})` : line.path;
       out.push(`${clock(line.time)}  УНЁС ${what}`);
+    } else if (line.kind === 'image' && (line.dest === 'document' || line.dest === 'empty')) {
+      // Хотел унести, но не получил целиком: 206 (просмотрщик iOS берёт
+      // кусками) или ошибка. В «унёс» не идёт, но и пропадать не должно.
+      flush();
+      const what = known ? `${title('/w/' + known.slug)} (${known.frame})` : line.path;
+      out.push(`${clock(line.time)}  пытался унести ${what}: ${line.status}`);
     } else if (line.kind === 'image' && known && !known.full) {
       if (!cards) cards = { at: line.time, deepest: -1, count: 0 };
       cards.deepest = Math.max(cards.deepest, known.position);

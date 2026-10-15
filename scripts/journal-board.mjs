@@ -218,12 +218,13 @@ for (const visit of people) {
 // ── отклик: оценки и подписки ──────────────────────────────────
 // Обоих единицы в месяц, и за день почти всегда ноль. На вопрос «было ли
 // вообще» отвечает только счёт за всё время, поэтому для него журнал
-// читается целиком, а не за окно доски. Свои заходы не в счёт: оценку
-// из проверки приёмки ставил хозяин.
+// читается целиком, а не за окно доски. В счёт только люди, как и везде
+// на доске: свои заходы нет (оценку из проверки приёмки ставил хозяин),
+// машины тоже — запись `rated` может послать и скрипт.
 const { records: everything } = await readDays(DIRECTORY, Infinity);
 const inWindow = new Set(days);
 const ratings = visitsOf(everything)
-  .filter(visit => !ownVisit(visit))
+  .filter(visit => !visit.bot && !ownVisit(visit))
   .flatMap(visit => visit.lines)
   .filter(line => line.path.startsWith('/api/note/rated/') && line.status === 204)
   .map(line => {
@@ -248,8 +249,12 @@ const byMade = [...new Set(Object.values(MADE))].map(made => [
   ratings.filter(rating => MADE[rating.maker] === made)
 ]);
 
+// Дата счёта — время файла: если `--pull` не прошёл, на доске прошлый
+// счёт, и плитка должна сказать, от какого он числа.
 let subscribed = null;
+let subscribedAt = '';
 try {
+  subscribedAt = fs.statSync(SUBSCRIBED).mtime.toISOString().slice(0, 10);
   subscribed = fs
     .readFileSync(SUBSCRIBED, 'utf8')
     .split('\n')
@@ -402,7 +407,7 @@ const page = `<!doctype html>
 
 <div class="row">
   ${number(ratedNow.length, 'оценок готового', `всего ${ratings.length}: ${grades(ratings)}`)}
-  ${subscribed ? number(subscribedNow.length, 'подписались', `всего ${subscribed.length}`) : number('?', 'подписались', 'счёт не получен: yarn stats')}
+  ${subscribed ? number(subscribedNow.length, 'подписались', `всего ${subscribed.length}, счёт от ${subscribedAt}`) : number('?', 'подписались', 'счёт не получен: yarn stats')}
 </div>
 
 ${
