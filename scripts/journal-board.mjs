@@ -16,7 +16,7 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { deviceOf, foreign, imageIndex, ownVisit, readDays, visitsOf } from './journal-read.mjs';
+import { deviceOf, foreign, imageIndex, ownVisit, readDays, taken, visitsOf } from './journal-read.mjs';
 import { TYPES, searchReport } from './search-console.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -86,9 +86,7 @@ const humanKeys = new Set(people.map(visit => visit.key));
 const human = records.filter(record => humanKeys.has(record.key));
 
 const pages = human.filter(record => record.kind === 'page' && record.status < 400);
-const takes = human.filter(
-  record => record.kind === 'image' && record.dest !== 'image' && (record.status === 200 || record.status === 304)
-);
+const takes = human.filter(taken);
 
 // Ссылка, выложенная наружу, узнаётся по реферу. Но узнаётся не всегда:
 // из приложения Reddit переход приходит без реферера вовсе, и такой заход

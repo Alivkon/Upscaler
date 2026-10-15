@@ -9,7 +9,7 @@
 // его точность и полнота неизвестны, а от него зависит каждое число выше.
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { deviceOf, foreign, imageIndex, ownVisit, readDays, visitsOf } from './journal-read.mjs';
+import { deviceOf, foreign, imageIndex, ownVisit, readDays, taken, visitsOf } from './journal-read.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, '..');
@@ -168,9 +168,7 @@ if (indexVisits.length) {
 
 // ── что уносили ────────────────────────────────────────────────
 
-const takes = human.filter(
-  record => record.kind === 'image' && record.dest !== 'image' && (record.status === 200 || record.status === 304)
-);
+const takes = human.filter(taken);
 const shows = human.filter(
   record => record.kind === 'image' && record.dest === 'image' && byUrl.get(record.path)?.full
 );

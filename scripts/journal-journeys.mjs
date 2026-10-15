@@ -26,7 +26,7 @@
 //     последнее, что человек попросил, а не то, на чём он закончил смотреть.
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { deviceOf, foreign, imageIndex, ownVisit, readDays, visitsOf } from './journal-read.mjs';
+import { deviceOf, foreign, imageIndex, ownVisit, readDays, taken, visitsOf } from './journal-read.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, '..');
@@ -57,12 +57,6 @@ const ALL = args.includes('--all');
 // по заголовку, и это единственное здешнее правило, которое когда-нибудь
 // придётся пересмотреть.
 const spoofed = visit => /Nexus 5X Build\/MMB29P/.test(visit.lines[0].ua);
-
-// Свой заход — по куке хозяина, как в сводке (`ownVisit`). Прежнее правило,
-// «настольный из DE», 15.10.2026 спрятало как своего гостя из Германии.
-// Строки до 21.09.2026 столбца `source` не несут, и свои заходы за те дни
-// показываются как чужие.
-const mine = ownVisit;
 
 // ── печать ─────────────────────────────────────────────────────
 
@@ -100,6 +94,11 @@ function steps(visit, byUrl, total) {
     } else if (line.kind === 'miss') {
       flush();
       out.push(`${clock(line.time)}  ${line.status} на ${line.path}`);
+    } else if (taken(line)) {
+      // Раньше карточек: карточку, открытую в новой вкладке, тоже унесли.
+      flush();
+      const what = known ? `${title('/w/' + known.slug)} (${known.frame})` : line.path;
+      out.push(`${clock(line.time)}  УНЁС ${what}`);
     } else if (line.kind === 'image' && known && !known.full) {
       if (!cards) cards = { at: line.time, deepest: -1, count: 0 };
       cards.deepest = Math.max(cards.deepest, known.position);
@@ -108,10 +107,6 @@ function steps(visit, byUrl, total) {
     } else if (line.kind === 'image' && known?.full && line.dest === 'image') {
       flush();
       out.push(`${clock(line.time)}  раскрыл во весь экран ${title('/w/' + known.slug)}`);
-    } else if (line.kind === 'image' && line.dest !== 'image' && line.status < 400) {
-      flush();
-      const what = known ? `${title('/w/' + known.slug)} (${known.frame})` : line.path;
-      out.push(`${clock(line.time)}  УНЁС ${what}`);
     }
   }
   flush();
@@ -136,7 +131,7 @@ function head(visit, number) {
 
 // ── что показываем ─────────────────────────────────────────────
 
-const { records } = await readDays(DIRECTORY, DAYS);
+const { records } = await readDays(DIRECTORY, DAYS, DAY);
 const { byUrl, total } = await imageIndex();
 
 const dropped = { 'подделка Nexus 5X': 0, свои: 0, 'нечего рассказать': 0 };
@@ -144,19 +139,20 @@ const people = [];
 for (const visit of visitsOf(records)) {
   if (visit.bot) continue;
   if (spoofed(visit)) dropped['подделка Nexus 5X']++;
-  else if (!ALL && mine(visit)) dropped['свои']++;
+  // Своё — по куке хозяина, как в сводке. Прежнее правило, «настольный из DE»,
+  // 15.10.2026 спрятало как своего гостя из Германии. Строки до 21.09.2026
+  // столбца `source` не несут, и свои заходы за те дни показываются как чужие.
+  else if (!ALL && ownVisit(visit)) dropped['свои']++;
   else people.push(visit);
 }
 
-const shown = (DAY ? people.filter(visit => visit.lines[0].day === DAY) : people).sort((a, b) =>
-  a.lines[0].time.localeCompare(b.lines[0].time)
-);
+people.sort((a, b) => a.lines[0].time.localeCompare(b.lines[0].time));
 
 // Заход, у которого не набралось ни шага, — это строки, которые печатать
 // нечем: один `styles.css`, один отброшенный запрос. Считаем и не показываем:
 // рассказ без событий читателя только сбивает.
 let told = 0;
-for (const visit of shown) {
+for (const visit of people) {
   const story = steps(visit, byUrl, total);
   if (!story.length) {
     dropped['нечего рассказать']++;
@@ -167,9 +163,9 @@ for (const visit of shown) {
   console.log('');
 }
 
-console.log(`Заходов людей ${DAY ? `${shown.length} за ${DAY}` : people.length}, рассказано ${told}`);
+console.log(`Заходов людей ${people.length}${DAY ? ` за ${DAY}` : ''}, рассказано ${told}`);
 console.log(
-  `Отброшено за всё окно: ${Object.entries(dropped)
+  `Отброшено${DAY ? ` за ${DAY}` : ' за всё окно'}: ${Object.entries(dropped)
     .map(([name, count]) => `${name} ${count}`)
     .join(', ')}`
 );

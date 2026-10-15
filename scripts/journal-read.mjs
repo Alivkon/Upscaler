@@ -36,7 +36,9 @@ function recordOf(parts) {
   return record;
 }
 
-export async function readDays(DIRECTORY, DAYS) {
+// `DAY` — один день по имени вместо последних `DAYS`: рассказ о заходах
+// спрашивают и о дне, давно выпавшем из недели.
+export async function readDays(DIRECTORY, DAYS, DAY = null) {
   let names;
   try {
     names = (await fs.readdir(DIRECTORY)).filter(name => name.endsWith('.tsv')).sort();
@@ -44,7 +46,7 @@ export async function readDays(DIRECTORY, DAYS) {
     console.error(`журнала нет: ${DIRECTORY}`);
     process.exit(1);
   }
-  const wanted = names.slice(-DAYS);
+  const wanted = DAY ? names.filter(name => name.startsWith(DAY)) : names.slice(-DAYS);
   const records = [];
   for (const name of wanted) {
     const text = await fs.readFile(path.join(DIRECTORY, name), 'utf8');
@@ -152,29 +154,51 @@ export async function imageIndex() {
 // старше, в 2026-м уже не телефон, а подпись: за тот же месяц это семь
 // заходов «Safari 8» на OS X 10.10, и каждый только за `/robots.txt`.
 const withoutFetchMetadata = ua => {
-  const version =
-    ua.match(/(?:iPhone|iPad|iPod).*? OS (\d+)_(\d+)/) ||
-    (!/Chrome|Chromium|CriOS|Edg|Firefox/.test(ua) && ua.match(/Version\/(\d+)\.(\d+).*Safari/));
-  if (!version) return false;
-  const [major, minor] = [Number(version[1]), Number(version[2])];
-  return major === 15 || (major === 16 && minor < 4);
+  const claimed = claimedVersion(ua);
+  return claimed?.engine === 'safari' && (claimed.major === 15 || (claimed.major === 16 && claimed.minor < 4));
 };
 
-// «Старше заголовка»: то же правило с другой стороны. Браузер, который назвался
-// версией без `Sec-Fetch-Dest` (Safari и iOS до 16.4, Chrome до 76, Firefox
-// до 90), а заголовок прислал, назвался чужим именем. Это современный Chrome
-// в костюме старого телефона. За 14.09–15.10 правило поймало 8 заходов из 350
-// «людей», и все восемь машины: пять раз `iPhone13,2; U; CPU iPhone OS 14_0`
-// из PL (31 карточка за 3 секунды, каждый раз одна и та же), iOS 13 с zh-CN
-// за 2 секунды и пара «iOS 10 + Android 7 с Chrome 59» в одну секунду 15.10.
-const claimedOlder = ua => {
+// Какую версию движка браузер называет. Один разбор на оба правила о
+// `Sec-Fetch-Dest`: «без Sec-Fetch» и «старше заголовка». Всё, что на iPhone,
+// — WebKit той версии, что и iOS, как бы браузер ни назывался.
+//
+// Переупакованные браузеры не судятся: у них число после `Chrome/` бывает
+// замороженным, а движок новее. Так делает UC Browser (`Chrome/78` у
+// нынешних сборок), и в нашем журнале за месяц таких не было ни одного;
+// Samsung, Yandex и Opera были, все с Chrome 115 и новее, но
+// список держит и их — цена пропуска здесь меньше цены ложного бота.
+const REPACKED =
+  /UCBrowser|UBrowser|Puffin|Opera Mini|OPR\/|YaBrowser|SamsungBrowser|MiuiBrowser|QQBrowser|MicroMessenger|Quark|baiduboxapp/;
+
+function claimedVersion(ua) {
   let found;
   if ((found = ua.match(/(?:iPhone|iPad|iPod).*? OS (\d+)_(\d+)/)))
-    return +found[1] < 16 || (+found[1] === 16 && +found[2] < 4);
-  if ((found = ua.match(/(?:Chrome|CriOS)\/(\d+)/))) return +found[1] < 76;
-  if ((found = ua.match(/Firefox\/(\d+)/))) return +found[1] < 90;
-  if ((found = ua.match(/Version\/(\d+)\.(\d+).*Safari/))) return +found[1] < 16 || (+found[1] === 16 && +found[2] < 4);
-  return false;
+    return { engine: 'safari', major: +found[1], minor: +found[2] };
+  if (REPACKED.test(ua)) return null;
+  if ((found = ua.match(/(?:Chrome|CriOS)\/(\d+)/))) return { engine: 'chrome', major: +found[1], minor: 0 };
+  if ((found = ua.match(/Firefox\/(\d+)/))) return { engine: 'firefox', major: +found[1], minor: 0 };
+  if ((found = ua.match(/Version\/(\d+)\.(\d+).*Safari/)))
+    return { engine: 'safari', major: +found[1], minor: +found[2] };
+  return null;
+}
+
+// «Старше заголовка»: то же правило с другой стороны. Браузер, который назвался
+// версией без `Sec-Fetch-Dest`, а заголовок прислал, назвался чужим именем.
+// Это современный Chrome в костюме старого телефона. За 14.09–15.10 правило
+// поймало 8 заходов из 350 «людей», и все восемь машины: пять раз
+// `iPhone13,2; U; CPU iPhone OS 14_0` из PL (31 карточка за 3 секунды, каждый
+// раз одна и та же), iOS 13 с zh-CN за 2 секунды и пара «iOS 10 + Android 7
+// с Chrome 59» в одну секунду 15.10.
+//
+// С какой версии заголовок шлют: Chrome с 80 (76–79 слали только `Site`
+// и `Mode`), Firefox с 90, Safari с 16.4.
+const DEST_SINCE = { chrome: [80, 0], firefox: [90, 0], safari: [16, 4] };
+
+const claimedOlder = ua => {
+  const claimed = claimedVersion(ua);
+  if (!claimed) return false;
+  const [major, minor] = DEST_SINCE[claimed.engine];
+  return claimed.major < major || (claimed.major === major && claimed.minor < minor);
 };
 
 const olderThanItsHeaders = lines =>
@@ -257,6 +281,16 @@ function classify(lines) {
   if (sawNoPictures(lines)) return { bot: true, why: 'без картинок' };
   return { bot: false, why: 'человек' };
 }
+
+// Унёс файл: картинку попросили не как картинку на странице, а документом
+// (открыл адрес, нажал Download) или скриптом (`empty`, кнопка через fetch).
+// Прочерк и `none` не в счёт: так приходит и показанная картинка у Safari
+// до 16.4, и строка до появления столбца, и различить их нечем. За месяц
+// у людей это 3 строки из 415.
+export const taken = line =>
+  line.kind === 'image' &&
+  (line.dest === 'document' || line.dest === 'empty') &&
+  (line.status === 200 || line.status === 304);
 
 // Свой заход — тот, где журнал узнал куку хозяина (`markOwner` в `journal.js`).
 // Это не бот и не посетитель: в счёт людей он не идёт ни на доске, ни в сводке.

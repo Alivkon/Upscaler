@@ -669,7 +669,8 @@ app.post(/^\/api\/note\//, (req, res, next) => {
   const rating = req.path.startsWith('/api/note/rated/');
   const site = req.get('sec-fetch-site');
   if ((site || rating) && site !== 'same-origin') return res.status(403).end();
-  res.status(noteAllowance(req, rating ? 'rating' : 'note') ? 204 : 429).end();
+  const bucket = rating ? 'rating' : req.path === '/api/note/hand' ? 'hand' : 'note';
+  res.status(noteAllowance(req, bucket) ? 204 : 429).end();
 });
 
 // Ненайденный адрес. Посетителю нужна страница, а скрипту приёмки — JSON:
