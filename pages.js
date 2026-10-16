@@ -527,8 +527,15 @@ export const cardCreator = item => {
 // и подписей по два, видны по одному: какие — решает CSS по `data-shown`
 // карточки (`.version` в styles.css). Подписи только для диктора: на экране
 // значок без слов.
+//
+// Значок «к приглушённой» нарисован один раз: его же показывает абзац над
+// указателем, объясняя, куда нажать, и нарисованный там заново он однажды
+// разошёлся бы с тем, что стоит на карточке.
+const dimGlyph = className =>
+  `<svg class="${className}" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.6 2.6H13.4V13.4H2.6ZM8 2.6V13.4" /><path class="version__hatch" d="M2.6 5.9L5.9 2.6M2.6 9.3L8 3.9M2.6 12.7L8 7.3M5.3 13.4L8 10.7" /></svg>`;
+
 const versionButton = `
-            <button class="version" type="button"><svg class="version__dim" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.6 2.6H13.4V13.4H2.6ZM8 2.6V13.4" /><path class="version__hatch" d="M2.6 5.9L5.9 2.6M2.6 9.3L8 3.9M2.6 12.7L8 7.3M5.3 13.4L8 10.7" /></svg><span class="visually-hidden version__dim">Try dimmed</span><svg class="version__scan" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.6 2.6H13.4V13.4H2.6ZM8 2.6V13.4" /><path class="version__hatch" d="M8 5.3L10.7 2.6M8 8.7L13.4 3.3M8 12.1L13.4 6.7M10.1 13.4L13.4 10.1" /></svg><span class="visually-hidden version__scan">Show original</span></button>`;
+            <button class="version" type="button">${dimGlyph('version__dim')}<span class="visually-hidden version__dim">Try dimmed</span><svg class="version__scan" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.6 2.6H13.4V13.4H2.6ZM8 2.6V13.4" /><path class="version__hatch" d="M8 5.3L10.7 2.6M8 8.7L13.4 3.3M8 12.1L13.4 6.7M10.1 13.4L13.4 10.1" /></svg><span class="visually-hidden version__scan">Show original</span></button>`;
 
 // Карточка указателя. Ссылок на работу две: изображение и подпись. Подпись
 // несёт текст ссылки, а изображение — единственное, на что посетитель целится.
@@ -638,6 +645,11 @@ function card(item, { eager = false, priority = false } = {}) {
 // Проём для чтения с экрана скрыт (`aria-hidden`): те же слова стоят ниже
 // в этикетке, и диктор, прочитавший их дважды, объявил бы две работы вместо
 // одной.
+//
+// Стоит последней (16.10.2026). Первой она открывала указатель пустым тёмным
+// проёмом, на ладони в половину экрана, и гостья по ссылке не поняла, что это
+// за сайт: до первой картины шли название, пустая рамка и ни одной фразы.
+// О приёмке теперь первым говорит абзац над сеткой (`intro`), ссылкой.
 const inviteCard = () => `<figure class="item item--invite">
           <div class="record">
             <a class="record__image" href="/restore" style="--ratio: 9 / 16" tabindex="-1" aria-hidden="true"
@@ -654,10 +666,10 @@ const inviteCard = () => `<figure class="item item--invite">
 // `eager` — сколько первых карточек грузить сразу. По умолчанию ни одной:
 // сетка «ещё из коллекции» на странице работы стоит ниже сгиба, и торопить
 // её значит отнимать канал у самой работы.
-const grid = (items, eager = 0, lead = '') =>
-  `<div class="collection">\n        ${lead ? `${lead}\n        ` : ''}${items
+const grid = (items, eager = 0, last = '') =>
+  `<div class="collection">\n        ${items
     .map((item, index) => card(item, { eager: index < eager, priority: eager > 0 && index === 0 }))
-    .join('\n        ')}\n      </div>`;
+    .join('\n        ')}${last ? `\n        ${last}` : ''}\n      </div>`;
 
 // Указатель — вся коллекция одной страницей. Постраничность была и снята:
 // она показывала первые десять работ, то есть, пока каталог пополняется
@@ -674,12 +686,12 @@ const grid = (items, eager = 0, lead = '') =>
 // в ранжировании, что мы решаем сами. Она же и человеку: коллекция в сто работ
 // листается плохо, а «покажи только сумрачные» — это то, чего от неё и хотят.
 //
-// Стоит под сеткой, а не над. Надстрочник над сеткой с указателя убран нарочно
-// (см. ниже), и ставить туда оглавление значило бы вернуть его другими словами:
-// первым на странице должна стоять работа, а не оглавление.
+// Стоит под сеткой целиком; над сеткой с 16.10.2026 только та его часть,
+// у которой есть своя страница с текстом (`intro`). Полный список сюда ведёт
+// ссылка «All collections», отсюда и `id`.
 const browseRows = rows =>
   rows.length
-    ? `<nav class="browse" aria-label="Browse the collection">${rows
+    ? `<nav class="browse" id="browse" aria-label="Browse the collection">${rows
         .map(
           row =>
             `<div class="browse__group browse__group--${escape(row.label.toLowerCase())}"><p class="browse__label">${escape(row.label)}</p><ul class="browse__list">${row.links
@@ -750,6 +762,42 @@ const mailingForm = `<form class="tail__mail" method="post" action="/mailing-lis
 // объявил бы его ещё одним разделом. Пустое место между ними и есть
 // разделитель: строка самая тихая на странице, и черта или точка сделали бы
 // из неё панель.
+// Абзац над сеткой указателя: что это за сайт, одной фразой, и что на нём
+// можно сделать (16.10.2026). Заголовка у указателя по-прежнему нет — абзац
+// начинается с имени сайта и сам отвечает на вопрос, который заголовок
+// только повторил бы: подруга Charlie, открыв указатель по ссылке, не поняла,
+// что это за сайт. Темы сайт и так объясняет абзацем над сеткой
+// (`topicPage`), и там это работало; указатель был единственной страницей,
+// где не говорилось ничего.
+//
+// Значок в тексте — тот же, что на карточке (`dimGlyph`): «маленький квадрат»
+// словами не найти среди ста пятидесяти этикеток, а нарисованный — сразу.
+//
+// Под абзацем — темы, традиции и предметы: страницы, у которых есть свой
+// текст, то есть те, что объясняют себя сами. Художников и стран здесь нет:
+// сорок ссылок над сеткой читались бы облаком тегов, а не оглавлением. Они
+// под сеткой, и туда ведёт последняя ссылка строки. Порядок — от настроения
+// к предмету: настроение — то, за чем на сайт обоев приходят.
+const INTRO_ROWS = ['Moods', 'Traditions', 'Subjects'];
+
+const intro = (count, rows) => {
+  const links = INTRO_ROWS.flatMap(label => rows.find(row => row.label === label)?.links ?? []);
+  return `<div class="intro">
+        <p class="intro__text">${SITE_NAME} is a collection of ${count} phone wallpapers made from museum paintings and engravings. Tap the small square ${dimGlyph('intro__glyph')} next to a title to see it dimmed, so your app icons stay readable on top. You can also <a href="/restore">make your own</a> and <a href="/mailing-list">get an email</a> when new ones are added.</p>
+        <nav aria-label="Collections">
+          <ul class="intro__links">
+            ${links
+              .map(
+                link =>
+                  `<li><a href="${escape(link.href)}">${escape(link.text)}</a>${link.count ? `<span class="intro__count">${link.count}</span>` : ''}</li>`
+              )
+              .join('\n            ')}
+            <li><a class="intro__all" href="#browse">All collections</a></li>
+          </ul>
+        </nav>
+      </div>`;
+};
+
 const tailRow = rows => `<div class="tail">${browseRows(rows)}${mailingForm}</div>`;
 
 export function collectionPage({ items, rows = [], origin }) {
@@ -778,7 +826,9 @@ export function collectionPage({ items, rows = [], origin }) {
     // и Lighthouse на это ругается (`heading-order`). Оставлено сознательно:
     // сетка — сама себе содержание, а прятать заголовок классом ради
     // строчки в аудите значит держать текст, который никто не прочтёт.
+    // Абзац над сеткой (`intro`) этого не меняет: он не заголовок.
     body: `
+      ${intro(items.length, rows)}
       ${grid(items, EAGER_CARDS, inviteCard())}
       ${tailRow(rows)}
     `

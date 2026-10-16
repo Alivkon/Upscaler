@@ -142,6 +142,29 @@ button {
   outline: 2px solid var(--fg);
   outline-offset: 3px;
 }
+/* На ладони три пункта рядом с маркой не встают: уже 420 px «Make a
+   wallpaper» и «Mailing list» ломались каждый на две строки. Снят первый,
+   «Collection»: он ведёт туда же, куда марка, и шапка остаётся одной строкой
+   до 360 px (16.10.2026). Порог взят с запасом на крупный шрифт в браузере. */
+@media (max-width: 480px) {
+  .masthead__nav a[href='/'] {
+    display: none;
+  }
+}
+/* 320 px: и двух пунктов рядом с маркой хватало, чтобы каждый ломался надвое.
+   Поля между словами уже, трекинга нет, и пункт не переносится внутри себя.
+   У меню два класса, а не один: правило ниже 860 px задаёт тот же `gap`
+   позже в файле. */
+@media (max-width: 340px) {
+  .masthead,
+  .masthead .masthead__nav {
+    gap: 12rem;
+  }
+  .masthead__nav a {
+    letter-spacing: 0;
+    white-space: nowrap;
+  }
+}
 
 /* ── коллекция ────────────────────────────────────────────── */
 .heading {
@@ -213,6 +236,62 @@ button {
    стоял надстрочник, а не притёрся к линейке шапки. */
 main > .collection {
   padding-top: clamp(24rem, 4vw, 40rem);
+}
+
+/* ── абзац указателя ──────────────────────────────────────────
+   Что это за сайт, и под ним строка тем (`intro` в pages.js). Заголовка нет,
+   поэтому абзац набран светлым, а не приглушённым, как `.topic__note`: здесь
+   он первое, что читают, и приглушённый выглядел бы примечанием к пустоте.
+   Мера строки та же, что у абзаца темы. */
+.intro {
+  padding: clamp(24rem, 4vw, 40rem) var(--gutter) 0;
+}
+.intro__text {
+  margin: 0;
+  max-width: 64ch;
+}
+/* значок с карточки, вставший в строку: ростом с прописную */
+.intro__glyph {
+  width: 1.05em;
+  height: 1.05em;
+  vertical-align: -0.15em;
+}
+/* Строка тем — тот же набор, что у списка под сеткой (`.browse__list`):
+   кегль 12 и счёт приглушённым. В строку, а не столбцами: над сеткой столбцы
+   встали бы панелью и отодвинули первую работу на экран вниз. */
+.intro__links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6rem 22rem;
+  margin: 18rem 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: 12rem;
+}
+.intro__links a {
+  text-decoration: none;
+}
+.intro__links a:hover {
+  text-decoration: underline;
+}
+.intro__count {
+  margin-left: 6rem;
+  font-size: 11rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--fg-dim);
+}
+/* Ссылка на полный список отличается от тем: она не тема, а путь к ним.
+   Приглушённая и подчёркнутая, как ссылка в тексте. */
+.intro__links .intro__all {
+  color: var(--fg-dim);
+  text-decoration: underline;
+}
+.intro + .collection {
+  padding-top: clamp(24rem, 3vw, 36rem);
+}
+/* куда ведёт «All collections»: список встаёт не вплотную к краю окна */
+#browse {
+  scroll-margin-top: 24rem;
 }
 
 /* ── тема ─────────────────────────────────────────────────────
@@ -521,6 +600,9 @@ main > .collection {
   width: 16rem;
   height: 16rem;
   flex: none;
+}
+.version svg,
+.intro__glyph {
   fill: none;
   stroke: currentColor;
   stroke-width: 1.2;

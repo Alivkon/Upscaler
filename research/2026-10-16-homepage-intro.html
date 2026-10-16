@@ -1,0 +1,85 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Абзац над указателем</title>
+<style>
+body{max-width:46em;margin:2em auto;padding:0 1em;font:16px/1.55 Georgia,serif}
+pre{background:#f4f4f4;padding:.8em;overflow-x:auto;font:13px/1.4 monospace;white-space:pre-wrap}
+code{background:#f4f4f4;padding:0 .2em;font:13px monospace}
+table{border-collapse:collapse}td,th{padding:.3em .6em;text-align:left}
+</style>
+
+<h1>Абзац над указателем: что это за сайт</h1>
+
+<p>16 октября 2026
+
+
+<h2>Цель</h2>
+
+<p>Подруга Charlie открыла указатель по ссылке и не поняла, что это за сайт. Первый экран подтверждал: имя сайта, пустой тёмный проём «Make your own wallpaper» (на ладони в половину экрана), две картины и ни одной фразы. Страницы тем (<code>/collection/nihonga</code>) с абзацем над сеткой ей были понятны. Второе замечание: оглавление внизу под сеткой, а туда не долистывают.
+
+
+<h2>Решения</h2>
+
+<ul>
+
+<li><strong>Абзац без заголовка, начинается с имени сайта.</strong> Вариант с заголовком «Phone wallpapers from museum paintings» над абзацем Charlie отверг: заголовок и первая фраза повторяли друг друга. Текст: «Tessarum is a collection of 156 phone wallpapers made from museum paintings and engravings. Tap the small square [значок] next to a title to see it dimmed, so your app icons stay readable on top. You can also make your own and get an email when new ones are added.»
+
+<li><strong>Без «free to use» и без «public domain».</strong> Из 156 работ 91 public domain, 50 CC0 и 15 CC BY 4.0 (Tokyo National Museum через ColBase), так что «public domain» неверно. «Museums have made free to use» неверно для 53 работ с Wikimedia Commons: свободны по возрасту, а не потому, что музей открыл их. Charlie не понравилось и само звучание.
+
+<li><strong>«Chosen by Charlie» снято</strong> Charlie: имени на сайте по-прежнему нет.
+
+<li><strong>Над сеткой только 11 страниц с текстом</strong> (настроения, традиции, предметы), строкой. Художники и страны остались под сеткой: 40 ссылок наверху читались бы облаком тегов. Вариант с плитками-обложками отвергнут: второй ряд картинок над сеткой картинок, первая работа уходит под сгиб, а обложки первой работой темы повторяются (одни и те же цветы у трёх тем).
+
+<li><strong>«All collections» прокручивает к списку под сеткой</strong>, а не ведёт на отдельную страницу: список один, второй копии и тонкой страницы нет. Название верное: у каждого художника и страны в списке тоже своя страница.
+
+<li><strong>Карточка «Make your own wallpaper» стоит последней</strong>, а не первой.
+
+</ul>
+
+
+<h2>Изменения</h2>
+
+<ul>
+
+<li><code>pages.js</code>: <code>intro()</code> и <code>INTRO_ROWS</code> (абзац и строка тем) перед сеткой в <code>collectionPage</code>; <code>id="browse"</code> у списка под сеткой; <code>grid()</code> берёт карточку-приглашение последним доводом (<code>last</code>) вместо первого (<code>lead</code>); рисунок значка вынесен в <code>dimGlyph</code>, его показывают и карточка, и абзац.
+
+<li><code>public/styles.css</code>: блок <code>.intro</code>; правило обводки значка общее у <code>.version svg</code> и <code>.intro__glyph</code>.
+
+</ul>
+
+
+<h2>Проверки</h2>
+
+<ul>
+
+<li><code>yarn verify</code>: «All matched files use Prettier code style!», код 0.
+
+<li>Локально <code>/</code>, <code>/collection/nihonga</code>, <code>/artists</code>, <code>/restore</code>, страница работы отвечают 200.
+
+<li>Playwright на 390 × 844: первая карточка сетки <code>item</code>, последняя <code>item item--invite</code>; щелчок по «All collections» даёт <code>#browse</code> и прокрутку к списку (scrollY 36613). Значок на карточке по-прежнему переключает: <code>data-shown</code> <code>scan → dim</code>.
+
+<li>Снимки 1440 × 900 и 390 × 844 смотрел глазами: на ладони абзац и строка занимают около половины первого экрана, картины начинаются сразу под ними.
+
+</ul>
+
+
+<h2>Шапка на ладони</h2>
+
+<p>Там же Charlie заметил шапку: на 390 px «Make a wallpaper» и «Mailing list» ломались каждый на две строки (полная шапка встаёт в строку только от 430 px). Из двух вариантов (марка строкой, пункты под ней; или пункт «Collection» снят) выбран второй: «Collection» ведёт туда же, куда марка, а шапка остаётся в одну строку и прежней высоты.
+
+<ul>
+<li><code>public/styles.css</code>: до 480 px пункт <code>a[href='/']</code> скрыт; до 340 px поля уже, трекинга нет, пункты не переносятся.
+<li>Playwright, высота меню и отступ последнего пункта от края: 320, 341, 360 и 390 px — 18 px (одна строка), отступ 20, горизонтальной прокрутки нет; 481 и 1440 px — три пункта, как раньше. <code>yarn verify</code> — код 0.
+</ul>
+
+<h2>Ограничения</h2>
+
+<ul>
+
+<li>Число 156 — <code>items.length</code> указателя, то есть считается само.
+
+<li>Что все 53 работы с Wikimedia Commons висят в музеях, не проверено; «museum paintings» стоит в тексте на этом допущении.
+
+<li>На боевой сайт не выложено.
+
+</ul>
