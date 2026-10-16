@@ -357,6 +357,19 @@ const plateSizes = item => {
 const offered = item => item.crops?.tall || item;
 const tile = item => item.crops?.tall || item;
 
+// Превью для X и мессенджеров — плита, а не телефонный кадр. Карточка
+// `summary_large_image` у X почти вдвое шире высоты, и кадр 9:16 она
+// дополняла полосами сбоку (16.10.2026). Широкий кадр 16:9 подошёл бы ещё
+// лучше, но он спрятан (`HIDDEN_KINDS` в gallery.js). Берётся самая крупная
+// копия плиты, а не мастер: мастер весит мегабайты, и мессенджеры с
+// потолком на размер превью его не покажут.
+const shared = item => item.copies.at(-1) || item;
+
+// Превью указателя выбрано руками: первая работа витрины меняется вместе
+// с развеской, а превью — лицо сайта в чужой ленте. Буря Гудена горизонтальна
+// и читается маленькой. Нет её в коллекции — берётся первая работа.
+const PREVIEW_REF = 'TS·0412';
+
 // Вторая версия работы — приглушённая, на неё переводит галочка «Dimmed».
 // Привозит страница всегда скан (`catalogueItems` в gallery.js, 14.10.2026).
 const otherOf = item => item.dimmed || null;
@@ -807,6 +820,7 @@ const intro = (count, rows) => {
 const tailRow = rows => `<div class="tail">${browseRows(rows)}${mailingForm}</div>`;
 
 export function collectionPage({ items, rows = [], origin }) {
+  const face = items.find(item => item.ref === PREVIEW_REF) || items[0];
   return layout({
     current: 'collection',
     script: '/try-dimmed.js',
@@ -814,12 +828,10 @@ export function collectionPage({ items, rows = [], origin }) {
     description: DESCRIPTION,
     canonical: `${origin}/`,
     // Превью для мессенджеров и соцсетей: без него ссылка на коллекцию идёт
-    // голой строкой. Берём первую работу — она же и первое, что видит
-    // открывший, — и берём её телефонным кадром: коллекция телефонная,
-    // и превью, показывающее широкую плиту, обещает не то.
-    image: items.length ? `${origin}${offered(items[0]).url}` : undefined,
-    imageWidth: items.length ? offered(items[0]).width : undefined,
-    imageHeight: items.length ? offered(items[0]).height : undefined,
+    // голой строкой. Какая работа и какой кадр — у `PREVIEW_REF` и `shared`.
+    image: face ? `${origin}${shared(face).url}` : undefined,
+    imageWidth: face ? shared(face).width : undefined,
+    imageHeight: face ? shared(face).height : undefined,
     // Заголовка над сеткой нет. «The collection» стояло 11-м кеглем в верхнем
     // регистре и приглушённым цветом — надстрочник, а не headline: человеку
     // оно ничего не продавало, а поиску не давало ни одного слова, которое
@@ -890,11 +902,10 @@ export function topicPage({ topic, origin }) {
     title: topic.title,
     description: topic.description,
     canonical: `${origin}${topic.path}`,
-    // Превью — первая работа темы её телефонным кадром, как и у указателя:
-    // тема телефонная, и широкая плита в превью обещала бы не то.
-    image: items.length ? `${origin}${offered(items[0]).url}` : undefined,
-    imageWidth: items.length ? offered(items[0]).width : undefined,
-    imageHeight: items.length ? offered(items[0]).height : undefined,
+    // Превью — первая работа темы, её плита (`shared`).
+    image: items.length ? `${origin}${shared(items[0]).url}` : undefined,
+    imageWidth: items.length ? shared(items[0]).width : undefined,
+    imageHeight: items.length ? shared(items[0]).height : undefined,
     // Числа в абзац приходят замером тех же работ, что стоят под ним
     // (`measure` в `collections.js`), а не строкой: вписанное руками число
     // разъезжается со списком молча — и разъехавшееся число в тексте,
