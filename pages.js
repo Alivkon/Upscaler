@@ -782,7 +782,7 @@ const intro = (count, rows) => {
   // и ссылка к нему без него вела бы в никуда.
   const all = rows.length ? '<li><a class="intro__all" href="#browse">All collections</a></li>' : '';
   return `<div class="intro">
-        <p class="intro__text">${SITE_NAME} is a collection of ${count} phone wallpapers made from museum paintings and engravings. Tap the small square ${dimGlyph('intro__glyph')} next to a title to see it dimmed, so your app icons stay readable on top. You can also <a href="/restore">make your own</a> and <a href="/mailing-list">get an email</a> when new ones are added.</p>
+        <p class="intro__text">${SITE_NAME} is a collection of ${count} phone wallpapers made from museum paintings and engravings. Tap the small square ${dimGlyph('intro__glyph')} next to a title to see a dimmed version. You can also <a href="/restore">make your own</a> and <a href="/mailing-list">get an email</a> when new ones are added.</p>
         <nav aria-label="Collections">
           <ul class="intro__links">
             ${links
