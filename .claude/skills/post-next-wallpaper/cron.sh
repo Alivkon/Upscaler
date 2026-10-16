@@ -5,6 +5,15 @@
 cd /home/charlie/repos/Upscaler || exit 1
 unset ANTHROPIC_API_KEY
 LOG=/home/charlie/repos/Upscaler/.social-post.log
+
+# Crontab fires at 02:00 Paris (20:00 New York); a random wait of up to
+# three hours spreads posts over the US evening, so they don't land
+# at the same minute every day.
+if [ -z "$DRY_RUN" ]; then
+  WAIT=$((RANDOM % 180))
+  echo "=== $(date '+%F %T') waiting $WAIT min" >> "$LOG"
+  sleep $((WAIT * 60))
+fi
 TODAY=$(date +%F)
 
 PROMPT="Use the post-next-wallpaper skill to post the next work to Tumblr and to Pinterest. \

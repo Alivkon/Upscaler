@@ -10,8 +10,9 @@ drip, not a bulk upload. Never post more than one per platform in a single run
 unless Charlie explicitly asks for more.
 
 **It already runs on a schedule:** crontab fires `cron.sh` (next to this
-file) at 03:07 Paris time, Monday to Friday — US evening, when Tumblr's feed is
-busiest. Output goes to `.social-post.log` in the repo root. So before a manual
+file) at 02:00 Paris time, Monday to Friday, and the script then waits a
+random 0–3 hours, so posts land between 20:00 and 23:00 New York — US evening,
+when Tumblr's and Pinterest's feeds are busiest. Output goes to `.social-post.log` in the repo root. So before a manual
 run, check `social-posts.json` for an entry dated today. `DRY_RUN=1 cron.sh`
 picks the next works without posting.
 
