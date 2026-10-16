@@ -147,7 +147,7 @@ button {
    «Collection»: он ведёт туда же, куда марка, и шапка остаётся одной строкой
    до 360 px (16.10.2026). Порог взят с запасом на крупный шрифт в браузере. */
 @media (max-width: 480px) {
-  .masthead__nav a[href='/'] {
+  .masthead__home {
     display: none;
   }
 }

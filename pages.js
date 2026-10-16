@@ -161,8 +161,9 @@ function layout({
   // стало три, и `current !== 'restore'` подсветил бы «Collection» на списке
   // рассылки. Имя есть у каждой страницы — их семь, и ни одна не зовёт
   // `layout` без `current`.
+  // У первого пункта класс: на ладони он снят (styles.css, порог 480).
   const nav = [
-    ['/', 'Collection', current === 'collection'],
+    ['/', 'Collection', current === 'collection', 'masthead__home'],
     ['/restore', 'Make a wallpaper', current === 'restore'],
     ['/mailing-list', 'Mailing list', current === 'mailing-list']
   ];
@@ -219,7 +220,7 @@ function layout({
     <header class="masthead">
       <a class="masthead__mark" href="/">${SITE_NAME}</a>
       <nav class="masthead__nav">
-        ${nav.map(([href, label, on]) => `<a href="${href}"${on ? ' aria-current="page"' : ''}>${label}</a>`).join('\n        ')}
+        ${nav.map(([href, label, on, cls]) => `<a href="${href}"${cls ? ` class="${cls}"` : ''}${on ? ' aria-current="page"' : ''}>${label}</a>`).join('\n        ')}
       </nav>
     </header>
     <main>${body}</main>
@@ -528,14 +529,16 @@ export const cardCreator = item => {
 // карточки (`.version` в styles.css). Подписи только для диктора: на экране
 // значок без слов.
 //
-// Значок «к приглушённой» нарисован один раз: его же показывает абзац над
-// указателем, объясняя, куда нажать, и нарисованный там заново он однажды
-// разошёлся бы с тем, что стоит на карточке.
-const dimGlyph = className =>
-  `<svg class="${className}" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.6 2.6H13.4V13.4H2.6ZM8 2.6V13.4" /><path class="version__hatch" d="M2.6 5.9L5.9 2.6M2.6 9.3L8 3.9M2.6 12.7L8 7.3M5.3 13.4L8 10.7" /></svg>`;
+// Квадрат нарисован один раз на оба значка, а значок «к приглушённой»
+// показывает ещё и абзац над указателем, объясняя, куда нажать: нарисованный
+// там заново, он однажды разошёлся бы с тем, что стоит на карточке.
+const glyph = (className, hatch) =>
+  `<svg class="${className}" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.6 2.6H13.4V13.4H2.6ZM8 2.6V13.4" /><path class="version__hatch" d="${hatch}" /></svg>`;
+const dimGlyph = className => glyph(className, 'M2.6 5.9L5.9 2.6M2.6 9.3L8 3.9M2.6 12.7L8 7.3M5.3 13.4L8 10.7');
+const scanGlyph = className => glyph(className, 'M8 5.3L10.7 2.6M8 8.7L13.4 3.3M8 12.1L13.4 6.7M10.1 13.4L13.4 10.1');
 
 const versionButton = `
-            <button class="version" type="button">${dimGlyph('version__dim')}<span class="visually-hidden version__dim">Try dimmed</span><svg class="version__scan" viewBox="0 0 16 16" aria-hidden="true"><path d="M2.6 2.6H13.4V13.4H2.6ZM8 2.6V13.4" /><path class="version__hatch" d="M8 5.3L10.7 2.6M8 8.7L13.4 3.3M8 12.1L13.4 6.7M10.1 13.4L13.4 10.1" /></svg><span class="visually-hidden version__scan">Show original</span></button>`;
+            <button class="version" type="button">${dimGlyph('version__dim')}<span class="visually-hidden version__dim">Try dimmed</span>${scanGlyph('version__scan')}<span class="visually-hidden version__scan">Show original</span></button>`;
 
 // Карточка указателя. Ссылок на работу две: изображение и подпись. Подпись
 // несёт текст ссылки, а изображение — единственное, на что посетитель целится.
@@ -755,13 +758,6 @@ const mailingForm = `<form class="tail__mail" method="post" action="/mailing-lis
           <button class="link tail__send" type="submit">Subscribe</button>
         </form>`;
 
-// Строка под сеткой указателя: оглавление слева, рассылка справа.
-//
-// Рассылка стоит РЯДОМ с `nav`, а не внутри него. Список рассылки — не раздел
-// коллекции, и диктор, читающий `nav` с подписью «Browse the collection»,
-// объявил бы его ещё одним разделом. Пустое место между ними и есть
-// разделитель: строка самая тихая на странице, и черта или точка сделали бы
-// из неё панель.
 // Абзац над сеткой указателя: что это за сайт, одной фразой, и что на нём
 // можно сделать (16.10.2026). Заголовка у указателя по-прежнему нет — абзац
 // начинается с имени сайта и сам отвечает на вопрос, который заголовок
@@ -782,6 +778,9 @@ const INTRO_ROWS = ['Moods', 'Traditions', 'Subjects'];
 
 const intro = (count, rows) => {
   const links = INTRO_ROWS.flatMap(label => rows.find(row => row.label === label)?.links ?? []);
+  // Список под сеткой рисуется, только когда строки есть (`browseRows`),
+  // и ссылка к нему без него вела бы в никуда.
+  const all = rows.length ? '<li><a class="intro__all" href="#browse">All collections</a></li>' : '';
   return `<div class="intro">
         <p class="intro__text">${SITE_NAME} is a collection of ${count} phone wallpapers made from museum paintings and engravings. Tap the small square ${dimGlyph('intro__glyph')} next to a title to see it dimmed, so your app icons stay readable on top. You can also <a href="/restore">make your own</a> and <a href="/mailing-list">get an email</a> when new ones are added.</p>
         <nav aria-label="Collections">
@@ -792,12 +791,19 @@ const intro = (count, rows) => {
                   `<li><a href="${escape(link.href)}">${escape(link.text)}</a>${link.count ? `<span class="intro__count">${link.count}</span>` : ''}</li>`
               )
               .join('\n            ')}
-            <li><a class="intro__all" href="#browse">All collections</a></li>
+            ${all}
           </ul>
         </nav>
       </div>`;
 };
 
+// Строка под сеткой указателя: оглавление слева, рассылка справа.
+//
+// Рассылка стоит РЯДОМ с `nav`, а не внутри него. Список рассылки — не раздел
+// коллекции, и диктор, читающий `nav` с подписью «Browse the collection»,
+// объявил бы его ещё одним разделом. Пустое место между ними и есть
+// разделитель: строка самая тихая на странице, и черта или точка сделали бы
+// из неё панель.
 const tailRow = rows => `<div class="tail">${browseRows(rows)}${mailingForm}</div>`;
 
 export function collectionPage({ items, rows = [], origin }) {
