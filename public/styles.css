@@ -183,6 +183,30 @@ button {
      у всех одинаковое, растянутое перестало бы им быть. */
   align-items: start;
 }
+/* Растягивается карточка, а не запись: рост ряда забирает этикетка, паспарту
+   остаётся своего размера. Так нижние строки этикетки — размер и Download —
+   встают у соседей на одной высоте, а имя автора стоит вплотную к названию,
+   какой бы длины оно ни было. */
+.collection .item {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+}
+.collection .caption {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+.collection .caption__spec {
+  margin-top: auto;
+}
+.collection .caption .link {
+  align-self: flex-start;
+}
+/* у приглашения строки характеристик нет, и вниз уходит сама ссылка */
+.collection .item--invite .caption .link {
+  margin-top: auto;
+}
 /* Витрина — единственная сетка, стоящая прямо в `<main>`: у соседних работ
    отступ сверху задаёт `.adjacent`, а здесь его задавал заголовок, которого
    больше нет. Взято его же верхнее поле, чтобы первый ряд встал там же, где
@@ -296,8 +320,8 @@ main > .collection {
 .record {
   margin: 0;
   background: var(--card);
-  /* поле неравномерное: по бокам поровну, снизу тяжелее */
-  padding: 7rem 7rem 14rem;
+  /* поле равное со всех сторон */
+  padding: 7rem;
   box-shadow:
     0 24px 60px -28px rgba(0, 0, 0, 0.85),
     0 2px 0 0 var(--card-edge);
@@ -389,21 +413,14 @@ main > .collection {
 /* Названий нет: опознавательный признак работы — инвентарный номер.
    В каталоге запись сначала нумеруют и только потом описывают. */
 .caption {
-  margin: 10rem 0 0;
+  margin: 8rem 0 0;
 }
 .caption__title {
   font-weight: 500;
   font-size: 15rem;
   line-height: 1.1;
   letter-spacing: 0.02em;
-  margin: 0 0 6rem;
-  /* Место под две строки держится всегда. Названия работ разной длины:
-     на окне 1868 px 105 названий из 118 умещаются в строку, остальные 13
-     занимают две; на 1280 px, где колонка уже, — 96 и 22. В трёх строках
-     не нуждается ни одно. Без запаса всё, что ниже названия, ехало бы
-     у соседей по ряду на разной высоте. На странице работы заголовок
-     свой (`.plate .caption__title`), и запас там снят. */
-  min-height: 2lh;
+  margin: 0 0 4rem;
   font-variant-numeric: lining-nums tabular-nums;
   /* номер — финишная черта: он появляется уже заполненным */
   transition: color 0.5s ease;
@@ -546,7 +563,6 @@ main > .collection {
 }
 .record--plate {
   padding: clamp(12rem, 1.6vw, 20rem);
-  padding-bottom: clamp(22rem, 3vw, 38rem);
   height: min(72vh, 620rem);
   display: flex;
   flex-direction: column;
@@ -626,7 +642,7 @@ main > .collection {
   height: auto;
   width: auto;
   max-width: 100%;
-  max-height: calc(min(72vh, 620rem) - clamp(34rem, 4.6vw, 58rem));
+  max-height: calc(min(72vh, 620rem) - clamp(24rem, 3.2vw, 40rem));
 }
 /* «Было» на странице не показывается целиком (почему — в `beforeFrame`,
    pages.js): в проёме оно неотличимо от «стало». Файл здесь только затем,
@@ -772,9 +788,6 @@ body.is-dragging .record--plate {
 .plate .caption__title {
   font-size: clamp(23rem, 3vw, 28rem);
   margin-bottom: 12rem;
-  /* Заголовок здесь один на странице, и ровнять его не с чем: запас под
-     вторую строку оставил бы дыру над характеристиками. */
-  min-height: 0;
 }
 /* До выбора файла номера нет вовсе — слот пустует, но высоту держит. Пустым
    он стал не для красоты: стоял `TS·––––`, тот же формат, что несут работы
@@ -1573,7 +1586,7 @@ body.is-locked {
     width: auto;
   }
   .record--plate .record__image.has-work img {
-    max-height: calc(min(46vh, 380rem) - clamp(34rem, 4.6vw, 58rem));
+    max-height: calc(min(46vh, 380rem) - clamp(24rem, 3.2vw, 40rem));
   }
   .label {
     width: min(380rem, 84vw);
