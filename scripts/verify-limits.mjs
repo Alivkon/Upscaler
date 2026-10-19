@@ -68,7 +68,7 @@ const refusedBy = (allowance, words) => Boolean(allowance.refusal) && allowance.
     if (guest.upscale().refusal) complain(`попытка ${attempt} из пяти отказана, а должна пройти`);
   }
   const sixth = guest.upscale();
-  if (!refusedBy(sixth, 'Five images an hour')) complain(`шестая за час прошла: ${sixth.refusal ?? 'без отказа'}`);
+  if (!refusedBy(sixth, 'reached the limit')) complain(`шестая за час прошла: ${sixth.refusal ?? 'без отказа'}`);
   if (!(sixth.retryAfter > 0 && sixth.retryAfter <= 3600)) complain(`Retry-After вне часа: ${sixth.retryAfter}`);
 }
 
@@ -99,7 +99,7 @@ travel(25);
     if (guest.upscale().refusal) complain(`браузер ${browser + 1} с адреса отказан, а должен пройти`);
   }
   const eleventh = visitor(address).upscale();
-  if (!refusedBy(eleventh, 'Ten images a day'))
+  if (!refusedBy(eleventh, 'reached the limit'))
     complain(`одиннадцатый с адреса прошёл: ${eleventh.refusal ?? 'без отказа'}`);
 }
 
@@ -127,7 +127,7 @@ travel(25);
     else passed += 1;
   }
   if (passed !== CEILING) complain(`общий потолок сработал на ${passed}, а не на ${CEILING}`);
-  if (!refusedBy(refusal ?? {}, 'images this site makes in a day'))
+  if (!refusedBy(refusal ?? {}, 'as many images today'))
     complain(`${CEILING + 1}-й прошёл: ${refusal?.refusal ?? 'без отказа'}`);
 }
 
