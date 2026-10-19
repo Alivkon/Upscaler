@@ -53,14 +53,14 @@ export function formatOf(file) {
 // и числа. Читают его обе стороны: сервер решает по нему, какой путь
 // записать с кодом 204, и второго списка, который разошёлся бы с этим,
 // у него нет.
-// Слова сцены — те же, что у `setStage` в intake.js, плюс `offered` и кроме
-// `empty`: без принесённого файла ни ухода, ни правой кнопки не пишется.
+// Слова сцены — те же, что у `setStage` в intake.js, кроме `empty`: без
+// принесённого файла ни ухода, ни правой кнопки не пишется.
 const HOW = '(pick|drop|paste)';
 const FORMAT = `(${FORMATS.join('|')})`;
 const SIZE = '\\d{1,5}x\\d{1,5}';
-const MAKER = '(server|browser|webgpu|wasm)';
+const MAKER = '(server|browser)';
 const EFFECT = '(crop|treat|blur|vignette)';
-const STAGE = '(measured|offered|working|done)';
+const STAGE = '(measured|working|done)';
 
 export const NOTED = new RegExp(
   '^/api/note/(' +

@@ -236,13 +236,11 @@ const ratings = visitsOf(everything)
   });
 const ratedNow = ratings.filter(rating => inWindow.has(rating.day));
 // Кто считал — значит, что оценили. `browser` — модели не было вовсе, файл
-// хватал по размеру, и оценка говорит об отделке; остальные три — об
+// хватал по размеру, и оценка говорит об отделке; `server` — об
 // увеличении (`showResult` в intake.js). Делить их нужно, чтобы «Good» за
 // приглушение не засчитывался модели.
 const MADE = {
   server: 'увеличено на сервере',
-  webgpu: 'увеличено в браузере',
-  wasm: 'увеличено в браузере',
   browser: 'без увеличения'
 };
 const WORDS = ['good', 'fair', 'poor'];

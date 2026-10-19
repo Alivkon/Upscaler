@@ -29,7 +29,6 @@ import { artistIndex, artistPageOf, browse, everyPage, pageAt, pagesWith, rows }
 import { finish, phoneWindow } from './treatment.js';
 import { serverLongestSide } from './public/frame.js';
 import { NOTED } from './public/note.js';
-import { MODEL as MODEL_FILE, WEIGHED } from './public/model-files.js';
 import { MODEL, configured as upscalerReady, enlarge } from './upscaler.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -137,57 +136,6 @@ app.use(journal(path.resolve(__dirname, process.env.LOG_DIR || 'log')));
 // `compression` смотрит на тип и JPEG не трогает.
 app.use(compression());
 app.use(express.static(path.join(__dirname, 'public')));
-// Рантайм счёта в браузере: приёмка увеличивает картинку у самого посетителя,
-// и ей нужен onnxruntime-web. Он лежит в node_modules и оттуда же отдаётся —
-// копия в `public/` разошлась бы с package.json при первом же обновлении.
-//
-// Версия читается из package.json самого рантайма, а не из нашего: у нас
-// записано «1.27.0», а поставлено то, что решил установщик.
-const ORT_VERSION = JSON.parse(
-  await fs.readFile(path.join(__dirname, 'node_modules/onnxruntime-web/package.json'), 'utf8')
-).version;
-// Сжатый рантайм весит около шести мегабайт и качается один раз, поэтому год
-// с `immutable` здесь уместен — но только потому, что версия стоит в адресе.
-// Раньше её там не было: файлы называются `ort.webgpu.min.mjs` и
-// `ort-wasm-simd-threaded.jsep.wasm` и после обновления пакета сохраняют имена.
-// Год `immutable` на таком имени означал бы, что вернувшийся посетитель ещё
-// год считает старым рантаймом; а хуже того, js и wasm лежат в кэше по
-// отдельности, и вымывание одного без другого ломает у ORT проверку сборки —
-// счёт в браузере переставал бы работать без всякой возможности починить.
-app.use(
-  `/vendor/ort/${ORT_VERSION}`,
-  express.static(path.join(__dirname, 'node_modules/onnxruntime-web/dist'), {
-    setHeaders: res => res.setHeader('Cache-Control', 'public, max-age=31536000, immutable')
-  })
-);
-// Сколько весит то, что качается перед первой плиткой. Числа уезжают
-// в разметку, потому что взять их в браузере неоткуда: `compression` жмёт
-// эти файлы на лету, `Content-Length` в ответе нет вовсе, и качающий
-// двадцать шесть мегабайт не может сказать, сколько осталось. Молчаливое
-// ожидание читалось как поломка (public/intake.js).
-//
-// Не одно число, а список: wasm-файлов два, и какой из них спросят, решится
-// уже в браузере — по тому, дал ли он адаптер видеокарты (model-files.js).
-// Сервер поэтому взвешивает оба, а складывает нужные тот, кто их и качает.
-//
-// Считается один раз на старте и с собственного диска. Файла нет — нет
-// и записи: приёмка тогда покажет работу без доли, но покажет.
-const ORT_DIST = 'node_modules/onnxruntime-web/dist';
-const LOAD_BYTES = Object.fromEntries(
-  (
-    await Promise.all(
-      [...WEIGHED.map(name => [name, `${ORT_DIST}/${name}`]), [MODEL_FILE, `public${MODEL_FILE}`]].map(
-        async ([name, file]) => [
-          name,
-          await fs.stat(path.join(__dirname, file)).then(
-            i => i.size,
-            () => 0
-          )
-        ]
-      )
-    )
-  ).filter(([, size]) => size > 0)
-);
 // Правила обработки — те же файлы, что читает сервер. Приёмка считает галочки
 // «приглушить» и «кадр под телефон» на стороне посетителя, и читать их она
 // обязана отсюда: копия правил в `public/` означала бы, что витрина и приёмка
@@ -385,9 +333,7 @@ app.get('/w/:slug', async (req, res, next) => {
   }
 });
 
-app.get('/restore', (_req, res) =>
-  html(res, 200, intakePage({ origin: SITE_ORIGIN, runtime: ORT_VERSION, runtimeBytes: JSON.stringify(LOAD_BYTES) }))
-);
+app.get('/restore', (_req, res) => html(res, 200, intakePage({ origin: SITE_ORIGIN })));
 
 // Сколько работ увеличено моделью и во сколько раз, страница считает по
 // витрине, а не пишет числом: число в тексте разошлось бы с коллекцией при

@@ -18,7 +18,7 @@
 
 import { measure } from './collections.js';
 import { formatBytes, formatDims, formatType } from './public/record.js';
-import { MIN_SOURCE } from './public/upscale-local.js';
+import { MIN_SOURCE } from './public/frame.js';
 
 const SITE_NAME = 'Tessarum';
 // Сказано про работы коллекции и про телефон: описание страницы попадает
@@ -152,8 +152,6 @@ function layout({
   ld,
   script,
   preload = [],
-  runtime,
-  runtimeBytes,
   current,
   noindex = false
 }) {
@@ -208,11 +206,6 @@ function layout({
          не выполнился, страница стоит сканом, и тот, кто выбрал приглушённое
          на прошлой работе, успевает увидеть не тот файл — и скачать его. -->
     ${preload.map(href => `<link rel="modulepreload" href="${escape(href)}" />`).join('')}
-    ${runtime ? `<meta name="ort-version" content="${escape(runtime)}" />` : ''}
-    <!-- Вес того, что качает первая картинка. Сервер видит эти файлы у себя
-         на диске, браузер — нет: отдаются они сжатыми на лету, и длины в
-         ответе нет. Без этого числа полоска загрузки невозможна. -->
-    ${runtimeBytes ? `<meta name="ort-bytes" content="${escape(String(runtimeBytes))}" />` : ''}
     ${ld ? `<script type="application/ld+json">${JSON.stringify(ld, null, 2)}</script>` : ''}
   </head>
   <body>
@@ -1513,16 +1506,9 @@ export function workPage({ item, shelves = [], total, pages = [], artist = null,
 // image» называло операцию словом, которого в этом значении не знают, а
 // «Make your own wallpaper» называет результат. В шапке тот же пункт
 // короче, «Make a wallpaper»: длинное переносилось на ладони в третью строку.
-// Версия рантайма приходит с сервера и уходит в `<meta>`: путь до
-// onnxruntime-web она содержит целиком (`/vendor/ort/1.27.0/…`), а вписать её
-// в `upscale-local.js` значило бы завести вторую запись о версии рядом с
-// package.json — то самое расхождение, ради которого рантайм и отдаётся из
-// node_modules, а не копией в `public/`.
-export function intakePage({ origin, runtime, runtimeBytes }) {
+export function intakePage({ origin }) {
   return layout({
     current: 'restore',
-    runtime,
-    runtimeBytes,
     // Заголовок и описание названы теми словами, которыми это ищут, а не
     // теми, которыми это устроено. «Upscale» отсюда ушёл намеренно: выдача
     // по нему — Adobe, Cloudinary, upscale.media и ещё четверо таких же,
@@ -1547,7 +1533,7 @@ export function intakePage({ origin, runtime, runtimeBytes }) {
               <span class="prompt__fine">JPG, PNG or WebP</span>
               <!-- Совет, а не требование, и оба его числа выведены, а не
                    вписаны: 540 × 960 — это порог обоев, делённый на множитель
-                   модели (MIN_SOURCE в upscale-local.js), то есть самая мелкая
+                   модели (MIN_SOURCE во frame.js), то есть самая мелкая
                    картинка, из которой ещё выходит кадр 2160 × 3840.
 
                    «Вертикальная» — про то, сколько от картинки доживёт до
@@ -1909,7 +1895,7 @@ export function licensePage({ origin, upscaled }) {
           </li>
         </ul>
 
-        <h2 id="model">The models that enlarge your picture</h2>
+        <h2 id="model">The model that enlarges your picture</h2>
         <p>
           Enlarging happens on our machines. The picture you drop is sent to us, passed to a graphics
           card we rent by the second from
@@ -1927,22 +1913,8 @@ export function licensePage({ origin, upscaled }) {
           asks nothing of anybody.
         </p>
         <p>
-          There is a second one, and you meet it only if the first refuses. Our server has a daily
-          ceiling, and past it the page offers to do the work in your own browser instead. Then it
-          downloads a small neural network alongside itself and runs it on your device, and the
-          picture never leaves it. That one is
-          <a href="https://openmodeldb.info/models/4x-ClearRealityV1" rel="noopener" target="_blank"
-            >4x-ClearRealityV1</a
-          >
-          by Kim2091, under
-          <a href="https://creativecommons.org/licenses/by-nc-sa/4.0/" rel="license noopener" target="_blank"
-            >CC BY-NC-SA 4.0</a
-          >. Our copy is modified: the exported output dimensions are corrected, without which it
-          will not run on a graphics card. So our copy carries the same licence.
-        </p>
-        <p>
           None of this touches the file you download. The enlarged picture is yours, on the terms the
-          original work carried; the licences above are ours to keep, not yours.
+          original work carried; the licence above is ours to keep, not yours.
         </p>
 
         <h2>The ordinary small print</h2>

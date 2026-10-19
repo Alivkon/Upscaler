@@ -261,7 +261,7 @@ if (untouched.length) console.log(`  не забирал никто: ${untouched
 // здесь не складываются: их смотрят по заходу, через `--sample`.
 const notes = human.filter(record => record.path.startsWith('/api/note/') && record.status === 204 && !HAND(record));
 // Обе таблицы — целиком, без десятки `rank`: пар здесь около тридцати,
-// и срезались бы редкие — `failed …`, `wasm poor`, ради которых их и читают.
+// и срезались бы редкие — `failed …`, `server poor`, ради которых их и читают.
 table(rank(tally(notes.map(record => record.path.split('/').slice(3, 5).join(' '))), Infinity), 'Приёмка (/api/note)');
 // Оценка готового — отдельно: в общей таблице видно только, кто считал,
 // а спрашивают её ради пары «кто считал × что сказали».
