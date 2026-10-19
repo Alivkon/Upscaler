@@ -197,7 +197,12 @@ function withProfile(jpeg, icc) {
  * на котором модель и выбирали.
  */
 export async function enlarge(buffer, { width, height, targetLongestSide }) {
-  if (!configured()) throw new HttpError(503, 'Upscaling is switched off right now.');
+  if (!configured()) {
+    // На машине разработчика это умолчание, и письма там нет (`ALARM_TO` не
+    // задан). На боевой — потерянная при правке `.env` переменная.
+    raiseAlarm('UPSCALE_URL, UPSCALE_KEY or UPSCALE_SECRET is missing on the server');
+    throw new HttpError(503, 'Upscaling is switched off right now.');
+  }
   const sent = await shrunkToFit(buffer, width, height);
 
   let response;

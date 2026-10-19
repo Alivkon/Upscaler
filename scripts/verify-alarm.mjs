@@ -22,8 +22,12 @@ globalThis.fetch = async (url, options) => {
   }
   return new Response('workspace billing limit reached', { status: modalStatus });
 };
-// Строки отказов в логе здесь ожидаемы и только мешали бы читать вывод.
-console.error = () => {};
+// Строки отказов в логе здесь ожидаемы и только мешали бы читать вывод;
+// всё прочее, вроде упавшего импорта, должно остаться видно.
+const say = console.error;
+console.error = (line, ...rest) => {
+  if (!/^(upscaler|alarm): /.test(String(line))) say(line, ...rest);
+};
 
 process.env.UPSCALE_URL = 'https://test--upscale.modal.run';
 process.env.UPSCALE_KEY = 'wk-test';
@@ -89,17 +93,32 @@ await settle();
 if (locked.status !== 503) complain(`на 401 посетитель получил ${locked.status}, а не 503`);
 if (letters.length !== 3) complain('на 401 письмо не ушло');
 
-// 7. Resend не принял письмо — тишина не наступает, следующий отказ пробует снова.
+// 7. Resend не принял письмо — сутки тишины не наступают, но и на каждом
+// отказе он не дёргается: следующая попытка через час.
 travel(24);
 resendStatus = 500;
 await raiseAlarm('first');
 resendStatus = 200;
-const retried = await raiseAlarm('second');
-if (!retried) complain('после неушедшего письма следующее ждёт сутки');
+if (await raiseAlarm('second')) complain('после неушедшего письма повтор ушёл сразу, без часа');
+travel(1);
+if (!(await raiseAlarm('third'))) complain('через час после неушедшего письма повтора нет');
+
+// 8. Сервер без настройки на боевой — тоже поломка, о ней пишется.
+travel(24);
+delete process.env.UPSCALE_SECRET;
+const before = letters.length;
+await call();
+await settle();
+if (letters.length !== before + 1) complain('без UPSCALE_SECRET письмо не ушло');
+
+// 9. Длинный ответ Modal (HTML-страница ошибки) в письмо целиком не идёт.
+travel(24);
+await raiseAlarm('x'.repeat(50_000));
+if (letters.at(-1).text.length > 2000) complain(`письмо длиной ${letters.at(-1).text.length}, ответ не обрезан`);
 
 if (problems.length) {
   process.stderr.write(`письмо об отказе: ${problems.length} ошибок\n`);
   for (const problem of problems) process.stderr.write(`  ${problem}\n`);
   process.exit(1);
 }
-console.log('письмо об отказе: семь проверок пройдены');
+console.log('письмо об отказе: девять проверок пройдены');

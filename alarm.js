@@ -13,6 +13,9 @@
 // Без `RESEND_API_KEY` или `ALARM_TO` молчит: на машине разработчика письма
 // о своих же опытах не нужны.
 const QUIET_MS = 24 * 60 * 60 * 1000;
+const RETRY_MS = 60 * 60 * 1000;
+// Ответ Modal бывает целой HTML-страницей ошибки; в письме нужно начало.
+const REASON_CHARS = 500;
 const FROM = 'Tessarum server <hello@tessarum.com>';
 
 let lastSent = -Infinity;
@@ -33,7 +36,7 @@ export async function raiseAlarm(reason) {
   const text = [
     'Server upscaling just failed, so visitors are only offered the in-browser fallback.',
     '',
-    `What the server saw: ${reason}`,
+    `What the server saw: ${reason.slice(0, REASON_CHARS)}`,
     '',
     'If Modal says the workspace is out of credit, top it up in the Modal dashboard (Settings, Usage and billing).',
     'The full line is in the container log. Next alert no sooner than in 24 hours.'
@@ -50,7 +53,9 @@ export async function raiseAlarm(reason) {
   } catch (error) {
     console.error(`alarm: письмо не ушло (${error.name}: ${error.message})`);
   }
-  // Неушедшее письмо сутки тишины не открывает: следующий отказ попробует снова.
-  lastSent = -Infinity;
+  // Неушедшее письмо сутки тишины не открывает, но и не повторяется на каждом
+  // отказе: сломанный ключ Resend иначе слал бы запрос на каждого посетителя.
+  // Следующая попытка через час.
+  lastSent = Date.now() - QUIET_MS + RETRY_MS;
   return false;
 }
