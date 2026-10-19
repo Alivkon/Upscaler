@@ -467,6 +467,52 @@
         "still life"
       ],
       "more": "https://tessarum.com/artists/willem-kalf"
+    },
+    {
+      "ref": "vl-0485",
+      "slug": "after-kalf-still-life-nautilus-iphone-wallpaper",
+      "postedAt": "2026-10-16",
+      "file": "images/for-tumblr/vl-0485-after-kalf-still-life-nautilus-iphone-wallpaper.jpg",
+      "crop": "whole",
+      "edit": "scan",
+      "medium": null,
+      "tags": [
+        "painting",
+        "art",
+        "art history",
+        "phone wallpaper",
+        "tessarum",
+        "dark academia",
+        "willem kalf",
+        "dutch golden age",
+        "dutch painting",
+        "baroque",
+        "still life painting",
+        "still life"
+      ],
+      "more": "https://tessarum.com/collection/dutch-golden-age"
+    },
+    {
+      "ref": "vl-0036",
+      "slug": "interior-of-the-pantheon-rome-architectural-iphone-wallpaper",
+      "postedAt": "2026-10-19",
+      "file": "images/for-tumblr/vl-0036-interior-of-the-pantheon-rome-architectural-iphone-wallpaper.jpg",
+      "crop": "whole",
+      "edit": "scan",
+      "medium": "oil on canvas",
+      "tags": [
+        "painting",
+        "art",
+        "art history",
+        "phone wallpaper",
+        "tessarum",
+        "dark academia",
+        "oil on canvas",
+        "architecture",
+        "italy",
+        "giovanni paolo panini"
+      ],
+      "more": "https://tessarum.com/collection/dark-academia"
     }
   ],
   "pinterest": [
@@ -703,6 +749,26 @@
       "file": "images/crops/gudin-storm-shipwreck-desktop-wallpaper-dim-phone-1115x2416.jpg",
       "crop": "phone",
       "edit": "dim"
+    },
+    {
+      "ref": "vl-0354",
+      "slug": "mount-starr-king-yosemite-bierstadt-iphone-wallpaper",
+      "postedAt": "2026-10-16",
+      "board": "Art",
+      "title": "Mount Starr King, Yosemite, Albert Bierstadt, dark academia phone wallpaper",
+      "file": "images/crops/mount-starr-king-yosemite-bierstadt-iphone-wallpaper-ceil-phone-1772x3840.jpg",
+      "crop": "phone",
+      "edit": "ceil"
+    },
+    {
+      "ref": "vl-0485",
+      "slug": "after-kalf-still-life-nautilus-iphone-wallpaper",
+      "postedAt": "2026-10-19",
+      "board": "Art",
+      "title": "Still Life with Nautilus Cup, after Willem Kalf, dark academia phone wallpaper",
+      "file": "images/crops/after-kalf-still-life-nautilus-iphone-wallpaper-ceil-phone-1833x3972.jpg",
+      "crop": "phone",
+      "edit": "ceil"
     }
   ]
 }
