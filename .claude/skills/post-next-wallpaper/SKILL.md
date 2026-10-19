@@ -410,7 +410,20 @@ scratchpad for upload.
     `crop: "phone"`, and `edit`: the rule in the file name (`-dim-phone-` →
     `"dim"`, `-ceil-phone-` → `"ceil"`, `-none-phone-` → `"scan"`).
 
-## 5. Report back
+## 5. Commit the record
+
+Once the entries are written, commit `research/social-posts.json` on its
+own, naming the path so nothing else in the index rides along (AGENTS.md:
+never `git add -A`):
+
+```bash
+git commit research/social-posts.json -m "Пост: <ref> в Tumblr / Pinterest"
+```
+
+Don't push. Left uncommitted, the record piled up for days (16–19.10.2026)
+and was the one dirty file in every `git status`.
+
+## 6. Report back
 
 Tell Charlie, briefly: which work got posted where, the title/caption used,
 and anything that looked off (e.g. a board that no longer matches, a tag
