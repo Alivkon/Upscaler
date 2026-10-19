@@ -263,6 +263,25 @@ const sawNoPictures = lines =>
   lines.some(line => line.kind === 'page' && line.status === 200 && PICTURE_PAGE.test(line.path)) &&
   !lines.some(askedForPicture);
 
+// «Картинка без страницы»: попросил карточку так, как её просит страница
+// (`image`, реферер наш), а самой страницы в заходе нет, ни стиля, ни скрипта.
+// И взял её впервые: 200, а не 304. Правило «одни файлы» такого не видит —
+// там файл берут адресом, `document`.
+//
+// Закрыло 19.10.2026 четыре захода из семи «людей» дня: zh-CN, HK и SG по
+// очереди, Chrome 101–123 на Windows и Mac, по одной свежей карточке
+// с реферером `/collection/british-painting`. В ту же секунду, что первый,
+// `/` взял клиент `node` — похоже, страницу и картинку брал один сборщик.
+//
+// Только компьютер, и это главная оговорка. Заход «одни карточки» у iPhone
+// обычен: из 53 таких за 13.09–19.10 у 28 страница лежит в другом заходе
+// того же дня с тем же браузером. Телефон сменил адрес посреди визита, и
+// страница досталась одному `visit`, карточки другому. На компьютере таких
+// за то же время не было ни одного, кроме четырёх пойманных.
+const pictureWithoutPage = lines =>
+  lines.every(line => line.kind === 'image' && line.dest === 'image' && line.status === 200) &&
+  deviceOf(lines[0].ua) === 'настольный';
+
 function classify(lines) {
   const declared = lines
     .map(line => (line.bot === '-' ? claimedBy(line.ua) : line.bot))
@@ -270,8 +289,10 @@ function classify(lines) {
   const pages = lines.filter(line => line.kind === 'page').length;
   const props = lines.filter(line => line.kind === 'asset' || line.kind === 'image').length;
   const noua = lines.some(line => line.bot === 'noua');
+  // Рука тоже ответ: вкладка, вернувшаяся назавтра, бывает заходом из одной
+  // записи руки, без единого файла (`public/hand.js`).
   const got = lines.some(
-    line => (line.kind === 'page' && line.status < 400) || line.kind === 'asset' || line.kind === 'image'
+    line => (line.kind === 'page' && line.status < 400) || line.kind === 'asset' || line.kind === 'image' || HAND(line)
   );
   if (declared) return { bot: true, why: declared.split(':')[0], fake: declared.endsWith(':fake') };
   if (noua) return { bot: true, why: 'без заголовка' };
@@ -282,6 +303,7 @@ function classify(lines) {
   if (olderThanItsHeaders(lines)) return { bot: true, why: 'старше заголовка' };
   if (fetchedOnlyFiles(lines)) return { bot: true, why: 'одни файлы' };
   if (sawNoPictures(lines)) return { bot: true, why: 'без картинок' };
+  if (pictureWithoutPage(lines)) return { bot: true, why: 'картинка без страницы' };
   return { bot: false, why: 'человек' };
 }
 
@@ -300,6 +322,21 @@ export const taken = line =>
 // Свой заход — тот, где журнал узнал куку хозяина (`markOwner` в `journal.js`).
 // Это не бот и не посетитель: в счёт людей он не идёт ни на доске, ни в сводке.
 export const ownVisit = visit => visit.lines.some(line => line.source === 'me');
+
+// Рука — первое движение мыши, пальца или клавиши (`public/hand.js`).
+// 15.10.2026 её завели подтверждением, а не фильтром: боялись потерять того,
+// кто посмотрел и закрыл, ничего не тронув. Проверено 19.10.2026 на всех
+// 24 «людях» с её появления: 17 с рукой, и даже самые короткие из них,
+// 7–8 секунд, касались страницы. У 7 без руки три машины (одна пришла
+// «с» `/robots.txt`), два захода хозяина без куки и два iPhone по
+// 2 секунды. То есть потеря — не больше двух человек за четыре дня,
+// а без руки в людях стояли машины, которых правила выше не видят.
+//
+// Заходы до появления руки судятся по-старому: руки у них быть не могло.
+export const HAND_SINCE = '2026-10-15T16:52:54Z';
+const HAND = line => line.path === '/api/note/hand' && line.status === 204;
+export const handOf = visit => visit.lines.some(HAND);
+export const confirmed = visit => handOf(visit) || visit.lines[0].time < HAND_SINCE;
 
 export function visitsOf(records) {
   const groups = new Map();

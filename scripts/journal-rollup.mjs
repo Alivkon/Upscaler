@@ -9,7 +9,7 @@
 // его точность и полнота неизвестны, а от него зависит каждое число выше.
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { deviceOf, foreign, imageIndex, ownVisit, readDays, taken, visitsOf } from './journal-read.mjs';
+import { deviceOf, foreign, handOf, imageIndex, ownVisit, readDays, taken, visitsOf } from './journal-read.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT = path.join(__dirname, '..');
@@ -69,11 +69,9 @@ console.log(
   `\nЗаходов ${visits.length}: людей ${people.length}, машин ${bots.length}. ` +
     `Страниц у людей ${humanPages}, на заход ${(humanPages / (people.length || 1)).toFixed(1)}`
 );
-// Рука (`public/hand.js`) — подтверждение, а не признак: без неё заход
-// в машины не уходит. Строка появилась 15.10.2026, дни до неё дают ноль.
-const HAND = record => record.path === '/api/note/hand' && record.status === 204;
-const handed = new Set(human.filter(HAND).map(record => record.key));
-console.log(`  из них двигали мышью или пальцем: ${handed.size}`);
+// Рука (`handOf` в `journal-read.mjs`). Доска считает людьми только тех,
+// у кого она была; сводка показывает обоих, чтобы разницу было видно.
+console.log(`  из них двигали мышью или пальцем: ${people.filter(handOf).length}`);
 
 table(rank(tally(bots.map(visit => visit.why))), 'Машины: кто (заходов)');
 const fakes = bots.filter(visit => visit.fake);

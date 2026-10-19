@@ -16,7 +16,7 @@ import { execFileSync } from 'node:child_process';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { deviceOf, foreign, imageIndex, ownVisit, readDays, taken, visitsOf } from './journal-read.mjs';
+import { confirmed, deviceOf, foreign, imageIndex, ownVisit, readDays, taken, visitsOf } from './journal-read.mjs';
 import { TYPES, searchReport } from './search-console.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -101,7 +101,10 @@ try {
 }
 
 const visits = visitsOf(records);
-const people = visits.filter(visit => !visit.bot && !ownVisit(visit));
+// Люди на доске — только те, у кого была рука (`confirmed` в `journal-read.mjs`).
+// Остальные не-машины стоят рядом мелким числом «без руки», а не пропадают.
+const unmarked = visits.filter(visit => !visit.bot && !ownVisit(visit));
+const people = unmarked.filter(confirmed);
 const humanKeys = new Set(people.map(visit => visit.key));
 const human = records.filter(record => humanKeys.has(record.key));
 
@@ -202,7 +205,7 @@ const traffic = [
   ['всего', size(sent(records))],
   ['картинки', size(sent(records.filter(record => record.kind === 'image')))],
   ['страницы', size(sent(records.filter(record => record.kind === 'page')))],
-  ['из всего — машинам', size(sent(records.filter(record => !humanKeys.has(record.key))))]
+  ['из всего — не людям', size(sent(records.filter(record => !humanKeys.has(record.key))))]
 ];
 
 // Часы последнего дня, в местном времени того, кто смотрит: журнал пишется
@@ -220,11 +223,11 @@ for (const visit of people) {
 // вообще» отвечает только счёт за всё время, поэтому для него журнал
 // читается целиком, а не за окно доски. В счёт только люди, как и везде
 // на доске: свои заходы нет (оценку из проверки приёмки ставил хозяин),
-// машины тоже — запись `rated` может послать и скрипт.
+// машины и заходы без руки тоже — запись `rated` может послать и скрипт.
 const { records: everything } = await readDays(DIRECTORY, Infinity);
 const inWindow = new Set(days);
 const ratings = visitsOf(everything)
-  .filter(visit => !visit.bot && !ownVisit(visit))
+  .filter(visit => !visit.bot && !ownVisit(visit) && confirmed(visit))
   .flatMap(visit => visit.lines)
   .filter(line => line.path.startsWith('/api/note/rated/') && line.status === 204)
   .map(line => {
@@ -398,7 +401,7 @@ const page = `<!doctype html>
 <p class="fresh">Снимок на ${safe(new Date().toLocaleString('ru-RU', { dateStyle: 'short', timeStyle: 'short' }))} — сама страница не обновляется. Свежие числа: <code>yarn stats</code> в терминале.</p>
 
 <div class="row">
-  ${number(people.length, 'заходов людей', `машин ${visits.length - people.length}`)}
+  ${number(people.length, 'заходов людей', `без руки ${unmarked.length - people.length}, машин ${visits.length - unmarked.length}`)}
   ${number(pages.length, 'страниц', `${(pages.length / (people.length || 1)).toFixed(1)} на заход`)}
   ${number(fromReddit.length, 'с Reddit', `без реферера ${noRef}`)}
   ${number(takes.length, 'унесли файлов', `ушли с первой же ${alone} из ${coldEntries.length}`)}
