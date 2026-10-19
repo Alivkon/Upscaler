@@ -206,6 +206,7 @@ export async function enlarge(buffer, { width, height, targetLongestSide }) {
   const sent = await shrunkToFit(buffer, width, height);
 
   let response;
+  let grown;
   try {
     response = await fetch(url(), {
       method: 'POST',
@@ -213,6 +214,9 @@ export async function enlarge(buffer, { width, height, targetLongestSide }) {
       body: sent,
       signal: AbortSignal.timeout(WAIT_MS)
     });
+    // Срок `AbortSignal.timeout` идёт и на чтение ответа: Modal, отдавший
+    // заголовки и замолчавший на картинке, — тот же зависший вызов.
+    if (response.ok) grown = Buffer.from(await response.arrayBuffer());
   } catch (error) {
     // Наружу по-прежнему нечего сказать: посетителю нечего делать с именем
     // нашего поставщика видеокарт. А вот в логе причина обязана остаться —
@@ -241,7 +245,6 @@ export async function enlarge(buffer, { width, height, targetLongestSide }) {
 
   if (!response.ok) throw await refusal(response);
 
-  const grown = Buffer.from(await response.arrayBuffer());
   const toned = await tonedLikeOriginal(sent, grown);
   // Обе стороны названы поимённо, а не «вписать в квадрат»: пропорция берётся
   // у исходника, тем же `resultSize`, каким страница назвала размер до

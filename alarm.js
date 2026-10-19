@@ -34,7 +34,7 @@ export async function raiseAlarm(reason) {
   lastSent = Date.now();
 
   const text = [
-    'Server upscaling just failed, so visitors are only offered the in-browser fallback.',
+    'Server upscaling just failed, so visitors can only get their picture at its original size.',
     '',
     `What the server saw: ${reason.slice(0, REASON_CHARS)}`,
     '',

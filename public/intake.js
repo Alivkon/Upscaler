@@ -75,6 +75,10 @@ const SENT_TO_US = 'Enlarged on our server; your picture is sent to us and to Mo
 // dynamically imported module: http://…/treat-local.js» — сообщение для
 // консоли, и в нём наш собственный адрес. Подробность остаётся в `console.warn`.
 const FINISH_FAILED = 'Your browser could not apply these changes.';
+// Второй выход после любого отказа сервера, и по счётчику тоже: без
+// увеличения кнопка считает в браузере, и счётчик это не трогает. Стоит здесь,
+// а не в текстах сервера, потому что галочка — страницы.
+const WITHOUT_ENLARGING = 'To make it now at its original size, untick Increase size.';
 // Начало всех строк о ходе работы. Стояло здесь «Working in your browser»,
 // и читалось это не как «идёт сейчас», а как утверждение о том, где вообще
 // считают, — тем более что двумя строками ниже стоит «Made in your own
@@ -490,10 +494,10 @@ async function restoreOnServer() {
     console.warn('server upscale failed:', error);
     report('failed', 'server');
     // Текст сервера написан для посетителя и показывается как есть. Выход
-    // у отказа один и уже на экране: `renderFailed` возвращает галочки и
-    // кнопку, и со снятым «Increase size» та же кнопка отдаёт кадр,
-    // приглушение и виньетку в исходном размере (`withoutModel`).
-    return renderFailed(error.message);
+    // у отказа один: `renderFailed` возвращает галочки и кнопку, и со снятым
+    // «Increase size» та же кнопка отдаёт кадр, приглушение и виньетку
+    // в исходном размере (`withoutModel`). Его и называем.
+    return renderFailed(`${error.message} ${WITHOUT_ENLARGING}`);
   }
   // Дальше отказ уже не про сервер: картинка сделана и оплачена.
   return showResult(made);

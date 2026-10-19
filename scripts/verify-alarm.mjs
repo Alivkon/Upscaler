@@ -21,6 +21,13 @@ globalThis.fetch = async (url, options) => {
     return new Response('{}', { status: resendStatus });
   }
   if (modalStatus === 'timeout') throw new DOMException('The operation timed out.', 'TimeoutError');
+  // Заголовки пришли, а картинка застряла на полпути.
+  if (modalStatus === 'stalled') {
+    const body = new ReadableStream({
+      pull: () => Promise.reject(new DOMException('The operation timed out.', 'TimeoutError'))
+    });
+    return new Response(body, { status: 200 });
+  }
   return new Response('workspace billing limit reached', { status: modalStatus });
 };
 // Строки отказов в логе здесь ожидаемы и только мешали бы читать вывод;
@@ -126,9 +133,19 @@ await settle();
 if (hung.status !== 504) complain(`на таймаут посетитель получил ${hung.status}, а не 504`);
 if (!letters.at(-1).text.includes('timed out')) complain('на таймаут письмо не ушло');
 
+// 11. То же, но Modal замолчал посреди картинки: срок идёт и на чтение ответа.
+travel(24);
+modalStatus = 'stalled';
+const lettersBefore = letters.length;
+const stalled = await call();
+await settle();
+if (stalled.status !== 504) complain(`на застрявшую картинку посетитель получил ${stalled.status}, а не 504`);
+if (letters.length !== lettersBefore + 1 || !letters.at(-1).text.includes('timed out'))
+  complain('на застрявшую картинку письмо не ушло');
+
 if (problems.length) {
   process.stderr.write(`письмо об отказе: ${problems.length} ошибок\n`);
   for (const problem of problems) process.stderr.write(`  ${problem}\n`);
   process.exit(1);
 }
-console.log('письмо об отказе: десять проверок пройдены');
+console.log('письмо об отказе: одиннадцать проверок пройдены');

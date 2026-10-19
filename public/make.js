@@ -14,8 +14,7 @@
 //
 //   file, bitmap, width, height — принесённое (`opening.brought`);
 //   effects — что нажато, в том же виде, какой принимает `finishLocally`;
-//   name(extension, how) — как назвать готовое (`localName` в intake.js);
-//   onProgress — куда сообщать о ходе счёта; слова складывает зовущий.
+//   name(extension, how) — как назвать готовое (`localName` в intake.js).
 //
 // Возвращают оба одинаковое: `{ blob, filename, extension, provider }`.
 // Отказ — исключением, и текст его предназначен посетителю только у сервера;
@@ -52,7 +51,12 @@ function toFile(job, canvas, provider, sourceType = job.file.type) {
 export async function withoutModel(job) {
   const { finishLocally } = await import('./treat-local.js');
   const canvas = new OffscreenCanvas(job.width, job.height);
-  canvas.getContext('2d').drawImage(job.bitmap, 0, 0);
+  const ctx = canvas.getContext('2d');
+  // Снимок с телефона в 24 Мп больше холста Safari (`usable`), и без проверки
+  // посетитель скачал бы пустой файл. Отказ здесь честнее: зовущий скажет его
+  // словами.
+  if (!usable(ctx, job.width, job.height)) throw new Error(`canvas too large: ${job.width}x${job.height}`);
+  ctx.drawImage(job.bitmap, 0, 0);
   return toFile(job, finishLocally(canvas, job.effects), 'browser');
 }
 

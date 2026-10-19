@@ -50,14 +50,12 @@ const RULES = {
   visitor: {
     allowed: 5,
     window: HOUR,
-    refusal: when =>
-      `You've reached the limit for enlarging. Try again in ${when}, or untick Increase size to make it now at its original size.`
+    refusal: when => `You've reached the limit for enlarging. Try again in ${when}.`
   },
   address: {
     allowed: 10,
     window: DAY,
-    refusal: when =>
-      `You've reached the limit for enlarging. Try again in ${when}, or untick Increase size to make it now at its original size.`
+    refusal: when => `You've reached the limit for enlarging. Try again in ${when}.`
   },
   // Рассылка — ворота не про деньги, а про файл: маршрут `/mailing-list`
   // дописывает строку на диск, и открыт он всякому, кто умеет слать POST.
@@ -107,8 +105,7 @@ const RULES = {
     // Так число живёт в одном месте.
     allowed: 50,
     window: DAY,
-    refusal: when =>
-      `We've enlarged as many images today as we can. Try again in ${when}, or untick Increase size to make it now at its original size.`
+    refusal: when => `We've enlarged as many images today as we can. Try again in ${when}.`
   }
 };
 

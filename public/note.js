@@ -68,7 +68,7 @@ export const NOTED = new RegExp(
       `chose/${HOW}/${SIZE}/${FORMAT}/\\d{1,7}kb`,
       `refused/${HOW}/${FORMAT}`,
       `failed/open/${FORMAT}`,
-      'failed/(preview|finish|server|browser|show)',
+      'failed/(preview|finish|server|show)',
       `made/${MAKER}/(${EFFECT}(,${EFFECT}){0,3}|none)/${SIZE}/\\d{1,5}s`,
       `download/${MAKER}`,
       `rated/${MAKER}/(poor|fair|good)`,
