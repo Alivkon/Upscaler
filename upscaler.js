@@ -13,6 +13,7 @@
 // WTFPL — без «некоммерчески» и без share-alike, в отличие от модели,
 // которая считает в браузере.
 import sharp from 'sharp';
+import { raiseAlarm } from './alarm.js';
 import { HttpError } from './http-error.js';
 import { resultSize } from './public/frame.js';
 
@@ -222,6 +223,7 @@ export async function enlarge(buffer, { width, height, targetLongestSide }) {
     // списывается.
     if (error.name === 'TimeoutError')
       throw charged(new HttpError(504, 'The enlargement took too long. Try again in a moment.'));
+    raiseAlarm(`no connection (${error.name}: ${error.message})`);
     throw new HttpError(503, 'Upscaling is switched off right now.');
   }
 
@@ -280,6 +282,7 @@ async function refusal(response) {
     // выглядит выключенным увеличением — так оно для него и есть; настоящая
     // причина остаётся в логе, и разбирать её нам, а не ему.
     console.error(`upscaler: до модели не достучались (${response.status}) ${said}`);
+    raiseAlarm(`Modal answered ${response.status}: ${said}`);
     return new HttpError(503, 'Upscaling is switched off right now.');
   }
   // Всё остальное — авария на той стороне: модель упала, контейнеру не хватило
@@ -288,5 +291,9 @@ async function refusal(response) {
   // покажет, чьей картинке он достался, а это единственный случай, когда
   // чужие слова нужны целиком.
   console.error(`upscaler: вызов не удался (${response.status}) ${said}`);
+  // Сюда же попадает и кончившийся счёт: каким кодом Modal о нём скажет,
+  // мы не проверяли, поэтому письмо уходит на любой отказ, кроме двух
+  // посетительских выше.
+  raiseAlarm(`Modal answered ${response.status}: ${said}`);
   return charged(new HttpError(502, 'The enlargement did not finish. Try again in a moment.'));
 }
