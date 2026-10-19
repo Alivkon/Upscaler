@@ -226,8 +226,15 @@ export async function enlarge(buffer, { width, height, targetLongestSide }) {
     // выложено. Второе для посетителя ничем не отличается от выключенного
     // увеличения, так ему и говорится, и место в счётчике за него не
     // списывается.
-    if (error.name === 'TimeoutError')
+    //
+    // Вышедшее время пишется хозяину, как и прочие отказы. Одиночный долгий
+    // вызов поломкой не был бы, но вызовов у нас 0–4 в день и за 13.09–19.10
+    // ни одного неудачного, так что и первый таймаут скорее авария, чем
+    // случай: зависший Modal иначе отказывал бы всем молча.
+    if (error.name === 'TimeoutError') {
+      raiseAlarm(`timed out after ${WAIT_MS / 1000} s`);
       throw charged(new HttpError(504, 'The enlargement took too long. Try again in a moment.'));
+    }
     raiseAlarm(`no connection (${error.name}: ${error.message})`);
     throw new HttpError(503, 'Upscaling is switched off right now.');
   }

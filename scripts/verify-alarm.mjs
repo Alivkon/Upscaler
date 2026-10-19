@@ -20,6 +20,7 @@ globalThis.fetch = async (url, options) => {
     letters.push(JSON.parse(options.body));
     return new Response('{}', { status: resendStatus });
   }
+  if (modalStatus === 'timeout') throw new DOMException('The operation timed out.', 'TimeoutError');
   return new Response('workspace billing limit reached', { status: modalStatus });
 };
 // Строки отказов в логе здесь ожидаемы и только мешали бы читать вывод;
@@ -116,9 +117,18 @@ travel(24);
 await raiseAlarm('x'.repeat(50_000));
 if (letters.at(-1).text.length > 2000) complain(`письмо длиной ${letters.at(-1).text.length}, ответ не обрезан`);
 
+// 10. Modal не ответил вовремя: посетитель получает 504, хозяину письмо.
+travel(24);
+process.env.UPSCALE_SECRET = 'ws-test';
+modalStatus = 'timeout';
+const hung = await call();
+await settle();
+if (hung.status !== 504) complain(`на таймаут посетитель получил ${hung.status}, а не 504`);
+if (!letters.at(-1).text.includes('timed out')) complain('на таймаут письмо не ушло');
+
 if (problems.length) {
   process.stderr.write(`письмо об отказе: ${problems.length} ошибок\n`);
   for (const problem of problems) process.stderr.write(`  ${problem}\n`);
   process.exit(1);
 }
-console.log('письмо об отказе: девять проверок пройдены');
+console.log('письмо об отказе: десять проверок пройдены');
