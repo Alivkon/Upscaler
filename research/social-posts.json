@@ -513,6 +513,30 @@
         "giovanni paolo panini"
       ],
       "more": "https://tessarum.com/collection/dark-academia"
+    },
+    {
+      "ref": "vl-0391",
+      "slug": "yoroboshi-shimomura-kanzan-iphone-wallpaper",
+      "postedAt": "2026-10-20",
+      "file": "images/for-tumblr/vl-0391-yoroboshi-shimomura-kanzan-iphone-wallpaper.jpg",
+      "crop": "tall+whole",
+      "edit": "scan",
+      "medium": "color on gold-ground silk",
+      "tags": [
+        "painting",
+        "art",
+        "art history",
+        "phone wallpaper",
+        "tessarum",
+        "color on silk",
+        "nihonga",
+        "japanese painting",
+        "japanese art",
+        "flower painting",
+        "folding screen",
+        "shimomura kanzan"
+      ],
+      "more": "https://tessarum.com/collection/nihonga"
     }
   ],
   "pinterest": [
@@ -769,6 +793,16 @@
       "file": "images/crops/after-kalf-still-life-nautilus-iphone-wallpaper-ceil-phone-1833x3972.jpg",
       "crop": "phone",
       "edit": "ceil"
+    },
+    {
+      "ref": "vl-0036",
+      "slug": "interior-of-the-pantheon-rome-architectural-iphone-wallpaper",
+      "postedAt": "2026-10-20",
+      "board": "Art",
+      "title": "Interior of the Pantheon, Rome, Giovanni Paolo Panini, dark academia phone wallpaper",
+      "file": "images/crops/interior-of-the-pantheon-rome-architectural-iphone-wallpaper-dim-phone-1569x3400.jpg",
+      "crop": "phone",
+      "edit": "dim"
     }
   ]
 }
