@@ -28,6 +28,7 @@ globalThis.fetch = async (url, options) => {
     });
     return new Response(body, { status: 200 });
   }
+  if (modalStatus === 200) return new Response(await grownPicture(), { status: 200 });
   return new Response('workspace billing limit reached', { status: modalStatus });
 };
 // Строки отказов в логе здесь ожидаемы и только мешали бы читать вывод;
@@ -44,8 +45,13 @@ delete process.env.RESEND_API_KEY;
 delete process.env.ALARM_TO;
 
 const { enlarge } = await import('../upscaler.js');
-const { raiseAlarm } = await import('../alarm.js');
+const { clearAlarm, raiseAlarm } = await import('../alarm.js');
 
+// Что «вернула модель»: та же серая картинка, вчетверо больше.
+const grownPicture = () =>
+  sharp({ create: { width: 32, height: 32, channels: 3, background: '#808080' } })
+    .jpeg()
+    .toBuffer();
 const picture = await sharp({ create: { width: 8, height: 8, channels: 3, background: '#808080' } })
   .jpeg()
   .toBuffer();
@@ -143,9 +149,45 @@ if (stalled.status !== 504) complain(`на застрявшую картинку
 if (letters.length !== lettersBefore + 1 || !letters.at(-1).text.includes('timed out'))
   complain('на застрявшую картинку письмо не ушло');
 
+// 12. Увеличение снова заработало — второе письмо, со временем аварии,
+// и сутки тишины кончаются: следующий отказ — новая авария.
+// Авария из прошлых проверок длится с первой из них; её закрывают отдельно.
+travel(24);
+modalStatus = 200;
+await call();
+await settle();
+if (!letters.at(-1).text.includes('h, counted')) complain('долгая авария названа не в часах');
+modalStatus = 'timeout';
+await call();
+await settle();
+const down = letters.length;
+travel(0.5);
+modalStatus = 200;
+const healed = await call();
+await settle();
+if (healed instanceof Error) complain(`удачный вызов отказал: ${healed.message}`);
+if (letters.length !== down + 1) complain(`на возврат ушло ${letters.length - down} писем, а не одно`);
+else if (!letters.at(-1).subject.includes('back') || !letters.at(-1).text.includes('30 min'))
+  complain(`в письме о возврате нет темы или времени аварии: ${JSON.stringify(letters.at(-1))}`);
+await call();
+await settle();
+if (letters.length !== down + 1) complain('второй удачный вызов прислал ещё письмо о возврате');
+modalStatus = 'timeout';
+await call();
+await settle();
+if (letters.length !== down + 2) complain('новая авария сразу после возврата промолчала');
+
+// 13. Без письма об отказе не бывает и письма о возврате.
+modalStatus = 200;
+await call();
+await settle();
+const quiet = letters.length;
+if (await clearAlarm()) complain('clearAlarm без аварии сказал, что письмо ушло');
+if (letters.length !== quiet) complain('письмо о возврате без аварии');
+
 if (problems.length) {
   process.stderr.write(`письмо об отказе: ${problems.length} ошибок\n`);
   for (const problem of problems) process.stderr.write(`  ${problem}\n`);
   process.exit(1);
 }
-console.log('письмо об отказе: одиннадцать проверок пройдены');
+console.log('письмо об отказе: тринадцать проверок пройдены');

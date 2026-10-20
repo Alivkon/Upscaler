@@ -13,7 +13,7 @@
 // WTFPL — без «некоммерчески» и без share-alike, в отличие от модели,
 // которая считает в браузере.
 import sharp from 'sharp';
-import { raiseAlarm } from './alarm.js';
+import { clearAlarm, raiseAlarm } from './alarm.js';
 import { HttpError } from './http-error.js';
 import { resultSize } from './public/frame.js';
 
@@ -266,6 +266,9 @@ export async function enlarge(buffer, { width, height, targetLongestSide }) {
   // переносит, но отвечает за него не он.
   const { icc } = await sharp(sent).metadata();
 
+  // Не раньше: «снова работает» значит, что посетитель получил картинку,
+  // а не что Modal ответил 200 на то, что потом не разобралось.
+  clearAlarm();
   return {
     buffer: withProfile(output, icc),
     contentType: 'image/jpeg',
