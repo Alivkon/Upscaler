@@ -558,6 +558,31 @@
         "gao qipei"
       ],
       "more": "https://tessarum.com/collection/landscape-painting"
+    },
+    {
+      "ref": "vl-0369",
+      "slug": "the-garden-of-eden-yamamoto-hosui-iphone-wallpaper",
+      "postedAt": "2026-10-22",
+      "file": "images/for-tumblr/vl-0369-the-garden-of-eden-yamamoto-hosui-iphone-wallpaper.jpg",
+      "crop": "whole",
+      "edit": "scan",
+      "medium": "Oil on canvas",
+      "tags": [
+        "painting",
+        "art",
+        "art history",
+        "phone wallpaper",
+        "tessarum",
+        "dark academia",
+        "oil on canvas",
+        "flower painting",
+        "dark floral",
+        "dark botanical",
+        "landscape painting",
+        "japanese art",
+        "yamamoto hosui"
+      ],
+      "more": "https://tessarum.com/collection/flower-painting"
     }
   ],
   "pinterest": [
@@ -832,6 +857,16 @@
       "board": "Art",
       "title": "Yoroboshi, Shimomura Kanzan, phone wallpaper",
       "file": "images/crops/yoroboshi-shimomura-kanzan-iphone-wallpaper-none-phone-1772x3840.jpg",
+      "crop": "phone",
+      "edit": "scan"
+    },
+    {
+      "ref": "vl-0445",
+      "slug": "kalf-nautilus-still-life-3-iphone-wallpaper",
+      "postedAt": "2026-10-22",
+      "board": "Art",
+      "title": "Wineglass and a Bowl of Fruit, Willem Kalf, dark academia phone wallpaper",
+      "file": "images/crops/kalf-nautilus-still-life-3-iphone-wallpaper-none-phone-1518x3288.jpg",
       "crop": "phone",
       "edit": "scan"
     }
