@@ -13,9 +13,9 @@ unless Charlie explicitly asks for more.
 file) at 02:00 Paris time, Monday to Friday, and the script then waits a
 random 0–3 hours, so posts land between 20:00 and 23:00 New York — US evening,
 when Tumblr's and Pinterest's feeds are busiest. Since 23.10.2026 one
-Tumblr post in three goes out at 16:00–16:30 Berlin instead: on those days
+Tumblr post in three goes out at 11:00–11:30 Berlin instead: on those days
 (picked by the date in `cron.sh`) the night run posts Pinterest only and a
-second crontab line, `cron.sh afternoon`, posts Tumblr. Output goes to `.social-post.log` in the repo root. So before a manual
+second crontab line, `cron.sh morning`, posts Tumblr. Output goes to `.social-post.log` in the repo root. So before a manual
 run, check `social-posts.json` for an entry dated today. `DRY_RUN=1 cron.sh`
 picks the next works without posting.
 

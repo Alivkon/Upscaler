@@ -2,27 +2,27 @@
 # Unattended run of the post-next-wallpaper skill, called from crontab.
 # ANTHROPIC_API_KEY must stay unset: with it, Claude in Chrome doesn't load.
 # DRY_RUN=1 picks the next works and reports them without posting anything.
-# First argument is the slot: "night" (default) or "afternoon".
+# First argument is the slot: "night" (default) or "morning".
 cd /home/charlie/repos/Upscaler || exit 1
 unset ANTHROPIC_API_KEY
 LOG=/home/charlie/repos/Upscaler/.social-post.log
 
 SLOT=${1:-night}
 
-# One Tumblr post in three goes out at 16:00 Berlin instead of the US
-# evening, to see whether the European afternoon reaches anyone. The day
+# One Tumblr post in three goes out at 11:00 Berlin instead of the US
+# evening, to see whether the European morning reaches anyone. The day
 # is picked by the date, so both runs of one day agree on it.
 if [ $(( $(date +%s) / 86400 % 3 )) -eq 0 ]; then
-  TUMBLR_SLOT=afternoon
+  TUMBLR_SLOT=morning
 else
   TUMBLR_SLOT=night
 fi
-if [ "$SLOT" = afternoon ]; then
-  [ "$TUMBLR_SLOT" = afternoon ] || exit 0
+if [ "$SLOT" = morning ]; then
+  [ "$TUMBLR_SLOT" = morning ] || exit 0
   TARGETS="to Tumblr only (Pinterest posts in the night run)"
   SPREAD=30
-elif [ "$TUMBLR_SLOT" = afternoon ]; then
-  TARGETS="to Pinterest only (today's Tumblr post goes out at 16:00)"
+elif [ "$TUMBLR_SLOT" = morning ]; then
+  TARGETS="to Pinterest only (today's Tumblr post goes out at 11:00)"
   SPREAD=180
 else
   TARGETS="to Tumblr and to Pinterest"
@@ -30,7 +30,7 @@ else
 fi
 
 # Night: crontab fires at 02:00 Paris (20:00 New York) and a random wait of
-# up to three hours spreads posts over the US evening. Afternoon: 16:00
+# up to three hours spreads posts over the US evening. Morning: 11:00
 # Berlin plus up to half an hour. Either way not the same minute every day.
 if [ -z "$DRY_RUN" ]; then
   WAIT=$((RANDOM % SPREAD))
