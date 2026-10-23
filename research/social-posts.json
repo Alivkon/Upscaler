@@ -583,6 +583,29 @@
         "yamamoto hosui"
       ],
       "more": "https://tessarum.com/collection/flower-painting"
+    },
+    {
+      "ref": "vl-0394",
+      "slug": "great-fire-seen-from-hisamatsu-kobayashi-kiyochika-iphone-wallpaper",
+      "postedAt": "2026-10-23",
+      "file": "images/for-tumblr/vl-0394-great-fire-seen-from-hisamatsu-kobayashi-kiyochika-iphone-wallpaper.jpg",
+      "crop": "whole",
+      "edit": "scan",
+      "medium": "Color woodblock print",
+      "tags": [
+        "painting",
+        "art",
+        "art history",
+        "phone wallpaper",
+        "tessarum",
+        "dark academia",
+        "color woodblock print",
+        "woodblock print",
+        "japanese art",
+        "ukiyo-e",
+        "kobayashi kiyochika"
+      ],
+      "more": "https://tessarum.com/"
     }
   ],
   "pinterest": [
@@ -867,6 +890,16 @@
       "board": "Art",
       "title": "Wineglass and a Bowl of Fruit, Willem Kalf, dark academia phone wallpaper",
       "file": "images/crops/kalf-nautilus-still-life-3-iphone-wallpaper-none-phone-1518x3288.jpg",
+      "crop": "phone",
+      "edit": "scan"
+    },
+    {
+      "ref": "vl-0372",
+      "slug": "finger-painted-landscape-gao-qipei-iphone-wallpaper",
+      "postedAt": "2026-10-23",
+      "board": "Art",
+      "title": "Finger Painted Landscape, Gao Qipei, phone wallpaper",
+      "file": "images/crops/finger-painted-landscape-gao-qipei-iphone-wallpaper-none-phone-1385x3000.jpg",
       "crop": "phone",
       "edit": "scan"
     }
