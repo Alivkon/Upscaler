@@ -391,10 +391,21 @@ scratchpad for upload.
    judgment, don't force it. **No em dashes in the Pinterest title** — use a
    comma instead. Example:
    `Landscape Near Paris, Georges Michel, dark academia phone wallpaper`.
-4. **Description** — leave it **empty** by default. Never repeat the title
-   in it. Never write "no sign-up" (the catalogue's own `pin` field says
-   this — don't reuse that field's text verbatim here). Never mention
-   resolution or "4K".
+4. **Description** — since 27.10.2026 the same text on every pin, word for
+   word (Charlie's wording):
+
+   ```
+   Download free at full size. 150+ classical painting backgrounds on tessarum.
+   ```
+
+   The first sentence is the reason to click: Pinterest shrinks the pin.
+   "Backgrounds" is Pinterest's word for these, "wallpaper" is Google's.
+   The number has to stay true: the site had 156 works on 27.10.2026, so
+   raise it to 200+ only once the home page count passes 200. The upscaler
+   line was tried and dropped to keep it short. Don't add the title, "no sign-up", "4K" or pixel sizes:
+   "4k" draws a different crowd on Pinterest (research/2026-08-16-HANDOVER.md).
+   Don't mention "dimmed", because the pin is already the dimmed file, and
+   don't mention a desktop version, because the page doesn't have one.
 5. **Link** — `https://tessarum.com/w/<slug>?source=pinterest`. The tag is
    how `yarn stats` counts visits from the Pinterest app, which sends no
    referrer; don't drop it.
