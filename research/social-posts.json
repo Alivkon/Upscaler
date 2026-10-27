@@ -606,6 +606,36 @@
         "kobayashi kiyochika"
       ],
       "more": "https://tessarum.com/"
+    },
+    {
+      "refs": [
+        "vl-0378",
+        "vl-0352",
+        "vl-0230"
+      ],
+      "slugs": [
+        "landscape-gustave-courbet-iphone-wallpaper",
+        "the-cliff-at-etretat-courbet-iphone-wallpaper",
+        "panoramic-view-of-the-alps-les-dents-du-midi-courbet-iphone-wallpaper"
+      ],
+      "postedAt": "2026-10-27",
+      "crop": "group",
+      "edit": "scan",
+      "medium": null,
+      "tags": [
+        "painting",
+        "art",
+        "art history",
+        "phone wallpaper",
+        "tessarum",
+        "dark academia",
+        "gustave courbet",
+        "landscape painting",
+        "ocean painting",
+        "seascape",
+        "marine painting"
+      ],
+      "more": "https://tessarum.com/collection/landscape-painting"
     }
   ],
   "pinterest": [
@@ -902,6 +932,16 @@
       "file": "images/crops/finger-painted-landscape-gao-qipei-iphone-wallpaper-none-phone-1385x3000.jpg",
       "crop": "phone",
       "edit": "scan"
+    },
+    {
+      "ref": "vl-0369",
+      "slug": "the-garden-of-eden-yamamoto-hosui-iphone-wallpaper",
+      "postedAt": "2026-10-27",
+      "board": "Art",
+      "title": "The Garden of Eden, Yamamoto Hosui, dark academia phone wallpaper",
+      "file": "images/crops/the-garden-of-eden-yamamoto-hosui-iphone-wallpaper-ceil-phone-1371x2970.jpg",
+      "crop": "phone",
+      "edit": "ceil"
     }
   ]
 }
