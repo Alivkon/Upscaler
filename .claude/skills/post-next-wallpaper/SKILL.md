@@ -395,7 +395,7 @@ scratchpad for upload.
    word (Charlie's wording):
 
    ```
-   Download free at full size. 150+ classical painting backgrounds on tessarum.
+   Download free at full size at tessarum.com. 150+ more classical painting backgrounds.
    ```
 
    The first sentence is the reason to click: Pinterest shrinks the pin.
